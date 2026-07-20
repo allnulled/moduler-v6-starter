@@ -1,0 +1,1 @@
+module.exports = require(__dirname + "/refrescador/refrescador.api.dist.js");

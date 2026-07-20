@@ -1,0 +1,1 @@
+$compiler.inject.source("./Mv6NativeForms.class.js")
