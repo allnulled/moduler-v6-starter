@@ -2344,14 +2344,14 @@
                     } else if (isPrototype) {
                         targetType = "prototype class member";
                     } else if (isClass) {
-                        targetType = "pure class";
+                        targetType = "only class";
                     }
                     if (isClass) {
                         if (isStatic || isPrototype) {
                             suffixes += " = ";
                         }
                         suffixes += `class ${fileId}`;
-                        targetType = targetType === "pure class" ? targetType : targetType + " + class";
+                        targetType = targetType === "class" ? targetType : targetType + " + class";
                     } else if (isAsync) {
                         prefixes += `async `;
                         suffixes += `()`;
@@ -2361,7 +2361,7 @@
                         suffixes += `()`;
                         targetType += " + sync";
                     } else {
-                        suffixes = " =";
+                        suffixes = " ()";
                     }
                     if (!isOnlyClass) {
                         if (isJsFriendly) {
@@ -2738,12 +2738,14 @@
                 const devBinaryV6RelativeFilepath = path.relative(path.dirname(testunitFile), devBinaryV6Filepath);
                 if (!event.distribution.js) return;
                 const relativeTarget = path.relative(path.dirname(testunitFile), event.distribution.js);
-                const testunitContent = `const devbin = require(__dirname + ${JSON.stringify("/" + devBinaryV6RelativeFilepath)});\nconst target = require(__dirname + ${JSON.stringify("/" + relativeTarget)});\n\ndevbin.assert(true, "Test is empty right now");`;
+                const testunitContent = `const devbin = require(__dirname + ${JSON.stringify("/" + devBinaryV6RelativeFilepath)});\nconst target = require(__dirname + ${JSON.stringify("/" + relativeTarget)});\n\nmodule.exports = (async function () {\n\n  devbin.assert(true, "Test is empty right now");\n\n})();`;
                 const testunitDir = path.dirname(testunitFile);
-                await fs.promises.mkdir(testunitDir, {
-                    recursive: true
-                });
-                await fs.promises.writeFile(testunitFile, testunitContent, "utf8");
+                if (!await this.existsFile(testunitFile)) {
+                    await fs.promises.mkdir(testunitDir, {
+                        recursive: true
+                    });
+                    await fs.promises.writeFile(testunitFile, testunitContent, "utf8");
+                }
                 return {
                     unitDir: testunitDir,
                     unitFile: testunitFile,
@@ -2752,9 +2754,9 @@
                 };
             }
             executeUnitTestFileOf(filepath, event) {
-                if (false) {
-                    return require(event.testFabrication.unitFile);
-                }
+                console.log(`[*] Executing unit test file of: ${event.testFabrication.unitFile}`);
+                delete require.cache[event.testFabrication.unitFile];
+                return require(event.testFabrication.unitFile);
             }
             async propagateUpTouchEventFrom(filepath, event = {}) {
                 const fs = require("fs");
@@ -2809,7 +2811,6 @@
                 const fs = require("fs");
                 const path = require("path");
                 const filepath = this.devbin.compiler.fullpathOf(file);
-                this.assert(this.devbin.compiler.rootdirOf(filepath).startsWith("@/src"), `Parameter «--file» must start with «${this.devbin.compiler.rootdir}» but it is «${filepath}» on «DevBinaryV6.Utils.prototype.touchFile»`);
                 const event = this.constructor.defaultTouchFileOptions({
                     propagateUp: true,
                     processedEntries: {},
@@ -2819,10 +2820,11 @@
                 event.isJsEntry = filepath.endsWith(".entry.js");
                 event.isCssEntry = filepath.endsWith(".entry.css");
                 event.isMdEntry = filepath.endsWith(".entry.md");
+                event.isJsTest = filepath.endsWith(".test.js");
                 const isEntry = event.isJsEntry || event.isCssEntry || event.isMdEntry;
                 Processing_entry: {
                     if (!isEntry) {
-                        console.log(`[-] Touch event dismissed from: ${filepath}`);
+                        if (!event.isJsTest) console.log(`[-] Touch event dismissed from: ${filepath}`);
                         break Processing_entry;
                     }
                     console.log(`[*] Touch event triggered from: ${filepath}`);
@@ -2847,6 +2849,17 @@
                             file: filepath,
                             event: event
                         });
+                    }
+                }
+                Processing_test: {
+                    if (event.isJsTest) {
+                        console.log(`[-] Touch event processed as test from: ${filepath}`);
+                        await this.executeUnitTestFileOf(filepath, {
+                            testFabrication: {
+                                unitFile: filepath
+                            }
+                        });
+                        return event;
                     }
                 }
                 Triggering_onTouch_file: {
@@ -3048,11 +3061,11 @@
             }
             async loop(args) {
                 const targetRoot = await this.devbin.utils.constructor.findFirstParentDirectoryContaining(process.cwd(), "package.json");
-                const targetDir = require("path").resolve(targetRoot, "src");
+                const targetDirs = [ require("path").resolve(targetRoot, "src"), require("path").resolve(targetRoot, "test/unit/src") ];
                 return this.devbin.constructor.Refrescador.run({
-                    watch: [ targetDir ],
+                    watch: targetDirs,
                     bulletproof: false,
-                    ignore: [ "**/node_modules/**/*", "**/dist/**/*", "**/*.dist.*", "**/logs/**/*", "**/test/assets/unit/**/*" ],
+                    ignore: [ "**/node_modules/**/*", "**/dist/**/*", "**/*.dist.*", "**/logs/**/*" ],
                     port: 3005,
                     debounce: 0,
                     extensions: [ "sh", "ts", "tsx", "txt", "js", "json", "css", "html", "md" ],
