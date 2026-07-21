@@ -3068,7 +3068,7 @@
                     ignore: [ "**/node_modules/**/*", "**/dist/**/*", "**/*.dist.*", "**/logs/**/*" ],
                     port: 3005,
                     debounce: 0,
-                    extensions: [ "sh", "ts", "tsx", "txt", "js", "json", "css", "html", "md" ],
+                    extensions: [ "sh", "js", "css", "html", "md" ],
                     execute: [ "dev/run.js touch --file @{refrescador.file}" ],
                     message: "El tiempo de refrescar ha llegado",
                     messageFile: "TODO.md",
