@@ -2649,10 +2649,18 @@
                     });
                 }
                 Get_dist_filepaths: {
-                    const outputNames = this.getDistribuibleFilenamesOf(compilation.file);
+                    const outputNames = this.getDistribuibleFilenamesOf(compilation.file, event);
                     const inputDir = require("path").dirname(outputNames.file);
                     const inputRootdir = this.devbin.compiler.rootdirOf(inputDir);
-                    const outputDir = this.devbin.compiler.fullpathOf(inputRootdir.replace(/^\@\//g, "@/dist/"));
+                    let outputDir = undefined;
+                    Export_directly_to_dist_www_if_isWww: {
+                        if (event.isWww) {
+                            console.log(inputRootdir);
+                            outputDir = this.devbin.compiler.fullpathOf(inputRootdir.replace(/^\@\/src\/www/g, "@/dist/www"));
+                        } else {
+                            outputDir = this.devbin.compiler.fullpathOf(inputRootdir.replace(/^\@\//g, "@/dist/"));
+                        }
+                    }
                     distJs = require("path").resolve(outputDir, outputNames.js);
                     distCss = require("path").resolve(outputDir, outputNames.css);
                     distMd = require("path").resolve(outputDir, outputNames.md);
@@ -2662,10 +2670,10 @@
                     report.names = outputNames;
                 }
                 Make_assertions_for_safety: {
-                    this.assert(distJs.endsWith(".dist.js"));
-                    this.assert(distCss.endsWith(".dist.css"));
-                    this.assert(distMd.endsWith(".md"));
-                    this.assert(distJs.includes("/dist/"));
+                    this.assert(distJs.endsWith(".dist.js"), `File should end with «.dist.js» but it is not the case on «${distJs}»`);
+                    this.assert(distCss.endsWith(".dist.css"), `File should end with «.dist.css» but it is not the case on «${distCss}»`);
+                    this.assert(distMd.endsWith(".md"), `File should end with «.md» but it is not the case on «${distMd}»`);
+                    this.assert(distJs.includes("/dist/"), `File should include «/dist/» but it is not the case on «${distJs}»`);
                 }
                 Overwrite_dist_files: {
                     await this.ensureDirectoryOf(distJs);
@@ -2682,6 +2690,7 @@
                             }
                         });
                         await require("fs").promises.writeFile(distJs, output.code, "utf8");
+                        console.log(`[*] Distribution file generated at: ${distJs}`);
                         report.js = distJs;
                         Save_in_touch_event_cache: {
                             event.processedEntries[compilation.file] = {
@@ -2704,7 +2713,7 @@
                     return report;
                 }
             }
-            getDistribuibleFilenamesOf(fileBrute) {
+            getDistribuibleFilenamesOf(fileBrute, event) {
                 let file, filename, fileExtension;
                 file = require("path").basename(fileBrute);
                 if (file.endsWith(".entry.js")) {
@@ -2732,12 +2741,17 @@
                 };
             }
             async fabricateUnitTestFileOf(filepath, event) {
+                if (event.isWww) {
+                    return -2;
+                }
+                if (!event.distribution.js) {
+                    return -3;
+                }
                 const path = require("path");
                 const fs = require("fs");
                 const testunitFile = path.resolve(event.distribution.names.rootdirDirectory.replace(/^\@\/src/g, this.devbin.compiler.fullpathOf("@/test/unit/src")), event.distribution.names.test);
                 const devBinaryV6Filepath = this.devbin.compiler.fullpathOf("@/dev/bin.js");
                 const devBinaryV6RelativeFilepath = path.relative(path.dirname(testunitFile), devBinaryV6Filepath);
-                if (!event.distribution.js) return;
                 const relativeTarget = path.relative(path.dirname(testunitFile), event.distribution.js);
                 const testunitContent = `const devbin = require(__dirname + ${JSON.stringify("/" + devBinaryV6RelativeFilepath)});\nconst target = require(__dirname + ${JSON.stringify("/" + relativeTarget)});\n\nmodule.exports = (async function () {\n\n  devbin.assert(true, "Test is empty right now");\n\n})();`;
                 const testunitDir = path.dirname(testunitFile);
@@ -2755,9 +2769,13 @@
                 };
             }
             executeUnitTestFileOf(filepath, event) {
-                console.log(`[*] Executing unit test file of: ${event.testFabrication.unitFile}`);
-                delete require.cache[event.testFabrication.unitFile];
-                return require(event.testFabrication.unitFile);
+                if (event.isWww) {
+                    console.log(`[*] No test for browser file: ${filepath}`);
+                } else {
+                    console.log(`[*] Executing unit test file of: ${event.testFabrication.unitFile}`);
+                    delete require.cache[event.testFabrication.unitFile];
+                    return require(event.testFabrication.unitFile);
+                }
             }
             async propagateUpTouchEventFrom(filepath, event = {}) {
                 const fs = require("fs");
@@ -2822,6 +2840,7 @@
                 event.isCssEntry = filepath.endsWith(".entry.css");
                 event.isMdEntry = filepath.endsWith(".entry.md");
                 event.isJsTest = filepath.endsWith(".test.js");
+                event.isWww = filepath.startsWith(this.devbin.compiler.fullpathOf("@/src/www") + "/");
                 const isEntry = event.isJsEntry || event.isCssEntry || event.isMdEntry;
                 Processing_entry: {
                     if (!isEntry) {
