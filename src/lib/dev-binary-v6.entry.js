@@ -927,6 +927,7 @@
                     let filepath, dependencies, output;
                     const parameters = this._formatExportParameters(signature);
                     const {id: _id = null, file: _file = null, dependencies: _dependencies = null, factory: _factory = null} = parameters;
+                    this.assert(this.section instanceof ModulerV6.SectionsManager, `For some random reason, the section manager global instance is not available on «ModulerV6.prototype.export»`);
                     this.assert(!this.section.has(_id), `Cannot export section by id «${_id}» because it already exists on «ModulerV6.prototype.export»`);
                     Resolving_module: {
                         const signatureCopy = [ ...signature ];
@@ -942,8 +943,7 @@
                     }
                     return output;
                 }
-                static globalInstance=new this;
-                static globalSectionsManagerInstance=new this.SectionsManager;
+                static globalSectionsManagerInstance=new this.SectionsManager({});
                 section=this.constructor.globalSectionsManagerInstance;
                 constructor(basedirArg = null, cloneOf = null) {
                     const basedir = basedirArg === null ? this.constructor.getEnvironmentDirectory() : basedirArg;
@@ -970,6 +970,7 @@
                     };
                     this.css = new ModulerV6.CssManager(this);
                 }
+                static globalInstance=new this;
             };
         }.call());
         const CompilerV6 = class CompilerV6 {
@@ -3068,7 +3069,7 @@
                     ignore: [ "**/node_modules/**/*", "**/dist/**/*", "**/*.dist.*", "**/logs/**/*" ],
                     port: 3005,
                     debounce: 0,
-                    extensions: [ "sh", "js", "css", "html", "md" ],
+                    extensions: [ "js", "css", "html", "md" ],
                     execute: [ "dev/run.js touch --file @{refrescador.file}" ],
                     message: "El tiempo de refrescar ha llegado",
                     messageFile: "TODO.md",
