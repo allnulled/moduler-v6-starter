@@ -2939,6 +2939,11 @@
                             recursive: true
                         });
                     },
+                    _initializeDuplicatedFile: async function(src, dst) {
+                        if (!await utils._existsFile(dst)) {
+                            return await fs.promises.copyFile(src, dst);
+                        }
+                    },
                     _readFile: function(src) {
                         return fs.promises.readFile(src, "utf8");
                     },
@@ -2959,6 +2964,7 @@
                 const saveFile = parameters.ignoreErrors ? utils.trify(utils._saveFile) : utils._saveFile;
                 const duplicateFile = parameters.ignoreErrors ? utils.trify(utils._duplicateFile) : utils._duplicateFile;
                 const duplicateDirectory = parameters.ignoreErrors ? utils.trify(utils._duplicateDirectory) : utils._duplicateDirectory;
+                const duplicateFileIfNotExists = utils.trify(utils._initializeDuplicatedFile);
                 await createDirectory(`${targetDir}/dev`);
                 await createDirectory(`${targetDir}/dev/bin`);
                 await createDirectory(`${targetDir}/dev/bin/help`);
@@ -2966,6 +2972,7 @@
                 await createDirectory(`${targetDir}/src/lib`);
                 await createDirectory(`${targetDir}/dist`);
                 await createDirectory(`${targetDir}/dist/src`);
+                await createDirectory(`${targetDir}/dist/www`);
                 await createDirectory(`${targetDir}/dist/src/lib`);
                 await createDirectory(`${targetDir}/test`);
                 await createDirectory(`${targetDir}/test/unit`);
@@ -2976,6 +2983,9 @@
                 await saveFile(`${targetDir}/dev/bin/help/command.js`, 'module.exports = async function() {\n  throw new Error("Command «help» is not coded yet");\n};', "utf8");
                 await saveFile(`${targetDir}/dev/run.js`, "#!/usr/bin/env node\n\nmodule.exports = require(`${__dirname}/bin.js`).selfDispatch();", "utf8");
                 await saveFile(`${targetDir}/dev/bin.js`, "#!/usr/bin/env node\n\nrequire(`${__dirname}/../dist/src/lib/dev-binary-v6.dist.js`);\n\nmodule.exports = DevBinaryV6.create(`${__dirname}/..`);", "utf8");
+                await duplicateFileIfNotExists(`${__dirname}/../src/DevBinaryV6/Utils/core/index.html`, `${targetDir}/dist/www/index.html`);
+                await duplicateFileIfNotExists(`${__dirname}/../src/DevBinaryV6/Utils/core/app.js`, `${targetDir}/dist/www/app.js`);
+                await duplicateFileIfNotExists(`${__dirname}/../src/DevBinaryV6/Utils/core/app.css`, `${targetDir}/dist/www/app.css`);
                 await duplicateFile(`${__dirname}/moduler-v6.dist.js`, `${targetDir}/src/lib/moduler-v6.entry.js`);
                 await duplicateFile(`${__dirname}/moduler-v6.dist.js`, `${targetDir}/dist/src/lib/moduler-v6.dist.js`);
                 await duplicateFile(`${__dirname}/compiler-v6.dist.js`, `${targetDir}/src/lib/compiler-v6.entry.js`);
@@ -3073,7 +3083,10 @@
                     execute: [ "dev/run.js touch --file @{refrescador.file}" ],
                     message: "El tiempo de refrescar ha llegado",
                     messageFile: "TODO.md",
-                    payload: 'console.log("📟 Evento de refrescar activado");'
+                    payload: 'console.log("📟 Evento de refrescar activado");',
+                    serve: this.devbin.compiler.fullpathOf("@/dist/www"),
+                    staticPath: "dist/www",
+                    urlPrefix: "/"
                 });
             }
             touch(args) {
