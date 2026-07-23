@@ -1382,12 +1382,13 @@
                 try {
                     const filepath = path.resolve(dir1, whenContains);
                     await fs.promises.readFile(filepath);
-                    return filepath;
+                    return dir1;
                 } catch (error) {
                     dir0 = dir1;
-                    dir1 = fs.promises.readdir(dir1);
+                    dir1 = path.dirname(dir1);
                 }
             }
+            return null;
         }
         static ansi={
             colors: Object.assign({

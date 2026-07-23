@@ -1393,12 +1393,13 @@
                     try {
                         const filepath = path.resolve(dir1, whenContains);
                         await fs.promises.readFile(filepath);
-                        return filepath;
+                        return dir1;
                     } catch (error) {
                         dir0 = dir1;
-                        dir1 = fs.promises.readdir(dir1);
+                        dir1 = path.dirname(dir1);
                     }
                 }
+                return null;
             }
             static ansi={
                 colors: Object.assign({
@@ -2655,7 +2656,6 @@
                     let outputDir = undefined;
                     Export_directly_to_dist_www_if_isWww: {
                         if (event.isWww) {
-                            console.log(inputRootdir);
                             outputDir = this.devbin.compiler.fullpathOf(inputRootdir.replace(/^\@\/src\/www/g, "@/dist/www"));
                         } else {
                             outputDir = this.devbin.compiler.fullpathOf(inputRootdir.replace(/^\@\//g, "@/dist/"));
@@ -2696,6 +2696,19 @@
                             event.processedEntries[compilation.file] = {
                                 distJs: distJs
                             };
+                        }
+                        Generate_instrumentalized_if_settings_instrumentalize_includes_it: {
+                            await this.devbin.settings.load();
+                            const instrumentalizeFiles = this.devbin.settings?.data?.instrumentalize || [];
+                            const isMatch = this.globOf(instrumentalizeFiles).matches(distJs);
+                            if (isMatch) {
+                                Create_instrumentalization: {
+                                    const instrJs = distJs.replace(/\.dist\.js$/g, ".dist.instr.js");
+                                    const instrSource = this.instrumentCode(output.code, distJs);
+                                    await require("fs").promises.writeFile(instrJs, instrSource, "utf8");
+                                    console.log(`[*] Instrumentation file generated at: ${instrJs}`);
+                                }
+                            }
                         }
                     }
                     if (compilation.css) {
@@ -3037,6 +3050,23 @@
                     ...injection
                 });
             }
+            instrumentCode(code, filename) {
+                const {createInstrumenter: createInstrumenter} = require("istanbul-lib-instrument");
+                const instrumenter = createInstrumenter({
+                    produceSourceMap: true,
+                    esModules: true
+                });
+                const instrumented = instrumenter.instrumentSync(code, filename);
+                return instrumented;
+            }
+            globOf(globPatterns) {
+                return {
+                    matcher: require("picomatch")(globPatterns),
+                    matches(file) {
+                        return this.matcher(file);
+                    }
+                };
+            }
             constructor(devbin) {
                 this.devbin = devbin;
             }
@@ -3143,6 +3173,25 @@
                 return true;
             }
         };
+        static Settings=class Settings {
+            constructor(devbin) {
+                this.devbin = devbin;
+                this.data = null;
+            }
+            async load(forceReload = false) {
+                if (!forceReload && this.data) {
+                    return this.data;
+                }
+                const settingsPath = this.devbin.compiler.fullpathOf("@/dev/settings.js");
+                const exists = await this.devbin.utils.existsFile(settingsPath);
+                if (!exists) {
+                    return this.data;
+                }
+                const settingsModule = require(settingsPath);
+                const settings = await settingsModule.call(this.devbin);
+                return this.data = Object.assign({}, settings);
+            }
+        };
         cronometer=this.constructor.Cronometer();
         assert(...args) {
             return this.moduler.assert(...args);
@@ -3208,6 +3257,7 @@
             this.compiler = new CompilerV6(basedir || process.cwd(), ...parent ? [ parent.compiler ] : []);
             this.moduler = this.compiler.moduler;
             this.utils = parent ? parent.utils : new this.constructor.Utils(this);
+            this.settings = new this.constructor.Settings(this);
             this.shadowCommands = parent ? parent.shadowCommands : new this.constructor.ShadowCommands(this);
         }
     };
