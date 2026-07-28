@@ -432,15 +432,16 @@ var require_from_glob_watcher_to_socketio_emit = __commonJS({
         color1(`   - extensions:      ${colors.endToken}${listSeparator}${!config.extensions.length ? "(none)" : config.extensions.join(listSeparator)}`);
         color1(`   - ignore:          ${colors.endToken}${listSeparator}${!config.ignore.length ? "(none)" : config.ignore.map((f) => path.resolve(f)).join(listSeparator)}`);
         color1(`   - ignoreCallback:  ${colors.endToken}${listSeparator}${!config.ignoreCallback.length ? "(none)" : config.ignoreCallback}`);
+        color1(`   - urlPrefix:       ${colors.endToken}${listSeparator}${!config.urlPrefix ? "(none)" : config.urlPrefix}`);
         color1(`   - serve:           ${colors.endToken}${listSeparator}${staticDir}`);
         color1(`   - staticPath:      ${colors.endToken}${listSeparator}${!config.staticPath.length ? "(none)" : config.staticPath}`);
-        color1(`   - urlPrefix:       ${colors.endToken}${listSeparator}${!config.urlPrefix ? "(none)" : config.urlPrefix}`);
         color1(`   - payload:         ${colors.endToken}${listSeparator}${config.payload.length} characters`);
         color1(`   - payloadFile:     ${colors.endToken}${listSeparator}${config.payloadFile ? config.payloadFile : "(none)"}`);
         color1(`   - bulletproof:     ${colors.endToken}${listSeparator}${config.bulletproof ? "yes" : "no"}`);
         color1(`   - message:         ${colors.endToken}${listSeparator}${config.message}`);
         color1(`   - messageFile:     ${colors.endToken}${listSeparator}${config.messageFile}`);
         color1(`   - basedir:         ${colors.endToken}${listSeparator}${config.basedir}`);
+        color1(`   - controllers:     ${colors.endToken}${listSeparator}${!config.controllers.length ? "(none)" : config.controllers.map((f) => path.resolve(f)).join(listSeparator)}`);
         color1(`   - execute:         ${colors.endToken}${listSeparator}${!config.execute.length ? "(none)" : config.execute.join(listSeparator)}`);
         color1(`   - executeCallback: ${colors.endToken}${listSeparator}${!config.executeCallback.length ? "(none)" : config.executeCallback.join(listSeparator)}`);
       };
@@ -689,6 +690,17 @@ var require_from_glob_watcher_to_socketio_emit = __commonJS({
         console.error("Watcher error:", err);
       });
       console.clear();
+      const extraControllers = [];
+      if (config.controllers.length) {
+        for (let indexController = 0; indexController < config.controllers.length; indexController++) {
+          const controllerPath = config.controllers[indexController];
+          const controllerFile = path.resolve(controllerPath);
+          console.log(`[*] Importing controllers (${indexController}) from: ${controllerFile}`);
+          const controllerCallback = require(controllerFile);
+          const controllerReport = controllerCallback({ app, router, server, config, watcher, io });
+          if (Array.isArray(controllerReport)) extraControllers.push(...controllerReport);
+        }
+      }
       const printUrls = function() {
         const normalizeJoin = function(a, b) {
           const params = [];
@@ -702,11 +714,18 @@ var require_from_glob_watcher_to_socketio_emit = __commonJS({
           return result;
         };
         color2(`\u{1F7E2} Puntos disponibles: \u{1F4C2}=${config.basedir}`);
-        color2(` \u{1F539} [app]       http://localhost:${config.port}` + normalizeJoin(config.urlPrefix, "index.html"));
-        color2(` \u{1F539} [server]    http://localhost:${config.port}` + normalizeJoin(config.urlPrefix));
-        color2(` \u{1F539} [static]    http://localhost:${config.port}` + normalizeJoin(config.urlPrefix, config.staticPath));
-        color2(` \u{1F539} [socket.io] http://localhost:${config.port}` + normalizeJoin(config.urlPrefix, "socket.io-client.js"));
-        color2(` \u{1F539} [reloader]  http://localhost:${config.port}` + normalizeJoin(config.urlPrefix, "client.js"));
+        color2(` \u{1F539} [app]         http://localhost:${config.port}` + normalizeJoin(config.urlPrefix, "index.html"));
+        color2(` \u{1F539} [server]      http://localhost:${config.port}` + normalizeJoin(config.urlPrefix));
+        color2(` \u{1F539} [static]      http://localhost:${config.port}` + normalizeJoin(config.urlPrefix, config.staticPath));
+        color2(` \u{1F539} [socket.io]   http://localhost:${config.port}` + normalizeJoin(config.urlPrefix, "socket.io-client.js"));
+        color2(` \u{1F539} [reloader]    http://localhost:${config.port}` + normalizeJoin(config.urlPrefix, "client.js"));
+        if (config.controllers.length) color2(` \u{1F539} [controllers] ${config.controllers.length}` + (config.controllers.length ? "\n" + " ".repeat(18) + config.controllers.map((c) => shortenPath(c)).join("\n + ") : ""));
+        if (extraControllers.length) {
+          for (let indexCtrlReport = 0; indexCtrlReport < extraControllers.length; indexCtrlReport++) {
+            const extraController = extraControllers[indexCtrlReport];
+            color2(` \u{1F539} ${("[" + extraController[0] + "]").padEnd(13)} http://localhost:${config.port}` + normalizeJoin(extraController[1]));
+          }
+        }
       };
       server.listen(config.port, () => {
         printUrls();
@@ -723,7 +742,7 @@ var require_from_glob_watcher_to_socketio_emit = __commonJS({
           second: "numeric"
         })}`);
       });
-      return { server, watcher, config, io };
+      return { app, router, server, config, watcher, io };
     };
   }
 });
@@ -831,6 +850,11 @@ var require_from_object_to_window_reloader_server = __commonJS({
           default: process.cwd(),
           type: String
         },
+        controllers: {
+          alias: "ct",
+          default: [],
+          type: Array
+        },
         version: {
           alias: "v",
           default: false,
@@ -882,6 +906,7 @@ var require_from_object_to_window_reloader_server = __commonJS({
         execute: { type: Array },
         executeCallback: { type: Array },
         basedir: { type: String },
+        controllers: { type: Array },
         version: { type: Boolean }
       });
       return {

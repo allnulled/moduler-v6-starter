@@ -2957,13 +2957,13 @@
                     },
                     _saveFile: async function(file, contents) {
                         if (parameters.dontOverride && await utils._existsFile(file)) {
-                            return;
+                            return -1;
                         }
                         return await fs.promises.writeFile(file, contents, "utf8");
                     },
                     _duplicateFile: async function(src, dst) {
                         if (parameters.dontOverride && await utils._existsFile(dst)) {
-                            return;
+                            return -1;
                         }
                         return await fs.promises.copyFile(src, dst);
                     },
@@ -3001,11 +3001,13 @@
                 await createDirectory(`${targetDir}/dev`);
                 await createDirectory(`${targetDir}/dev/bin`);
                 await createDirectory(`${targetDir}/dev/bin/help`);
+                await createDirectory(`${targetDir}/dev/coverage`);
                 await createDirectory(`${targetDir}/src`);
                 await createDirectory(`${targetDir}/src/lib`);
                 await createDirectory(`${targetDir}/dist`);
                 await createDirectory(`${targetDir}/dist/src`);
                 await createDirectory(`${targetDir}/dist/www`);
+                await createDirectory(`${targetDir}/dist/www/coverage`);
                 await createDirectory(`${targetDir}/dist/src/lib`);
                 await createDirectory(`${targetDir}/test`);
                 await createDirectory(`${targetDir}/test/unit`);
@@ -3015,10 +3017,13 @@
                 if (!await utils._existsFile(`${targetDir}/.gitignore`)) await saveFile(`${targetDir}/.gitignore`, "node_modules", "utf8");
                 await saveFile(`${targetDir}/dev/bin/help/command.js`, 'module.exports = async function() {\n  throw new Error("Command «help» is not coded yet");\n};', "utf8");
                 await saveFile(`${targetDir}/dev/run.js`, "#!/usr/bin/env node\n\nmodule.exports = require(`${__dirname}/bin.js`).selfDispatch();", "utf8");
-                await saveFile(`${targetDir}/dev/bin.js`, "#!/usr/bin/env node\n\nrequire(`${__dirname}/../dist/src/lib/dev-binary-v6.dist.js`);\n\nmodule.exports = DevBinaryV6.create(`${__dirname}/..`);", "utf8");
+                await saveFile(`${targetDir}/dev/bin.js`, "require(`${__dirname}/../dist/src/lib/dev-binary-v6.dist.js`);\n\nmodule.exports = DevBinaryV6.create(`${__dirname}/..`);", "utf8");
                 await duplicateFileIfNotExists(`${__dirname}/../src/DevBinaryV6/Utils/core/index.html`, `${targetDir}/dist/www/index.html`);
                 await duplicateFileIfNotExists(`${__dirname}/../src/DevBinaryV6/Utils/core/app.js`, `${targetDir}/dist/www/app.js`);
                 await duplicateFileIfNotExists(`${__dirname}/../src/DevBinaryV6/Utils/core/app.css`, `${targetDir}/dist/www/app.css`);
+                await duplicateFileIfNotExists(`${__dirname}/../src/DevBinaryV6/Utils/core/settings.js`, `${targetDir}/dev/settings.js`);
+                await duplicateFile(`${__dirname}/../src/DevBinaryV6/Utils/core/controllers.js`, `${targetDir}/dev/controllers.js`);
+                await duplicateFile(`${__dirname}/../src/DevBinaryV6/Utils/core/no-coverage.html`, `${targetDir}/dev/coverage/index.html`);
                 await duplicateFile(`${__dirname}/moduler-v6.dist.js`, `${targetDir}/src/lib/moduler-v6.entry.js`);
                 await duplicateFile(`${__dirname}/moduler-v6.dist.js`, `${targetDir}/dist/src/lib/moduler-v6.dist.js`);
                 await duplicateFile(`${__dirname}/compiler-v6.dist.js`, `${targetDir}/src/lib/compiler-v6.entry.js`);
@@ -3124,7 +3129,10 @@
                 const targetRoot = await this.devbin.utils.constructor.findFirstParentDirectoryContaining(process.cwd(), "package.json");
                 await this.devbin.settings.load();
                 const port = this.devbin.settings.data?.loop?.port || 3005;
+                const settingsControllers = this.devbin.settings.data?.loop?.controllers || [];
                 const targetDirs = [ require("path").resolve(targetRoot, "src"), require("path").resolve(targetRoot, "test/unit/src") ];
+                const devControllersFile = `${targetRoot}/dev/controllers.js`;
+                const devControllers = await this.devbin.utils.existsFile(devControllersFile) ? [ devControllersFile ] : [];
                 return this.devbin.constructor.Refrescador.run({
                     watch: targetDirs,
                     bulletproof: false,
@@ -3138,7 +3146,8 @@
                     payload: 'console.log("📟 Evento de refrescar activado");',
                     serve: this.devbin.compiler.fullpathOf("@/dist/www"),
                     staticPath: "dist/www",
-                    urlPrefix: "/"
+                    urlPrefix: "/",
+                    controllers: [ ...devControllers, ...settingsControllers ]
                 });
             }
             touch(args) {
