@@ -554,7 +554,8 @@
             AtInjects: [ "/*@injects:", "*/", function(token) {
                 return {
                     syntax: "@Injects",
-                    ...token
+                    inner: token.inner,
+                    location: token.location
                 };
             } ],
             JavadocComment: [ "/**", "*/", function(token) {
@@ -871,13 +872,13 @@
             let filepath, dependencies;
             const parameters = this._formatImportParameters(signature);
             const {id: _id = null, file: _file = null, dependencies: _dependencies = null, factory: _factory = null} = parameters;
-            Resolve_by_id: {
+            Resolve_as_section: {
                 if (_id) {
                     this.assert(this.section.has(_id), `No section named «${_id}» on «ModulerV6.prototype.import»`);
                     return this.section.get(_id);
                 }
             }
-            Resolve_by_file: {
+            Resolve_as_file: {
                 if (_file) {
                     filepath = this.normalizationOf(_file);
                     if (filepath in this.modules) {
@@ -886,23 +887,25 @@
                     return this._importFile(filepath);
                 }
             }
-            Resolve_by_dependencies: {
-                if (_dependencies && _dependencies.length) {
-                    dependencies = Promise.all(_dependencies.map(dependency => this._importFile(dependency)));
-                    if (!_factory) {
-                        return dependencies;
+            Here_is_only_factory: {
+                Resolve_dependencies: {
+                    if (_dependencies && _dependencies.length) {
+                        dependencies = Promise.all(_dependencies.map(dependency => this.import(dependency)));
+                        if (!_factory) {
+                            return dependencies;
+                        }
                     }
                 }
-            }
-            Resolve_by_factory: {
-                if (_factory && dependencies) {
-                    return dependencies.then(resolvedDependencies => this._importFactory(_factory, resolvedDependencies));
-                } else if (_factory && !dependencies) {
-                    return this._importFactory(_factory, []);
-                } else if (dependencies) {
-                    return dependencies;
-                } else {
-                    throw new Error("This error should never happen by design (8210)");
+                Resolve_factory: {
+                    if (_factory && dependencies) {
+                        return dependencies.then(resolvedDependencies => this._importFactory(_factory, resolvedDependencies));
+                    } else if (_factory && !dependencies) {
+                        return this._importFactory(_factory, []);
+                    } else if (dependencies) {
+                        return dependencies;
+                    } else {
+                        throw new Error("This error should never happen by design (8210)");
+                    }
                 }
             }
             throw new Error("This error should never happen by design (4993)");
