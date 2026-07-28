@@ -2942,6 +2942,7 @@
                     bin: {},
                     main: "dist/main.dist.js",
                     scripts: {
+                        dev: "./dev/run.js loop",
                         test: "echo 'no tests now'"
                     },
                     dependencies: currentPackageJson.dependencies,
@@ -3121,12 +3122,14 @@
             }
             async loop(args) {
                 const targetRoot = await this.devbin.utils.constructor.findFirstParentDirectoryContaining(process.cwd(), "package.json");
+                await this.devbin.settings.load();
+                const port = this.devbin.settings.data?.loop?.port || 3005;
                 const targetDirs = [ require("path").resolve(targetRoot, "src"), require("path").resolve(targetRoot, "test/unit/src") ];
                 return this.devbin.constructor.Refrescador.run({
                     watch: targetDirs,
                     bulletproof: false,
                     ignore: [ "**/node_modules/**/*", "**/dist/**/*", "**/*.dist.*", "**/logs/**/*" ],
-                    port: 3005,
+                    port: port,
                     debounce: 0,
                     extensions: [ "js", "css", "html", "md" ],
                     execute: [ "dev/run.js touch --file @{refrescador.file}" ],
@@ -3190,6 +3193,11 @@
                 const settingsModule = require(settingsPath);
                 const settings = await settingsModule.call(this.devbin);
                 return this.data = Object.assign({}, settings);
+            }
+            async get(property = null, forceReload = false) {
+                await this.load(forceReload);
+                if (!property) return this.data;
+                return this.data[property];
             }
         };
         cronometer=this.constructor.Cronometer();
