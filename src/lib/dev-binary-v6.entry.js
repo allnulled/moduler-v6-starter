@@ -3002,6 +3002,7 @@
                 await createDirectory(`${targetDir}/dev/bin`);
                 await createDirectory(`${targetDir}/dev/bin/help`);
                 await createDirectory(`${targetDir}/dev/coverage`);
+                await createDirectory(`${targetDir}/dev/files`);
                 await createDirectory(`${targetDir}/src`);
                 await createDirectory(`${targetDir}/src/lib`);
                 await createDirectory(`${targetDir}/dist`);
@@ -3023,7 +3024,6 @@
                 await duplicateFileIfNotExists(`${__dirname}/../src/DevBinaryV6/Utils/core/app.css`, `${targetDir}/dist/www/app.css`);
                 await duplicateFileIfNotExists(`${__dirname}/../src/DevBinaryV6/Utils/core/settings.js`, `${targetDir}/dev/settings.js`);
                 await duplicateFile(`${__dirname}/../src/DevBinaryV6/Utils/core/controllers.js`, `${targetDir}/dev/controllers.js`);
-                await duplicateFile(`${__dirname}/../src/DevBinaryV6/Utils/core/no-coverage.html`, `${targetDir}/dev/coverage/index.html`);
                 await duplicateFile(`${__dirname}/moduler-v6.dist.js`, `${targetDir}/src/lib/moduler-v6.entry.js`);
                 await duplicateFile(`${__dirname}/moduler-v6.dist.js`, `${targetDir}/dist/src/lib/moduler-v6.dist.js`);
                 await duplicateFile(`${__dirname}/compiler-v6.dist.js`, `${targetDir}/src/lib/compiler-v6.entry.js`);
