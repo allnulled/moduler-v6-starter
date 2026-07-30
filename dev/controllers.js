@@ -140,6 +140,32 @@ module.exports = function ({ app }) {
       </body>
       </html>`);
   });
+  app.use("/dev/coverage", async function (req, res, next) {
+    try {
+      if (["/",""].includes(req.path)) {
+        const coverageReports = await require("fs").promises.readdir(`${__dirname}/coverage`);
+        let list = "";
+        for(let index=0; index<coverageReports.length; index++) {
+          const filename = coverageReports[index];
+          list += `<li><a href="./${filename}">${filename}</a></li>\n`;
+        }
+        list = `<ul>\n${list}</ul>\n`;
+        let html = `<!DOCTYPE html>\n`;
+        html += `<html>\n`;
+        html += `<body>\n`;
+        html += `<style>html { font-family: monospace; }</style>\n`;
+        html += `<h3>Reportes de cobertura de código actuales:</h3>\n`;
+        html += list;
+        html += `</body>\n`;
+        html += `</html>\n`;
+        return res.send(html);
+      }
+      next();
+    } catch (error) {
+      console.log(error);
+      next();
+    }
+  });
   app.use("/dev/coverage", require("express").static(`${__dirname}/coverage`));
   return [
     ["build-cov", "/dev/coverage/commit [POST]"],

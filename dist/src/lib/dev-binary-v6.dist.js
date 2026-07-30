@@ -262,6 +262,29 @@
                         return this;
                     }
                 };
+                static Settings=class ModulerV6Settings {
+                    constructor(moduler) {
+                        this.moduler = moduler;
+                        this.data = null;
+                    }
+                    async load(forceReload = false) {
+                        if (!forceReload && this.data) {
+                            return this.data;
+                        }
+                        const settingsPath = this.moduler.normalizationOf("@/dist/www/dev/settings.js");
+                        try {
+                            return this.data = await this.moduler.import(settingsPath);
+                        } catch (error) {
+                            console.error(error);
+                            return undefined;
+                        }
+                    }
+                    async get(property = null, forceReload = false) {
+                        await this.load(forceReload);
+                        if (!property) return this.data;
+                        return this.data[property];
+                    }
+                };
                 static Parser=function(mod) {
                     if (typeof window !== "undefined") window["TextParserV1"] = mod;
                     if (typeof global !== "undefined") global["TextParserV1"] = mod;
@@ -972,6 +995,10 @@
                         forEmbeddedForms: this.constructor.Parser.create(this.grammars.forEmbeddedForms)
                     };
                     this.css = new ModulerV6.CssManager(this);
+                    this.settings = new ModulerV6.Settings(this);
+                    if (cloneOf) {
+                        this.settings.data = cloneOf.settings.data;
+                    }
                 }
                 static globalInstance=new this;
             };
@@ -3190,6 +3217,11 @@
                 });
             }
         };
+        static ShadowFileEvents=class ShadowFileEvents {
+            constructor(devbin) {
+                this.devbin = devbin;
+            }
+        };
         static Formatters={
             asString: function(values) {
                 return values.at(-1);
@@ -3198,10 +3230,10 @@
                 return true;
             }
         };
-        static Settings=class Settings {
+        static Settings=class DevBinaryV6Settings extends ModulerV6.Settings {
             constructor(devbin) {
+                super(devbin.moduler);
                 this.devbin = devbin;
-                this.data = null;
             }
             async load(forceReload = false) {
                 if (!forceReload && this.data) {
@@ -3215,11 +3247,6 @@
                 const settingsModule = require(settingsPath);
                 const settings = await settingsModule.call(this.devbin);
                 return this.data = Object.assign({}, settings);
-            }
-            async get(property = null, forceReload = false) {
-                await this.load(forceReload);
-                if (!property) return this.data;
-                return this.data[property];
             }
         };
         cronometer=this.constructor.Cronometer();
@@ -3289,6 +3316,7 @@
             this.utils = parent ? parent.utils : new this.constructor.Utils(this);
             this.settings = new this.constructor.Settings(this);
             this.shadowCommands = parent ? parent.shadowCommands : new this.constructor.ShadowCommands(this);
+            this.shadowFileEvents = parent ? parent.shadowFileEvents : new this.constructor.ShadowFileEvents(this);
         }
     };
 }.call());

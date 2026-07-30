@@ -251,6 +251,29 @@
                     return this;
                 }
             };
+            static Settings=class ModulerV6Settings {
+                constructor(moduler) {
+                    this.moduler = moduler;
+                    this.data = null;
+                }
+                async load(forceReload = false) {
+                    if (!forceReload && this.data) {
+                        return this.data;
+                    }
+                    const settingsPath = this.moduler.normalizationOf("@/dist/www/dev/settings.js");
+                    try {
+                        return this.data = await this.moduler.import(settingsPath);
+                    } catch (error) {
+                        console.error(error);
+                        return undefined;
+                    }
+                }
+                async get(property = null, forceReload = false) {
+                    await this.load(forceReload);
+                    if (!property) return this.data;
+                    return this.data[property];
+                }
+            };
             static Parser=function(mod) {
                 if (typeof window !== "undefined") window["TextParserV1"] = mod;
                 if (typeof global !== "undefined") global["TextParserV1"] = mod;
@@ -961,6 +984,10 @@
                     forEmbeddedForms: this.constructor.Parser.create(this.grammars.forEmbeddedForms)
                 };
                 this.css = new ModulerV6.CssManager(this);
+                this.settings = new ModulerV6.Settings(this);
+                if (cloneOf) {
+                    this.settings.data = cloneOf.settings.data;
+                }
             }
             static globalInstance=new this;
         };
