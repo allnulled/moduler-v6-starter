@@ -15,6 +15,99 @@
         return ModulerV6;
     })(function() {
         return class ModulerV6 {
+            static createResolvable() {
+                let promise, resolve, reject;
+                promise = new Promise((_resolve, _reject) => {
+                    resolve = _resolve;
+                    reject = _reject;
+                });
+                return {
+                    promise: promise,
+                    resolve: resolve,
+                    reject: reject
+                };
+            }
+            static onLoaded=this.createResolvable();
+            static Runtime=class Runtime {
+                constructor(owner) {}
+                static onLoaded=ModulerV6.createResolvable();
+                cache={
+                    isLoaded: false
+                };
+                get env() {
+                    return ModulerV6.globalInstance.settings.data?.env || "unknown";
+                }
+                get isDev() {
+                    if (typeof this.cache.isDev === "boolean") return this.cache.isDev;
+                    if (ModulerV6.globalInstance.settings.data?.env) return this.cache.isDev = ModulerV6.globalInstance.settings.data?.env === "dev";
+                }
+                get isTest() {
+                    if (typeof this.cache.isTest === "boolean") return this.cache.isTest;
+                    if (ModulerV6.globalInstance.settings.data?.env) return this.cache.isTest = ModulerV6.globalInstance.settings.data?.env === "test";
+                }
+                get isProd() {
+                    if (typeof this.cache.isProd === "boolean") return this.cache.isProd;
+                    if (ModulerV6.globalInstance.settings.data?.env) return this.cache.isProd = ModulerV6.globalInstance.settings.data?.env === "prod";
+                }
+                get isBrowser() {
+                    if (typeof this.cache.isBrowser === "boolean") return this.cache.isBrowser;
+                    return this.cache.isBrowser = typeof window !== "undefined" && typeof window.location !== "undefined";
+                }
+                get isNodejs() {
+                    if (typeof this.cache.isNodejs === "boolean") return this.cache.isNodejs;
+                    return this.cache.isNodejs = typeof require !== "undefined" && typeof __dirname !== "undefined";
+                }
+                get hasCompilerV6() {
+                    return typeof CompilerV6 !== "undefined";
+                }
+                get hasDevBinaryV6() {
+                    return typeof DevBinaryV6 !== "undefined";
+                }
+                get getRootdir() {
+                    return ModulerV6.globalInstance.rootdir;
+                }
+                get getBasedir() {
+                    return ModulerV6.globalInstance.basedir;
+                }
+                get moduler() {
+                    return ModulerV6.globalInstance;
+                }
+                get compiler() {
+                    return CompilerV6.globalInstance;
+                }
+                get devbin() {
+                    return DevBinaryV6.globalInstance;
+                }
+                isInRefrescador() {
+                    throw new Error("Not supported yet");
+                }
+                isInModule(someModuler) {
+                    throw new Error("Not supported yet");
+                }
+                load() {
+                    if (this.cache.isLoaded) {
+                        return this.cache.isLoaded;
+                    }
+                    return Promise.all([ ModulerV6.globalInstance.settings.load() ]).then(output => {
+                        this.cache.isLoaded = output;
+                        return this;
+                    });
+                }
+                static load() {
+                    if (this.globalInstance.cache.isLoaded) {
+                        return this.globalInstance;
+                    }
+                    return this.globalInstance.load();
+                }
+                static globalInstance=new this;
+                static {
+                    (async () => {
+                        await ModulerV6.onLoaded.promise;
+                        await Runtime.load();
+                        Runtime.onLoaded.resolve();
+                    })();
+                }
+            };
             static AssertionError=class AssertionError extends Error {
                 constructor(message) {
                     super(message);
@@ -260,12 +353,17 @@
                     if (!forceReload && this.data) {
                         return this.data;
                     }
-                    const settingsPath = this.moduler.normalizationOf("@/dist/www/dev/settings.js");
                     try {
-                        return this.data = await this.moduler.import(settingsPath);
+                        return this.data = await this.moduler.import("@/dist/www/dev/settings.dist.js");
                     } catch (error) {
-                        console.error(error);
-                        return undefined;
+                        console.log("[!] Could not load settings because:", error);
+                    }
+                }
+                async loadSilently(...args) {
+                    try {
+                        return await this.load(...args);
+                    } catch (error) {
+                        return error;
                     }
                 }
                 async get(property = null, forceReload = false) {
@@ -776,10 +874,27 @@
             _readUrl(url) {
                 return fetch(this.normalizationOf(url), {
                     method: "GET"
-                }).then(response => response.text());
+                }).then(response => {
+                    if (!response.ok) {
+                        throw Object.assign(new Error(`[!] Could not read URL because of HTTP ${response.status} Error: ${response.statusText}`), {
+                            name: "FetchError"
+                        });
+                    }
+                    return response.text();
+                });
             }
             _readPath(url) {
-                return this._isBrowser ? this._readUrl(url) : this._readFile(url);
+                return (this.runtime.isBrowser ? this._readUrl(url) : this._readFile(url)).then(it => {
+                    if (this.settings.data?.traceExternalSources) {
+                        console.log("[*] Read from external source:");
+                        console.log("--------------------:");
+                        console.log(it);
+                        console.log("--------------------/");
+                    }
+                    return it;
+                }).catch(error => {
+                    throw error;
+                });
             }
             _wrapInTry(source, parameters = {}, file = null) {
                 let js = "";
@@ -800,28 +915,55 @@
             }
             _importFile(filepathBrute) {
                 let originalHolder = {};
-                const filepath = this.normalizationOf(filepathBrute);
-                const moduleHolder = {
-                    get exports() {
-                        return originalHolder;
-                    },
-                    set exports(output) {
-                        originalHolder = output;
+                let filepath, filepathMask;
+                Normalize_file: {
+                    filepath = filepathMask = this.normalizationOf(filepathBrute);
+                }
+                console.log("[*] Importing file: " + filepath);
+                Use_instrumentalized_if_conditions_are_met: {
+                    if (!(this.runtime.isDev || this.runtime.isTest)) {
+                        console.log("[*] Dismissed instrumentalization for reason 1: the environment is not «dev» or «test»");
+                        console.log(this.runtime);
+                        break Use_instrumentalized_if_conditions_are_met;
                     }
-                };
-                return this.evaluateFile(filepath, {
-                    module: moduleHolder,
-                    exports: moduleHolder.exports,
-                    $moduler: this.cloneForFile(filepath)
-                }).then(result => {
-                    let output = undefined;
-                    if (typeof result === "undefined") {
-                        output = moduleHolder.exports;
+                    if (!this.settings.data?.instrumentalize?.length) {
+                        console.log("[*] Dismissed instrumentalization for reason 2: settings were not provided because file «@/dist/www/dev/settings.dist.js» is missing or «ModulerV6.prototype.settings.loadSilently» was not awaited before the first «ModulerV6.prototype.{import,export}» call");
+                        break Use_instrumentalized_if_conditions_are_met;
+                    }
+                    if (!this.settings.data.instrumentalize.map(file => this.normalizationOf(file)).includes(filepath)) {
+                        console.log("[*] Dismissed instrumentalization for reason 3: the file is not added to ModulerV6.prototype.settings.data.instrumentalize");
+                        break Use_instrumentalized_if_conditions_are_met;
+                    }
+                    filepath = filepath.replace(/\.js$/g, ".instr.js");
+                    console.log(`[*] Using instrumentalized version of: ${filepathMask}`);
+                }
+                Evaluate_file_and_export_results: {
+                    if (filepathBrute.endsWith(".json")) {
+                        return this.modules[filepathMask] = this._readPath(filepathBrute).then(content => JSON.parse(content));
                     } else {
-                        output = moduleHolder.exports = result;
+                        const moduleHolder = {
+                            get exports() {
+                                return originalHolder;
+                            },
+                            set exports(output) {
+                                originalHolder = output;
+                            }
+                        };
+                        return this.evaluateFile(filepath, {
+                            module: moduleHolder,
+                            exports: moduleHolder.exports,
+                            $moduler: this.cloneForFile(filepath)
+                        }).then(result => {
+                            let output = undefined;
+                            if (typeof result === "undefined") {
+                                output = moduleHolder.exports;
+                            } else {
+                                output = moduleHolder.exports = result;
+                            }
+                            return this.modules[filepathMask] = output;
+                        });
                     }
-                    return this.modules[filepath] = output;
-                });
+                }
             }
             _importFactory(factory, dependencies = []) {
                 let originalHolder = {};
@@ -988,8 +1130,12 @@
                 if (cloneOf) {
                     this.settings.data = cloneOf.settings.data;
                 }
+                this.runtime = ModulerV6.Runtime.globalInstance;
             }
             static globalInstance=new this;
+            static isLoaded=Promise.all([ () => {
+                this.onLoaded.resolve();
+            }, this.globalInstance.runtime.load() ]);
         };
     }.call());
     const CompilerV6 = class CompilerV6 {

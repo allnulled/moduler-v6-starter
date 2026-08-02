@@ -26,6 +26,99 @@
             return ModulerV6;
         })(function() {
             return class ModulerV6 {
+                static createResolvable() {
+                    let promise, resolve, reject;
+                    promise = new Promise((_resolve, _reject) => {
+                        resolve = _resolve;
+                        reject = _reject;
+                    });
+                    return {
+                        promise: promise,
+                        resolve: resolve,
+                        reject: reject
+                    };
+                }
+                static onLoaded=this.createResolvable();
+                static Runtime=class Runtime {
+                    constructor(owner) {}
+                    static onLoaded=ModulerV6.createResolvable();
+                    cache={
+                        isLoaded: false
+                    };
+                    get env() {
+                        return ModulerV6.globalInstance.settings.data?.env || "unknown";
+                    }
+                    get isDev() {
+                        if (typeof this.cache.isDev === "boolean") return this.cache.isDev;
+                        if (ModulerV6.globalInstance.settings.data?.env) return this.cache.isDev = ModulerV6.globalInstance.settings.data?.env === "dev";
+                    }
+                    get isTest() {
+                        if (typeof this.cache.isTest === "boolean") return this.cache.isTest;
+                        if (ModulerV6.globalInstance.settings.data?.env) return this.cache.isTest = ModulerV6.globalInstance.settings.data?.env === "test";
+                    }
+                    get isProd() {
+                        if (typeof this.cache.isProd === "boolean") return this.cache.isProd;
+                        if (ModulerV6.globalInstance.settings.data?.env) return this.cache.isProd = ModulerV6.globalInstance.settings.data?.env === "prod";
+                    }
+                    get isBrowser() {
+                        if (typeof this.cache.isBrowser === "boolean") return this.cache.isBrowser;
+                        return this.cache.isBrowser = typeof window !== "undefined" && typeof window.location !== "undefined";
+                    }
+                    get isNodejs() {
+                        if (typeof this.cache.isNodejs === "boolean") return this.cache.isNodejs;
+                        return this.cache.isNodejs = typeof require !== "undefined" && typeof __dirname !== "undefined";
+                    }
+                    get hasCompilerV6() {
+                        return typeof CompilerV6 !== "undefined";
+                    }
+                    get hasDevBinaryV6() {
+                        return typeof DevBinaryV6 !== "undefined";
+                    }
+                    get getRootdir() {
+                        return ModulerV6.globalInstance.rootdir;
+                    }
+                    get getBasedir() {
+                        return ModulerV6.globalInstance.basedir;
+                    }
+                    get moduler() {
+                        return ModulerV6.globalInstance;
+                    }
+                    get compiler() {
+                        return CompilerV6.globalInstance;
+                    }
+                    get devbin() {
+                        return DevBinaryV6.globalInstance;
+                    }
+                    isInRefrescador() {
+                        throw new Error("Not supported yet");
+                    }
+                    isInModule(someModuler) {
+                        throw new Error("Not supported yet");
+                    }
+                    load() {
+                        if (this.cache.isLoaded) {
+                            return this.cache.isLoaded;
+                        }
+                        return Promise.all([ ModulerV6.globalInstance.settings.load() ]).then(output => {
+                            this.cache.isLoaded = output;
+                            return this;
+                        });
+                    }
+                    static load() {
+                        if (this.globalInstance.cache.isLoaded) {
+                            return this.globalInstance;
+                        }
+                        return this.globalInstance.load();
+                    }
+                    static globalInstance=new this;
+                    static {
+                        (async () => {
+                            await ModulerV6.onLoaded.promise;
+                            await Runtime.load();
+                            Runtime.onLoaded.resolve();
+                        })();
+                    }
+                };
                 static AssertionError=class AssertionError extends Error {
                     constructor(message) {
                         super(message);
@@ -271,12 +364,17 @@
                         if (!forceReload && this.data) {
                             return this.data;
                         }
-                        const settingsPath = this.moduler.normalizationOf("@/dist/www/dev/settings.js");
                         try {
-                            return this.data = await this.moduler.import(settingsPath);
+                            return this.data = await this.moduler.import("@/dist/www/dev/settings.dist.js");
                         } catch (error) {
-                            console.error(error);
-                            return undefined;
+                            console.log("[!] Could not load settings because:", error);
+                        }
+                    }
+                    async loadSilently(...args) {
+                        try {
+                            return await this.load(...args);
+                        } catch (error) {
+                            return error;
                         }
                     }
                     async get(property = null, forceReload = false) {
@@ -787,10 +885,27 @@
                 _readUrl(url) {
                     return fetch(this.normalizationOf(url), {
                         method: "GET"
-                    }).then(response => response.text());
+                    }).then(response => {
+                        if (!response.ok) {
+                            throw Object.assign(new Error(`[!] Could not read URL because of HTTP ${response.status} Error: ${response.statusText}`), {
+                                name: "FetchError"
+                            });
+                        }
+                        return response.text();
+                    });
                 }
                 _readPath(url) {
-                    return this._isBrowser ? this._readUrl(url) : this._readFile(url);
+                    return (this.runtime.isBrowser ? this._readUrl(url) : this._readFile(url)).then(it => {
+                        if (this.settings.data?.traceExternalSources) {
+                            console.log("[*] Read from external source:");
+                            console.log("--------------------:");
+                            console.log(it);
+                            console.log("--------------------/");
+                        }
+                        return it;
+                    }).catch(error => {
+                        throw error;
+                    });
                 }
                 _wrapInTry(source, parameters = {}, file = null) {
                     let js = "";
@@ -811,28 +926,55 @@
                 }
                 _importFile(filepathBrute) {
                     let originalHolder = {};
-                    const filepath = this.normalizationOf(filepathBrute);
-                    const moduleHolder = {
-                        get exports() {
-                            return originalHolder;
-                        },
-                        set exports(output) {
-                            originalHolder = output;
+                    let filepath, filepathMask;
+                    Normalize_file: {
+                        filepath = filepathMask = this.normalizationOf(filepathBrute);
+                    }
+                    console.log("[*] Importing file: " + filepath);
+                    Use_instrumentalized_if_conditions_are_met: {
+                        if (!(this.runtime.isDev || this.runtime.isTest)) {
+                            console.log("[*] Dismissed instrumentalization for reason 1: the environment is not «dev» or «test»");
+                            console.log(this.runtime);
+                            break Use_instrumentalized_if_conditions_are_met;
                         }
-                    };
-                    return this.evaluateFile(filepath, {
-                        module: moduleHolder,
-                        exports: moduleHolder.exports,
-                        $moduler: this.cloneForFile(filepath)
-                    }).then(result => {
-                        let output = undefined;
-                        if (typeof result === "undefined") {
-                            output = moduleHolder.exports;
+                        if (!this.settings.data?.instrumentalize?.length) {
+                            console.log("[*] Dismissed instrumentalization for reason 2: settings were not provided because file «@/dist/www/dev/settings.dist.js» is missing or «ModulerV6.prototype.settings.loadSilently» was not awaited before the first «ModulerV6.prototype.{import,export}» call");
+                            break Use_instrumentalized_if_conditions_are_met;
+                        }
+                        if (!this.settings.data.instrumentalize.map(file => this.normalizationOf(file)).includes(filepath)) {
+                            console.log("[*] Dismissed instrumentalization for reason 3: the file is not added to ModulerV6.prototype.settings.data.instrumentalize");
+                            break Use_instrumentalized_if_conditions_are_met;
+                        }
+                        filepath = filepath.replace(/\.js$/g, ".instr.js");
+                        console.log(`[*] Using instrumentalized version of: ${filepathMask}`);
+                    }
+                    Evaluate_file_and_export_results: {
+                        if (filepathBrute.endsWith(".json")) {
+                            return this.modules[filepathMask] = this._readPath(filepathBrute).then(content => JSON.parse(content));
                         } else {
-                            output = moduleHolder.exports = result;
+                            const moduleHolder = {
+                                get exports() {
+                                    return originalHolder;
+                                },
+                                set exports(output) {
+                                    originalHolder = output;
+                                }
+                            };
+                            return this.evaluateFile(filepath, {
+                                module: moduleHolder,
+                                exports: moduleHolder.exports,
+                                $moduler: this.cloneForFile(filepath)
+                            }).then(result => {
+                                let output = undefined;
+                                if (typeof result === "undefined") {
+                                    output = moduleHolder.exports;
+                                } else {
+                                    output = moduleHolder.exports = result;
+                                }
+                                return this.modules[filepathMask] = output;
+                            });
                         }
-                        return this.modules[filepath] = output;
-                    });
+                    }
                 }
                 _importFactory(factory, dependencies = []) {
                     let originalHolder = {};
@@ -999,8 +1141,12 @@
                     if (cloneOf) {
                         this.settings.data = cloneOf.settings.data;
                     }
+                    this.runtime = ModulerV6.Runtime.globalInstance;
                 }
                 static globalInstance=new this;
+                static isLoaded=Promise.all([ () => {
+                    this.onLoaded.resolve();
+                }, this.globalInstance.runtime.load() ]);
             };
         }.call());
         const CompilerV6 = class CompilerV6 {
@@ -2540,9 +2686,15 @@
                         if (label) this.mark(label);
                         this.stoppedAt = new Date;
                         return this;
+                    },
+                    milliseconds() {
+                        return this.stoppedAt - this.openedAt;
                     }
                 };
                 return tasks[name];
+            };
+            getTask.pick = function(name, defaultValue = null) {
+                return tasks[name] || defaultValue;
             };
             getTask.export = function() {
                 return Object.values(tasks).map(task => ({
@@ -2591,6 +2743,18 @@
                     return selectedDir;
                 }
                 throw new Error(`No directory up found with file «${file}» from directory «${dir}» on «DevBinaryV6Utils.findFirstParentDirectoryContaining»`);
+            }
+            static removeNullPropertiesFromObject(obj) {
+                const output = {};
+                for (let prop in obj) {
+                    const val = obj[prop];
+                    if (val !== null) {
+                        output[prop] = val;
+                    } else {
+                        console.log("Removed: " + prop, val);
+                    }
+                }
+                return output;
             }
             assert(...args) {
                 return this.devbin.moduler.assert(...args);
@@ -2678,7 +2842,7 @@
                 return result;
             }
             async compileDistribuiblesOf(filepath, event) {
-                let compilation, srcDistJs, srcDistCss, srcDistMd, distJs, distCss, distMd, report;
+                let compilation, srcDistJs, srcDistMd, distJs, distCss, distMd, report;
                 Initialize_report: {
                     report = {};
                 }
@@ -2705,7 +2869,6 @@
                     distCss = require("path").resolve(outputDir, outputNames.css);
                     distMd = require("path").resolve(outputDir, outputNames.md);
                     srcDistJs = require("path").resolve(inputDir, outputNames.js);
-                    srcDistCss = require("path").resolve(inputDir, outputNames.css);
                     srcDistMd = require("path").resolve(inputDir, outputNames.md);
                     report.names = outputNames;
                 }
@@ -2740,7 +2903,7 @@
                         Generate_instrumentalized_if_settings_instrumentalize_includes_it: {
                             await this.devbin.settings.load();
                             const instrumentalizeFiles = this.devbin.settings?.data?.instrumentalize || [];
-                            const isMatch = this.globOf(instrumentalizeFiles).matches(distJs);
+                            const isMatch = instrumentalizeFiles.map(file => this.devbin.moduler.normalizationOf(file)).includes(distJs);
                             if (isMatch) {
                                 Create_instrumentalization: {
                                     const instrJs = distJs.replace(/\.dist\.js$/g, ".dist.instr.js");
@@ -2753,7 +2916,6 @@
                     }
                     if (compilation.css) {
                         await require("fs").promises.writeFile(distCss, compilation.css, "utf8");
-                        await require("fs").promises.writeFile(srcDistCss, compilation.css, "utf8");
                         report.css = distCss;
                     }
                     if (compilation.md) {
@@ -2884,8 +3046,10 @@
                 const path = require("path");
                 const filepath = this.devbin.compiler.fullpathOf(file);
                 const event = this.constructor.defaultTouchFileOptions({
+                    type: "TouchFileEvent",
                     propagateUp: true,
                     processedEntries: {},
+                    isRoot: false,
                     ...optionsInput
                 });
                 this.assert(optionsInput.uncacheInjections === event.uncacheInjections, "Las inyections 2");
@@ -2895,58 +3059,93 @@
                 event.isJsTest = filepath.endsWith(".test.js");
                 event.isWww = filepath.startsWith(this.devbin.compiler.fullpathOf("@/src/www") + "/");
                 const isEntry = event.isJsEntry || event.isCssEntry || event.isMdEntry;
-                Processing_entry: {
-                    if (!isEntry) {
-                        if (!event.isJsTest) console.log(`[-] Touch event dismissed from: ${filepath}`);
-                        break Processing_entry;
+                Touch_event: {
+                    Processing_entry: {
+                        Paso_previo_1_caso_dev_settings_exportar_a_www_dev_settings_las_partes_exportables: {
+                            if (filepath === this.devbin.compiler.fullpathOf("@/dev/settings.js")) {
+                                try {
+                                    const settingsAsyncFactory = require(filepath);
+                                    const settingsData = await settingsAsyncFactory({
+                                        devbin: this.devbin
+                                    });
+                                    const publicableSettings = this.constructor.removeNullPropertiesFromObject({
+                                        env: settingsData.env || null,
+                                        instrumentalize: settingsData.instrumentalize || null,
+                                        traceExternalSources: settingsData.traceExternalSources || null
+                                    });
+                                    const instrumentalizeJsonFile = this.devbin.compiler.fullpathOf("@/dist/www/dev/settings/publicable.json");
+                                    await fs.promises.writeFile(instrumentalizeJsonFile, JSON.stringify(publicableSettings, null, 2), "utf8");
+                                } catch (error) {
+                                    console.log("[!] Error loading settings:", error);
+                                }
+                                break Touch_event;
+                            }
+                        }
+                        Paso_0_descartar_si_no_es_entry_o_test: {
+                            if (!isEntry && !event.isJsTest) {
+                                console.log(`[-] Touch event dismissed from: ${filepath}`);
+                                break Processing_entry;
+                            } else {
+                                console.log(`[*] Touch event triggered from: ${filepath}`);
+                            }
+                        }
+                        Paso_1_compilar_distribuibles: {
+                            Object.assign(event, {
+                                distribution: await this.compileDistribuiblesOf(filepath, event)
+                            });
+                        }
+                        Paso_2_fabricar_test_unitario: {
+                            Object.assign(event, {
+                                testFabrication: await this.fabricateUnitTestFileOf(filepath, event)
+                            });
+                        }
+                        Paso_3_ejecutar_test_unitario: {
+                            Object.assign(event, {
+                                testExecution: await this.executeUnitTestFileOf(filepath, event)
+                            });
+                        }
+                        Triggering_onDistribute_file: {
+                            const onDistributeFile = path.join(path.dirname(filepath), "e.onDistribute.js");
+                            await this.triggerCallbackFromFile(onDistributeFile, {
+                                file: filepath,
+                                event: event
+                            });
+                        }
                     }
-                    console.log(`[*] Touch event triggered from: ${filepath}`);
-                    Paso_1_compilar_distribuibles: {
-                        Object.assign(event, {
-                            distribution: await this.compileDistribuiblesOf(filepath, event)
-                        });
+                    Processing_test: {
+                        if (event.isJsTest) {
+                            console.log(`[-] Touch event processed as test from: ${filepath}`);
+                            await this.executeUnitTestFileOf(filepath, {
+                                testFabrication: {
+                                    unitFile: filepath
+                                }
+                            });
+                            return event;
+                        }
                     }
-                    Paso_2_fabricar_test_unitario: {
-                        Object.assign(event, {
-                            testFabrication: await this.fabricateUnitTestFileOf(filepath, event)
-                        });
-                    }
-                    Paso_3_ejecutar_test_unitario: {
-                        Object.assign(event, {
-                            testExecution: await this.executeUnitTestFileOf(filepath, event)
-                        });
-                    }
-                    Triggering_onDistribute_file: {
-                        const onDistributeFile = path.join(path.dirname(filepath), "e.onDistribute.js");
-                        await this.triggerCallbackFromFile(onDistributeFile, {
+                    Triggering_onTouch_file: {
+                        const onTouchFile = path.join(path.dirname(filepath), "e.onTouch.js");
+                        await this.triggerCallbackFromFile(onTouchFile, {
                             file: filepath,
                             event: event
                         });
                     }
-                }
-                Processing_test: {
-                    if (event.isJsTest) {
-                        console.log(`[-] Touch event processed as test from: ${filepath}`);
-                        await this.executeUnitTestFileOf(filepath, {
-                            testFabrication: {
-                                unitFile: filepath
-                            }
-                        });
-                        return event;
+                    Propagating_touch_up: {
+                        Paso_4_propagar_evento_arriba: {
+                            Object.assign(event, {
+                                touchPropagation: event.propagateUp ? await this.propagateUpTouchEventFrom(filepath, event) : false
+                            });
+                        }
                     }
-                }
-                Triggering_onTouch_file: {
-                    const onTouchFile = path.join(path.dirname(filepath), "e.onTouch.js");
-                    await this.triggerCallbackFromFile(onTouchFile, {
-                        file: filepath,
-                        event: event
-                    });
-                }
-                Propagating_touch_up: {
-                    Paso_4_propagar_evento_arriba: {
-                        Object.assign(event, {
-                            touchPropagation: event.propagateUp ? await this.propagateUpTouchEventFrom(filepath, event) : false
-                        });
+                    On_root_execute_tests: {
+                        if (event.isRoot) {
+                            Test_integrity: {
+                                await this.devbin.tester.runDirectory("@/test/integrity");
+                            }
+                            Test_features: {
+                                await this.devbin.tester.runDirectory("@/test/feature");
+                            }
+                        }
                     }
                 }
                 return event;
@@ -3044,15 +3243,20 @@
                 await createDirectory(`${targetDir}/dev/coverage`);
                 await createDirectory(`${targetDir}/dev/files`);
                 await createDirectory(`${targetDir}/src`);
-                await createDirectory(`${targetDir}/src/lib`);
                 await createDirectory(`${targetDir}/dist`);
                 await createDirectory(`${targetDir}/dist/src`);
                 await createDirectory(`${targetDir}/dist/www`);
                 await createDirectory(`${targetDir}/dist/www/coverage`);
+                await createDirectory(`${targetDir}/dist/www/lib`);
+                await createDirectory(`${targetDir}/dist/www/dev`);
+                await createDirectory(`${targetDir}/dist/www/dev/settings`);
                 await createDirectory(`${targetDir}/dist/src/lib`);
                 await createDirectory(`${targetDir}/test`);
+                await createDirectory(`${targetDir}/test/feature`);
+                await createDirectory(`${targetDir}/test/integrity`);
                 await createDirectory(`${targetDir}/test/unit`);
                 await createDirectory(`${targetDir}/test/unit/src`);
+                await createDirectory(`${targetDir}/test/spontaneous`);
                 await createDirectory(`${targetDir}/docs`);
                 await saveFile(`${targetDir}/package.json`, JSON.stringify(initialPackageJson, null, 2), "utf8");
                 if (!await utils._existsFile(`${targetDir}/.gitignore`)) await saveFile(`${targetDir}/.gitignore`, "node_modules", "utf8");
@@ -3064,17 +3268,11 @@
                 await duplicateFileIfNotExists(`${__dirname}/../src/DevBinaryV6/Utils/core/app.css`, `${targetDir}/dist/www/app.css`);
                 await duplicateFileIfNotExists(`${__dirname}/../src/DevBinaryV6/Utils/core/settings.js`, `${targetDir}/dev/settings.js`);
                 await duplicateFile(`${__dirname}/../src/DevBinaryV6/Utils/core/controllers.js`, `${targetDir}/dev/controllers.js`);
-                await duplicateFile(`${__dirname}/moduler-v6.dist.js`, `${targetDir}/src/lib/moduler-v6.entry.js`);
                 await duplicateFile(`${__dirname}/moduler-v6.dist.js`, `${targetDir}/dist/src/lib/moduler-v6.dist.js`);
-                await duplicateFile(`${__dirname}/compiler-v6.dist.js`, `${targetDir}/src/lib/compiler-v6.entry.js`);
+                await duplicateFile(`${__dirname}/moduler-v6.dist.js`, `${targetDir}/dist/www/lib/moduler-v6.dist.js`);
                 await duplicateFile(`${__dirname}/compiler-v6.dist.js`, `${targetDir}/dist/src/lib/compiler-v6.dist.js`);
-                await duplicateFile(`${__dirname}/dev-binary-v6.dist.js`, `${targetDir}/src/lib/dev-binary-v6.entry.js`);
                 await duplicateFile(`${__dirname}/dev-binary-v6.dist.js`, `${targetDir}/dist/src/lib/dev-binary-v6.dist.js`);
-                await duplicateFile(`${__dirname}/refrescador.dist.js`, `${targetDir}/src/lib/refrescador.entry.js`);
                 await duplicateFile(`${__dirname}/refrescador.dist.js`, `${targetDir}/dist/src/lib/refrescador.dist.js`);
-                await duplicateDirectory(`${__dirname}/refrescador`, `${targetDir}/src/lib/refrescador`, {
-                    recursive: true
-                });
                 await duplicateDirectory(`${__dirname}/refrescador`, `${targetDir}/dist/src/lib/refrescador`, {
                     recursive: true
                 });
@@ -3170,13 +3368,13 @@
                 await this.devbin.settings.load();
                 const port = this.devbin.settings.data?.loop?.port || 3005;
                 const settingsControllers = this.devbin.settings.data?.loop?.controllers || [];
-                const targetDirs = [ require("path").resolve(targetRoot, "src"), require("path").resolve(targetRoot, "test/unit/src") ];
+                const targetDirs = [ require("path").resolve(targetRoot, "src"), require("path").resolve(targetRoot, "dev/settings.js"), require("path").resolve(targetRoot, "test/unit/src"), require("path").resolve(targetRoot, "test/feature"), require("path").resolve(targetRoot, "test/integrity"), require("path").resolve(targetRoot, "test/spontaneous") ];
                 const devControllersFile = `${targetRoot}/dev/controllers.js`;
                 const devControllers = await this.devbin.utils.existsFile(devControllersFile) ? [ devControllersFile ] : [];
                 return this.devbin.constructor.Refrescador.run({
                     watch: targetDirs,
                     bulletproof: false,
-                    ignore: [ "**/node_modules/**/*", "**/dist/**/*", "**/*.dist.*", "**/logs/**/*" ],
+                    ignore: [ "**/node_modules/**/*", "**/dist/**/*", "**/*.dist.*", "**/logs/**/*", "**/test/unit/**/*" ],
                     port: port,
                     debounce: 0,
                     extensions: [ "js", "css", "html", "md" ],
@@ -3213,7 +3411,8 @@
                 }, args);
                 this.assert(typeof parameters.file === "string", `Parameter «--file» is required as string on «DevBinaryV6.ShadowCommands.prototype.touch»`);
                 return this.devbin.utils.touchFile(parameters.file, {
-                    uncacheInjections: parameters.uncacheInjections
+                    uncacheInjections: parameters.uncacheInjections,
+                    isRoot: true
                 });
             }
         };
@@ -3247,6 +3446,80 @@
                 const settingsModule = require(settingsPath);
                 const settings = await settingsModule.call(this.devbin);
                 return this.data = Object.assign({}, settings);
+            }
+        };
+        static Tester=class Tester {
+            constructor(devbin) {
+                this.devbin = devbin;
+            }
+            async runDirectory(dirInput, filterCallback = false, _ignoreFiles = [ "runner.js" ], injection = {}, _testsType = false) {
+                const fs = require("fs");
+                const path = require("path");
+                const ERROR_SEPARATOR = `\n - `;
+                const dir = this.devbin.compiler.normalizationOf(dirInput);
+                const testsType = _testsType || path.basename(dir);
+                const testFiles = (await fs.promises.readdir(dir)).filter(file => {
+                    const endsWithJs = file.endsWith(".js");
+                    const isNotIgnored = !_ignoreFiles.includes(file);
+                    const passesFilter = filterCallback ? filterCallback(file) : true;
+                    return endsWithJs && isNotIgnored && passesFilter;
+                });
+                const $ = this.devbin.compiler.constructor.ansi.colors;
+                const errors = [];
+                const crono = this.devbin.constructor.Cronometer();
+                for (let index = 0; index < testFiles.length; index++) {
+                    const testName = testFiles[index];
+                    const testFile = `${dir}/${testName}`;
+                    console.log($.style("cyanBright,italic").text(`🟢 Starting «${testName}» [${testsType}:${index + 1}/${testFiles.length}]`));
+                    let testCallback;
+                    try {
+                        const _testCallback = require(testFile);
+                        this.devbin.compiler.assert(typeof _testCallback === "function", `Test type «${testsType}» with name «${testName}» must export a callback`);
+                        testCallback = _testCallback;
+                    } catch (error) {
+                        const expression = `🟣 Bad exportation on «${testsType}:${index}» named «${testName}»${ERROR_SEPARATOR}${error.name}: ${error.message}${ERROR_SEPARATOR}${error.stack}`;
+                        console.log($.style("red,italic").text($.box(expression)));
+                        errors.push({
+                            test: testName,
+                            error: error,
+                            expression: expression
+                        });
+                    }
+                    if (testCallback) {
+                        const testId = `${testsType}@${index}:${testName}`;
+                        const testCronometer = crono(testId).open("Started");
+                        try {
+                            await testCallback({
+                                DevBinaryV6: this.devbin.constructor,
+                                devBinaryV6: this.devbin,
+                                ...injection
+                            });
+                            testCronometer.stop("Success");
+                            const expression = `🟢 Done: «${testName}» [${testsType}:${index + 1}/${testFiles.length}] [⏳=${testCronometer.milliseconds()}]`;
+                            console.log($.style("green,italic").text(expression));
+                        } catch (error) {
+                            testCronometer.stop("Failure");
+                            const expression = `🔴 Failed «${testName}» [${testsType}:${index + 1}/${testFiles.length}]${ERROR_SEPARATOR}${error.name}: ${error.message}${ERROR_SEPARATOR}${error.stack}`;
+                            console.log($.style("red,italic").text(expression));
+                            errors.push({
+                                test: testName,
+                                error: error,
+                                expression: expression
+                            });
+                        }
+                    }
+                }
+                if (testFiles.length) {
+                    if (errors.length) {
+                        console.log($.style("cyan").text(`⚠️  Errors report of «${testsType}» tests:`));
+                        for (let index = 0; index < errors.length; index++) {
+                            const {test: test, error: error, expression: expression} = errors[index];
+                            console.log($.style("magenta").text($.box(`  - Error nº${index + 1}/${errors.length}: ${ERROR_SEPARATOR}` + expression)));
+                        }
+                    } else {
+                        console.log($.style("greenBright,bold").text($.box(`💎 No errors reported on «${testsType}» tests`)));
+                    }
+                }
             }
         };
         cronometer=this.constructor.Cronometer();
@@ -3317,6 +3590,7 @@
             this.settings = new this.constructor.Settings(this);
             this.shadowCommands = parent ? parent.shadowCommands : new this.constructor.ShadowCommands(this);
             this.shadowFileEvents = parent ? parent.shadowFileEvents : new this.constructor.ShadowFileEvents(this);
+            this.tester = parent ? parent.tester : new this.constructor.Tester(this);
         }
     };
 }.call());

@@ -28,10 +28,6 @@ module.exports = function ({ app }) {
   const jsonMiddleware = require("body-parser").json({});
   app.post("/dev/coverage/commit", [jsonMiddleware], function (request, response) {
     Persist_coverage_as_json: {
-      // @TODO: persistir el reporte de cobertura del instrumentado.
-      console.log("Hay que pasarle el objeto de cov del instrumentado por aquí:");
-      console.log("(Parte en proceso de desarrollo)");
-      console.log(request.body);
       const {
         coverage,
         name = "default"

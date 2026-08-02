@@ -10,6 +10,72 @@
     return ModulerV6;
 })(function() {
     return class ModulerV6 {
+        static Runtime=class Runtime {
+            constructor(owner) {}
+            cache={
+                isLoaded: false
+            };
+            get env() {
+                return this.settings?.env?.id || "unknown";
+            }
+            get isDev() {
+                if (this.cache.isDev) return this.cache.isDev;
+                return this.cache.isDev = this.settings?.env?.id === "dev";
+            }
+            get isTest() {
+                if (this.cache.isTest) return this.cache.isTest;
+                return this.cache.isTest = this.settings?.env?.id === "test";
+            }
+            get isProd() {
+                if (this.cache.isProd) return this.cache.isProd;
+                return this.cache.isProd = this.settings?.env?.id === "prod";
+            }
+            get isBrowser() {
+                return typeof window !== "undefined" && typeof window.location !== "undefined";
+            }
+            get isNodejs() {
+                return typeof require !== "undefined" && typeof __dirname !== "undefined";
+            }
+            get hasCompilerV6() {
+                return typeof CompilerV6 !== "undefined";
+            }
+            get hasDevBinaryV6() {
+                return typeof DevBinaryV6 !== "undefined";
+            }
+            get getRootdir() {
+                return ModulerV6.globalInstance.rootdir;
+            }
+            get getBasedir() {
+                return ModulerV6.globalInstance.basedir;
+            }
+            get moduler() {
+                return ModulerV6.globalInstance;
+            }
+            get compiler() {
+                return CompilerV6.globalInstance;
+            }
+            get devbin() {
+                return DevBinaryV6.globalInstance;
+            }
+            isInRefrescador() {
+                throw new Error("Not supported yet");
+            }
+            isInModule(someModuler) {
+                throw new Error("Not supported yet");
+            }
+            load() {
+                if (this.cache.isLoaded) {
+                    return this.cache.isLoaded;
+                }
+                return Promise.all([ this.loadSettings() ]).then(output => this.cache.isLoaded = output);
+            }
+            loadSettings() {
+                if (this.settings) return this.settings;
+                return ModulerV6.globalInstance.import("@/dist/www/dev/settings.dist.js").then(settings => this.settings = settings).catch(error => false);
+            }
+            settings=null;
+            static globalInstance=new Runtime;
+        };
         static AssertionError=class AssertionError extends Error {
             constructor(message) {
                 super(message);
@@ -983,7 +1049,9 @@
             if (cloneOf) {
                 this.settings.data = cloneOf.settings.data;
             }
+            this.runtime = ModulerV6.Runtime.globalInstance;
         }
         static globalInstance=new this;
+        static isLoaded=Promise.all([ this.globalInstance.runtime.load() ]);
     };
 }.call());
