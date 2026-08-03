@@ -926,28 +926,24 @@
                 }
                 _importFile(filepathBrute) {
                     let originalHolder = {};
-                    let filepath, filepathMask;
+                    let filepath, filepathMask, isInstr;
                     Normalize_file: {
                         filepath = filepathMask = this.normalizationOf(filepathBrute);
                     }
-                    console.log("[*] Importing file: " + filepath);
                     Use_instrumentalized_if_conditions_are_met: {
                         if (!(this.runtime.isDev || this.runtime.isTest)) {
-                            console.log("[*] Dismissed instrumentalization for reason 1: the environment is not «dev» or «test»");
-                            console.log(this.runtime);
                             break Use_instrumentalized_if_conditions_are_met;
                         }
                         if (!this.settings.data?.instrumentalize?.length) {
-                            console.log("[*] Dismissed instrumentalization for reason 2: settings were not provided because file «@/dist/www/dev/settings.dist.js» is missing or «ModulerV6.prototype.settings.loadSilently» was not awaited before the first «ModulerV6.prototype.{import,export}» call");
                             break Use_instrumentalized_if_conditions_are_met;
                         }
                         if (!this.settings.data.instrumentalize.map(file => this.normalizationOf(file)).includes(filepath)) {
-                            console.log("[*] Dismissed instrumentalization for reason 3: the file is not added to ModulerV6.prototype.settings.data.instrumentalize");
                             break Use_instrumentalized_if_conditions_are_met;
                         }
+                        isInstr = true;
                         filepath = filepath.replace(/\.js$/g, ".instr.js");
-                        console.log(`[*] Using instrumentalized version of: ${filepathMask}`);
                     }
+                    console.log("[*] Importing file: " + filepath);
                     Evaluate_file_and_export_results: {
                         if (filepathBrute.endsWith(".json")) {
                             return this.modules[filepathMask] = this._readPath(filepathBrute).then(content => JSON.parse(content));
@@ -2719,6 +2715,7 @@
             static defaultTouchFileOptions(overrider = {}) {
                 return {
                     propagateUp: true,
+                    testFeatures: [],
                     ...overrider
                 };
             }
@@ -2858,8 +2855,8 @@
                     const inputDir = require("path").dirname(outputNames.file);
                     const inputRootdir = this.devbin.compiler.rootdirOf(inputDir);
                     let outputDir = undefined;
-                    Export_directly_to_dist_www_if_isWww: {
-                        if (event.isWww) {
+                    Export_directly_to_dist_www_if_isSrcWww: {
+                        if (event.isSrcWww) {
                             outputDir = this.devbin.compiler.fullpathOf(inputRootdir.replace(/^\@\/src\/www/g, "@/dist/www"));
                         } else {
                             outputDir = this.devbin.compiler.fullpathOf(inputRootdir.replace(/^\@\//g, "@/dist/"));
@@ -2956,7 +2953,7 @@
                 };
             }
             async fabricateUnitTestFileOf(filepath, event) {
-                if (event.isWww) {
+                if (event.isSrcWww) {
                     return -2;
                 }
                 if (!event.distribution.js) {
@@ -2984,7 +2981,7 @@
                 };
             }
             executeUnitTestFileOf(filepath, event) {
-                if (event.isWww) {
+                if (event.isSrcWww) {
                     console.log(`[*] No test for browser file: ${filepath}`);
                 } else {
                     console.log(`[*] Executing unit test file of: ${event.testFabrication.unitFile}`);
@@ -3053,74 +3050,89 @@
                     ...optionsInput
                 });
                 this.assert(optionsInput.uncacheInjections === event.uncacheInjections, "Las inyections 2");
+                event.isHtml = filepath.endsWith(".html");
                 event.isJsEntry = filepath.endsWith(".entry.js");
                 event.isCssEntry = filepath.endsWith(".entry.css");
                 event.isMdEntry = filepath.endsWith(".entry.md");
                 event.isJsTest = filepath.endsWith(".test.js");
-                event.isWww = filepath.startsWith(this.devbin.compiler.fullpathOf("@/src/www") + "/");
+                const rootPath = this.devbin.moduler.rootdirOf(filepath);
+                event.isSrcWww = rootPath.startsWith("@/src/www/");
+                event.isSrc = rootPath.startsWith("@/src/");
                 const isEntry = event.isJsEntry || event.isCssEntry || event.isMdEntry;
                 Touch_event: {
                     Processing_entry: {
                         Paso_previo_1_caso_dev_settings_exportar_a_www_dev_settings_las_partes_exportables: {
                             if (filepath === this.devbin.compiler.fullpathOf("@/dev/settings.js")) {
-                                try {
-                                    const settingsAsyncFactory = require(filepath);
-                                    const settingsData = await settingsAsyncFactory({
-                                        devbin: this.devbin
-                                    });
-                                    const publicableSettings = this.constructor.removeNullPropertiesFromObject({
-                                        env: settingsData.env || null,
-                                        instrumentalize: settingsData.instrumentalize || null,
-                                        traceExternalSources: settingsData.traceExternalSources || null
-                                    });
-                                    const instrumentalizeJsonFile = this.devbin.compiler.fullpathOf("@/dist/www/dev/settings/publicable.json");
-                                    await fs.promises.writeFile(instrumentalizeJsonFile, JSON.stringify(publicableSettings, null, 2), "utf8");
-                                } catch (error) {
-                                    console.log("[!] Error loading settings:", error);
-                                }
+                                await this.exportDevSettings(filepath);
                                 break Touch_event;
                             }
                         }
-                        Paso_0_descartar_si_no_es_entry_o_test: {
-                            if (!isEntry && !event.isJsTest) {
-                                console.log(`[-] Touch event dismissed from: ${filepath}`);
-                                break Processing_entry;
-                            } else {
-                                console.log(`[*] Touch event triggered from: ${filepath}`);
+                        Paso_previo_2_caso_src_html: {
+                            if (event.isHtml) {
+                                if (event.isSrcWww) {
+                                    const outputFile = `@/dist/www/${rootPath.replace("@/src/www/", "")}`;
+                                    await this.copyFile(rootPath, outputFile);
+                                } else if (event.isSrc) {
+                                    const outputFile = `@/dist/src/${rootPath.replace("@/src/", "")}`;
+                                    await this.copyFile(rootPath, outputFile);
+                                } else {
+                                    console.log(`[-] Touch event dismissed from an *.html not under «@/src/»: ${filepath}`);
+                                    break Touch_event;
+                                }
                             }
                         }
-                        Paso_1_compilar_distribuibles: {
-                            Object.assign(event, {
-                                distribution: await this.compileDistribuiblesOf(filepath, event)
-                            });
-                        }
-                        Paso_2_fabricar_test_unitario: {
-                            Object.assign(event, {
-                                testFabrication: await this.fabricateUnitTestFileOf(filepath, event)
-                            });
-                        }
-                        Paso_3_ejecutar_test_unitario: {
-                            Object.assign(event, {
-                                testExecution: await this.executeUnitTestFileOf(filepath, event)
-                            });
-                        }
-                        Triggering_onDistribute_file: {
-                            const onDistributeFile = path.join(path.dirname(filepath), "e.onDistribute.js");
-                            await this.triggerCallbackFromFile(onDistributeFile, {
-                                file: filepath,
-                                event: event
-                            });
+                        Caso_js_o_test_js: {
+                            Paso_0_descartar_si_no_es_entry_o_test: {
+                                if (!isEntry && !event.isJsTest) {
+                                    console.log(`[-] Touch event dismissed from not entry or test: ${filepath}`);
+                                    break Processing_entry;
+                                } else {
+                                    console.log(`[*] Touch event triggered from: ${filepath}`);
+                                }
+                            }
+                            Paso_1_compilar_distribuibles: {
+                                Object.assign(event, {
+                                    distribution: await this.compileDistribuiblesOf(filepath, event)
+                                });
+                            }
+                            Paso_2_fabricar_test_unitario: {
+                                Object.assign(event, {
+                                    testFabrication: await this.fabricateUnitTestFileOf(filepath, event)
+                                });
+                            }
+                            Paso_3_ejecutar_test_unitario: {
+                                Object.assign(event, {
+                                    testExecution: await this.executeUnitTestFileOf(filepath, event)
+                                });
+                            }
+                            Triggering_onDistribute_file: {
+                                const onDistributeFile = path.join(path.dirname(filepath), "e.onDistribute.js");
+                                await this.triggerCallbackFromFile(onDistributeFile, {
+                                    file: filepath,
+                                    event: event
+                                });
+                            }
+                            Triggering_onTestFeature_file: {
+                                const onTestFeatureFile = path.join(path.dirname(filepath), "e.onTestFeature.js");
+                                const featuresAdded = await this.triggerCallbackFromFile(onTestFeatureFile, {
+                                    file: filepath,
+                                    event: event
+                                });
+                                if (typeof featuresAdded !== "number") {
+                                    this.assert(Array.isArray(featuresAdded), `File «e.onTestFeature.js» must return array about file «${onTestFeatureFile}» on «DevBinaryV6.Utils.prototype.touchFile»`);
+                                    event.testFeatures.push(...featuresAdded);
+                                }
+                            }
                         }
                     }
                     Processing_test: {
                         if (event.isJsTest) {
-                            console.log(`[-] Touch event processed as test from: ${filepath}`);
                             await this.executeUnitTestFileOf(filepath, {
                                 testFabrication: {
                                     unitFile: filepath
                                 }
                             });
-                            return event;
+                            break Touch_event;
                         }
                     }
                     Triggering_onTouch_file: {
@@ -3132,18 +3144,19 @@
                     }
                     Propagating_touch_up: {
                         Paso_4_propagar_evento_arriba: {
+                            const touchPropagation = event.propagateUp ? await this.propagateUpTouchEventFrom(filepath, event) : false;
                             Object.assign(event, {
-                                touchPropagation: event.propagateUp ? await this.propagateUpTouchEventFrom(filepath, event) : false
+                                touchPropagation: touchPropagation
                             });
                         }
                     }
                     On_root_execute_tests: {
                         if (event.isRoot) {
-                            Test_integrity: {
-                                await this.devbin.tester.runDirectory("@/test/integrity");
+                            Run_feature_tests: {
+                                await this.devbin.tester.runDirectory("@/test/feature", file => this.matchesFileWithSimpleSelector(path.basename(file), [ ...event.testFeatures, ...this.devbin.settings.data.features || [] ]));
                             }
-                            Test_features: {
-                                await this.devbin.tester.runDirectory("@/test/feature");
+                            Run_case_tests: {
+                                await this.devbin.tester.runDirectory("@/test/case", file => file.endsWith(".js"));
                             }
                         }
                     }
@@ -3256,7 +3269,7 @@
                 await createDirectory(`${targetDir}/test/integrity`);
                 await createDirectory(`${targetDir}/test/unit`);
                 await createDirectory(`${targetDir}/test/unit/src`);
-                await createDirectory(`${targetDir}/test/spontaneous`);
+                await createDirectory(`${targetDir}/test/case`);
                 await createDirectory(`${targetDir}/docs`);
                 await saveFile(`${targetDir}/package.json`, JSON.stringify(initialPackageJson, null, 2), "utf8");
                 if (!await utils._existsFile(`${targetDir}/.gitignore`)) await saveFile(`${targetDir}/.gitignore`, "node_modules", "utf8");
@@ -3310,6 +3323,37 @@
                         return this.matcher(file);
                     }
                 };
+            }
+            async exportDevSettings(filepath) {
+                try {
+                    const fs = require("fs");
+                    const settingsAsyncFactory = require(filepath);
+                    const settingsData = await settingsAsyncFactory({
+                        devbin: this.devbin
+                    });
+                    const publicableSettings = this.constructor.removeNullPropertiesFromObject({
+                        env: settingsData.env || null,
+                        instrumentalize: settingsData.instrumentalize || null,
+                        traceExternalSources: settingsData.traceExternalSources || null
+                    });
+                    const instrumentalizeJsonFile = this.devbin.compiler.fullpathOf("@/dist/www/dev/settings/publicable.json");
+                    await fs.promises.writeFile(instrumentalizeJsonFile, JSON.stringify(publicableSettings, null, 2), "utf8");
+                } catch (error) {
+                    console.log("[!] Error loading settings:", error);
+                }
+            }
+            copyFile(src, dst) {
+                return require("fs").promises.copyFile(this.devbin.moduler.normalizationOf(src), this.devbin.moduler.normalizationOf(dst));
+            }
+            matchesFileWithSimpleSelector(filepath, selectors = []) {
+                this.assert(Array.isArray(selectors), "Parameter «selectors» must be array on «DevBinaryV6.Utils.prototype.matchesFileWithSimpleSelector»");
+                return selectors.some((selector, index) => {
+                    this.assert(typeof selector === "string", `All selectors must be strings but on index «${index}» there is a «${typeof selector}»`);
+                    if (selector.startsWith("^")) {
+                        return filepath.startsWith(selector.slice(1));
+                    }
+                    return filepath.includes(selector);
+                });
             }
             constructor(devbin) {
                 this.devbin = devbin;
