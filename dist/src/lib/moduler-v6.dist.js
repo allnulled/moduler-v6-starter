@@ -89,9 +89,6 @@
                 });
             }
             static load() {
-                if (this.globalInstance.cache.isLoaded) {
-                    return this.globalInstance;
-                }
                 return this.globalInstance.load();
             }
             static globalInstance=new this;
@@ -480,9 +477,9 @@
                             let offset = 0;
                             let wasEnded = false;
                             Processing_match: if (typeof ender === "string") {
-                                while (countingFrom + offset < text.length) {
+                                while (countingFrom + offset <= text.length) {
                                     const currentPosition = countingFrom + offset;
-                                    const isMatchingEnder = text.startsWith(ender, currentPosition);
+                                    const isMatchingEnder = text.startsWith(ender, currentPosition) || currentPosition === text.length && options.enderCanBeEOF === true;
                                     if (isMatchingEnder) {
                                         wasEnded = true;
                                         this._pushToken({
@@ -679,19 +676,73 @@
                     location: token.location
                 };
             } ],
-            JavadocComment: [ "/**", "*/", function(token) {
+            MultilineMarkdownComment: [ "/**", "*/", function(token) {
                 return {
-                    syntax: "Javadoc Comment",
+                    syntax: "Multiline Markdown Comment",
+                    ...token
+                };
+            } ],
+            NewParagraphMarkdownComment: [ "///@@:", "\n", function(token) {
+                return {
+                    syntax: "New Paragraph Markdown Comment",
                     ...token
                 };
             }, {
-                allowInside: true
+                enderCanBeEOF: true
+            } ],
+            NewLineMarkdownComment: [ "///@:", "\n", function(token) {
+                return {
+                    syntax: "New Line Markdown Comment",
+                    ...token
+                };
+            }, {
+                enderCanBeEOF: true
+            } ],
+            PrecisedTabulationMarkdownComment: [ "///@~", "\n", function(token) {
+                return {
+                    syntax: "Precised Tabulation Markdown Comment",
+                    ...token
+                };
+            }, {
+                enderCanBeEOF: true
+            } ],
+            IncreasedTabulationMarkdownComment: [ "///@+", "\n", function(token) {
+                return {
+                    syntax: "Increased Tabulation Markdown Comment",
+                    ...token
+                };
+            }, {
+                enderCanBeEOF: true
+            } ],
+            DecreasedTabulationMarkdownComment: [ "///@-", "\n", function(token) {
+                return {
+                    syntax: "Decreased Tabulation Markdown Comment",
+                    ...token
+                };
+            }, {
+                enderCanBeEOF: true
+            } ],
+            InlineMarkdownComment: [ "///@&:", "\n", function(token) {
+                return {
+                    syntax: "Inline Markdown Comment",
+                    ...token
+                };
+            }, {
+                enderCanBeEOF: true
+            } ],
+            UnspacedInlineMarkdownComment: [ "///@&&:", "\n", function(token) {
+                return {
+                    syntax: "Unspaced Inline Markdown Comment",
+                    ...token
+                };
+            }, {
+                enderCanBeEOF: true
             } ]
         };
         static defaultGrammars={
-            forJs: [ this.nativeGrammars.InjectSource, this.nativeGrammars.InjectString, this.nativeGrammars.InjectTemplate, this.nativeGrammars.ImportJs, this.nativeGrammars.ExportJs, this.nativeGrammars.AtRequires, this.nativeGrammars.AtInjects, this.nativeGrammars.JavadocComment ],
-            forCss: [ this.nativeGrammars.InjectSource, this.nativeGrammars.InjectString, this.nativeGrammars.InjectTemplate, this.nativeGrammars.ImportJs, this.nativeGrammars.ExportJs, this.nativeGrammars.AtRequires, this.nativeGrammars.AtInjects, this.nativeGrammars.JavadocComment ],
-            forMd: [ this.nativeGrammars.InjectSource, this.nativeGrammars.InjectString, this.nativeGrammars.ImportJs, this.nativeGrammars.ExportJs, this.nativeGrammars.MultilineCommentValueInjection, this.nativeGrammars.AtRequires, this.nativeGrammars.AtInjects, this.nativeGrammars.JavadocComment ],
+            forJs: [ this.nativeGrammars.InjectSource, this.nativeGrammars.InjectString, this.nativeGrammars.InjectTemplate, this.nativeGrammars.ImportJs, this.nativeGrammars.ExportJs, this.nativeGrammars.AtRequires, this.nativeGrammars.AtInjects, this.nativeGrammars.MultilineMarkdownComment, this.nativeGrammars.NewParagraphMarkdownComment, this.nativeGrammars.NewLineMarkdownComment, this.nativeGrammars.PrecisedTabulationMarkdownComment, this.nativeGrammars.IncreasedTabulationMarkdownComment, this.nativeGrammars.DecreasedTabulationMarkdownComment, this.nativeGrammars.InlineMarkdownComment, this.nativeGrammars.UnspacedInlineMarkdownComment ],
+            forCss: [ this.nativeGrammars.InjectSource, this.nativeGrammars.InjectString, this.nativeGrammars.InjectTemplate, this.nativeGrammars.ImportJs, this.nativeGrammars.ExportJs, this.nativeGrammars.AtRequires, this.nativeGrammars.AtInjects ],
+            forMd: [ this.nativeGrammars.InjectSource, this.nativeGrammars.InjectString, this.nativeGrammars.ImportJs, this.nativeGrammars.ExportJs, this.nativeGrammars.MultilineCommentValueInjection, this.nativeGrammars.AtRequires, this.nativeGrammars.AtInjects ],
             forCssOnRuntime: [ this.nativeGrammars.AtRequires ],
             forTemplateComments: [ this.nativeGrammars.MultilineCommentValueInjection, this.nativeGrammars.MultilineCommentCodeInjection ],
             forEmbeddedForms: [ this.nativeGrammars.EmbeddedFormFieldOpener, this.nativeGrammars.EmbeddedFormFieldCloser ]
@@ -927,7 +978,7 @@
                 isInstr = true;
                 filepath = filepath.replace(/\.js$/g, ".instr.js");
             }
-            console.log("[*] Importing file: " + filepath);
+            console.log("[*] ModulerV6 imports: " + this.rootdirOf(filepath));
             Evaluate_file_and_export_results: {
                 if (filepathBrute.endsWith(".json")) {
                     return this.modules[filepathMask] = this._readPath(filepathBrute).then(content => JSON.parse(content));
@@ -1124,8 +1175,9 @@
             this.runtime = ModulerV6.Runtime.globalInstance;
         }
         static globalInstance=new this;
-        static isLoaded=Promise.all([ () => {
+        static isLoaded=(async () => {
+            await this.globalInstance.runtime.load();
             this.onLoaded.resolve();
-        }, this.globalInstance.runtime.load() ]);
+        })();
     };
 }.call());
