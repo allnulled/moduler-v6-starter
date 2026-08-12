@@ -362,7 +362,8 @@
                             return this.data;
                         }
                         try {
-                            return this.data = await this.moduler.import("@/dist/www/dev/settings.dist.js");
+                            const settings = await this.moduler.import("@/dist/www/dev/settings.dist.js");
+                            return this.data = typeof settings === "function" ? await settings.call(this) : settings;
                         } catch (error) {
                             console.log("[!] Could not load settings because:", error);
                         }
@@ -775,6 +776,9 @@
                         return process.cwd();
                     }
                 }
+                static create(...args) {
+                    return new this(...args);
+                }
                 _formatImportParameters(signature) {
                     this.assert(Array.isArray(signature), "Parameter «signature» must be array on «ModulerV6.prototype._formatImportParameters»");
                     this.assert(signature.length !== 0, "ModulerV6.prototype.import cannot have 0 arguments");
@@ -1040,6 +1044,17 @@
                     });
                     return typeof result === "undefined" ? originalHolder : result;
                 }
+                _importSectionByMap(sectionId, returnsOnMissing = undefined) {
+                    if (!this.settings.data?.sectionsMap) {
+                        return returnsOnMissing;
+                    }
+                    const originalMap = this.settings.data.sectionsMap;
+                    if (!(sectionId in originalMap)) {
+                        return returnsOnMissing;
+                    }
+                    const sectionPath = originalMap[sectionId];
+                    return this.import(sectionPath);
+                }
                 assert(condition, message) {
                     return this.constructor.assert(condition, message);
                 }
@@ -1101,9 +1116,17 @@
                     const parameters = this._formatImportParameters(signature);
                     const {id: _id = null, file: _file = null, dependencies: _dependencies = null, factory: _factory = null} = parameters;
                     Resolve_as_section: {
-                        if (_id) {
-                            this.assert(this.section.has(_id), `No section named «${_id}» on «ModulerV6.prototype.import»`);
-                            return this.section.get(_id);
+                        if (!_id) break Resolve_as_section;
+                        As_loaded_section: {
+                            if (this.section.has(_id)) {
+                                return this.section.get(_id);
+                            }
+                        }
+                        As_mapped_section: {
+                            const uniqueFailure = {};
+                            const sectionByMap = this._importSectionByMap(_id, uniqueFailure);
+                            this.assert(sectionByMap !== uniqueFailure, `No section named «${_id}» on «ModulerV6.prototype.import»`);
+                            return sectionByMap;
                         }
                     }
                     Resolve_as_file: {
