@@ -3741,6 +3741,27 @@
                 }
             }
         };
+        static Files=class Files {
+            static create(...args) {
+                return new this(...args);
+            }
+            constructor(devbin) {
+                this.devbin = devbin;
+            }
+            async trify(callback, ...args) {
+                try {
+                    return await callback(...args);
+                } catch (error) {
+                    return null;
+                }
+            }
+            deleteFile=Object.assign(file => require("fs").promises.unlink(file), {
+                try: (...args) => this.trify(this.deleteFile, ...args)
+            });
+            hasFile(file) {
+                return require("fs").promises.access(file).then(() => true).catch(error => false);
+            }
+        };
         cronometer=this.constructor.Cronometer();
         assert(...args) {
             return this.moduler.assert(...args);
@@ -3810,6 +3831,7 @@
             this.shadowCommands = parent ? parent.shadowCommands : new this.constructor.ShadowCommands(this);
             this.shadowFileEvents = parent ? parent.shadowFileEvents : new this.constructor.ShadowFileEvents(this);
             this.tester = parent ? parent.tester : new this.constructor.Tester(this);
+            this.files = parent ? parent.files : new this.constructor.Files(this);
         }
     };
 }.call());
