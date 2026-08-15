@@ -2371,7 +2371,8 @@
                             const targetPath = targetPaths[indexTarget];
                             const targetCompilation = await subcompiler._compileRecursively({
                                 resource: subcompiler.fullpathOf(targetPath),
-                                isRoot: false
+                                isRoot: false,
+                                parentCompilation: compilationFile.parentCompilation || compilationFile
                             }, compilationProcess);
                             Inject_in_compilation_text: {}
                             Inject_in_report_object: {
@@ -2420,7 +2421,8 @@
                             const targetPath = targetPaths[indexTarget];
                             const targetCompilation = await subcompiler._compileRecursively({
                                 resource: subcompiler.fullpathOf(targetPath),
-                                isRoot: false
+                                isRoot: false,
+                                parentCompilation: compilationFile.parentCompilation || compilationFile
                             }, compilationProcess);
                             Inject_in_compilation_text: {}
                             Inject_in_report_object: {
@@ -2648,7 +2650,7 @@
                 this._trace("_getPreferredOutput", arguments);
                 return {
                     file: compilationFile.resource,
-                    report: compilationProcess.to === "data" ? compilationFile.report : false,
+                    report: compilationFile.report || false,
                     ...compilationFile.compilation
                 };
             }
