@@ -1568,7 +1568,6 @@
                 const fileCss = this.compiler.constructor._changeFileExtension(fileNormalization, ".css");
                 const fileMd = this.compiler.constructor._changeFileExtension(fileNormalization, ".md");
                 const promises = [];
-                console.log(this);
                 if (this.js || true) {
                     const outputJs = options.mode === "beautified" && this.beautifiedJs ? this.beautifiedJs.code : options.mode === "minified" && this.minifiedJs ? this.minifiedJs.code : this.js;
                     promises.push(require("fs").promises.writeFile(fileJs, outputJs, "utf8"));
@@ -2327,7 +2326,6 @@
         async _compileAsModulerImport(compilationFile, compilationProcess, {token: token, tokenIndex: tokenIndex}) {
             if (compilationProcess.to !== "data") {
                 this._trace("_compileAsModulerImport", arguments);
-                return false;
             }
             this._traceIn("_compileAsModulerImport", arguments);
             let parameters, namedParameters = {}, targetPaths = [];
