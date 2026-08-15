@@ -1470,10 +1470,16 @@
             hasFile(file) {
                 return require("fs").promises.access(file).then(() => true).catch(error => false);
             }
-            writeFile=Object.assign((file, contents, encoding = "utf8") => require("fs").promises.writeFile(file, contents, encoding), {
+            writeFile=Object.assign((file, contents, encoding = "utf8") => {
+                const absolutePath = this.compiler.normalizationOf(file);
+                return require("fs").promises.writeFile(absolutePath, contents, encoding);
+            }, {
                 try: (...args) => this.trify(this.writeFile, ...args)
             });
-            readFile=Object.assign((file, encoding = "utf8") => require("fs").promises.readFile(file, encoding), {
+            readFile=Object.assign((file, encoding = "utf8") => {
+                const absolutePath = this.compiler.normalizationOf(file);
+                return require("fs").promises.readFile(absolutePath, encoding);
+            }, {
                 try: (...args) => this.trify(this.readFile, ...args)
             });
         };
@@ -1531,7 +1537,8 @@
                     },
                     report: {
                         tree: {}
-                    }
+                    },
+                    mdUnification: []
                 };
             }
             constructor(compilationFile, compilationProcess, compiler) {
@@ -1577,7 +1584,7 @@
                     console.log("[*] Saving compilation.css at: " + fileCss);
                 } else if (this.md) {
                     promises.push(require("fs").promises.writeFile(fileMd, this.md, "utf8"));
-                    console.log("[*] Saving compilation.md at: " + fileCss);
+                    console.log("[*] Saving compilation.md at: " + fileMd);
                 }
                 return Promise.all(promises);
             }
@@ -2027,6 +2034,9 @@
                     });
                 }
             }
+            Unify_markdown: {
+                this._unifyCompilationMarkdown(compilationFile);
+            }
             this._traceOut("_compileTokens", arguments);
             return compilationFile.compilation;
         }
@@ -2087,12 +2097,10 @@
                 Bundle_as_CompilationResult: {
                     output = new this.constructor.CompilationResult(output, this);
                 }
-                If_file_is_entry: {
-                    if (compilationFile.resource.endsWith(".entry.js")) {
-                        Generate_rels_json_file: {
-                            const relsFile = this.normalizationOf(this.rootdirOf(compilationFile.resource).replace(/^\@\/src\//g, "@/dist/").replace(/\.entry\.js$/g, ".rels.json"));
-                            await this.files.writeFile.try(relsFile, JSON.stringify(compilationFile.report, null, 2), "utf8");
-                        }
+                And_file_is_entry: if (compilationFile.resource.endsWith(".entry.js")) {
+                    Generate_rels_json_file: {
+                        const relsFile = this.normalizationOf(this.rootdirOf(compilationFile.resource).replace(/^\@\/src\//g, "@/dist/").replace(/\.entry\.js$/g, ".rels.json"));
+                        await this.files.writeFile.try(relsFile, JSON.stringify(compilationFile.report, null, 2), "utf8");
                     }
                 }
             }
@@ -2127,11 +2135,13 @@
         _tryToReadFile(file, altContent = undefined) {
             return require("fs").promises.readFile(file, "utf8").catch(err => altContent);
         }
-        _prependToParentCompilationFile(compilationFile, content, extension = "md") {
+        _prependToParentCompilationFile(compilationFile, content, extension = "md", betterAppend = false) {
+            const method = betterAppend ? "unshift" : "push";
+            compilationFile.mdUnification[method](content);
             if (compilationFile.parentCompilation) {
-                compilationFile.parentCompilation.compilation[extension] = content + compilationFile.parentCompilation.compilation[extension];
+                compilationFile.parentCompilation.mdUnification[method](content);
             }
-            compilationFile.compilation[extension] = content + compilationFile.compilation[extension];
+            return;
         }
         _compileAsModulerSectionGet(compilationFile, compilationProcess, {token: token, tokenIndex: tokenIndex}) {
             if (compilationProcess.to !== "data") {
@@ -2449,7 +2459,8 @@
             Compile_target: {
                 targetCompilation = await this._compileRecursively({
                     resource: targetPath,
-                    isRoot: false
+                    isRoot: false,
+                    parentCompilation: compilationFile.parentCompilation || compilationFile
                 }, compilationProcess);
             }
             Inject_in_compilation_text: {}
@@ -2464,7 +2475,7 @@
         }
         async _compileAsInjects(compilationFile, compilationProcess, {token: token, tokenIndex: tokenIndex}) {
             this._traceIn("_compileAsInjects", arguments);
-            let parameters, targetPath, targetCompilation;
+            let parameters, targetPath, targetCompilation, wasPrepended = false;
             const {tokenization: tokenization, source: source, resource: resource, isRoot: isRoot} = compilationFile;
             Evaluate_parameters: {
                 parameters = await this._getDataForTokenCompilation({
@@ -2494,52 +2505,51 @@
             Compile_target: {
                 targetCompilation = await this._compileRecursively({
                     resource: targetPath,
-                    isRoot: false
+                    isRoot: false,
+                    parentCompilation: compilationFile
                 }, compilationProcess);
             }
             Inject_in_compilation_text: {
                 if (compilationFile.resource.endsWith(".js")) {
                     let replacement = "";
-                    if (targetPath.endsWith("js")) {
+                    if (targetPath.endsWith(".js")) {
                         throw new Error("Syntax of «@injects» should not be used to import «js» files from «js» files. Use another syntax instead, like «$v6.injects.source» or «commented template injection» on «CompilerV6.prototype._compileAsInjects»");
-                        replacement = targetCompilation.js;
-                    } else if (targetPath.endsWith("css")) {
+                    } else if (targetPath.endsWith(".css")) {
                         compilationFile.compilation.css += "\n" + targetCompilation.css;
-                    } else if (targetPath.endsWith("md")) {
-                        compilationFile.compilation.md += "\n\n" + targetCompilation.md;
-                    } else {
+                    } else if (targetPath.endsWith(".md")) {} else {
                         throw new Error(`Syntax of «@injects» on «${targetPath}» is trying to import foraneous file extension.`);
                     }
                     compilationFile.compilation.js = this._replaceTextRange(compilationFile.compilation.js, token.location[0], token.location[1], replacement);
                 } else if (compilationFile.resource.endsWith(".css")) {
                     let replacement = "";
-                    if (targetPath.endsWith("js")) {
+                    if (targetPath.endsWith(".js")) {
                         throw new Error("Syntax of «@injects» can't be used to import «js» files from «css» files. Use another syntax instead.");
                         replacement = targetCompilation.js;
-                    } else if (targetPath.endsWith("css")) {
+                    } else if (targetPath.endsWith(".css")) {
                         compilationFile.compilation.css += "\n" + targetCompilation.css;
-                    } else if (targetPath.endsWith("md")) {
-                        compilationFile.compilation.md += "\n\n" + targetCompilation.md;
-                    } else {
+                    } else if (targetPath.endsWith(".md")) {} else {
                         throw new Error(`Syntax of «@injects» on «${targetPath}» is trying to import foraneous file extension.`);
                     }
                     compilationFile.compilation.css = this._replaceTextRange(compilationFile.compilation.css, token.location[0], token.location[1], replacement);
                 } else if (compilationFile.resource.endsWith(".md")) {
                     let replacement = "";
-                    if (targetPath.endsWith("js")) {
+                    if (targetPath.endsWith(".js")) {
                         throw new Error("Syntax of «@injects» can't be used to import «js» files from «md» files. Use another syntax instead.");
-                        replacement = targetCompilation.js;
-                    } else if (targetPath.endsWith("css")) {
+                    } else if (targetPath.endsWith(".css")) {
                         throw new Error("Syntax of «@injects» can't be used to import «css» files from «md» files. Use another syntax instead.");
-                        compilationFile.compilation.css += "\n" + targetCompilation.css;
-                    } else if (targetPath.endsWith("md")) {
-                        compilationFile.compilation.md += "\n\n" + targetCompilation.md;
+                    } else if (targetPath.endsWith(".md")) {
+                        compilationFile.compilation.md = this._replaceTextRange(compilationFile.compilation.md, token.location[0], token.location[1] - 1, "\n\n" + targetCompilation.md);
+                        wasPrepended = true;
                     } else {
                         throw new Error(`Syntax of «@injects» on «${targetPath}» is trying to import foraneous file extension.`);
                     }
-                    compilationFile.compilation.md = this._replaceTextRange(compilationFile.compilation.md, token.location[0], token.location[1], replacement);
                 } else {
                     throw new Error(`Syntax of «@injects» should only be available on «css,md» files and not on «${compilationFile.extension}»`);
+                }
+            }
+            Append_markdown: {
+                if (!wasPrepended) {
+                    this._prependToParentCompilationFile(compilationFile, "\n\n" + targetCompilation.md, "md", true);
                 }
             }
             Inject_in_report_object: {
@@ -2557,24 +2567,30 @@
         }
         async _compileAsMultilineMarkdownComment(compilationFile, compilationProcess, {token: token, tokenIndex: tokenIndex, state: state}) {
             let output = "";
-            output += "\n";
-            output += state.tabule(0);
-            output += this._removeInitialSpace(token.inner).split("\n").map(line => state.tabule(0) + line.replace(/^[ \t]*\* ?/g, "")).join("\n").replace(/\n[\t ]*$/g, "");
-            this._prependToParentCompilationFile(compilationFile, output, "md");
+            output += this._removeInitialSpace(token.inner).split("\n").map(line => line.replace(/^[ \t]*\* ?/g, "")).join("\n").replace(/\n[\t ]*$/g, "");
+            this._prependToParentCompilationFile(compilationFile, {
+                prefix: "\n",
+                tabulation: 0,
+                body: output
+            }, "md");
         }
         async _compileAsNewParagraphMarkdownComment(compilationFile, compilationProcess, {token: token, tokenIndex: tokenIndex, state: state}) {
             let output = "";
-            output += "\n\n";
-            output += state.tabule(0);
             output += this._removeInitialSpace(token.inner);
-            this._prependToParentCompilationFile(compilationFile, output, "md");
+            this._prependToParentCompilationFile(compilationFile, {
+                prefix: "\n\n",
+                tabulation: 0,
+                body: output
+            }, "md");
         }
         async _compileAsNewLineMarkdownComment(compilationFile, compilationProcess, {token: token, tokenIndex: tokenIndex, state: state}) {
             let output = "";
-            output += "\n";
-            output += state.tabule(0);
             output += this._removeInitialSpace(token.inner);
-            this._prependToParentCompilationFile(compilationFile, output, "md");
+            this._prependToParentCompilationFile(compilationFile, {
+                prefix: "\n",
+                tabulation: 0,
+                body: output
+            }, "md");
         }
         async _compileAsPrecisedTabulationMarkdownComment(compilationFile, compilationProcess, {token: token, tokenIndex: tokenIndex, state: state}) {
             const precisionMatch = token.inner.match(/^[0-9]+/g);
@@ -2585,10 +2601,12 @@
                 state.tabule(0, precisionNumber);
             } else {
                 let output = "";
-                output += "\n";
-                output += state.tabule(0, precisionNumber);
                 output += this._removeInitialSpace(innerText);
-                this._prependToParentCompilationFile(compilationFile, output, "md");
+                this._prependToParentCompilationFile(compilationFile, {
+                    prefix: "\n",
+                    tabulation: 0,
+                    body: output
+                }, "md");
             }
         }
         async _compileAsIncreasedTabulationMarkdownComment(compilationFile, compilationProcess, {token: token, tokenIndex: tokenIndex, state: state}) {
@@ -2612,12 +2630,20 @@
         async _compileAsInlineMarkdownComment(compilationFile, compilationProcess, {token: token, tokenIndex: tokenIndex, state: state}) {
             let output = " ";
             output += this._removeInitialSpace(token.inner);
-            this._prependToParentCompilationFile(compilationFile, output, "md");
+            this._prependToParentCompilationFile(compilationFile, {
+                prefix: " ",
+                tabulation: 0,
+                body: output
+            }, "md");
         }
         async _compileAsUnspacedInlineMarkdownComment(compilationFile, compilationProcess, {token: token, tokenIndex: tokenIndex, state: state}) {
             let output = "";
             output += this._removeInitialSpace(token.inner);
-            this._prependToParentCompilationFile(compilationFile, output, "md");
+            this._prependToParentCompilationFile(compilationFile, {
+                prefix: "",
+                tabulation: 0,
+                body: output
+            }, "md");
         }
         _initializeLogger(directory) {
             this._trace("_initializeLogger", arguments);
@@ -2802,6 +2828,14 @@
         }
         _removeInitialSpace(text) {
             return text.startsWith(" ") ? text.substr(1) : text;
+        }
+        _unifyCompilationMarkdown(compilationFile) {
+            compilationFile.compilation.md += compilationFile.mdUnification.reverse().map(it => {
+                if (typeof it === "string") {
+                    return it;
+                }
+                return it.prefix + "   ".repeat(it.tabulation) + it.body;
+            }).join("");
         }
         normalizationOf(nodepath, origin = false) {
             this._trace("normalizationOf", arguments);
