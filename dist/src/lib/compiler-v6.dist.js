@@ -1017,21 +1017,26 @@
                 }
             }
             _importFactory(factory, dependencies = []) {
-                let originalHolder = {};
+                let originalHolder = {}, output;
                 const moduleHolder = {
                     get exports() {
                         return originalHolder;
                     },
-                    set exports(output) {
-                        originalHolder = output;
+                    set exports(anotherOutput) {
+                        originalHolder = anotherOutput;
                     }
                 };
-                const result = factory(dependencies, {
+                output = factory(dependencies, {
                     module: moduleHolder,
                     exports: moduleHolder.exports,
                     $moduler: this
                 });
-                return typeof result === "undefined" ? originalHolder : result;
+                if (typeof output === "undefined") {
+                    if (Object.keys(originalHolder).length) {
+                        output = originalHolder;
+                    }
+                }
+                return output;
             }
             _importSectionByMap(sectionId, returnsOnMissing = undefined) {
                 if (!this.settings.data?.sectionsMap) {
@@ -1445,6 +1450,33 @@
             }
         };
         static Moduler=ModulerV6;
+        static Files=class Files {
+            static create(...args) {
+                return new this(...args);
+            }
+            constructor(compiler) {
+                this.compiler = compiler;
+            }
+            async trify(callback, ...args) {
+                try {
+                    return await callback(...args);
+                } catch (error) {
+                    return null;
+                }
+            }
+            deleteFile=Object.assign(file => require("fs").promises.unlink(file), {
+                try: (...args) => this.trify(this.deleteFile, ...args)
+            });
+            hasFile(file) {
+                return require("fs").promises.access(file).then(() => true).catch(error => false);
+            }
+            writeFile=Object.assign((file, contents, encoding = "utf8") => require("fs").promises.writeFile(file, contents, encoding), {
+                try: (...args) => this.trify(this.writeFile, ...args)
+            });
+            readFile=Object.assign((file, encoding = "utf8") => require("fs").promises.readFile(file, encoding), {
+                try: (...args) => this.trify(this.readFile, ...args)
+            });
+        };
         static CompilationProcess=class CompilationProcess {
             static assert(condition, message) {
                 if (!condition) throw new Error(message);
@@ -1536,13 +1568,17 @@
                 const fileCss = this.compiler.constructor._changeFileExtension(fileNormalization, ".css");
                 const fileMd = this.compiler.constructor._changeFileExtension(fileNormalization, ".md");
                 const promises = [];
-                if (this.js) {
+                console.log(this);
+                if (this.js || true) {
                     const outputJs = options.mode === "beautified" && this.beautifiedJs ? this.beautifiedJs.code : options.mode === "minified" && this.minifiedJs ? this.minifiedJs.code : this.js;
                     promises.push(require("fs").promises.writeFile(fileJs, outputJs, "utf8"));
+                    console.log(`[*] Saving compilation.js (${options.mode || "raw code"}) at: ` + fileJs);
                 } else if (this.css) {
                     promises.push(require("fs").promises.writeFile(fileCss, this.css, "utf8"));
+                    console.log("[*] Saving compilation.css at: " + fileCss);
                 } else if (this.md) {
                     promises.push(require("fs").promises.writeFile(fileMd, this.md, "utf8"));
+                    console.log("[*] Saving compilation.md at: " + fileCss);
                 }
                 return Promise.all(promises);
             }
@@ -1816,6 +1852,7 @@
             this.rootdir = parent ? parent.rootdir : basedir;
             this.moduler = new ModulerV6(basedir);
             this.moduler.compiler = this;
+            this.files = parent ? parent.files : new this.constructor.Files(this);
             this._grammars = this.moduler.grammars;
             this._parser = this.moduler.parser;
         }
@@ -2029,7 +2066,7 @@
                             chars: beautifiedCode.length,
                             originalSize: originalSize,
                             size: this.constructor.getStringSize(beautifiedCode),
-                            sizeRelationOf: (beautifiedCode.length / output.js.length * 100).toFixed(2) + "%",
+                            sizeRelationOf: (beautifiedCode.length / (output.js.length || 1) * 100).toFixed(2) + "%",
                             time: ((new Date - startedAt) / 1e3).toFixed(3) + "s"
                         };
                     }
@@ -2041,14 +2078,24 @@
                             chars: minifiedCode.length,
                             originalSize: originalSize,
                             size: this.constructor.getStringSize(minifiedCode),
-                            sizeRelationOf: (minifiedCode.length / output.js.length * 100).toFixed(2) + "%",
+                            sizeRelationOf: (minifiedCode.length / (output.js.length || 1) * 100).toFixed(2) + "%",
                             time: ((new Date - startedAt) / 1e3).toFixed(3) + "s"
                         };
                     }
                 }
             }
-            Bundle_as_CompilationResult_if_file_is_root: if (fileParameters.isRoot) {
-                output = new this.constructor.CompilationResult(output, this);
+            If_file_is_root: if (fileParameters.isRoot) {
+                Bundle_as_CompilationResult: {
+                    output = new this.constructor.CompilationResult(output, this);
+                }
+                If_file_is_entry: {
+                    if (compilationFile.resource.endsWith(".entry.js")) {
+                        Generate_rels_json_file: {
+                            const relsFile = this.normalizationOf(this.rootdirOf(compilationFile.resource).replace(/^\@\/src\//g, "@/dist/").replace(/\.entry\.js$/g, ".rels.json"));
+                            await this.files.writeFile.try(relsFile, JSON.stringify(compilationFile.report, null, 2), "utf8");
+                        }
+                    }
+                }
             }
             this._traceOut("_compileRecursively", arguments);
             return output;
@@ -2183,7 +2230,8 @@
                 Esto_tiene_que_hacerse_desde_dentro_del_compileRecursively: {}
             }
             Inject_in_report_object: {
-                if (compilationProcess.to !== "data") {
+                if (compilationProcess.to !== "data") {}
+                if (!compilationFile?.report?.tree || !targetCompilation) {
                     break Inject_in_report_object;
                 }
                 this._reportFileToken(compilationFile, targetPath, token);
@@ -2329,7 +2377,6 @@
         async _compileAsModulerExport(compilationFile, compilationProcess, {token: token, tokenIndex: tokenIndex}) {
             if (compilationProcess.to !== "data") {
                 this._trace("_compileAsModulerExport", arguments);
-                return false;
             }
             this._traceIn("_compileAsModulerExport", arguments);
             let parameters, namedParameters = {}, targetPaths = [];
@@ -2496,7 +2543,8 @@
                 }
             }
             Inject_in_report_object: {
-                if (compilationProcess.to !== "data") {
+                if (compilationProcess.to !== "data") {}
+                if (!compilationFile?.report?.tree || !targetCompilation) {
                     break Inject_in_report_object;
                 }
                 this._reportFileToken(compilationFile, targetPath, token);
