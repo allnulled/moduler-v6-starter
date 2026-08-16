@@ -2715,6 +2715,32 @@
                 const minLevel = entries.length ? Math.min(...entries.map(it => it.level)) : 0;
                 return entries.map(it => `${"  ".repeat(Math.max(0, it.level - minLevel))}- ${this._toMarkdownLink(it.title)}`).join("\n");
             }
+            _extractMarkdownRelations(compilationFile) {
+                let output = "";
+                const input = compilationFile.report.tree;
+                const files = Object.keys(input);
+                for (let indexFile = 0; indexFile < files.length; indexFile++) {
+                    const fileId = files[indexFile];
+                    const file = input[fileId];
+                    const tokens = Object.keys(file);
+                    output += `- **${fileId}**`;
+                    output += !tokens.length ? " *free*\n" : ` uses **${tokens.length} files**\n`;
+                    let counter = 0;
+                    for (let indexToken = 0; indexToken < tokens.length; indexToken++) {
+                        const tokenId = tokens[indexToken];
+                        const token = file[tokenId];
+                        const bestId = (() => {
+                            if (!token.referenceOf?.rootpath) {
+                                return token.inner;
+                            } else {
+                                return token.referenceOf.rootpath;
+                            }
+                        })();
+                        output += `  ${++counter}. *${bestId}* with **${token.syntax}**\n`;
+                    }
+                }
+                return output;
+            }
             _toMarkdownLink(title) {
                 const slug = title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/<[^>]*>/g, "").replace(/[`*_~]/g, "").replace(/[^\w\s-]/g, "").trim().replace(/\s+/g, "-").replace(/-+/g, "-");
                 return `[${title}](#${slug})`;
@@ -2931,10 +2957,14 @@
                     }).join("");
                 }
                 Inject_table_of_contents: {
-                    const pos = output.indexOf("{{ Table of contents }}");
-                    if (pos === -1) break Inject_table_of_contents;
+                    if (!output.includes("{{ Table of contents }}")) break Inject_table_of_contents;
                     const toc = this._extractMarkdownTableOfContents(output, true);
                     output = output.replace("{{ Table of contents }}", toc);
+                }
+                Inject_relations: {
+                    if (!output.includes("{{ Relations }}")) break Inject_relations;
+                    const rels = this._extractMarkdownRelations(compilationFile);
+                    output = output.replace("{{ Relations }}", rels);
                 }
                 Export_unification: {
                     compilationFile.compilation.md += output;
