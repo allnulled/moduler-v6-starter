@@ -2609,13 +2609,17 @@
                 const precisionNumber = parseInt(precisionText);
                 const innerText = token.inner.substr(precisionText.length + 1);
                 if (!innerText.trim()) {
-                    state.tabule(0, precisionNumber);
+                    this._prependToParentCompilationFile(compilationFile, {
+                        prefix: "",
+                        tabulation: "." + precisionNumber,
+                        body: ""
+                    }, "md");
                 } else {
                     let output = "";
                     output += this._removeInitialSpace(innerText);
                     this._prependToParentCompilationFile(compilationFile, {
                         prefix: "\n",
-                        tabulation: 0,
+                        tabulation: "." + precisionNumber,
                         body: output
                     }, "md");
                 }
@@ -2624,19 +2628,25 @@
                 const increasionMatch = token.inner.match(/^(\+)+/g);
                 const increasionText = (increasionMatch || [ "" ])[0];
                 const increasionNumber = increasionText.length + 1;
-                let output = "\n";
-                output += state.tabule(increasionNumber);
+                let output = "";
                 output += this._removeInitialSpace(token.inner.substr(increasionNumber + 1));
-                this._prependToParentCompilationFile(compilationFile, output, "md");
+                this._prependToParentCompilationFile(compilationFile, {
+                    prefix: "\n",
+                    tabulation: 1,
+                    body: output
+                }, "md");
             }
             async _compileAsDecreasedTabulationMarkdownComment(compilationFile, compilationProcess, {token: token, tokenIndex: tokenIndex, state: state}) {
                 const decreasionMatch = token.inner.match(/^(\-)+/g);
                 const decreasionText = (decreasionMatch || [ "" ])[0];
                 const decreasionNumber = decreasionText.length + 1;
-                let output = "\n";
-                output += state.tabule(-1 * decreasionNumber);
+                let output = "";
                 output += this._removeInitialSpace(token.inner.substr(decreasionNumber + 1));
-                this._prependToParentCompilationFile(compilationFile, output, "md");
+                this._prependToParentCompilationFile(compilationFile, {
+                    prefix: "\n",
+                    tabulation: -1,
+                    body: output
+                }, "md");
             }
             async _compileAsInlineMarkdownComment(compilationFile, compilationProcess, {token: token, tokenIndex: tokenIndex, state: state}) {
                 let output = " ";
@@ -2841,11 +2851,17 @@
                 return text.startsWith(" ") ? text.substr(1) : text;
             }
             _unifyCompilationMarkdown(compilationFile) {
+                let tabulation = 0;
                 compilationFile.compilation.md += compilationFile.mdUnification.reverse().map(it => {
                     if (typeof it === "string") {
                         return it;
                     }
-                    return it.prefix + "   ".repeat(it.tabulation) + it.body;
+                    if (typeof it.tabulation === "number") {
+                        tabulation += it.tabulation;
+                    } else if (typeof it.tabulation === "string") {
+                        tabulation = parseInt(it.tabulation.substr(1));
+                    }
+                    return it.prefix + "   ".repeat(tabulation) + it.body;
                 }).join("");
             }
             normalizationOf(nodepath, origin = false) {
