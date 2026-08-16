@@ -2154,9 +2154,6 @@
                     }
                 }
                 compilationFile.mdUnification[method](mdItemMetadata);
-                if (compilationFile.parentCompilation) {
-                    this._prependToParentCompilationFile(compilationFile.parentCompilation, content, extension, betterAppend);
-                }
                 return;
             }
             _compileAsModulerSectionGet(compilationFile, compilationProcess, {token: token, tokenIndex: tokenIndex}) {
@@ -2529,6 +2526,7 @@
                     if (compilationFile.resource.endsWith(".js")) {
                         let replacement = "";
                         if (targetPath.endsWith(".js")) {
+                            return this._compileAsInjectSource(...arguments);
                             throw new Error("Syntax of «@injects» should not be used to import «js» files from «js» files. Use another syntax instead, like «$v6.injects.source» or «commented template injection» on «CompilerV6.prototype._compileAsInjects»");
                         } else if (targetPath.endsWith(".css")) {
                             compilationFile.compilation.css += "\n" + targetCompilation.css;
@@ -2678,6 +2676,48 @@
                     tabulation: 0,
                     body: output
                 }, "md");
+            }
+            _extractMarkdownTableOfContents(text, asMarkdown = false) {
+                const entries = [];
+                const slugCounters = {};
+                const lines = text.split(/\r?\n/);
+                let insideCodeBlock = false;
+                for (const line of lines) {
+                    if (/^\s*```/.test(line)) {
+                        insideCodeBlock = !insideCodeBlock;
+                        continue;
+                    }
+                    if (insideCodeBlock) {
+                        continue;
+                    }
+                    const match = line.match(/^\s*(#{1,6})\s+(.+?)\s*#*\s*$/);
+                    if (!match) {
+                        continue;
+                    }
+                    const level = match[1].length - 1;
+                    const title = match[2].trim();
+                    let slug = title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/<[^>]*>/g, "").replace(/[`*_~]/g, "").replace(/[^\w\s-]/g, "").trim().replace(/\s+/g, "-").replace(/-+/g, "-");
+                    if (slugCounters[slug] === undefined) {
+                        slugCounters[slug] = 0;
+                    } else {
+                        slugCounters[slug]++;
+                        slug += "-" + slugCounters[slug];
+                    }
+                    entries.push({
+                        level: level,
+                        title: title,
+                        slug: slug
+                    });
+                }
+                if (!asMarkdown) {
+                    return entries;
+                }
+                const minLevel = entries.length ? Math.min(...entries.map(it => it.level)) : 0;
+                return entries.map(it => `${"  ".repeat(Math.max(0, it.level - minLevel))}- ${this._toMarkdownLink(it.title)}`).join("\n");
+            }
+            _toMarkdownLink(title) {
+                const slug = title.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/<[^>]*>/g, "").replace(/[`*_~]/g, "").replace(/[^\w\s-]/g, "").trim().replace(/\s+/g, "-").replace(/-+/g, "-");
+                return `[${title}](#${slug})`;
             }
             _initializeLogger(directory) {
                 this._trace("_initializeLogger", arguments);
@@ -2890,8 +2930,19 @@
                         return finalText;
                     }).join("");
                 }
+                Inject_table_of_contents: {
+                    const pos = output.indexOf("{{ Table of contents }}");
+                    if (pos === -1) break Inject_table_of_contents;
+                    const toc = this._extractMarkdownTableOfContents(output, true);
+                    output = output.replace("{{ Table of contents }}", toc);
+                }
                 Export_unification: {
                     compilationFile.compilation.md += output;
+                }
+                Export_unification_to_parent_compilation: {
+                    if (compilationFile.parentCompilation) {
+                        this._prependToParentCompilationFile(compilationFile.parentCompilation, output, "md", false);
+                    }
                 }
             }
             normalizationOf(nodepath, origin = false) {
@@ -3213,11 +3264,13 @@
                     }
                     if (compilation.css) {
                         await require("fs").promises.writeFile(distCss, compilation.css, "utf8");
+                        if (!event.processedEntries[compilation.file]) event.processedEntries[compilation.file] = {};
                         event.processedEntries[compilation.file].distCss = distCss;
                         report.css = distCss;
                     }
                     if (compilation.md) {
                         await require("fs").promises.writeFile(distMd, compilation.md, "utf8");
+                        if (!event.processedEntries[compilation.file]) event.processedEntries[compilation.file] = {};
                         event.processedEntries[compilation.file].distMd = distMd;
                         report.md = distMd;
                     }
