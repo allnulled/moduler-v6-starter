@@ -2012,16 +2012,7 @@
                 "Inline Markdown Comment": this._compileAsInlineMarkdownComment,
                 "Unspaced Inline Markdown Comment": this._compileAsUnspacedInlineMarkdownComment
             };
-            const state = {
-                tabulationIndex: 0,
-                tabulationSymbol: "   ",
-                tabule(mov = 0, precised = undefined) {
-                    this.tabulationIndex += mov;
-                    if (typeof precised === "number") this.tabulationIndex = precised;
-                    if (this.tabulationIndex < 0) this.tabulationIndex = 0;
-                    return this.tabulationSymbol.repeat(this.tabulationIndex);
-                }
-            };
+            const state = {};
             Iterating_tokens_backwardly: for (let tokenIndex = tokens.length - 1; tokenIndex >= 0; tokenIndex--) {
                 const token = tokens[tokenIndex];
                 Aplicar_logica_de_compilacion_backward_segun_token: {
@@ -2035,7 +2026,7 @@
                 }
             }
             Unify_markdown: {
-                this._unifyCompilationMarkdown(compilationFile);
+                this._unifyCompilationMarkdown(compilationFile, compilationProcess);
             }
             this._traceOut("_compileTokens", arguments);
             return compilationFile.compilation;
@@ -2054,6 +2045,12 @@
             Add_entry_in_tree: {
                 const id = this.rootdirOf(compilationFile.resource);
                 compilationFile.report.tree[id] = compilationFile.report.tree[id] || {};
+            }
+            Update_md_title_indentation: {
+                compilationFile.titleIndentation = compilationFile.parentCompilation?.titleIndentation || 0;
+                if (compilationFile.resource.endsWith(".entry.js")) {
+                    compilationFile.titleIndentation++;
+                }
             }
             Compile_inner_files_recursively_with_subcompiler: {
                 subcompiler = this._cloneForFile(compilationFile.resource, this);
@@ -2137,9 +2134,17 @@
         }
         _prependToParentCompilationFile(compilationFile, content, extension = "md", betterAppend = false) {
             const method = betterAppend ? "unshift" : "push";
-            compilationFile.mdUnification[method](content);
+            let mdItemMetadata = content;
+            Set_title_indentation: {
+                if (typeof content === "object") {
+                    if (!("titleIndentation" in content)) {
+                        content.titleIndentation = compilationFile.titleIndentation;
+                    }
+                }
+            }
+            compilationFile.mdUnification[method](mdItemMetadata);
             if (compilationFile.parentCompilation) {
-                compilationFile.parentCompilation.mdUnification[method](content);
+                this._prependToParentCompilationFile(compilationFile.parentCompilation, content, extension, betterAppend);
             }
             return;
         }
@@ -2225,7 +2230,7 @@
                     targetCompilation = await this._compileRecursively({
                         resource: targetPath,
                         isRoot: false,
-                        parentCompilation: compilationFile.parentCompilation || compilationFile
+                        parentCompilation: compilationFile
                     }, compilationProcess);
                 }
             }
@@ -2371,7 +2376,7 @@
                         const targetCompilation = await subcompiler._compileRecursively({
                             resource: subcompiler.fullpathOf(targetPath),
                             isRoot: false,
-                            parentCompilation: compilationFile.parentCompilation || compilationFile
+                            parentCompilation: compilationFile
                         }, compilationProcess);
                         Inject_in_compilation_text: {}
                         Inject_in_report_object: {
@@ -2421,7 +2426,7 @@
                         const targetCompilation = await subcompiler._compileRecursively({
                             resource: subcompiler.fullpathOf(targetPath),
                             isRoot: false,
-                            parentCompilation: compilationFile.parentCompilation || compilationFile
+                            parentCompilation: compilationFile
                         }, compilationProcess);
                         Inject_in_compilation_text: {}
                         Inject_in_report_object: {
@@ -2460,7 +2465,7 @@
                 targetCompilation = await this._compileRecursively({
                     resource: targetPath,
                     isRoot: false,
-                    parentCompilation: compilationFile.parentCompilation || compilationFile
+                    parentCompilation: compilationFile
                 }, compilationProcess);
             }
             Inject_in_compilation_text: {}
@@ -2538,7 +2543,11 @@
                     } else if (targetPath.endsWith(".css")) {
                         throw new Error("Syntax of «@injects» can't be used to import «css» files from «md» files. Use another syntax instead.");
                     } else if (targetPath.endsWith(".md")) {
-                        compilationFile.compilation.md = this._replaceTextRange(compilationFile.compilation.md, token.location[0], token.location[1] - 1, "\n\n" + targetCompilation.md);
+                        this._prependToParentCompilationFile(compilationFile, {
+                            prefix: "\n\n",
+                            tabulation: 0,
+                            body: this._replaceTextRange(compilationFile.compilation.md, token.location[0], token.location[1] - 1, targetCompilation.md)
+                        }, "md", false);
                         wasPrepended = true;
                     } else {
                         throw new Error(`Syntax of «@injects» on «${targetPath}» is trying to import foraneous file extension.`);
@@ -2549,7 +2558,11 @@
             }
             Append_markdown: {
                 if (!wasPrepended) {
-                    this._prependToParentCompilationFile(compilationFile, "\n\n" + targetCompilation.md, "md", true);
+                    this._prependToParentCompilationFile(compilationFile, {
+                        prefix: "\n\n",
+                        tabulation: 0,
+                        body: targetCompilation.md
+                    }, "md", false);
                 }
             }
             Inject_in_report_object: {
@@ -2839,19 +2852,36 @@
         _removeInitialSpace(text) {
             return text.startsWith(" ") ? text.substr(1) : text;
         }
-        _unifyCompilationMarkdown(compilationFile) {
-            let tabulation = 0;
-            compilationFile.compilation.md += compilationFile.mdUnification.reverse().map(it => {
-                if (typeof it === "string") {
-                    return it;
-                }
-                if (typeof it.tabulation === "number") {
-                    tabulation += it.tabulation;
-                } else if (typeof it.tabulation === "string") {
-                    tabulation = parseInt(it.tabulation.substr(1));
-                }
-                return it.prefix + "   ".repeat(tabulation) + it.body;
-            }).join("");
+        _unifyCompilationMarkdown(compilationFile, compilationProcess) {
+            let output, tabulation = 0;
+            Unify_parts: {
+                output = compilationFile.mdUnification.slice().reverse().map(it => {
+                    if (typeof it === "string") {
+                        return it;
+                    }
+                    Calculate_tabulation: {
+                        if (typeof it.tabulation === "number") {
+                            tabulation += it.tabulation;
+                        } else if (typeof it.tabulation === "string") {
+                            tabulation = parseInt(it.tabulation.substr(1));
+                        }
+                    }
+                    let indentedBody = it.body;
+                    Indent_body_titles: {
+                        if (it.titleIndentation) {
+                            indentedBody = indentedBody.replace(/(^|\n)\#/g, "\n#" + "#".repeat(it.titleIndentation));
+                        }
+                    }
+                    let finalText;
+                    Set_final_text: {
+                        finalText = it.prefix + "   ".repeat(tabulation) + indentedBody;
+                    }
+                    return finalText;
+                }).join("");
+            }
+            Export_unification: {
+                compilationFile.compilation.md += output;
+            }
         }
         normalizationOf(nodepath, origin = false) {
             this._trace("normalizationOf", arguments);
