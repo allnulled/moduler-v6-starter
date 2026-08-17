@@ -1,0 +1,17 @@
+{
+  "tree": {
+    "@/src/www/dev/settings.entry.js": {
+      "17-151": {
+        "syntax": "Moduler Import",
+        "type": "$moduler.import(",
+        "text": "$moduler.import([\n  \"@/dist/www/dev/settings/publicable.json\",\n], async function ([publicable]) {\n  return {\n    ...publicable,\n  };\n}",
+        "inner": "[\n  \"@/dist/www/dev/settings/publicable.json\",\n], async function ([publicable]) {\n  return {\n    ...publicable,\n  };\n}",
+        "outer": "$moduler.import([\n  \"@/dist/www/dev/settings/publicable.json\",\n], async function ([publicable]) {\n  return {\n    ...publicable,\n  };\n}",
+        "dependenciesOf": [
+          "@/dist/www/dev/settings/publicable.json"
+        ]
+      }
+    },
+    "@/dist/www/dev/settings/publicable.json": {}
+  }
+}

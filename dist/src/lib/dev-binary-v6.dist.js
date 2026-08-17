@@ -981,11 +981,15 @@
                 }
                 _importFile(filepathBrute) {
                     let originalHolder = {};
-                    let filepath, filepathMask, isInstr;
+                    let filepath, filepathMask, isInstr, isJson;
+                    isJson = filepathBrute.endsWith(".json");
                     Normalize_file: {
                         filepath = filepathMask = this.normalizationOf(filepathBrute);
                     }
                     Use_instrumentalized_if_conditions_are_met: {
+                        if (isJson) {
+                            break Use_instrumentalized_if_conditions_are_met;
+                        }
                         if (!(this.runtime.isDev || this.runtime.isTest)) {
                             break Use_instrumentalized_if_conditions_are_met;
                         }
@@ -1000,31 +1004,30 @@
                     }
                     console.log("[*] ModulerV6 imports: " + this.rootdirOf(filepath));
                     Evaluate_file_and_export_results: {
-                        if (filepathBrute.endsWith(".json")) {
+                        if (isJson) {
                             return this.modules[filepathMask] = this._readPath(filepathBrute).then(content => JSON.parse(content));
-                        } else {
-                            const moduleHolder = {
-                                get exports() {
-                                    return originalHolder;
-                                },
-                                set exports(output) {
-                                    originalHolder = output;
-                                }
-                            };
-                            return this.evaluateFile(filepath, {
-                                module: moduleHolder,
-                                exports: moduleHolder.exports,
-                                $moduler: this.cloneForFile(filepath)
-                            }).then(result => {
-                                let output = undefined;
-                                if (typeof result === "undefined") {
-                                    output = moduleHolder.exports;
-                                } else {
-                                    output = moduleHolder.exports = result;
-                                }
-                                return this.modules[filepathMask] = output;
-                            });
                         }
+                        const moduleHolder = {
+                            get exports() {
+                                return originalHolder;
+                            },
+                            set exports(output) {
+                                originalHolder = output;
+                            }
+                        };
+                        return this.evaluateFile(filepath, {
+                            module: moduleHolder,
+                            exports: moduleHolder.exports,
+                            $moduler: this.cloneForFile(filepath)
+                        }).then(result => {
+                            let output = undefined;
+                            if (typeof result === "undefined") {
+                                output = moduleHolder.exports;
+                            } else {
+                                output = moduleHolder.exports = result;
+                            }
+                            return this.modules[filepathMask] = output;
+                        });
                     }
                 }
                 _importFactory(factory, dependencies = []) {
@@ -1973,6 +1976,10 @@
                     out = this._parser.forCss.parse(compilationFile.source);
                 } else if (compilationFile.extension === "md") {
                     out = this._parser.forMd.parse(compilationFile.source);
+                } else if (compilationFile.extension === "json") {
+                    out = {
+                        formatted: []
+                    };
                 } else {
                     throw new Error(`File extension cannot be tokenized: «${compilationFile.resource}»`);
                 }
@@ -2118,6 +2125,13 @@
             _fetchCompilable(compilationFile, compilationProcess) {
                 this.assert(typeof compilationFile === "object", "Parameter «compilationFile» must be object on «CompilerV6.prototype._fetchCompilable»");
                 this.assert(typeof compilationFile.resource === "string", "Parameter «compilationFile.resource» must be string on «CompilerV6.prototype._fetchCompilable»");
+                if (compilationFile.resource.endsWith(".json")) {
+                    compilationFile.extension = "json";
+                    return this._readPath(compilationFile.resource).then(source => {
+                        compilationFile.source = "";
+                        return compilationFile.compilation.json = "";
+                    });
+                }
                 this.assert(/\.(js|css|md)$/g.test(compilationFile.resource), `Parameter «compilationFile.resource» now «${compilationFile.resource}» must match with valid extension on «CompilerV6.prototype._fetchCompilable»`);
                 Sacar_la_extension_del_fichero: {
                     compilationFile.extension = compilationFile.resource.match(/\.(js|css|md)$/g)[0].substr(1);
@@ -3534,14 +3548,18 @@
                             });
                         }
                     }
-                    On_root_execute_tests: {
-                        if (event.isRoot) {
-                            Run_feature_tests: {
-                                await this.devbin.tester.runDirectory("@/test/feature", file => this.matchesFileWithSimpleSelector(path.basename(file), [ ...event.testFeatures, ...this.devbin.settings.data?.features || [] ]));
-                            }
-                            Run_case_tests: {
-                                await this.devbin.tester.runDirectory("@/test/case", file => file.endsWith(".js"));
-                            }
+                    On_root: {
+                        if (!event.isRoot) break On_root;
+                        Run_feature_tests: {
+                            await this.devbin.tester.runDirectory("@/test/feature", file => this.matchesFileWithSimpleSelector(path.basename(file), [ ...event.testFeatures, ...this.devbin.settings.data?.features || [] ]));
+                        }
+                        Run_case_tests: {
+                            await this.devbin.tester.runDirectory("@/test/case", file => file.endsWith(".js"));
+                        }
+                        Run_devbin_test_command: {
+                            if (!await this.devbin.compiler.files.hasFile("@/dev/bin/test/command.js")) break Run_devbin_test_command;
+                            const output = await this.devbin.command([ "test", "--origin", filepath ]);
+                            if (output) console.log(output);
                         }
                     }
                 }
@@ -3579,7 +3597,7 @@
                     main: "dist/main.dist.js",
                     scripts: {
                         dev: "./dev/run.js loop",
-                        test: "echo 'no tests now'"
+                        test: "./dev/run.js test'"
                     },
                     dependencies: currentPackageJson.dependencies,
                     devDependencies: currentPackageJson.devDependencies,
@@ -3637,9 +3655,12 @@
                 await createDirectory(`${targetDir}/dev`);
                 await createDirectory(`${targetDir}/dev/bin`);
                 await createDirectory(`${targetDir}/dev/bin/help`);
+                await createDirectory(`${targetDir}/dev/bin/test`);
                 await createDirectory(`${targetDir}/dev/coverage`);
                 await createDirectory(`${targetDir}/dev/files`);
                 await createDirectory(`${targetDir}/src`);
+                await createDirectory(`${targetDir}/src/www`);
+                await createDirectory(`${targetDir}/src/www/dev`);
                 await createDirectory(`${targetDir}/dist`);
                 await createDirectory(`${targetDir}/dist/src`);
                 await createDirectory(`${targetDir}/dist/www`);
@@ -3664,6 +3685,8 @@
                 await duplicateFileIfNotExists(`${__dirname}/../src/DevBinaryV6/Utils/core/app.js`, `${targetDir}/dist/www/app.js`);
                 await duplicateFileIfNotExists(`${__dirname}/../src/DevBinaryV6/Utils/core/app.css`, `${targetDir}/dist/www/app.css`);
                 await duplicateFileIfNotExists(`${__dirname}/../src/DevBinaryV6/Utils/core/settings.js`, `${targetDir}/dev/settings.js`);
+                await duplicateFileIfNotExists(`${__dirname}/../src/DevBinaryV6/Utils/core/devbin-test.js`, `${targetDir}/dev/bin/test/command.js`);
+                await duplicateFileIfNotExists(`${__dirname}/../src/DevBinaryV6/Utils/core/www-settings.js`, `${targetDir}/src/www/dev/settings.entry.js`);
                 await duplicateFile(`${__dirname}/../src/DevBinaryV6/Utils/core/controllers.js`, `${targetDir}/dev/controllers.js`);
                 await duplicateFile(`${__dirname}/moduler-v6.dist.js`, `${targetDir}/dist/src/lib/moduler-v6.dist.js`);
                 await duplicateFile(`${__dirname}/moduler-v6.dist.js`, `${targetDir}/dist/www/lib/moduler-v6.dist.js`);
@@ -3715,12 +3738,12 @@
                     const settingsData = typeof settingsAsyncFactory === "function" ? await settingsAsyncFactory({
                         devbin: this.devbin
                     }) : settingsAsyncFactory;
-                    const publicableSettings = this.constructor.removeNullPropertiesFromObject({
-                        env: settingsData.env || null,
-                        instrumentalize: settingsData.instrumentalize || null,
-                        traceExternalSources: settingsData.traceExternalSources || null,
-                        sectionsMap: settingsData.sectionsMap || null
-                    });
+                    const publicableSettingsData = {};
+                    for (let indexProp = 0; indexProp < this.publicableSettingsIds.length; indexProp++) {
+                        const publicableProp = this.publicableSettingsIds[indexProp];
+                        publicableSettingsData[publicableProp] = settingsData[publicableProp] ?? null;
+                    }
+                    const publicableSettings = this.constructor.removeNullPropertiesFromObject(publicableSettingsData);
                     const publicableJson = this.devbin.compiler.fullpathOf("@/dist/www/dev/settings/publicable.json");
                     await this.ensureDirectoryOf(publicableJson);
                     await fs.promises.writeFile(publicableJson, JSON.stringify(publicableSettings, null, 2), "utf8");
@@ -3741,6 +3764,7 @@
                     return filepath.includes(selector);
                 });
             }
+            publicableSettingsIds=[ "env", "instrumentalize", "traceExternalSources", "sectionsMap" ];
             constructor(devbin) {
                 this.devbin = devbin;
             }

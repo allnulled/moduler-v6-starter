@@ -1,0 +1,8 @@
+{
+  "env": "dev",
+  "instrumentalize": [
+    "@/dist/www/app.dist.js",
+    "@/dist/www/std/application/Application/Application.dist.js",
+    "@/dist/www/test.dist.js"
+  ]
+}

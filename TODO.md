@@ -1,0 +1,10 @@
+- [ ] Limpiar el starter:
+   - [ ] vaciar el src excepto lib
+   - [ ] pasar lib a external
+      - [ ] con los cambios en el devbin
+   - [ ] vaciar el test/unit
+   - [ ] vaciar el test/{feature,integrity}/runner.js
+      - [ ] incorporar un método para llamar a todos los tests de 1 directorio
+         - [ ] a los js directos (opción A)
+         - [ ] a 1 js específico dentro de las carpetas (opción B)
+      - [ ] 

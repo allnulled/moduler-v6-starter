@@ -970,11 +970,15 @@
             }
             _importFile(filepathBrute) {
                 let originalHolder = {};
-                let filepath, filepathMask, isInstr;
+                let filepath, filepathMask, isInstr, isJson;
+                isJson = filepathBrute.endsWith(".json");
                 Normalize_file: {
                     filepath = filepathMask = this.normalizationOf(filepathBrute);
                 }
                 Use_instrumentalized_if_conditions_are_met: {
+                    if (isJson) {
+                        break Use_instrumentalized_if_conditions_are_met;
+                    }
                     if (!(this.runtime.isDev || this.runtime.isTest)) {
                         break Use_instrumentalized_if_conditions_are_met;
                     }
@@ -989,31 +993,30 @@
                 }
                 console.log("[*] ModulerV6 imports: " + this.rootdirOf(filepath));
                 Evaluate_file_and_export_results: {
-                    if (filepathBrute.endsWith(".json")) {
+                    if (isJson) {
                         return this.modules[filepathMask] = this._readPath(filepathBrute).then(content => JSON.parse(content));
-                    } else {
-                        const moduleHolder = {
-                            get exports() {
-                                return originalHolder;
-                            },
-                            set exports(output) {
-                                originalHolder = output;
-                            }
-                        };
-                        return this.evaluateFile(filepath, {
-                            module: moduleHolder,
-                            exports: moduleHolder.exports,
-                            $moduler: this.cloneForFile(filepath)
-                        }).then(result => {
-                            let output = undefined;
-                            if (typeof result === "undefined") {
-                                output = moduleHolder.exports;
-                            } else {
-                                output = moduleHolder.exports = result;
-                            }
-                            return this.modules[filepathMask] = output;
-                        });
                     }
+                    const moduleHolder = {
+                        get exports() {
+                            return originalHolder;
+                        },
+                        set exports(output) {
+                            originalHolder = output;
+                        }
+                    };
+                    return this.evaluateFile(filepath, {
+                        module: moduleHolder,
+                        exports: moduleHolder.exports,
+                        $moduler: this.cloneForFile(filepath)
+                    }).then(result => {
+                        let output = undefined;
+                        if (typeof result === "undefined") {
+                            output = moduleHolder.exports;
+                        } else {
+                            output = moduleHolder.exports = result;
+                        }
+                        return this.modules[filepathMask] = output;
+                    });
                 }
             }
             _importFactory(factory, dependencies = []) {
@@ -1962,6 +1965,10 @@
                 out = this._parser.forCss.parse(compilationFile.source);
             } else if (compilationFile.extension === "md") {
                 out = this._parser.forMd.parse(compilationFile.source);
+            } else if (compilationFile.extension === "json") {
+                out = {
+                    formatted: []
+                };
             } else {
                 throw new Error(`File extension cannot be tokenized: «${compilationFile.resource}»`);
             }
@@ -2107,6 +2114,13 @@
         _fetchCompilable(compilationFile, compilationProcess) {
             this.assert(typeof compilationFile === "object", "Parameter «compilationFile» must be object on «CompilerV6.prototype._fetchCompilable»");
             this.assert(typeof compilationFile.resource === "string", "Parameter «compilationFile.resource» must be string on «CompilerV6.prototype._fetchCompilable»");
+            if (compilationFile.resource.endsWith(".json")) {
+                compilationFile.extension = "json";
+                return this._readPath(compilationFile.resource).then(source => {
+                    compilationFile.source = "";
+                    return compilationFile.compilation.json = "";
+                });
+            }
             this.assert(/\.(js|css|md)$/g.test(compilationFile.resource), `Parameter «compilationFile.resource» now «${compilationFile.resource}» must match with valid extension on «CompilerV6.prototype._fetchCompilable»`);
             Sacar_la_extension_del_fichero: {
                 compilationFile.extension = compilationFile.resource.match(/\.(js|css|md)$/g)[0].substr(1);

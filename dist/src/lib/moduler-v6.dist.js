@@ -965,11 +965,15 @@
         }
         _importFile(filepathBrute) {
             let originalHolder = {};
-            let filepath, filepathMask, isInstr;
+            let filepath, filepathMask, isInstr, isJson;
+            isJson = filepathBrute.endsWith(".json");
             Normalize_file: {
                 filepath = filepathMask = this.normalizationOf(filepathBrute);
             }
             Use_instrumentalized_if_conditions_are_met: {
+                if (isJson) {
+                    break Use_instrumentalized_if_conditions_are_met;
+                }
                 if (!(this.runtime.isDev || this.runtime.isTest)) {
                     break Use_instrumentalized_if_conditions_are_met;
                 }
@@ -984,31 +988,30 @@
             }
             console.log("[*] ModulerV6 imports: " + this.rootdirOf(filepath));
             Evaluate_file_and_export_results: {
-                if (filepathBrute.endsWith(".json")) {
+                if (isJson) {
                     return this.modules[filepathMask] = this._readPath(filepathBrute).then(content => JSON.parse(content));
-                } else {
-                    const moduleHolder = {
-                        get exports() {
-                            return originalHolder;
-                        },
-                        set exports(output) {
-                            originalHolder = output;
-                        }
-                    };
-                    return this.evaluateFile(filepath, {
-                        module: moduleHolder,
-                        exports: moduleHolder.exports,
-                        $moduler: this.cloneForFile(filepath)
-                    }).then(result => {
-                        let output = undefined;
-                        if (typeof result === "undefined") {
-                            output = moduleHolder.exports;
-                        } else {
-                            output = moduleHolder.exports = result;
-                        }
-                        return this.modules[filepathMask] = output;
-                    });
                 }
+                const moduleHolder = {
+                    get exports() {
+                        return originalHolder;
+                    },
+                    set exports(output) {
+                        originalHolder = output;
+                    }
+                };
+                return this.evaluateFile(filepath, {
+                    module: moduleHolder,
+                    exports: moduleHolder.exports,
+                    $moduler: this.cloneForFile(filepath)
+                }).then(result => {
+                    let output = undefined;
+                    if (typeof result === "undefined") {
+                        output = moduleHolder.exports;
+                    } else {
+                        output = moduleHolder.exports = result;
+                    }
+                    return this.modules[filepathMask] = output;
+                });
             }
         }
         _importFactory(factory, dependencies = []) {
