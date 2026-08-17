@@ -1,0 +1,1 @@
+module.exports = require(require("path").resolve(__dirname + "/../../../src/external/refrescador/refrescador.api.dist.js"));

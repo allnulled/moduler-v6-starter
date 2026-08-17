@@ -1,3 +1,3 @@
-require(`${__dirname}/../dist/src/lib/dev-binary-v6.dist.js`);
+require(`${__dirname}/../src/external/dev-binary-v6.entry.js`);
 
 module.exports = DevBinaryV6.create(`${__dirname}/..`);
