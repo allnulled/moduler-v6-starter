@@ -749,6 +749,7 @@
                 forJs: [ this.nativeGrammars.InjectSource, this.nativeGrammars.InjectString, this.nativeGrammars.InjectTemplate, this.nativeGrammars.ImportJs, this.nativeGrammars.ExportJs, this.nativeGrammars.AtRequires, this.nativeGrammars.AtInjects, this.nativeGrammars.MultilineMarkdownComment, this.nativeGrammars.NewParagraphMarkdownComment, this.nativeGrammars.NewLineMarkdownComment, this.nativeGrammars.PrecisedTabulationMarkdownComment, this.nativeGrammars.IncreasedTabulationMarkdownComment, this.nativeGrammars.DecreasedTabulationMarkdownComment, this.nativeGrammars.InlineMarkdownComment, this.nativeGrammars.UnspacedInlineMarkdownComment ],
                 forCss: [ this.nativeGrammars.InjectSource, this.nativeGrammars.InjectString, this.nativeGrammars.InjectTemplate, this.nativeGrammars.ImportJs, this.nativeGrammars.ExportJs, this.nativeGrammars.AtRequires, this.nativeGrammars.AtInjects ],
                 forMd: [ this.nativeGrammars.InjectSource, this.nativeGrammars.InjectString, this.nativeGrammars.ImportJs, this.nativeGrammars.ExportJs, this.nativeGrammars.MultilineCommentValueInjection, this.nativeGrammars.AtRequires, this.nativeGrammars.AtInjects ],
+                forHtml: [ this.nativeGrammars.InjectSource, this.nativeGrammars.AtInjects ],
                 forCssOnRuntime: [ this.nativeGrammars.AtRequires ],
                 forTemplateComments: [ this.nativeGrammars.MultilineCommentValueInjection, this.nativeGrammars.MultilineCommentCodeInjection ],
                 forEmbeddedForms: [ this.nativeGrammars.EmbeddedFormFieldOpener, this.nativeGrammars.EmbeddedFormFieldCloser ]
@@ -1251,6 +1252,7 @@
                     forJs: this.constructor.defaultGrammars.forJs,
                     forCss: this.constructor.defaultGrammars.forCss,
                     forMd: this.constructor.defaultGrammars.forMd,
+                    forHtml: this.constructor.defaultGrammars.forHtml,
                     forTemplateComments: this.constructor.defaultGrammars.forTemplateComments,
                     forEmbeddedForms: this.constructor.defaultGrammars.forEmbeddedForms
                 };
@@ -1258,6 +1260,7 @@
                     forJs: this.constructor.Parser.create(this.grammars.forJs),
                     forCss: this.constructor.Parser.create(this.grammars.forCss),
                     forMd: this.constructor.Parser.create(this.grammars.forMd),
+                    forHtml: this.constructor.Parser.create(this.grammars.forHtml),
                     forTemplateComments: this.constructor.Parser.create(this.grammars.forTemplateComments),
                     forEmbeddedForms: this.constructor.Parser.create(this.grammars.forEmbeddedForms)
                 };
@@ -2027,6 +2030,8 @@
                 out = {
                     formatted: []
                 };
+            } else if (compilationFile.extension === "html") {
+                out = this._parser.forHtml.parse(compilationFile.source);
             } else {
                 throw new Error(`File extension cannot be tokenized: «${compilationFile.resource}»`);
             }
@@ -2179,9 +2184,9 @@
                     return compilationFile.compilation.json = "";
                 });
             }
-            this.assert(/\.(js|css|md)$/g.test(compilationFile.resource), `Parameter «compilationFile.resource» now «${compilationFile.resource}» must match with valid extension on «CompilerV6.prototype._fetchCompilable»`);
+            this.assert(/\.(js|css|md|html)$/g.test(compilationFile.resource), `Parameter «compilationFile.resource» now «${compilationFile.resource}» must match with valid extension on «CompilerV6.prototype._fetchCompilable»`);
             Sacar_la_extension_del_fichero: {
-                compilationFile.extension = compilationFile.resource.match(/\.(js|css|md)$/g)[0].substr(1);
+                compilationFile.extension = compilationFile.resource.match(/\.(js|css|md|html)$/g)[0].substr(1);
             }
             Propagar_la_extension_al_proceso_si_es_la_primera: {
                 if (typeof compilationProcess.extension === "undefined") {
@@ -2290,7 +2295,7 @@
                         const existsFile = await this._existsFile(targetPath);
                         if (!existsFile) {
                             const path = require("path");
-                            const targetId = this.rootdirOf(targetPath).replace(/\.js$/g, "");
+                            const targetId = this.rootdirOf(targetPath).replace(/\.(js|css|html)$/g, "");
                             await this._createDefaultInjectedFile(targetPath, targetId);
                         }
                     }
@@ -2304,12 +2309,28 @@
                 }
             }
             Inject_in_compilation_text: {
-                this.assert(compilationFile.extension === "js", `Syntax of «$compiler.inject.source» should only be available on «js» files and not on «${compilationFile.extension}»`);
-                this.assert(targetPath.endsWith(".js"), `Syntax of «$compiler.inject.source» on file «${compilationFile.resource}» is trying to import foraneous extension format file «${targetPath}» on «CompilerV6.prototype._compileAsInjectSource»`);
-                if (!targetCaches.js) targetCaches.js = targetCompilation.js;
-                targetCaches.css = targetCaches.css || targetCompilation?.css;
-                targetCaches.md = targetCaches.md || targetCompilation?.md;
-                compilationFile.compilation.js = this._replaceTextRange(compilationFile.compilation.js, token.location[0], token.location[1], targetCaches.js);
+                const isFromHtml = compilationFile.extension === "html";
+                if (isFromHtml) {
+                    const targetIsJs = targetPath.endsWith(".js");
+                    const targetIsCss = targetPath.endsWith(".css");
+                    this.assert(targetIsJs || targetIsCss, `Syntax of «$compiler.inject.source» from html files can only inject «js,css» files and not when importing «${targetPath}» from «${compilationFile.resource}»`);
+                    if (!targetCaches.js) targetCaches.js = targetCompilation.js;
+                    targetCaches.css = targetCaches.css || targetCompilation?.css;
+                    targetCaches.md = targetCaches.md || targetCompilation?.md;
+                    let newContent = targetCompilation[targetIsJs ? "js" : "css"];
+                    Escape_html_tags_in_this_case: {
+                        if (targetIsJs) newContent = newContent.replace(/(\< *)\/( *script *\>)/g, (match, g1, g2) => `${g1}\\/${g2}`);
+                        if (targetIsCss) newContent = newContent.replace(/(\< *)\/( *style *\>)/g, (match, g1, g2) => `${g1}\\/${g2}`);
+                    }
+                    compilationFile.compilation.html = this._replaceTextRange(compilationFile.compilation.html, token.location[0], token.location[1], newContent);
+                } else {
+                    this.assert(compilationFile.extension === "js", `Syntax of «$compiler.inject.source» can only inject files from «js,html» files and not on «${compilationFile.extension}» when importing «${targetPath}» from «${compilationFile.resource}»`);
+                    this.assert(targetPath.endsWith(".js"), `Syntax of «$compiler.inject.source» is trying to import foraneous extension format file «${targetPath}» from «${compilationFile.resource}» on «CompilerV6.prototype._compileAsInjectSource»`);
+                    if (!targetCaches.js) targetCaches.js = targetCompilation.js;
+                    targetCaches.css = targetCaches.css || targetCompilation?.css;
+                    targetCaches.md = targetCaches.md || targetCompilation?.md;
+                    compilationFile.compilation.js = this._replaceTextRange(compilationFile.compilation.js, token.location[0], token.location[1], targetCaches.js);
+                }
                 Esto_tiene_que_hacerse_desde_dentro_del_compileRecursively: {}
             }
             Inject_in_report_object: {
@@ -2621,6 +2642,14 @@
                         wasPrepended = true;
                     } else {
                         throw new Error(`Syntax of «@injects» on «${targetPath}» is trying to import foraneous file extension.`);
+                    }
+                } else if (compilationFile.resource.endsWith(".html")) {
+                    if (targetPath.endsWith(".js")) {
+                        return this._compileAsInjectSource(...arguments);
+                    } else if (targetPath.endsWith(".css")) {
+                        return this._compileAsInjectSource(...arguments);
+                    } else {
+                        throw new Error("Syntax of «@injects» can only be used to import «js,css» files from «html» files.");
                     }
                 } else {
                     throw new Error(`Syntax of «@injects» should only be available on «css,md» files and not on «${compilationFile.extension}»`);

@@ -744,6 +744,7 @@
             forJs: [ this.nativeGrammars.InjectSource, this.nativeGrammars.InjectString, this.nativeGrammars.InjectTemplate, this.nativeGrammars.ImportJs, this.nativeGrammars.ExportJs, this.nativeGrammars.AtRequires, this.nativeGrammars.AtInjects, this.nativeGrammars.MultilineMarkdownComment, this.nativeGrammars.NewParagraphMarkdownComment, this.nativeGrammars.NewLineMarkdownComment, this.nativeGrammars.PrecisedTabulationMarkdownComment, this.nativeGrammars.IncreasedTabulationMarkdownComment, this.nativeGrammars.DecreasedTabulationMarkdownComment, this.nativeGrammars.InlineMarkdownComment, this.nativeGrammars.UnspacedInlineMarkdownComment ],
             forCss: [ this.nativeGrammars.InjectSource, this.nativeGrammars.InjectString, this.nativeGrammars.InjectTemplate, this.nativeGrammars.ImportJs, this.nativeGrammars.ExportJs, this.nativeGrammars.AtRequires, this.nativeGrammars.AtInjects ],
             forMd: [ this.nativeGrammars.InjectSource, this.nativeGrammars.InjectString, this.nativeGrammars.ImportJs, this.nativeGrammars.ExportJs, this.nativeGrammars.MultilineCommentValueInjection, this.nativeGrammars.AtRequires, this.nativeGrammars.AtInjects ],
+            forHtml: [ this.nativeGrammars.InjectSource, this.nativeGrammars.AtInjects ],
             forCssOnRuntime: [ this.nativeGrammars.AtRequires ],
             forTemplateComments: [ this.nativeGrammars.MultilineCommentValueInjection, this.nativeGrammars.MultilineCommentCodeInjection ],
             forEmbeddedForms: [ this.nativeGrammars.EmbeddedFormFieldOpener, this.nativeGrammars.EmbeddedFormFieldCloser ]
@@ -1246,6 +1247,7 @@
                 forJs: this.constructor.defaultGrammars.forJs,
                 forCss: this.constructor.defaultGrammars.forCss,
                 forMd: this.constructor.defaultGrammars.forMd,
+                forHtml: this.constructor.defaultGrammars.forHtml,
                 forTemplateComments: this.constructor.defaultGrammars.forTemplateComments,
                 forEmbeddedForms: this.constructor.defaultGrammars.forEmbeddedForms
             };
@@ -1253,6 +1255,7 @@
                 forJs: this.constructor.Parser.create(this.grammars.forJs),
                 forCss: this.constructor.Parser.create(this.grammars.forCss),
                 forMd: this.constructor.Parser.create(this.grammars.forMd),
+                forHtml: this.constructor.Parser.create(this.grammars.forHtml),
                 forTemplateComments: this.constructor.Parser.create(this.grammars.forTemplateComments),
                 forEmbeddedForms: this.constructor.Parser.create(this.grammars.forEmbeddedForms)
             };
