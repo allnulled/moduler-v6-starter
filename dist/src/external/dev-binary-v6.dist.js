@@ -3042,7 +3042,13 @@
         static fromRootDirectoryOf(dir, file = "package.json") {
             return this.Utils.findFirstParentDirectoryContaining(dir, file).then(upperDir => new this(upperDir));
         }
-        static Refrescador=require(`${__dirname}/refrescador/refrescador.api.dist.js`);
+        static Refrescador=function() {
+            try {
+                require(require("path").resolve(`${__dirname}/refrescador/refrescador.api.dist.js`));
+            } catch (error) {
+                require(require("path").resolve(`${__dirname}/../../../src/external/refrescador/refrescador.api.dist.js`));
+            }
+        }();
         static CompilerV6=CompilerV6;
         static Cronometer=() => {
             let tasks = Object.assign({}, {
@@ -3571,10 +3577,16 @@
                     On_root: {
                         if (!event.isRoot) break On_root;
                         Run_feature_tests: {
-                            await this.devbin.tester.runDirectory("@/test/feature", file => this.matchesFileWithSimpleSelector(path.basename(file), [ ...event.testFeatures, ...this.devbin.settings.data?.features || [] ]));
+                            await this.devbin.tester.runDirectory("@/test/feature", {
+                                testFilename: "feature.js",
+                                filterCallback: file => this.matchesFileWithSimpleSelector(path.basename(file), [ ...event.testFeatures, ...this.devbin.settings.data?.test?.features || [] ])
+                            });
                         }
                         Run_case_tests: {
-                            await this.devbin.tester.runDirectory("@/test/case", file => file.endsWith(".js"));
+                            await this.devbin.tester.runDirectory("@/test/case", {
+                                testFilename: "case.js",
+                                filterCallback: file => this.matchesFileWithSimpleSelector(path.basename(file), [ ...event.testCase, ...this.devbin.settings.data?.test?.case || [] ])
+                            });
                         }
                         Run_devbin_test_command: {
                             if (!await this.devbin.compiler.files.hasFile("@/dev/bin/test/command.js")) break Run_devbin_test_command;
@@ -3789,7 +3801,7 @@
                     return filepath.includes(selector);
                 });
             }
-            publicableSettingsIds=[ "env", "instrumentalize", "traceExternalSources", "sectionsMap" ];
+            publicableSettingsIds=[ "env", "instrumentalize", "traceExternalSources", "sectionsMap", "test" ];
             constructor(devbin) {
                 this.devbin = devbin;
             }
@@ -3931,15 +3943,16 @@
             constructor(devbin) {
                 this.devbin = devbin;
             }
-            async runDirectory(dirInput, filterCallback = false, _ignoreFiles = [ "runner.js" ], injection = {}, _testsType = false) {
+            async runDirectory(dirInput, options = {}) {
+                const {filterCallback: filterCallback = false, ignoreFiles: ignoreFiles = [ "runner.js" ], injection: injection = {}, testsTitle: testsTitle = false, testFilename: testFilename = false} = options;
                 const fs = require("fs");
                 const path = require("path");
                 const ERROR_SEPARATOR = `\n - `;
                 const dir = this.devbin.compiler.normalizationOf(dirInput);
-                const testsType = _testsType || path.basename(dir);
+                const testsType = testsTitle || path.basename(dir);
                 const testFiles = (await fs.promises.readdir(dir)).filter(file => {
                     const endsWithJs = file.endsWith(".js");
-                    const isNotIgnored = !_ignoreFiles.includes(file);
+                    const isNotIgnored = !ignoreFiles.includes(file);
                     const passesFilter = filterCallback ? filterCallback(file) : true;
                     return endsWithJs && isNotIgnored && passesFilter;
                 });
@@ -3948,7 +3961,7 @@
                 const crono = this.devbin.constructor.Cronometer();
                 for (let index = 0; index < testFiles.length; index++) {
                     const testName = testFiles[index];
-                    const testFile = `${dir}/${testName}`;
+                    const testFile = `${dir}/${testName}` + (testFilename ? `/${testFilename}` : "");
                     console.log($.style("cyanBright,italic").text(`🟢 Starting «${testName}» [${testsType}:${index + 1}/${testFiles.length}]`));
                     let testCallback;
                     try {

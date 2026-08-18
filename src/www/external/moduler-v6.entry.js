@@ -853,14 +853,21 @@
                 this.assert(false, `ModulerV6.prototype.export cannot have ${signature.length} arguments`);
             }
         }
-        _joinPaths(subpaths, origin = false) {
-            this.assert(Array.isArray(subpaths), `Parameter «subpaths» must be array on «ModulerV6.prototype._joinPaths»`);
-            this.assert(subpaths.length !== 0, `Parameter «subpaths.length» cannot be 0 on «ModulerV6.prototype._joinPaths»`);
-            let out = "";
+        _joinPaths(subpathsInput, origin = false) {
+            this.assert(Array.isArray(subpathsInput), `Parameter «subpaths» must be array on «ModulerV6.prototype._joinPaths»`);
+            this.assert(subpathsInput.length !== 0, `Parameter «subpaths.length» cannot be 0 on «ModulerV6.prototype._joinPaths»`);
+            let out = "", activatedOptions = {};
+            const subpaths = [].concat(subpathsInput);
+            Correct_filesymbols: {
+                this.assert(typeof subpaths[0] === "string", `Parameter «subpaths[0]» must be string but «${typeof subpaths[0]}» was found instead on «ModulerV6.prototype._joinPaths»`);
+                const [_subpath, _activatedOptions] = this._removeSymbolsFromFilepath(subpaths[0], true);
+                subpaths[0] = _subpath;
+                activatedOptions = _activatedOptions;
+            }
             Join_paths_overwritting_when_required: for (let index = 0; index < subpaths.length; index++) {
                 const subpath = subpaths[index];
                 this.assert(typeof subpath === "string", `Parameter «subpaths[${index}]» must be string too on «ModulerV6.prototype._joinPaths»`);
-                this.assert(typeof subpath !== "", `Parameter «subpaths[${index}]» cannot be empty string on «ModulerV6.prototype._joinPaths»`);
+                this.assert(subpath !== "", `Parameter «subpaths[${index}]» cannot be empty string on «ModulerV6.prototype._joinPaths»`);
                 if (subpath.includes("://")) {
                     this.assert(subpath.match(this.constructor.symbols.REGEX_FOR_PROTOCOL_BASED_PATH), `Paths can only have «://» at the begining, and preceded only by a protocol id, if any in the case of «${subpath}» on «ModulerV6.prototype._joinPaths»`);
                     out = subpath;
@@ -899,6 +906,9 @@
                 }
                 out = newParts.join("/");
             }
+            if (activatedOptions.justTry) {
+                out = `!${out}`;
+            }
             return out;
         }
         splitPath(path) {
@@ -933,17 +943,15 @@
                 return response.text();
             });
         }
-        _readPath(url) {
+        _readPath(url, options = {}) {
             return (this.runtime.isBrowser ? this._readUrl(url) : this._readFile(url)).then(it => {
                 if (this.settings.data?.traceExternalSources) {
-                    console.log("[*] Read from external source:");
+                    console.log(`[*] Read from external source «${url}»:`);
                     console.log("--------------------:");
                     console.log(it);
                     console.log("--------------------/");
                 }
                 return it;
-            }).catch(error => {
-                throw error;
             });
         }
         _wrapInTry(source, parameters = {}, file = null) {
@@ -963,9 +971,9 @@
         _createAsyncFunction(source, parameters = []) {
             return new async function() {}.constructor(...parameters, source);
         }
-        _importFile(filepathBrute) {
-            let originalHolder = {};
+        _importFile(filepathInput) {
             let filepath, filepathMask, isInstr, isJson;
+            const [filepathBrute, activeOptions] = this._removeSymbolsFromFilepath(filepathInput, true);
             isJson = filepathBrute.endsWith(".json");
             Normalize_file: {
                 filepath = filepathMask = this.normalizationOf(filepathBrute);
@@ -989,33 +997,47 @@
             console.log("[*] ModulerV6 imports: " + this.rootdirOf(filepath));
             Evaluate_file_and_export_results: {
                 if (isJson) {
-                    return this.modules[filepathMask] = this._readPath(filepathBrute).then(content => JSON.parse(content));
+                    return this.modules[filepathMask] = this._readPath(filepathBrute).catch(error => {
+                        if (activeOptions.justTry) return undefined;
+                        throw error;
+                    }).then(content => {
+                        if (typeof content === "undefined") return undefined;
+                        return JSON.parse(content);
+                    });
                 }
+                let firstHolder = {};
+                let originalHolder = firstHolder;
                 const moduleHolder = {
                     get exports() {
                         return originalHolder;
                     },
-                    set exports(output) {
-                        originalHolder = output;
+                    set exports(value) {
+                        originalHolder = value;
                     }
                 };
                 return this.evaluateFile(filepath, {
                     module: moduleHolder,
                     exports: moduleHolder.exports,
                     $moduler: this.cloneForFile(filepath)
+                }, {
+                    onMissingResource: activeOptions.justTry === true ? () => undefined : false
                 }).then(result => {
                     let output = undefined;
-                    if (typeof result === "undefined") {
-                        output = moduleHolder.exports;
-                    } else {
+                    const returnsUndefined = () => typeof result === "undefined";
+                    const isSameEmptyObject = () => moduleHolder.exports === firstHolder && Object.keys(firstHolder).length === 0;
+                    if (!returnsUndefined()) {
                         output = moduleHolder.exports = result;
+                    } else if (!isSameEmptyObject()) {
+                        output = moduleHolder.exports;
                     }
                     return this.modules[filepathMask] = output;
                 });
             }
         }
         _importFactory(factory, dependencies = []) {
-            let originalHolder = {}, output;
+            let output = undefined;
+            let firstHolder = {};
+            let originalHolder = firstHolder;
             const moduleHolder = {
                 get exports() {
                     return originalHolder;
@@ -1024,14 +1046,32 @@
                     originalHolder = anotherOutput;
                 }
             };
-            output = factory(dependencies, {
+            const syncResult = factory(dependencies, {
                 module: moduleHolder,
                 exports: moduleHolder.exports,
                 $moduler: this
             });
-            if (typeof output === "undefined") {
-                if (Object.keys(originalHolder).length) {
-                    output = originalHolder;
+            if (syncResult instanceof Promise) {
+                return syncResult.then(result => {
+                    output = undefined;
+                    const returnsUndefined = () => typeof result === "undefined";
+                    const isSameEmptyObject = () => moduleHolder.exports === firstHolder && Object.keys(firstHolder).length === 0;
+                    if (!returnsUndefined()) {
+                        output = moduleHolder.exports = result;
+                    } else if (!isSameEmptyObject()) {
+                        output = moduleHolder.exports;
+                    }
+                    return output;
+                });
+            } else {
+                output = undefined;
+                const result = syncResult;
+                const returnsUndefined = () => typeof result === "undefined";
+                const isSameEmptyObject = () => moduleHolder.exports === firstHolder && Object.keys(firstHolder).length === 0;
+                if (!returnsUndefined()) {
+                    output = moduleHolder.exports = result;
+                } else if (!isSameEmptyObject()) {
+                    output = moduleHolder.exports;
                 }
             }
             return output;
@@ -1046,6 +1086,20 @@
             }
             const sectionPath = originalMap[sectionId];
             return this.import(sectionPath);
+        }
+        _removeSymbolsFromFilepath(filepathInput, returnData = false) {
+            let output = filepathInput;
+            const activeOptions = {};
+            Remove_justTry_prefix: {
+                if (output.startsWith("!")) {
+                    output = output.substr(1);
+                    activeOptions.justTry = true;
+                }
+            }
+            if (returnData) {
+                return [ output, activeOptions ];
+            }
+            return output;
         }
         assert(condition, message) {
             return this.constructor.assert(condition, message);
@@ -1089,10 +1143,14 @@
             const dirpath = this._joinPaths([ filepath, ".." ]);
             return new ModulerV6(dirpath, this);
         }
-        evaluateFile(file, injections = {}) {
-            return this._readPath(file).then(source => this.evaluateSource(source, injections, file));
+        evaluateFile(file, injections = {}, options = {}) {
+            return this._readPath(file, options).catch(error => {
+                if (options.onMissingResource) return options.onMissingResource(error);
+                throw error;
+            }).then(source => this.evaluateSource(source, injections, file));
         }
         evaluateSource(source, injections = {}, file = null) {
+            if (typeof source === "undefined") return undefined;
             this.assert(typeof source === "string", `Parameter «source» must be string but «${typeof source}» was passed instead on «ModulerV6.prototype.evaluateSource»`);
             this.assert(typeof injections === "object", `Parameter «injections» must be object but «${typeof injections}» was passed instead on «ModulerV6.prototype.evaluateSource»`);
             this.assert(!Array.isArray(injections), `Parameter «injections» must be object but not array on «ModulerV6.prototype.evaluateSource»`);

@@ -1,4 +1,4 @@
 module.exports = require(`${__dirname}/../../dev/bin.js`).tester.runDirectory(__dirname, {
-  title: "feature",
-  filename: "feature.js",
+  title: "speed",
+  filename: "speed.js",
 });
