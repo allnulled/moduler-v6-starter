@@ -3102,9 +3102,9 @@
         }
         static Refrescador=function() {
             try {
-                require(require("path").resolve(`${__dirname}/refrescador/refrescador.api.dist.js`));
+                return require(require("path").resolve(`${__dirname}/refrescador/refrescador.api.dist.js`));
             } catch (error) {
-                require(require("path").resolve(`${__dirname}/../../../src/external/refrescador/refrescador.api.dist.js`));
+                return require(require("path").resolve(`${__dirname}/../../../src/external/refrescador/refrescador.api.dist.js`));
             }
         }();
         static CompilerV6=CompilerV6;
@@ -3178,6 +3178,8 @@
                 return {
                     propagateUp: true,
                     testFeatures: [],
+                    testIntegrity: [],
+                    testSpeed: [],
                     ...overrider
                 };
             }
@@ -3579,15 +3581,20 @@
                                     event: event
                                 });
                             }
-                            Triggering_onTestFeature_file: {
-                                const onTestFeatureFile = path.join(path.dirname(filepath), "e.onTestFeature.js");
-                                const featuresAdded = await this.triggerCallbackFromFile(onTestFeatureFile, {
+                            Triggering_onTest_file: {
+                                const onTestFile = path.join(path.dirname(filepath), "e.onTest.js");
+                                const testsAdded = await this.triggerCallbackFromFile(onTestFile, {
                                     file: filepath,
                                     event: event
                                 });
-                                if (typeof featuresAdded !== "number") {
-                                    this.assert(Array.isArray(featuresAdded), `File «e.onTestFeature.js» must return array about file «${onTestFeatureFile}» on «DevBinaryV6.Utils.prototype.touchFile»`);
-                                    event.testFeatures.push(...featuresAdded);
+                                if (typeof testsAdded !== "number") {
+                                    this.assert(typeof testsAdded === "object", `File «e.onTest.js» must return object about file «${onTestFile}» on «DevBinaryV6.Utils.prototype.touchFile»`);
+                                    Object.keys(testsAdded).forEach(prop => {
+                                        this.assert([ "feature", "integrity", "speed" ].includes(prop), `File «e.onTest.js» on «${onTestFile}» cannot return object with unknown property «${prop}» on «DevBinaryV6.Utils.prototype.touchFile»`);
+                                    });
+                                    if ("feature" in testsAdded) event.testFeatures.push(...testsAdded.feature);
+                                    if ("integrity" in testsAdded) event.testIntegrity.push(...testsAdded.integrity);
+                                    if ("speed" in testsAdded) event.testSpeed.push(...testsAdded.speed);
                                 }
                             }
                         }
@@ -3634,6 +3641,20 @@
                     }
                     On_root: {
                         if (!event.isRoot) break On_root;
+                        Run_integrity_tests: {
+                            await this.devbin.tester.runDirectory("@/test/integrity", {
+                                title: "integrity",
+                                filename: "integrity.js",
+                                filter: file => this.matchesFileWithSimpleSelector(path.basename(file), [ ...event.testIntegrity, ...this.devbin.settings.data?.test?.integrity || [] ])
+                            });
+                        }
+                        Run_speed_tests: {
+                            await this.devbin.tester.runDirectory("@/test/speed", {
+                                title: "speed",
+                                filename: "speed.js",
+                                filter: file => this.matchesFileWithSimpleSelector(path.basename(file), [ ...event.testSpeed, ...this.devbin.settings.data?.test?.speed || [] ])
+                            });
+                        }
                         Run_feature_tests: {
                             await this.devbin.tester.runDirectory("@/test/feature", {
                                 title: "feature",
@@ -3708,6 +3729,10 @@
                         }
                         return await fs.promises.writeFile(file, contents, "utf8");
                     },
+                    _saveFileIfNotExists: async function(file, contents) {
+                        if (await utils._existsFile(file)) return -1;
+                        return await fs.promises.writeFile(file, contents, "utf8");
+                    },
                     _duplicateFile: async function(src, dst) {
                         if (parameters.dontOverride && await utils._existsFile(dst)) {
                             return -1;
@@ -3741,38 +3766,40 @@
                     _existsFile: utils.trify(utils._readFile, false)
                 });
                 const createDirectory = parameters.ignoreErrors ? utils.trify(utils._createDirectory) : utils._createDirectory;
+                const createDirectoryIfNotExists = utils.trify(utils._createDirectory);
                 const saveFile = parameters.ignoreErrors ? utils.trify(utils._saveFile) : utils._saveFile;
+                const saveFileIfNotExists = utils._saveFileIfNotExists;
                 const duplicateFile = parameters.ignoreErrors ? utils.trify(utils._duplicateFile) : utils._duplicateFile;
                 const duplicateDirectory = parameters.ignoreErrors ? utils.trify(utils._duplicateDirectory) : utils._duplicateDirectory;
                 const duplicateFileIfNotExists = utils.trify(utils._initializeDuplicatedFile);
-                await createDirectory(`${targetDir}/dev`);
-                await createDirectory(`${targetDir}/dev/bin`);
-                await createDirectory(`${targetDir}/dev/bin/help`);
-                await createDirectory(`${targetDir}/dev/bin/test`);
-                await createDirectory(`${targetDir}/dev/coverage`);
-                await createDirectory(`${targetDir}/dev/files`);
-                await createDirectory(`${targetDir}/src`);
-                await createDirectory(`${targetDir}/src/external`);
-                await createDirectory(`${targetDir}/src/www`);
-                await createDirectory(`${targetDir}/src/www/dev`);
-                await createDirectory(`${targetDir}/src/www/external`);
-                await createDirectory(`${targetDir}/dist`);
-                await createDirectory(`${targetDir}/dist/src`);
-                await createDirectory(`${targetDir}/dist/www`);
-                await createDirectory(`${targetDir}/dist/www/coverage`);
-                await createDirectory(`${targetDir}/dist/www/external`);
-                await createDirectory(`${targetDir}/dist/www/dev`);
-                await createDirectory(`${targetDir}/dist/www/dev/settings`);
-                await createDirectory(`${targetDir}/dist/src/external`);
-                await createDirectory(`${targetDir}/test`);
-                await createDirectory(`${targetDir}/test/feature`);
-                await createDirectory(`${targetDir}/test/integrity`);
-                await createDirectory(`${targetDir}/test/unit`);
-                await createDirectory(`${targetDir}/test/unit/src`);
-                await createDirectory(`${targetDir}/test/case`);
-                await createDirectory(`${targetDir}/test/speed`);
-                await createDirectory(`${targetDir}/docs`);
-                await saveFile(`${targetDir}/package.json`, JSON.stringify(initialPackageJson, null, 2), "utf8");
+                await createDirectoryIfNotExists(`${targetDir}/dev`);
+                await createDirectoryIfNotExists(`${targetDir}/dev/bin`);
+                await createDirectoryIfNotExists(`${targetDir}/dev/bin/help`);
+                await createDirectoryIfNotExists(`${targetDir}/dev/bin/test`);
+                await createDirectoryIfNotExists(`${targetDir}/dev/coverage`);
+                await createDirectoryIfNotExists(`${targetDir}/dev/files`);
+                await createDirectoryIfNotExists(`${targetDir}/src`);
+                await createDirectoryIfNotExists(`${targetDir}/src/external`);
+                await createDirectoryIfNotExists(`${targetDir}/src/www`);
+                await createDirectoryIfNotExists(`${targetDir}/src/www/dev`);
+                await createDirectoryIfNotExists(`${targetDir}/src/www/external`);
+                await createDirectoryIfNotExists(`${targetDir}/dist`);
+                await createDirectoryIfNotExists(`${targetDir}/dist/src`);
+                await createDirectoryIfNotExists(`${targetDir}/dist/www`);
+                await createDirectoryIfNotExists(`${targetDir}/dist/www/coverage`);
+                await createDirectoryIfNotExists(`${targetDir}/dist/www/external`);
+                await createDirectoryIfNotExists(`${targetDir}/dist/www/dev`);
+                await createDirectoryIfNotExists(`${targetDir}/dist/www/dev/settings`);
+                await createDirectoryIfNotExists(`${targetDir}/dist/src/external`);
+                await createDirectoryIfNotExists(`${targetDir}/test`);
+                await createDirectoryIfNotExists(`${targetDir}/test/feature`);
+                await createDirectoryIfNotExists(`${targetDir}/test/integrity`);
+                await createDirectoryIfNotExists(`${targetDir}/test/unit`);
+                await createDirectoryIfNotExists(`${targetDir}/test/unit/src`);
+                await createDirectoryIfNotExists(`${targetDir}/test/case`);
+                await createDirectoryIfNotExists(`${targetDir}/test/speed`);
+                await createDirectoryIfNotExists(`${targetDir}/docs`);
+                await saveFileIfNotExists(`${targetDir}/package.json`, JSON.stringify(initialPackageJson, null, 2), "utf8");
                 if (!await utils._existsFile(`${targetDir}/.gitignore`)) await saveFile(`${targetDir}/.gitignore`, "node_modules", "utf8");
                 await duplicateFileIfNotExists(`${__dirname}/../src/DevBinaryV6/Utils/core/devbin-help.js`, `${targetDir}/dev/bin/help/command.js`);
                 await duplicateFileIfNotExists(`${__dirname}/../src/DevBinaryV6/Utils/core/dev-bin.js`, `${targetDir}/dev/bin.js`);

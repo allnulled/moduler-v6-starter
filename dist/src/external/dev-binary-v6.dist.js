@@ -869,14 +869,21 @@
                         this.assert(false, `ModulerV6.prototype.export cannot have ${signature.length} arguments`);
                     }
                 }
-                _joinPaths(subpaths, origin = false) {
-                    this.assert(Array.isArray(subpaths), `Parameter «subpaths» must be array on «ModulerV6.prototype._joinPaths»`);
-                    this.assert(subpaths.length !== 0, `Parameter «subpaths.length» cannot be 0 on «ModulerV6.prototype._joinPaths»`);
-                    let out = "";
+                _joinPaths(subpathsInput, origin = false) {
+                    this.assert(Array.isArray(subpathsInput), `Parameter «subpaths» must be array on «ModulerV6.prototype._joinPaths»`);
+                    this.assert(subpathsInput.length !== 0, `Parameter «subpaths.length» cannot be 0 on «ModulerV6.prototype._joinPaths»`);
+                    let out = "", activatedOptions = {};
+                    const subpaths = [].concat(subpathsInput);
+                    Correct_filesymbols: {
+                        this.assert(typeof subpaths[0] === "string", `Parameter «subpaths[0]» must be string but «${typeof subpaths[0]}» was found instead on «ModulerV6.prototype._joinPaths»`);
+                        const [_subpath, _activatedOptions] = this._removeSymbolsFromFilepath(subpaths[0], true);
+                        subpaths[0] = _subpath;
+                        activatedOptions = _activatedOptions;
+                    }
                     Join_paths_overwritting_when_required: for (let index = 0; index < subpaths.length; index++) {
                         const subpath = subpaths[index];
                         this.assert(typeof subpath === "string", `Parameter «subpaths[${index}]» must be string too on «ModulerV6.prototype._joinPaths»`);
-                        this.assert(typeof subpath !== "", `Parameter «subpaths[${index}]» cannot be empty string on «ModulerV6.prototype._joinPaths»`);
+                        this.assert(subpath !== "", `Parameter «subpaths[${index}]» cannot be empty string on «ModulerV6.prototype._joinPaths»`);
                         if (subpath.includes("://")) {
                             this.assert(subpath.match(this.constructor.symbols.REGEX_FOR_PROTOCOL_BASED_PATH), `Paths can only have «://» at the begining, and preceded only by a protocol id, if any in the case of «${subpath}» on «ModulerV6.prototype._joinPaths»`);
                             out = subpath;
@@ -915,6 +922,9 @@
                         }
                         out = newParts.join("/");
                     }
+                    if (activatedOptions.justTry) {
+                        out = `!${out}`;
+                    }
                     return out;
                 }
                 splitPath(path) {
@@ -949,17 +959,15 @@
                         return response.text();
                     });
                 }
-                _readPath(url) {
+                _readPath(url, options = {}) {
                     return (this.runtime.isBrowser ? this._readUrl(url) : this._readFile(url)).then(it => {
                         if (this.settings.data?.traceExternalSources) {
-                            console.log("[*] Read from external source:");
+                            console.log(`[*] Read from external source «${url}»:`);
                             console.log("--------------------:");
                             console.log(it);
                             console.log("--------------------/");
                         }
                         return it;
-                    }).catch(error => {
-                        throw error;
                     });
                 }
                 _wrapInTry(source, parameters = {}, file = null) {
@@ -979,9 +987,9 @@
                 _createAsyncFunction(source, parameters = []) {
                     return new async function() {}.constructor(...parameters, source);
                 }
-                _importFile(filepathBrute) {
-                    let originalHolder = {};
+                _importFile(filepathInput) {
                     let filepath, filepathMask, isInstr, isJson;
+                    const [filepathBrute, activeOptions] = this._removeSymbolsFromFilepath(filepathInput, true);
                     isJson = filepathBrute.endsWith(".json");
                     Normalize_file: {
                         filepath = filepathMask = this.normalizationOf(filepathBrute);
@@ -1005,33 +1013,47 @@
                     console.log("[*] ModulerV6 imports: " + this.rootdirOf(filepath));
                     Evaluate_file_and_export_results: {
                         if (isJson) {
-                            return this.modules[filepathMask] = this._readPath(filepathBrute).then(content => JSON.parse(content));
+                            return this.modules[filepathMask] = this._readPath(filepathBrute).catch(error => {
+                                if (activeOptions.justTry) return undefined;
+                                throw error;
+                            }).then(content => {
+                                if (typeof content === "undefined") return undefined;
+                                return JSON.parse(content);
+                            });
                         }
+                        let firstHolder = {};
+                        let originalHolder = firstHolder;
                         const moduleHolder = {
                             get exports() {
                                 return originalHolder;
                             },
-                            set exports(output) {
-                                originalHolder = output;
+                            set exports(value) {
+                                originalHolder = value;
                             }
                         };
                         return this.evaluateFile(filepath, {
                             module: moduleHolder,
                             exports: moduleHolder.exports,
                             $moduler: this.cloneForFile(filepath)
+                        }, {
+                            onMissingResource: activeOptions.justTry === true ? () => undefined : false
                         }).then(result => {
                             let output = undefined;
-                            if (typeof result === "undefined") {
-                                output = moduleHolder.exports;
-                            } else {
+                            const returnsUndefined = () => typeof result === "undefined";
+                            const isSameEmptyObject = () => moduleHolder.exports === firstHolder && Object.keys(firstHolder).length === 0;
+                            if (!returnsUndefined()) {
                                 output = moduleHolder.exports = result;
+                            } else if (!isSameEmptyObject()) {
+                                output = moduleHolder.exports;
                             }
                             return this.modules[filepathMask] = output;
                         });
                     }
                 }
                 _importFactory(factory, dependencies = []) {
-                    let originalHolder = {}, output;
+                    let output = undefined;
+                    let firstHolder = {};
+                    let originalHolder = firstHolder;
                     const moduleHolder = {
                         get exports() {
                             return originalHolder;
@@ -1040,14 +1062,32 @@
                             originalHolder = anotherOutput;
                         }
                     };
-                    output = factory(dependencies, {
+                    const syncResult = factory(dependencies, {
                         module: moduleHolder,
                         exports: moduleHolder.exports,
                         $moduler: this
                     });
-                    if (typeof output === "undefined") {
-                        if (Object.keys(originalHolder).length) {
-                            output = originalHolder;
+                    if (syncResult instanceof Promise) {
+                        return syncResult.then(result => {
+                            output = undefined;
+                            const returnsUndefined = () => typeof result === "undefined";
+                            const isSameEmptyObject = () => moduleHolder.exports === firstHolder && Object.keys(firstHolder).length === 0;
+                            if (!returnsUndefined()) {
+                                output = moduleHolder.exports = result;
+                            } else if (!isSameEmptyObject()) {
+                                output = moduleHolder.exports;
+                            }
+                            return output;
+                        });
+                    } else {
+                        output = undefined;
+                        const result = syncResult;
+                        const returnsUndefined = () => typeof result === "undefined";
+                        const isSameEmptyObject = () => moduleHolder.exports === firstHolder && Object.keys(firstHolder).length === 0;
+                        if (!returnsUndefined()) {
+                            output = moduleHolder.exports = result;
+                        } else if (!isSameEmptyObject()) {
+                            output = moduleHolder.exports;
                         }
                     }
                     return output;
@@ -1062,6 +1102,20 @@
                     }
                     const sectionPath = originalMap[sectionId];
                     return this.import(sectionPath);
+                }
+                _removeSymbolsFromFilepath(filepathInput, returnData = false) {
+                    let output = filepathInput;
+                    const activeOptions = {};
+                    Remove_justTry_prefix: {
+                        if (output.startsWith("!")) {
+                            output = output.substr(1);
+                            activeOptions.justTry = true;
+                        }
+                    }
+                    if (returnData) {
+                        return [ output, activeOptions ];
+                    }
+                    return output;
                 }
                 assert(condition, message) {
                     return this.constructor.assert(condition, message);
@@ -1105,10 +1159,14 @@
                     const dirpath = this._joinPaths([ filepath, ".." ]);
                     return new ModulerV6(dirpath, this);
                 }
-                evaluateFile(file, injections = {}) {
-                    return this._readPath(file).then(source => this.evaluateSource(source, injections, file));
+                evaluateFile(file, injections = {}, options = {}) {
+                    return this._readPath(file, options).catch(error => {
+                        if (options.onMissingResource) return options.onMissingResource(error);
+                        throw error;
+                    }).then(source => this.evaluateSource(source, injections, file));
                 }
                 evaluateSource(source, injections = {}, file = null) {
+                    if (typeof source === "undefined") return undefined;
                     this.assert(typeof source === "string", `Parameter «source» must be string but «${typeof source}» was passed instead on «ModulerV6.prototype.evaluateSource»`);
                     this.assert(typeof injections === "object", `Parameter «injections» must be object but «${typeof injections}» was passed instead on «ModulerV6.prototype.evaluateSource»`);
                     this.assert(!Array.isArray(injections), `Parameter «injections» must be object but not array on «ModulerV6.prototype.evaluateSource»`);
@@ -3044,9 +3102,9 @@
         }
         static Refrescador=function() {
             try {
-                require(require("path").resolve(`${__dirname}/refrescador/refrescador.api.dist.js`));
+                return require(require("path").resolve(`${__dirname}/refrescador/refrescador.api.dist.js`));
             } catch (error) {
-                require(require("path").resolve(`${__dirname}/../../../src/external/refrescador/refrescador.api.dist.js`));
+                return require(require("path").resolve(`${__dirname}/../../../src/external/refrescador/refrescador.api.dist.js`));
             }
         }();
         static CompilerV6=CompilerV6;
@@ -3120,6 +3178,8 @@
                 return {
                     propagateUp: true,
                     testFeatures: [],
+                    testIntegrity: [],
+                    testSpeed: [],
                     ...overrider
                 };
             }
@@ -3521,15 +3581,20 @@
                                     event: event
                                 });
                             }
-                            Triggering_onTestFeature_file: {
-                                const onTestFeatureFile = path.join(path.dirname(filepath), "e.onTestFeature.js");
-                                const featuresAdded = await this.triggerCallbackFromFile(onTestFeatureFile, {
+                            Triggering_onTest_file: {
+                                const onTestFile = path.join(path.dirname(filepath), "e.onTest.js");
+                                const testsAdded = await this.triggerCallbackFromFile(onTestFile, {
                                     file: filepath,
                                     event: event
                                 });
-                                if (typeof featuresAdded !== "number") {
-                                    this.assert(Array.isArray(featuresAdded), `File «e.onTestFeature.js» must return array about file «${onTestFeatureFile}» on «DevBinaryV6.Utils.prototype.touchFile»`);
-                                    event.testFeatures.push(...featuresAdded);
+                                if (typeof testsAdded !== "number") {
+                                    this.assert(typeof testsAdded === "object", `File «e.onTest.js» must return object about file «${onTestFile}» on «DevBinaryV6.Utils.prototype.touchFile»`);
+                                    Object.keys(testsAdded).forEach(prop => {
+                                        this.assert([ "feature", "integrity", "speed" ].includes(prop), `File «e.onTest.js» on «${onTestFile}» cannot return object with unknown property «${prop}» on «DevBinaryV6.Utils.prototype.touchFile»`);
+                                    });
+                                    if ("feature" in testsAdded) event.testFeatures.push(...testsAdded.feature);
+                                    if ("integrity" in testsAdded) event.testIntegrity.push(...testsAdded.integrity);
+                                    if ("speed" in testsAdded) event.testSpeed.push(...testsAdded.speed);
                                 }
                             }
                         }
@@ -3576,16 +3641,32 @@
                     }
                     On_root: {
                         if (!event.isRoot) break On_root;
+                        Run_integrity_tests: {
+                            await this.devbin.tester.runDirectory("@/test/integrity", {
+                                title: "integrity",
+                                filename: "integrity.js",
+                                filter: file => this.matchesFileWithSimpleSelector(path.basename(file), [ ...event.testIntegrity, ...this.devbin.settings.data?.test?.integrity || [] ])
+                            });
+                        }
+                        Run_speed_tests: {
+                            await this.devbin.tester.runDirectory("@/test/speed", {
+                                title: "speed",
+                                filename: "speed.js",
+                                filter: file => this.matchesFileWithSimpleSelector(path.basename(file), [ ...event.testSpeed, ...this.devbin.settings.data?.test?.speed || [] ])
+                            });
+                        }
                         Run_feature_tests: {
                             await this.devbin.tester.runDirectory("@/test/feature", {
-                                testFilename: "feature.js",
-                                filterCallback: file => this.matchesFileWithSimpleSelector(path.basename(file), [ ...event.testFeatures, ...this.devbin.settings.data?.test?.features || [] ])
+                                title: "feature",
+                                filename: "feature.js",
+                                filter: file => this.matchesFileWithSimpleSelector(path.basename(file), [ ...event.testFeatures, ...this.devbin.settings.data?.test?.features || [] ])
                             });
                         }
                         Run_case_tests: {
                             await this.devbin.tester.runDirectory("@/test/case", {
-                                testFilename: "case.js",
-                                filterCallback: file => this.matchesFileWithSimpleSelector(path.basename(file), [ ...event.testCase, ...this.devbin.settings.data?.test?.case || [] ])
+                                title: "case",
+                                filename: "case.js",
+                                filter: file => true
                             });
                         }
                         Run_devbin_test_command: {
@@ -3602,7 +3683,8 @@
                 const parameters = Object.assign({}, {
                     ignoreErrors: false,
                     allowDirtyDirectory: false,
-                    dontOverride: false
+                    dontOverride: false,
+                    installDependencies: false
                 }, parametersInput, {
                     from: basedirInput
                 });
@@ -3647,6 +3729,10 @@
                         }
                         return await fs.promises.writeFile(file, contents, "utf8");
                     },
+                    _saveFileIfNotExists: async function(file, contents) {
+                        if (await utils._existsFile(file)) return -1;
+                        return await fs.promises.writeFile(file, contents, "utf8");
+                    },
                     _duplicateFile: async function(src, dst) {
                         if (parameters.dontOverride && await utils._existsFile(dst)) {
                             return -1;
@@ -3680,37 +3766,40 @@
                     _existsFile: utils.trify(utils._readFile, false)
                 });
                 const createDirectory = parameters.ignoreErrors ? utils.trify(utils._createDirectory) : utils._createDirectory;
+                const createDirectoryIfNotExists = utils.trify(utils._createDirectory);
                 const saveFile = parameters.ignoreErrors ? utils.trify(utils._saveFile) : utils._saveFile;
+                const saveFileIfNotExists = utils._saveFileIfNotExists;
                 const duplicateFile = parameters.ignoreErrors ? utils.trify(utils._duplicateFile) : utils._duplicateFile;
                 const duplicateDirectory = parameters.ignoreErrors ? utils.trify(utils._duplicateDirectory) : utils._duplicateDirectory;
                 const duplicateFileIfNotExists = utils.trify(utils._initializeDuplicatedFile);
-                await createDirectory(`${targetDir}/dev`);
-                await createDirectory(`${targetDir}/dev/bin`);
-                await createDirectory(`${targetDir}/dev/bin/help`);
-                await createDirectory(`${targetDir}/dev/bin/test`);
-                await createDirectory(`${targetDir}/dev/coverage`);
-                await createDirectory(`${targetDir}/dev/files`);
-                await createDirectory(`${targetDir}/src`);
-                await createDirectory(`${targetDir}/src/external`);
-                await createDirectory(`${targetDir}/src/www`);
-                await createDirectory(`${targetDir}/src/www/dev`);
-                await createDirectory(`${targetDir}/src/www/external`);
-                await createDirectory(`${targetDir}/dist`);
-                await createDirectory(`${targetDir}/dist/src`);
-                await createDirectory(`${targetDir}/dist/www`);
-                await createDirectory(`${targetDir}/dist/www/coverage`);
-                await createDirectory(`${targetDir}/dist/www/external`);
-                await createDirectory(`${targetDir}/dist/www/dev`);
-                await createDirectory(`${targetDir}/dist/www/dev/settings`);
-                await createDirectory(`${targetDir}/dist/src/external`);
-                await createDirectory(`${targetDir}/test`);
-                await createDirectory(`${targetDir}/test/feature`);
-                await createDirectory(`${targetDir}/test/integrity`);
-                await createDirectory(`${targetDir}/test/unit`);
-                await createDirectory(`${targetDir}/test/unit/src`);
-                await createDirectory(`${targetDir}/test/case`);
-                await createDirectory(`${targetDir}/docs`);
-                await saveFile(`${targetDir}/package.json`, JSON.stringify(initialPackageJson, null, 2), "utf8");
+                await createDirectoryIfNotExists(`${targetDir}/dev`);
+                await createDirectoryIfNotExists(`${targetDir}/dev/bin`);
+                await createDirectoryIfNotExists(`${targetDir}/dev/bin/help`);
+                await createDirectoryIfNotExists(`${targetDir}/dev/bin/test`);
+                await createDirectoryIfNotExists(`${targetDir}/dev/coverage`);
+                await createDirectoryIfNotExists(`${targetDir}/dev/files`);
+                await createDirectoryIfNotExists(`${targetDir}/src`);
+                await createDirectoryIfNotExists(`${targetDir}/src/external`);
+                await createDirectoryIfNotExists(`${targetDir}/src/www`);
+                await createDirectoryIfNotExists(`${targetDir}/src/www/dev`);
+                await createDirectoryIfNotExists(`${targetDir}/src/www/external`);
+                await createDirectoryIfNotExists(`${targetDir}/dist`);
+                await createDirectoryIfNotExists(`${targetDir}/dist/src`);
+                await createDirectoryIfNotExists(`${targetDir}/dist/www`);
+                await createDirectoryIfNotExists(`${targetDir}/dist/www/coverage`);
+                await createDirectoryIfNotExists(`${targetDir}/dist/www/external`);
+                await createDirectoryIfNotExists(`${targetDir}/dist/www/dev`);
+                await createDirectoryIfNotExists(`${targetDir}/dist/www/dev/settings`);
+                await createDirectoryIfNotExists(`${targetDir}/dist/src/external`);
+                await createDirectoryIfNotExists(`${targetDir}/test`);
+                await createDirectoryIfNotExists(`${targetDir}/test/feature`);
+                await createDirectoryIfNotExists(`${targetDir}/test/integrity`);
+                await createDirectoryIfNotExists(`${targetDir}/test/unit`);
+                await createDirectoryIfNotExists(`${targetDir}/test/unit/src`);
+                await createDirectoryIfNotExists(`${targetDir}/test/case`);
+                await createDirectoryIfNotExists(`${targetDir}/test/speed`);
+                await createDirectoryIfNotExists(`${targetDir}/docs`);
+                await saveFileIfNotExists(`${targetDir}/package.json`, JSON.stringify(initialPackageJson, null, 2), "utf8");
                 if (!await utils._existsFile(`${targetDir}/.gitignore`)) await saveFile(`${targetDir}/.gitignore`, "node_modules", "utf8");
                 await duplicateFileIfNotExists(`${__dirname}/../src/DevBinaryV6/Utils/core/devbin-help.js`, `${targetDir}/dev/bin/help/command.js`);
                 await duplicateFileIfNotExists(`${__dirname}/../src/DevBinaryV6/Utils/core/dev-bin.js`, `${targetDir}/dev/bin.js`);
@@ -3724,6 +3813,7 @@
                 await duplicateFileIfNotExists(`${__dirname}/../src/DevBinaryV6/Utils/core/settings.js`, `${targetDir}/dev/settings.js`);
                 await duplicateFileIfNotExists(`${__dirname}/../src/DevBinaryV6/Utils/core/devbin-test.js`, `${targetDir}/dev/bin/test/command.js`);
                 await duplicateFileIfNotExists(`${__dirname}/../src/DevBinaryV6/Utils/core/www-settings.js`, `${targetDir}/src/www/dev/settings.entry.js`);
+                await duplicateFileIfNotExists(`${__dirname}/../src/DevBinaryV6/Utils/core/www-settings.js`, `${targetDir}/dist/www/dev/settings.dist.js`);
                 await duplicateFileIfNotExists(`${__dirname}/../src/DevBinaryV6/Utils/core/controllers.js`, `${targetDir}/dev/controllers.js`);
                 await duplicateFile(`${__dirname}/moduler-v6.dist.js`, `${targetDir}/src/external/moduler-v6.entry.js`);
                 await duplicateFile(`${__dirname}/moduler-v6.dist.js`, `${targetDir}/src/www/external/moduler-v6.entry.js`);
@@ -3733,6 +3823,7 @@
                 await duplicateDirectory(`${__dirname}/refrescador`, `${targetDir}/src/external/refrescador`, {
                     recursive: true
                 });
+                if (parameters.installDependencies) await this.installNpmDependencies([], targetDir);
                 return {
                     targetDir: targetDir
                 };
@@ -3802,6 +3893,17 @@
                 });
             }
             publicableSettingsIds=[ "env", "instrumentalize", "traceExternalSources", "sectionsMap", "test" ];
+            async installNpmDependencies(files, rootdir = this.devbin.moduler.rootdir) {
+                const {exec: exec} = require("child_process");
+                const {promisify: promisify} = require("util");
+                const execAsync = promisify(exec);
+                const command = "npm install" + (files ? ` ${files.join(" ")}` : "");
+                const {stdout: stdout, stderr: stderr} = await execAsync(command, {
+                    cwd: rootdir
+                });
+                if (stderr) throw stderr;
+                return stdout;
+            }
             constructor(devbin) {
                 this.devbin = devbin;
             }
@@ -3820,6 +3922,12 @@
                         default: false,
                         alias: [ "-f" ],
                         description: "Empty directory from which to start the new project"
+                    },
+                    installDependencies: {
+                        onFormat: devbin.constructor.Formatters.asBoolean,
+                        default: false,
+                        alias: [ "-i" ],
+                        description: "Runs «npm install» once all files are ensured"
                     }
                 }, args);
                 this.assert(typeof parameters.from === "string", `Parameter «--from» is required as string on «DevBinaryV6.ShadowCommands.prototype['new project']»`);
@@ -3841,6 +3949,12 @@
                         default: false,
                         alias: [ "-r" ],
                         description: "Overwrites all core files if used"
+                    },
+                    installDependencies: {
+                        onFormat: devbin.constructor.Formatters.asBoolean,
+                        default: false,
+                        alias: [ "-i" ],
+                        description: "Runs «npm install» once all files are ensured"
                     }
                 }, args);
                 this.assert(typeof parameters.from === "string", `Parameter «--from» is required as string on «DevBinaryV6.ShadowCommands.prototype['ensure core']»`);
@@ -3944,25 +4058,31 @@
                 this.devbin = devbin;
             }
             async runDirectory(dirInput, options = {}) {
-                const {filterCallback: filterCallback = false, ignoreFiles: ignoreFiles = [ "runner.js" ], injection: injection = {}, testsTitle: testsTitle = false, testFilename: testFilename = false} = options;
+                const {filter: filter = false, ignore: ignore = [ "runner.js" ], injection: injection = {}, title: title = false, filename: filename = false} = options;
+                Validate_properties_because_it_is_faulty: {
+                    const validOptions = [ "filter", "ignore", "injection", "title", "filename" ];
+                    for (let prop in options) {
+                        this.devbin.assert(validOptions.includes(prop), `Parameter «options» does not accept property «${prop}» on «DevBinaryV6.Tester.prototype.runDirectory»`);
+                    }
+                }
                 const fs = require("fs");
                 const path = require("path");
                 const ERROR_SEPARATOR = `\n - `;
                 const dir = this.devbin.compiler.normalizationOf(dirInput);
-                const testsType = testsTitle || path.basename(dir);
+                const testsType = title || path.basename(dir);
                 const testFiles = (await fs.promises.readdir(dir)).filter(file => {
-                    const endsWithJs = file.endsWith(".js");
-                    const isNotIgnored = !ignoreFiles.includes(file);
-                    const passesFilter = filterCallback ? filterCallback(file) : true;
-                    return endsWithJs && isNotIgnored && passesFilter;
+                    const isNotIgnored = !ignore.includes(file);
+                    const passesFilter = filter ? filter(file) : true;
+                    return isNotIgnored && passesFilter;
                 });
-                const $ = this.devbin.compiler.constructor.ansi.colors;
+                const ansiTool = this.devbin.compiler.constructor.ansi.colors;
+                console.log(`[*] Found ${testFiles.length} tests` + (title ? ` for «${title}»` : ""));
                 const errors = [];
                 const crono = this.devbin.constructor.Cronometer();
                 for (let index = 0; index < testFiles.length; index++) {
                     const testName = testFiles[index];
-                    const testFile = `${dir}/${testName}` + (testFilename ? `/${testFilename}` : "");
-                    console.log($.style("cyanBright,italic").text(`🟢 Starting «${testName}» [${testsType}:${index + 1}/${testFiles.length}]`));
+                    const testFile = `${dir}/${testName}` + (filename ? `/${filename}` : "");
+                    console.log(ansiTool.style("cyanBright,italic").text(`🟢 Starting «${testName}» [${testsType}:${index + 1}/${testFiles.length}]`));
                     let testCallback;
                     try {
                         const _testCallback = require(testFile);
@@ -3970,7 +4090,7 @@
                         testCallback = _testCallback;
                     } catch (error) {
                         const expression = `🟣 Bad exportation on «${testsType}:${index}» named «${testName}»${ERROR_SEPARATOR}${error.name}: ${error.message}${ERROR_SEPARATOR}${error.stack}`;
-                        console.log($.style("red,italic").text($.box(expression)));
+                        console.log(ansiTool.style("red,italic").text(ansiTool.box(expression)));
                         errors.push({
                             test: testName,
                             error: error,
@@ -3983,16 +4103,20 @@
                         try {
                             await testCallback({
                                 DevBinaryV6: this.devbin.constructor,
+                                CompilerV6: this.devbin.compiler.constructor,
+                                ModulerV6: this.devbin.moduler.constructor,
                                 devBinaryV6: this.devbin,
+                                compilerV6: this.devbin.compiler,
+                                modulerV6: this.devbin.moduler,
                                 ...injection
                             });
                             testCronometer.stop("Success");
                             const expression = `🟢 Done: «${testName}» [${testsType}:${index + 1}/${testFiles.length}] [⏳=${testCronometer.milliseconds()}]`;
-                            console.log($.style("green,italic").text(expression));
+                            console.log(ansiTool.style("green,italic").text(expression));
                         } catch (error) {
                             testCronometer.stop("Failure");
                             const expression = `🔴 Failed «${testName}» [${testsType}:${index + 1}/${testFiles.length}]${ERROR_SEPARATOR}${error.name}: ${error.message}${ERROR_SEPARATOR}${error.stack}`;
-                            console.log($.style("red,italic").text(expression));
+                            console.log(ansiTool.style("red,italic").text(expression));
                             errors.push({
                                 test: testName,
                                 error: error,
@@ -4003,13 +4127,13 @@
                 }
                 if (testFiles.length) {
                     if (errors.length) {
-                        console.log($.style("cyan").text(`⚠️  Errors report of «${testsType}» tests:`));
+                        console.log(ansiTool.style("cyan").text(`⚠️  Errors report of «${testsType}» tests:`));
                         for (let index = 0; index < errors.length; index++) {
                             const {test: test, error: error, expression: expression} = errors[index];
-                            console.log($.style("magenta").text($.box(`  - Error nº${index + 1}/${errors.length}: ${ERROR_SEPARATOR}` + expression)));
+                            console.log(ansiTool.style("magenta").text(ansiTool.box(`  - Error nº${index + 1}/${errors.length}: ${ERROR_SEPARATOR}` + expression)));
                         }
                     } else {
-                        console.log($.style("greenBright,bold").text($.box(`💎 No errors reported on «${testsType}» tests`)));
+                        console.log(ansiTool.style("greenBright,bold").text(ansiTool.box(`💎 No errors reported on «${testsType}» tests`)));
                     }
                 }
             }
