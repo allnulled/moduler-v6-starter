@@ -3543,6 +3543,7 @@
                 const event = this.constructor.defaultTouchFileOptions({
                     type: "TouchFileEvent",
                     propagateUp: true,
+                    ignoreOnTouchEvent: false,
                     processedEntries: {},
                     isRoot: false,
                     ...optionsInput
@@ -3641,6 +3642,7 @@
                         }
                     }
                     Triggering_onTouch_file: {
+                        if (event.ignoreOnTouchEvent) break Triggering_onTouch_file;
                         const onTouchFile = path.join(path.dirname(filepath), "e.onTouch.js");
                         await this.triggerCallbackFromFile(onTouchFile, {
                             file: filepath,
@@ -3869,7 +3871,7 @@
                 const callback = require(file);
                 this.assert(typeof callback === "function", `File «${file}» should export a function on «DevBinaryV6.Utils.prototype.triggerCallbackFromFile»`);
                 return await callback.call(this, {
-                    devbin: this,
+                    devbin: this.devbin,
                     ...injection
                 });
             }
