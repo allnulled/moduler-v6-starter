@@ -564,6 +564,12 @@
                     ...token
                 };
             } ],
+            InjectModule: [ "$" + "compiler.inject.module(", this.Parser.symbols.PARENTHESYS_BALANCE, function(token) {
+                return {
+                    syntax: "Inject Module",
+                    ...token
+                };
+            } ],
             ImportJs: [ "$" + "moduler.import(", this.Parser.symbols.PARENTHESYS_BALANCE, function(token) {
                 return {
                     syntax: "Moduler Import",
@@ -741,7 +747,7 @@
             } ]
         };
         static defaultGrammars={
-            forJs: [ this.nativeGrammars.InjectSource, this.nativeGrammars.InjectString, this.nativeGrammars.InjectTemplate, this.nativeGrammars.ImportJs, this.nativeGrammars.ExportJs, this.nativeGrammars.AtRequires, this.nativeGrammars.AtInjects, this.nativeGrammars.MultilineMarkdownComment, this.nativeGrammars.NewParagraphMarkdownComment, this.nativeGrammars.NewLineMarkdownComment, this.nativeGrammars.PrecisedTabulationMarkdownComment, this.nativeGrammars.IncreasedTabulationMarkdownComment, this.nativeGrammars.DecreasedTabulationMarkdownComment, this.nativeGrammars.InlineMarkdownComment, this.nativeGrammars.UnspacedInlineMarkdownComment ],
+            forJs: [ this.nativeGrammars.InjectSource, this.nativeGrammars.InjectString, this.nativeGrammars.InjectTemplate, this.nativeGrammars.InjectModule, this.nativeGrammars.ImportJs, this.nativeGrammars.ExportJs, this.nativeGrammars.AtRequires, this.nativeGrammars.AtInjects, this.nativeGrammars.MultilineMarkdownComment, this.nativeGrammars.NewParagraphMarkdownComment, this.nativeGrammars.NewLineMarkdownComment, this.nativeGrammars.PrecisedTabulationMarkdownComment, this.nativeGrammars.IncreasedTabulationMarkdownComment, this.nativeGrammars.DecreasedTabulationMarkdownComment, this.nativeGrammars.InlineMarkdownComment, this.nativeGrammars.UnspacedInlineMarkdownComment ],
             forCss: [ this.nativeGrammars.InjectSource, this.nativeGrammars.InjectString, this.nativeGrammars.InjectTemplate, this.nativeGrammars.ImportJs, this.nativeGrammars.ExportJs, this.nativeGrammars.AtRequires, this.nativeGrammars.AtInjects ],
             forMd: [ this.nativeGrammars.InjectSource, this.nativeGrammars.InjectString, this.nativeGrammars.ImportJs, this.nativeGrammars.ExportJs, this.nativeGrammars.MultilineCommentValueInjection, this.nativeGrammars.AtRequires, this.nativeGrammars.AtInjects ],
             forHtml: [ this.nativeGrammars.InjectSource, this.nativeGrammars.AtInjects ],

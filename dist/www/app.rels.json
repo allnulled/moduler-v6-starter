@@ -1,17 +1,5 @@
 {
   "tree": {
-    "@/src/www/app.entry.js": {
-      "0-56": {
-        "syntax": "Inject Source",
-        "inner": "\"./external/moduler-v6.entry.js\"",
-        "referenceOf": {
-          "type": "file",
-          "entry": "./external/moduler-v6.entry.js",
-          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/external/moduler-v6.entry.js",
-          "rootpath": "@/src/www/external/moduler-v6.entry.js"
-        }
-      }
-    },
-    "@/src/www/external/moduler-v6.entry.js": {}
+    "@/src/www/app.entry.js": {}
   }
 }
