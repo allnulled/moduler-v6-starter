@@ -569,6 +569,12 @@
                         ...token
                     };
                 } ],
+                InjectModule: [ "$" + "compiler.inject.module(", this.Parser.symbols.PARENTHESYS_BALANCE, function(token) {
+                    return {
+                        syntax: "Inject Module",
+                        ...token
+                    };
+                } ],
                 ImportJs: [ "$" + "moduler.import(", this.Parser.symbols.PARENTHESYS_BALANCE, function(token) {
                     return {
                         syntax: "Moduler Import",
@@ -746,7 +752,7 @@
                 } ]
             };
             static defaultGrammars={
-                forJs: [ this.nativeGrammars.InjectSource, this.nativeGrammars.InjectString, this.nativeGrammars.InjectTemplate, this.nativeGrammars.ImportJs, this.nativeGrammars.ExportJs, this.nativeGrammars.AtRequires, this.nativeGrammars.AtInjects, this.nativeGrammars.MultilineMarkdownComment, this.nativeGrammars.NewParagraphMarkdownComment, this.nativeGrammars.NewLineMarkdownComment, this.nativeGrammars.PrecisedTabulationMarkdownComment, this.nativeGrammars.IncreasedTabulationMarkdownComment, this.nativeGrammars.DecreasedTabulationMarkdownComment, this.nativeGrammars.InlineMarkdownComment, this.nativeGrammars.UnspacedInlineMarkdownComment ],
+                forJs: [ this.nativeGrammars.InjectSource, this.nativeGrammars.InjectString, this.nativeGrammars.InjectTemplate, this.nativeGrammars.InjectModule, this.nativeGrammars.ImportJs, this.nativeGrammars.ExportJs, this.nativeGrammars.AtRequires, this.nativeGrammars.AtInjects, this.nativeGrammars.MultilineMarkdownComment, this.nativeGrammars.NewParagraphMarkdownComment, this.nativeGrammars.NewLineMarkdownComment, this.nativeGrammars.PrecisedTabulationMarkdownComment, this.nativeGrammars.IncreasedTabulationMarkdownComment, this.nativeGrammars.DecreasedTabulationMarkdownComment, this.nativeGrammars.InlineMarkdownComment, this.nativeGrammars.UnspacedInlineMarkdownComment ],
                 forCss: [ this.nativeGrammars.InjectSource, this.nativeGrammars.InjectString, this.nativeGrammars.InjectTemplate, this.nativeGrammars.ImportJs, this.nativeGrammars.ExportJs, this.nativeGrammars.AtRequires, this.nativeGrammars.AtInjects ],
                 forMd: [ this.nativeGrammars.InjectSource, this.nativeGrammars.InjectString, this.nativeGrammars.ImportJs, this.nativeGrammars.ExportJs, this.nativeGrammars.MultilineCommentValueInjection, this.nativeGrammars.AtRequires, this.nativeGrammars.AtInjects ],
                 forHtml: [ this.nativeGrammars.InjectSource, this.nativeGrammars.AtInjects ],
@@ -761,11 +767,57 @@
             };
             static getEnvironmentDirectory() {
                 if (this.isBrowser) {
+                    Apply_github_io_configurations_if_so: {
+                        const projectName = this.isGithubIo();
+                        if (projectName) return `${window.location.origin}/${projectName}`;
+                    }
                     return window.location.origin;
                 } else {
                     return process.cwd();
                 }
             }
+            static isGithubIo() {
+                if (!this.isBrowser) return false;
+                if (!/\.github\.io$/i.test(window.location.hostname)) return false;
+                return window.location.pathname.split("/").filter(Boolean)[0];
+            }
+            static bindToRefrescador() {
+                if (!this.isBrowser) return -2;
+                if (this.isGithubIo()) return -3;
+                return Promise.all([ this.includeScript.try("/socket-io.client.js"), this.includeScript.try("/client.js") ]);
+            }
+            async trify(callback, ...args) {
+                try {
+                    return await callback(...args);
+                } catch (error) {
+                    return null;
+                }
+            }
+            static includeScript=Object.assign(src => {
+                this.assert(this.isBrowser, `ModulerV6.includeScript cannot include scripts in environments that are not browser and so file «${src}» cannot be loaded`);
+                return new Promise((resolve, reject) => {
+                    const script = document.createElement("script");
+                    script.src = src;
+                    script.onload = () => resolve();
+                    script.onerror = error => reject(error);
+                    document.head.appendChild(script);
+                });
+            }, {
+                try: (...args) => this.trify(this.includeScript, ...args)
+            });
+            static includeStyle=Object.assign(src => {
+                this.assert(this.isBrowser, `ModulerV6.includeStyle cannot include styles in environments that are not browser and so file «${src}» cannot be loaded`);
+                return new Promise((resolve, reject) => {
+                    const link = document.createElement("link");
+                    link.rel = "stylesheet";
+                    link.href = src;
+                    link.onload = () => resolve();
+                    link.onerror = error => reject(error);
+                    document.head.appendChild(link);
+                });
+            }, {
+                try: (...args) => this.trify(this.includeStyle, ...args)
+            });
             static create(...args) {
                 return new this(...args);
             }
@@ -1273,6 +1325,9 @@
             }
             static globalInstance=new this;
             static isLoaded=(async () => {
+                En_paralelo: {
+                    this.bindToRefrescador();
+                }
                 await this.globalInstance.runtime.load();
                 this.onLoaded.resolve();
             })();
@@ -1531,8 +1586,19 @@
             deleteFile=Object.assign(file => require("fs").promises.unlink(file), {
                 try: (...args) => this.trify(this.deleteFile, ...args)
             });
+            deleteDirectory=Object.assign(dir => {
+                const fullDir = this.compiler.moduler.normalizationOf(dir);
+                return require("fs").promises.rm(fullDir, {
+                    recursive: true
+                });
+            }, {
+                try: (...args) => this.trify(this.deleteDirectory, ...args)
+            });
             hasFile(file) {
                 return require("fs").promises.access(file).then(() => true).catch(error => false);
+            }
+            hasDirectory(dir) {
+                return require("fs").promises.access(dir).then(() => true).catch(error => false);
             }
             writeFile=Object.assign((file, contents, encoding = "utf8") => {
                 const absolutePath = this.compiler.normalizationOf(file);
@@ -1540,12 +1606,33 @@
             }, {
                 try: (...args) => this.trify(this.writeFile, ...args)
             });
+            makeDirectory=Object.assign(dir => {
+                const fullDir = this.compiler.normalizationOf(dir);
+                return require("fs").promises.mkdir(fullDir);
+            }, {
+                try: (...args) => this.trify(this.makeDirectory, ...args)
+            });
             readFile=Object.assign((file, encoding = "utf8") => {
                 const absolutePath = this.compiler.normalizationOf(file);
                 return require("fs").promises.readFile(absolutePath, encoding);
             }, {
                 try: (...args) => this.trify(this.readFile, ...args)
             });
+            copyDirectory=Object.assign(async (src, dst) => {
+                const fullSrc = this.compiler.moduler.normalizationOf(src);
+                const fullDst = this.compiler.moduler.normalizationOf(dst);
+                await this.ensureDirectory(fullDst);
+                return await require("fs").promises.cp(fullSrc, fullDst, {
+                    recursive: true
+                });
+            }, {
+                try: (...args) => this.trify(this.copyDirectory, ...args)
+            });
+            ensureDirectory(dir) {
+                return require("fs").promises.mkdir(dir, {
+                    recursive: true
+                }).catch(error => -2);
+            }
         };
         static CompilationProcess=class CompilationProcess {
             static assert(condition, message) {
@@ -2060,6 +2147,7 @@
                 "Inject Source": this._compileAsInjectSource,
                 "Inject String": this._compileAsInjectString,
                 "Inject Template": this._compileAsInjectTemplate,
+                "Inject Module": this._compileAsInjectModule,
                 "Multiline Comment Code Injection": this._compileAsMultilineCommentCodeInjection,
                 "Multiline Comment Value Injection": this._compileAsMultilineCommentValueInjection,
                 "Moduler Import": this._compileAsModulerImport,
@@ -2258,7 +2346,7 @@
                 return false;
             }
         }
-        async _compileAsInjectSource(compilationFile, compilationProcess, {token: token, tokenIndex: tokenIndex}) {
+        async _compileAsInjectSource(compilationFile, compilationProcess, {token: token, tokenIndex: tokenIndex}, options = {}) {
             this._traceIn("_compileAsInjectSource", arguments);
             let parameters, targetPath, targetCompilation, targetCaches = {};
             const {tokenization: tokenization, source: source, resource: resource, isRoot: isRoot} = compilationFile;
@@ -2329,7 +2417,11 @@
                     if (!targetCaches.js) targetCaches.js = targetCompilation.js;
                     targetCaches.css = targetCaches.css || targetCompilation?.css;
                     targetCaches.md = targetCaches.md || targetCompilation?.md;
-                    compilationFile.compilation.js = this._replaceTextRange(compilationFile.compilation.js, token.location[0], token.location[1], targetCaches.js);
+                    let outputJs = targetCaches.js;
+                    if (options?.modifySource) {
+                        outputJs = options.modifySource(outputJs);
+                    }
+                    compilationFile.compilation.js = this._replaceTextRange(compilationFile.compilation.js, token.location[0], token.location[1], outputJs);
                 }
                 Esto_tiene_que_hacerse_desde_dentro_del_compileRecursively: {}
             }
@@ -2421,6 +2513,16 @@
                 Object.assign(compilationFile.report.tree, targetCompilation.report.tree);
             }
             this._traceOut("_compileAsInjectTemplate", arguments);
+        }
+        _compileAsInjectModule(compilationFile, compilationProcess, {token: token, tokenIndex: tokenIndex}) {
+            return this._compileAsInjectSource(compilationFile, compilationProcess, {
+                token: token,
+                tokenIndex: tokenIndex
+            }, {
+                modifySource: function(source) {
+                    return [ `(() => {`, `let __firstHolder = {};`, `let __originalHolder = __firstHolder;`, `const module = {`, `  get exports() {`, `    return __originalHolder;`, `  },`, `  set exports(value) {`, `    __originalHolder = value;`, `  }`, `};`, `const exports = module.exports;`, `const __result = (() => {`, source, `})();`, `let __output = undefined;`, `const __returnsUndefined = () => typeof __result === "undefined";`, `const __isSameEmptyObject = () => (module.exports === __firstHolder) && ((Object.keys(__firstHolder).length === 0));`, `if(!__returnsUndefined()) {`, `  __output = module.exports = __result;`, `} else if(!__isSameEmptyObject()) {`, `  __output = module.exports;`, `}`, `return __output;`, `})()` ].join("\n");
+                }
+            });
         }
         _compileAsMultilineCommentCodeInjection() {
             this._trace("_compileAsMultilineCommentCodeInjection", arguments);

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CalendarScript</title>
+</head>
+<body>
+    <h3>CalendarScript</h3>
+    <p>La aplicación no está disponible todavía.</p>
+    <div id="app"></div>
+    <script src="/socket.io-client.js"></script>
+    <script src="/client.js"></script>
+    <style>
+        /*@injects:"./app.entry.css"*/
+    </style>
+    <script data-module="ModulerV6">
+        $compiler.inject.source("@/dist/www/external/moduler-v6.dist.js")
+    </script>
+    <script data-module="CalendarScript.app">
+        $compiler.inject.source("@/dist/www/apps/CalendarScript/app.dist.js")
+    </script>
+    <script data-module="CalendarScript.satelite">
+        (async function() {
+            const Satelite = await $moduler.import("@/dist/www/apps/CalendarScript/satelite.dist.js");
+            Satelite.orbit();
+        })();
+    </script>
+</body>
+</html>

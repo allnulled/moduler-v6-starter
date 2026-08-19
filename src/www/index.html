@@ -3,23 +3,19 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1.0">
-    <title>Application</title>
-    <link rel="stylesheet" href="./app.dist.css" />
-</head>
-    <h1>This is it, the entry point of your application</h1>
-<body>
-    <div id="app"></div>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplicaciones</title>
     <script src="/socket.io-client.js"></script>
     <script src="/client.js"></script>
-    <script src="./lib/moduler-v6.dist.js"></script>
-    <script>
-        (async function() {
-            const app = await ModulerV6.globalInstance.import("@/dist/www/app.dist.js");
-            console.log(app);
-        })();
-    </script>
+</head>
+<body>
+    <h3>Aplicaciones disponibles:</h3>
+    <ol>
+        <li><a href="./apps/CalendarScript/index.html">CalendarScript</a> es un editor de un lenguaje de scripting raro y sirve para organizarse tareas en el tiempo.</li>
+        <li>No hay más, de momento.</li>
+    </ol>
+    <style>/*@injects:"@/dist/www/app.dist.css"*/</style>
+    <script>/*@injects:"@/dist/www/app.dist.js"*/</script>
 </body>
 
 </html>

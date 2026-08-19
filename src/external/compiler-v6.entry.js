@@ -767,11 +767,57 @@
             };
             static getEnvironmentDirectory() {
                 if (this.isBrowser) {
+                    Apply_github_io_configurations_if_so: {
+                        const projectName = this.isGithubIo();
+                        if (projectName) return `${window.location.origin}/${projectName}`;
+                    }
                     return window.location.origin;
                 } else {
                     return process.cwd();
                 }
             }
+            static isGithubIo() {
+                if (!this.isBrowser) return false;
+                if (!/\.github\.io$/i.test(window.location.hostname)) return false;
+                return window.location.pathname.split("/").filter(Boolean)[0];
+            }
+            static bindToRefrescador() {
+                if (!this.isBrowser) return -2;
+                if (this.isGithubIo()) return -3;
+                return Promise.all([ this.includeScript.try("/socket-io.client.js"), this.includeScript.try("/client.js") ]);
+            }
+            async trify(callback, ...args) {
+                try {
+                    return await callback(...args);
+                } catch (error) {
+                    return null;
+                }
+            }
+            static includeScript=Object.assign(src => {
+                this.assert(this.isBrowser, `ModulerV6.includeScript cannot include scripts in environments that are not browser and so file «${src}» cannot be loaded`);
+                return new Promise((resolve, reject) => {
+                    const script = document.createElement("script");
+                    script.src = src;
+                    script.onload = () => resolve();
+                    script.onerror = error => reject(error);
+                    document.head.appendChild(script);
+                });
+            }, {
+                try: (...args) => this.trify(this.includeScript, ...args)
+            });
+            static includeStyle=Object.assign(src => {
+                this.assert(this.isBrowser, `ModulerV6.includeStyle cannot include styles in environments that are not browser and so file «${src}» cannot be loaded`);
+                return new Promise((resolve, reject) => {
+                    const link = document.createElement("link");
+                    link.rel = "stylesheet";
+                    link.href = src;
+                    link.onload = () => resolve();
+                    link.onerror = error => reject(error);
+                    document.head.appendChild(link);
+                });
+            }, {
+                try: (...args) => this.trify(this.includeStyle, ...args)
+            });
             static create(...args) {
                 return new this(...args);
             }
@@ -1279,6 +1325,9 @@
             }
             static globalInstance=new this;
             static isLoaded=(async () => {
+                En_paralelo: {
+                    this.bindToRefrescador();
+                }
                 await this.globalInstance.runtime.load();
                 this.onLoaded.resolve();
             })();
