@@ -555,10 +555,6 @@
                     };
                     return TextParserV1;
                 }.call());
-                static assert(condition, message) {
-                    if (!condition) throw new this.AssertionError(message);
-                }
-                static isBrowser=typeof window !== "undefined";
                 static nativeGrammars={
                     InjectSource: [ "$" + "compiler.inject.source(", this.Parser.symbols.PARENTHESYS_BALANCE, function(token) {
                         return {
@@ -771,33 +767,10 @@
                     forTemplateComments: [ this.nativeGrammars.MultilineCommentValueInjection, this.nativeGrammars.MultilineCommentCodeInjection ],
                     forEmbeddedForms: [ this.nativeGrammars.EmbeddedFormFieldOpener, this.nativeGrammars.EmbeddedFormFieldCloser ]
                 };
-                static symbols={
-                    REGEX_FOR_SLASH_AT_THE_END: /(\\|\/)$/g,
-                    REGEX_FOR_PROTOCOL_BASED_PATH: /^([A-Za-z0-9\-\_\$]*)\:\/\//g,
-                    REGEX_FOR_ABSOLUTE_WINDOWS_PATH: /^(([A-Za-z]:(\\|\/))|((\\|\/){2}))/g
-                };
-                static getEnvironmentDirectory() {
-                    if (this.isBrowser) {
-                        Apply_github_io_configurations_if_so: {
-                            const projectName = this.isGithubIo();
-                            if (projectName) return `${window.location.origin}/${projectName}`;
-                        }
-                        return window.location.origin;
-                    } else {
-                        return process.cwd();
-                    }
+                static assert(condition, message) {
+                    if (!condition) throw new this.AssertionError(message);
                 }
-                static isGithubIo() {
-                    if (!this.isBrowser) return false;
-                    if (!/\.github\.io$/i.test(window.location.hostname)) return false;
-                    return window.location.pathname.split("/").filter(Boolean)[0];
-                }
-                static bindToRefrescador() {
-                    if (!this.isBrowser) return -2;
-                    if (this.isGithubIo()) return -3;
-                    return Promise.all([ this.includeScript.try("/socket-io.client.js"), this.includeScript.try("/client.js") ]);
-                }
-                async trify(callback, ...args) {
+                static async trify(callback, ...args) {
                     try {
                         return await callback(...args);
                     } catch (error) {
@@ -829,6 +802,49 @@
                 }, {
                     try: (...args) => this.trify(this.includeStyle, ...args)
                 });
+                static isBrowser=typeof window !== "undefined";
+                static isGithubIo() {
+                    if (!this.isBrowser) return false;
+                    if (!/\.github\.io$/i.test(window.location.hostname)) return false;
+                    return window.location.pathname.split("/").filter(Boolean)[0];
+                }
+                static symbols={
+                    REGEX_FOR_SLASH_AT_THE_END: /(\\|\/)$/g,
+                    REGEX_FOR_PROTOCOL_BASED_PATH: /^([A-Za-z0-9\-\_\$]*)\:\/\//g,
+                    REGEX_FOR_ABSOLUTE_WINDOWS_PATH: /^(([A-Za-z]:(\\|\/))|((\\|\/){2}))/g
+                };
+                static getEnvironmentDirectory() {
+                    if (this.isBrowser) {
+                        Apply_github_io_configurations_if_so: {
+                            const projectName = this.isGithubIo();
+                            if (projectName) return `${window.location.origin}/${projectName}`;
+                        }
+                        return window.location.origin;
+                    } else {
+                        return process.cwd();
+                    }
+                }
+                static async bindToRefrescador() {
+                    if (!this.isBrowser) return -2;
+                    if (this.isGithubIo()) return -3;
+                    await this.includeScript.try("/socket.io-client.js");
+                    await this.includeScript.try("/client.js");
+                    return "bound successfully";
+                }
+                static updateAllHtmlLinks() {
+                    if (!this.isBrowser) {
+                        console.error("[!] ModulerV6.updateAllHtmlLinks can only be used in browser");
+                        return -2;
+                    }
+                    const allAnchors = document.body.querySelectorAll("a");
+                    console.log(`[*] ModulerV6 found ${allAnchors.length} anchors to update its link`);
+                    allAnchors.forEach(el => {
+                        const dataHref = el.getAttribute("data-mv6-href");
+                        if (dataHref?.startsWith("@/")) {
+                            el.setAttribute("href", $moduler.normalizationOf(dataHref));
+                        }
+                    });
+                }
                 static create(...args) {
                     return new this(...args);
                 }
@@ -1173,6 +1189,7 @@
                 assert(condition, message) {
                     return this.constructor.assert(condition, message);
                 }
+                trify=this.constructor.trify;
                 createAssertFunction() {
                     return (...args) => this.assert(...args);
                 }
@@ -1638,6 +1655,13 @@
                     });
                 }, {
                     try: (...args) => this.trify(this.copyDirectory, ...args)
+                });
+                copyFile=Object.assign(async (src, dst) => {
+                    const fullSrc = this.compiler.moduler.normalizationOf(src);
+                    const fullDst = this.compiler.moduler.normalizationOf(dst);
+                    return await require("fs").promises.copyFile(fullSrc, fullDst);
+                }, {
+                    try: (...args) => this.trify(this.copyFile, ...args)
                 });
                 ensureDirectory(dir) {
                     return require("fs").promises.mkdir(dir, {
@@ -2138,7 +2162,7 @@
                 this._traceOut("_tokenizeText", arguments);
                 return out;
             }
-            _replaceTextRange(text, start, end, replacement) {
+            _replaceTextRange(text, start, end, replacement, token = false) {
                 this._trace("_replaceTextRange", arguments);
                 if (text.length < start) {
                     this._tracer.printStack();
@@ -2148,7 +2172,8 @@
                     this._tracer.printStack();
                     throw new Error("Text replacement out of text boundaries (2)");
                 }
-                const output = text.slice(0, start) + replacement + text.slice(end + 1);
+                const offset = !token && token.syntax === "@Injects" ? 2 : 1;
+                const output = text.slice(0, start) + replacement + text.slice(end + offset);
                 return output;
             }
             async _compileTokens(compilationFile, compilationProcess) {
@@ -2418,10 +2443,10 @@
                         targetCaches.md = targetCaches.md || targetCompilation?.md;
                         let newContent = targetCompilation[targetIsJs ? "js" : "css"];
                         Escape_html_tags_in_this_case: {
-                            if (targetIsJs) newContent = newContent.replace(/(\< *)\/( *script *\>)/g, (match, g1, g2) => `${g1}\\/${g2}`);
-                            if (targetIsCss) newContent = newContent.replace(/(\< *)\/( *style *\>)/g, (match, g1, g2) => `${g1}\\/${g2}`);
+                            if (targetIsJs) newContent = newContent.replace(/(\< *)\/( *script *\>)/gi, (match, g1, g2) => `${g1}\\/${g2}`);
+                            if (targetIsCss) newContent = newContent.replace(/(\< *)\/( *style *\>)/gi, (match, g1, g2) => `${g1}\\/${g2}`);
                         }
-                        compilationFile.compilation.html = this._replaceTextRange(compilationFile.compilation.html, token.location[0], token.location[1], newContent);
+                        compilationFile.compilation.html = this._replaceTextRange(compilationFile.compilation.html, token.location[0], token.location[1], newContent, token);
                     } else {
                         this.assert(compilationFile.extension === "js", `Syntax of «$compiler.inject.source» can only inject files from «js,html» files and not on «${compilationFile.extension}» when importing «${targetPath}» from «${compilationFile.resource}»`);
                         this.assert(targetPath.endsWith(".js"), `Syntax of «$compiler.inject.source» is trying to import foraneous extension format file «${targetPath}» from «${compilationFile.resource}» on «CompilerV6.prototype._compileAsInjectSource»`);
@@ -2432,7 +2457,7 @@
                         if (options?.modifySource) {
                             outputJs = options.modifySource(outputJs);
                         }
-                        compilationFile.compilation.js = this._replaceTextRange(compilationFile.compilation.js, token.location[0], token.location[1], outputJs);
+                        compilationFile.compilation.js = this._replaceTextRange(compilationFile.compilation.js, token.location[0], token.location[1], outputJs, token);
                     }
                     Esto_tiene_que_hacerse_desde_dentro_del_compileRecursively: {}
                 }
@@ -2750,7 +2775,7 @@
                             this._prependToParentCompilationFile(compilationFile, {
                                 prefix: "\n\n",
                                 tabulation: 0,
-                                body: this._replaceTextRange(compilationFile.compilation.md, token.location[0], token.location[1] - 1, targetCompilation.md)
+                                body: this._replaceTextRange(compilationFile.compilation.md, token.location[0], token.location[1] - 0, targetCompilation.md)
                             }, "md", false);
                             wasPrepended = true;
                         } else {
@@ -3580,7 +3605,7 @@
             }
             executeUnitTestFileOf(filepath, event) {
                 if (event.isSrcWww) {
-                    console.log(`[*] No test for browser file: ${filepath}`);
+                    console.log(`[*] DevBinaryV6 ignored test for browser file: ${filepath}`);
                 } else {
                     delete require.cache[event.testFabrication.unitFile];
                     if (!event.testFabrication.unitFile) return -2;
@@ -3934,6 +3959,9 @@
                 await createDirectoryIfNotExists(`${targetDir}/test/case`);
                 await createDirectoryIfNotExists(`${targetDir}/test/speed`);
                 await createDirectoryIfNotExists(`${targetDir}/docs`);
+                await createDirectoryIfNotExists(`${targetDir}/docs/dist`);
+                await createDirectoryIfNotExists(`${targetDir}/docs/dist/www`);
+                await createDirectoryIfNotExists(`${targetDir}/docs/dist/www/external`);
                 await saveFileIfNotExists(`${targetDir}/package.json`, JSON.stringify(initialPackageJson, null, 2), "utf8");
                 if (!await utils._existsFile(`${targetDir}/.gitignore`)) await saveFile(`${targetDir}/.gitignore`, "node_modules", "utf8");
                 await duplicateFileIfNotExists(`${__dirname}/../src/DevBinaryV6/Utils/core/devbin-help.js`, `${targetDir}/dev/bin/help/command.js`);
@@ -3950,8 +3978,10 @@
                 await duplicateFileIfNotExists(`${__dirname}/../src/DevBinaryV6/Utils/core/www-settings.js`, `${targetDir}/src/www/dev/settings.entry.js`);
                 await duplicateFileIfNotExists(`${__dirname}/../src/DevBinaryV6/Utils/core/www-settings.js`, `${targetDir}/dist/www/dev/settings.dist.js`);
                 await duplicateFileIfNotExists(`${__dirname}/../src/DevBinaryV6/Utils/core/controllers.js`, `${targetDir}/dev/controllers.js`);
-                await duplicateFile(`${__dirname}/moduler-v6.dist.js`, `${targetDir}/src/external/moduler-v6.entry.js`);
                 await duplicateFile(`${__dirname}/moduler-v6.dist.js`, `${targetDir}/src/www/external/moduler-v6.entry.js`);
+                await duplicateFile(`${__dirname}/moduler-v6.dist.js`, `${targetDir}/dist/www/external/moduler-v6.dist.js`);
+                await duplicateFile(`${__dirname}/moduler-v6.dist.js`, `${targetDir}/docs/dist/www/external/moduler-v6.dist.js`);
+                await duplicateFile(`${__dirname}/moduler-v6.dist.js`, `${targetDir}/src/external/moduler-v6.entry.js`);
                 await duplicateFile(`${__dirname}/compiler-v6.dist.js`, `${targetDir}/src/external/compiler-v6.entry.js`);
                 await duplicateFile(`${__dirname}/dev-binary-v6.dist.js`, `${targetDir}/src/external/dev-binary-v6.entry.js`);
                 await duplicateFile(`${__dirname}/refrescador.dist.js`, `${targetDir}/src/external/refrescador.entry.js`);
@@ -4103,8 +4133,11 @@
             "print root"(args, devbin) {
                 console.log(devbin.compiler.rootdir);
             }
-            "build github pages"(args, devbin) {
-                return devbin.compiler.files.copyDirectory("@/dist/www", "@/docs/dist/www");
+            async "build github pages"(args, devbin) {
+                await devbin.compiler.files.copyDirectory("@/dist/www", "@/docs/dist/www");
+                await devbin.compiler.files.copyFile.try("@/dist/www/index.html", "@/docs/dist/www/index.html");
+                await devbin.compiler.files.copyFile.try("@/dist/www/app.dist.js", "@/docs/dist/www/app.dist.js");
+                await devbin.compiler.files.copyFile.try("@/dist/www/app.dist.css", "@/docs/dist/www/app.dist.css");
             }
             async loop(args) {
                 const targetRoot = await this.devbin.utils.constructor.findFirstParentDirectoryContaining(process.cwd(), "package.json");
@@ -4214,7 +4247,7 @@
                     return isNotIgnored && passesFilter;
                 });
                 const ansiTool = this.devbin.compiler.constructor.ansi.colors;
-                console.log(`[*] Found ${testFiles.length} tests` + (title ? ` for «${title}»` : ""));
+                console.log(`[*] DevBinaryV6 found ${testFiles.length} tests` + (title ? ` for «${title}»` : ""));
                 const errors = [];
                 const crono = this.devbin.constructor.Cronometer();
                 for (let index = 0; index < testFiles.length; index++) {
@@ -4281,7 +4314,7 @@
             return this.moduler.assert(...args);
         }
         async command(args = []) {
-            let commandParameters, commandSubpath, commandCallback, commandType, commandId;
+            let commandParameters, commandSubpath, commandCallback, commandType, commandId, commandName;
             Extract_command_parameters: {
                 if (Array.isArray(args)) {
                     commandParameters = this.utils.parseCliArgs(args);
@@ -4294,6 +4327,7 @@
             }
             Extract_command_id: {
                 commandId = commandParameters._.join("/");
+                commandName = commandParameters._.join(" ");
             }
             Define_path_from_command: {
                 commandSubpath = this.compiler.normalizationOf(`@/dev/bin/${commandId}/command.js`);
@@ -4314,9 +4348,8 @@
                         commandCallback = require(commandSubpath);
                     } else {
                         commandType = "hook";
-                        const possibleHookId = commandParameters._.join(" ");
-                        if (possibleHookId in this.shadowCommands) {
-                            commandCallback = this.shadowCommands[possibleHookId];
+                        if (commandName in this.shadowCommands) {
+                            commandCallback = this.shadowCommands[commandName];
                             break Load_command_callback_from_file_or_shadowCommands;
                         }
                         const errorMessage = `Error of «devbin command not found» for parameters «${commandId}»`;
@@ -4326,9 +4359,10 @@
             }
             Execute_command_callback: {
                 try {
+                    console.log(`[*] DevBinaryV6 executing command: ${commandName}`);
                     return await commandCallback.call(this.shadowCommands, commandParameters, this, commandType, commandSubpath);
                 } catch (error) {
-                    console.error(`[!] The «devbin ${commandId}» command threw an error:`, error);
+                    console.error(`[!] The «devbin ${commandName}» command threw an error:`, error);
                     throw error;
                 }
             }

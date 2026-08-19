@@ -539,6 +539,10 @@
             };
             return TextParserV1;
         }.call());
+        static assert(condition, message) {
+            if (!condition) throw new this.AssertionError(message);
+        }
+        static isBrowser=typeof window !== "undefined";
         static nativeGrammars={
             InjectSource: [ "$" + "compiler.inject.source(", this.Parser.symbols.PARENTHESYS_BALANCE, function(token) {
                 return {
@@ -751,47 +755,6 @@
             forTemplateComments: [ this.nativeGrammars.MultilineCommentValueInjection, this.nativeGrammars.MultilineCommentCodeInjection ],
             forEmbeddedForms: [ this.nativeGrammars.EmbeddedFormFieldOpener, this.nativeGrammars.EmbeddedFormFieldCloser ]
         };
-        static assert(condition, message) {
-            if (!condition) throw new this.AssertionError(message);
-        }
-        static async trify(callback, ...args) {
-            try {
-                return await callback(...args);
-            } catch (error) {
-                return null;
-            }
-        }
-        static includeScript=Object.assign(src => {
-            this.assert(this.isBrowser, `ModulerV6.includeScript cannot include scripts in environments that are not browser and so file «${src}» cannot be loaded`);
-            return new Promise((resolve, reject) => {
-                const script = document.createElement("script");
-                script.src = src;
-                script.onload = () => resolve();
-                script.onerror = error => reject(error);
-                document.head.appendChild(script);
-            });
-        }, {
-            try: (...args) => this.trify(this.includeScript, ...args)
-        });
-        static includeStyle=Object.assign(src => {
-            this.assert(this.isBrowser, `ModulerV6.includeStyle cannot include styles in environments that are not browser and so file «${src}» cannot be loaded`);
-            return new Promise((resolve, reject) => {
-                const link = document.createElement("link");
-                link.rel = "stylesheet";
-                link.href = src;
-                link.onload = () => resolve();
-                link.onerror = error => reject(error);
-                document.head.appendChild(link);
-            });
-        }, {
-            try: (...args) => this.trify(this.includeStyle, ...args)
-        });
-        static isBrowser=typeof window !== "undefined";
-        static isGithubIo() {
-            if (!this.isBrowser) return false;
-            if (!/\.github\.io$/i.test(window.location.hostname)) return false;
-            return window.location.pathname.split("/").filter(Boolean)[0];
-        }
         static symbols={
             REGEX_FOR_SLASH_AT_THE_END: /(\\|\/)$/g,
             REGEX_FOR_PROTOCOL_BASED_PATH: /^([A-Za-z0-9\-\_\$]*)\:\/\//g,
@@ -808,27 +771,29 @@
                 return process.cwd();
             }
         }
-        static async bindToRefrescador() {
+        static isGithubIo() {
+            if (!this.isBrowser) return false;
+            if (!/\.github\.io$/i.test(window.location.hostname)) return false;
+            return window.location.pathname.split("/").filter(Boolean)[0];
+        }
+        static bindToRefrescador() {
             if (!this.isBrowser) return -2;
             if (this.isGithubIo()) return -3;
-            await this.includeScript.try("/socket.io-client.js");
-            await this.includeScript.try("/client.js");
-            return "bound successfully";
+            return Promise.all([ this.includeScript.try("/socket-io.client.js"), this.includeScript.try("/client.js") ]);
         }
-        static updateAllHtmlLinks() {
-            if (!this.isBrowser) {
-                console.error("[!] ModulerV6.updateAllHtmlLinks can only be used in browser");
-                return -2;
+        async trify(callback, ...args) {
+            try {
+                return await callback(...args);
+            } catch (error) {
+                return null;
             }
-            const allAnchors = document.body.querySelectorAll("a");
-            console.log(`[*] ModulerV6 found ${allAnchors.length} anchors to update its link`);
-            allAnchors.forEach(el => {
-                const dataHref = el.getAttribute("data-mv6-href");
-                if (dataHref?.startsWith("@/")) {
-                    el.setAttribute("href", $moduler.normalizationOf(dataHref));
-                }
-            });
         }
+        static includeScript=Object.assign(src => {}, {
+            try: (...args) => this.trify(this.includeScript, ...args)
+        });
+        static includeStyle=Object.assign(src => {}, {
+            try: (...args) => this.trify(this.includeStyle, ...args)
+        });
         static create(...args) {
             return new this(...args);
         }
@@ -1173,7 +1138,6 @@
         assert(condition, message) {
             return this.constructor.assert(condition, message);
         }
-        trify=this.constructor.trify;
         createAssertFunction() {
             return (...args) => this.assert(...args);
         }
@@ -1337,9 +1301,6 @@
         }
         static globalInstance=new this;
         static isLoaded=(async () => {
-            En_paralelo: {
-                this.bindToRefrescador();
-            }
             await this.globalInstance.runtime.load();
             this.onLoaded.resolve();
         })();

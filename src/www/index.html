@@ -5,17 +5,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aplicaciones</title>
-    <script src="/socket.io-client.js"></script>
-    <script src="/client.js"></script>
 </head>
 <body>
     <h3>Aplicaciones disponibles:</h3>
     <ol>
-        <li><a href="./apps/CalendarScript/index.html">CalendarScript</a> es un editor de un lenguaje de scripting raro y sirve para organizarse tareas en el tiempo.</li>
+        <li><a data-mv6-href="@/dist/www/apps/CalendarScript/index.html">CalendarScript</a> es un editor de un lenguaje de scripting raro y sirve para organizarse tareas en el tiempo.</li>
         <li>No hay más, de momento.</li>
     </ol>
+    <script>$compiler.inject.source("@/dist/www/external/moduler-v6.dist.js")</script>
+    <script>ModulerV6.updateAllHtmlLinks();</script>
     <style>/*@injects:"@/dist/www/app.dist.css"*/</style>
-    <script>/*@injects:"@/dist/www/app.dist.js"*/</script>
+    <script>$compiler.inject.source("@/dist/www/app.dist.js")</script>
 </body>
 
 </html>

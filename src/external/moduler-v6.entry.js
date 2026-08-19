@@ -539,10 +539,6 @@
             };
             return TextParserV1;
         }.call());
-        static assert(condition, message) {
-            if (!condition) throw new this.AssertionError(message);
-        }
-        static isBrowser=typeof window !== "undefined";
         static nativeGrammars={
             InjectSource: [ "$" + "compiler.inject.source(", this.Parser.symbols.PARENTHESYS_BALANCE, function(token) {
                 return {
@@ -755,33 +751,10 @@
             forTemplateComments: [ this.nativeGrammars.MultilineCommentValueInjection, this.nativeGrammars.MultilineCommentCodeInjection ],
             forEmbeddedForms: [ this.nativeGrammars.EmbeddedFormFieldOpener, this.nativeGrammars.EmbeddedFormFieldCloser ]
         };
-        static symbols={
-            REGEX_FOR_SLASH_AT_THE_END: /(\\|\/)$/g,
-            REGEX_FOR_PROTOCOL_BASED_PATH: /^([A-Za-z0-9\-\_\$]*)\:\/\//g,
-            REGEX_FOR_ABSOLUTE_WINDOWS_PATH: /^(([A-Za-z]:(\\|\/))|((\\|\/){2}))/g
-        };
-        static getEnvironmentDirectory() {
-            if (this.isBrowser) {
-                Apply_github_io_configurations_if_so: {
-                    const projectName = this.isGithubIo();
-                    if (projectName) return `${window.location.origin}/${projectName}`;
-                }
-                return window.location.origin;
-            } else {
-                return process.cwd();
-            }
+        static assert(condition, message) {
+            if (!condition) throw new this.AssertionError(message);
         }
-        static isGithubIo() {
-            if (!this.isBrowser) return false;
-            if (!/\.github\.io$/i.test(window.location.hostname)) return false;
-            return window.location.pathname.split("/").filter(Boolean)[0];
-        }
-        static bindToRefrescador() {
-            if (!this.isBrowser) return -2;
-            if (this.isGithubIo()) return -3;
-            return Promise.all([ this.includeScript.try("/socket-io.client.js"), this.includeScript.try("/client.js") ]);
-        }
-        async trify(callback, ...args) {
+        static async trify(callback, ...args) {
             try {
                 return await callback(...args);
             } catch (error) {
@@ -813,6 +786,49 @@
         }, {
             try: (...args) => this.trify(this.includeStyle, ...args)
         });
+        static isBrowser=typeof window !== "undefined";
+        static isGithubIo() {
+            if (!this.isBrowser) return false;
+            if (!/\.github\.io$/i.test(window.location.hostname)) return false;
+            return window.location.pathname.split("/").filter(Boolean)[0];
+        }
+        static symbols={
+            REGEX_FOR_SLASH_AT_THE_END: /(\\|\/)$/g,
+            REGEX_FOR_PROTOCOL_BASED_PATH: /^([A-Za-z0-9\-\_\$]*)\:\/\//g,
+            REGEX_FOR_ABSOLUTE_WINDOWS_PATH: /^(([A-Za-z]:(\\|\/))|((\\|\/){2}))/g
+        };
+        static getEnvironmentDirectory() {
+            if (this.isBrowser) {
+                Apply_github_io_configurations_if_so: {
+                    const projectName = this.isGithubIo();
+                    if (projectName) return `${window.location.origin}/${projectName}`;
+                }
+                return window.location.origin;
+            } else {
+                return process.cwd();
+            }
+        }
+        static async bindToRefrescador() {
+            if (!this.isBrowser) return -2;
+            if (this.isGithubIo()) return -3;
+            await this.includeScript.try("/socket.io-client.js");
+            await this.includeScript.try("/client.js");
+            return "bound successfully";
+        }
+        static updateAllHtmlLinks() {
+            if (!this.isBrowser) {
+                console.error("[!] ModulerV6.updateAllHtmlLinks can only be used in browser");
+                return -2;
+            }
+            const allAnchors = document.body.querySelectorAll("a");
+            console.log(`[*] ModulerV6 found ${allAnchors.length} anchors to update its link`);
+            allAnchors.forEach(el => {
+                const dataHref = el.getAttribute("data-mv6-href");
+                if (dataHref?.startsWith("@/")) {
+                    el.setAttribute("href", $moduler.normalizationOf(dataHref));
+                }
+            });
+        }
         static create(...args) {
             return new this(...args);
         }
@@ -1157,6 +1173,7 @@
         assert(condition, message) {
             return this.constructor.assert(condition, message);
         }
+        trify=this.constructor.trify;
         createAssertFunction() {
             return (...args) => this.assert(...args);
         }
