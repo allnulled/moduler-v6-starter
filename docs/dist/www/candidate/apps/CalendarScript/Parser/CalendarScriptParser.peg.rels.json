@@ -1,0 +1,61 @@
+{
+  "tree": {
+    "@/src/www/candidate/apps/CalendarScript/Parser/CalendarScriptParser.peg.entry.js": {
+      "172-212": {
+        "syntax": "@Injects",
+        "inner": "\"./syntax/variables.peg.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "./syntax/variables.peg.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/candidate/apps/CalendarScript/Parser/syntax/variables.peg.js",
+          "rootpath": "@/src/www/candidate/apps/CalendarScript/Parser/syntax/variables.peg.js"
+        }
+      },
+      "135-170": {
+        "syntax": "@Injects",
+        "inner": "\"./syntax/json.peg.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "./syntax/json.peg.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/candidate/apps/CalendarScript/Parser/syntax/json.peg.js",
+          "rootpath": "@/src/www/candidate/apps/CalendarScript/Parser/syntax/json.peg.js"
+        }
+      },
+      "81-133": {
+        "syntax": "@Injects",
+        "inner": "\"./syntax/expresiones booleanas.peg.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "./syntax/expresiones booleanas.peg.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/candidate/apps/CalendarScript/Parser/syntax/expresiones booleanas.peg.js",
+          "rootpath": "@/src/www/candidate/apps/CalendarScript/Parser/syntax/expresiones booleanas.peg.js"
+        }
+      },
+      "42-79": {
+        "syntax": "@Injects",
+        "inner": "\"./syntax/inicio.peg.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "./syntax/inicio.peg.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/candidate/apps/CalendarScript/Parser/syntax/inicio.peg.js",
+          "rootpath": "@/src/www/candidate/apps/CalendarScript/Parser/syntax/inicio.peg.js"
+        }
+      },
+      "0-40": {
+        "syntax": "@Injects",
+        "inner": "\"./syntax/prescript.peg.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "./syntax/prescript.peg.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/candidate/apps/CalendarScript/Parser/syntax/prescript.peg.js",
+          "rootpath": "@/src/www/candidate/apps/CalendarScript/Parser/syntax/prescript.peg.js"
+        }
+      }
+    },
+    "@/src/www/candidate/apps/CalendarScript/Parser/syntax/variables.peg.js": {},
+    "@/src/www/candidate/apps/CalendarScript/Parser/syntax/json.peg.js": {},
+    "@/src/www/candidate/apps/CalendarScript/Parser/syntax/expresiones booleanas.peg.js": {},
+    "@/src/www/candidate/apps/CalendarScript/Parser/syntax/inicio.peg.js": {},
+    "@/src/www/candidate/apps/CalendarScript/Parser/syntax/prescript.peg.js": {}
+  }
+}

@@ -10,6 +10,31 @@
     return ModulerV6;
 })(function() {
     return class ModulerV6 {
+        static Tracer=class Tracer {
+            static create(...args) {
+                return new this(...args);
+            }
+            constructor(id = null, parent = null) {
+                this.level = 0;
+                if (parent) Object.assign(this, parent);
+                this.id = id || "mv6-" + ModulerV6._getRandomString(5);
+            }
+            trace=Object.assign(method => {
+                console.log(`[·] [${this.id}] [${this.level}] [=] ${method}`);
+            }, {
+                in: method => {
+                    console.log(`[·] [${this.id}] [${++this.level}] [+] ${method}`);
+                },
+                out: method => {
+                    console.log(`[·] [${this.id}] [${--this.level}] [-] ${method}`);
+                },
+                error: (method, error) => {
+                    console.log(`[!] [${this.id}] [${this.level}] [!] ${method}`, error);
+                }
+            });
+            subtracer(id) {}
+        };
+        static tracer=this.Tracer.create("ModulerV6");
         static createResolvable() {
             let promise, resolve, reject;
             promise = new Promise((_resolve, _reject) => {
@@ -761,6 +786,17 @@
                 return null;
             }
         }
+        static _alphabet="abcdefghijklmnopqrstuvwxyz".split("");
+        static _getRandomString(len = 10) {
+            let out = "";
+            while (out.length < len) {
+                out += this._getRandomCharacter();
+            }
+            return out;
+        }
+        static _getRandomCharacter(alphabet = this._alphabet) {
+            return alphabet[Math.floor(Math.random() * alphabet.length)];
+        }
         static includeScript=Object.assign(src => {
             this.assert(this.isBrowser, `ModulerV6.includeScript cannot include scripts in environments that are not browser and so file «${src}» cannot be loaded`);
             return new Promise((resolve, reject) => {
@@ -798,6 +834,7 @@
             REGEX_FOR_ABSOLUTE_WINDOWS_PATH: /^(([A-Za-z]:(\\|\/))|((\\|\/){2}))/g
         };
         static getEnvironmentDirectory() {
+            this.tracer.trace("ModulerV6.static.getEnvironmentDirectory");
             if (this.isBrowser) {
                 Apply_github_io_configurations_if_so: {
                     const projectName = this.isGithubIo();
@@ -832,6 +869,7 @@
         static create(...args) {
             return new this(...args);
         }
+        tracer=this.constructor.Tracer.create("ModulerV6.globalInstance");
         _formatImportParameters(signature) {
             this.assert(Array.isArray(signature), "Parameter «signature» must be array on «ModulerV6.prototype._formatImportParameters»");
             this.assert(signature.length !== 0, "ModulerV6.prototype.import cannot have 0 arguments");

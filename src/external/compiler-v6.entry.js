@@ -15,6 +15,31 @@
         return ModulerV6;
     })(function() {
         return class ModulerV6 {
+            static Tracer=class Tracer {
+                static create(...args) {
+                    return new this(...args);
+                }
+                constructor(id = null, parent = null) {
+                    this.level = 0;
+                    if (parent) Object.assign(this, parent);
+                    this.id = id || "mv6-" + ModulerV6._getRandomString(5);
+                }
+                trace=Object.assign(method => {
+                    console.log(`[·] [${this.id}] [${this.level}] [=] ${method}`);
+                }, {
+                    in: method => {
+                        console.log(`[·] [${this.id}] [${++this.level}] [+] ${method}`);
+                    },
+                    out: method => {
+                        console.log(`[·] [${this.id}] [${--this.level}] [-] ${method}`);
+                    },
+                    error: (method, error) => {
+                        console.log(`[!] [${this.id}] [${this.level}] [!] ${method}`, error);
+                    }
+                });
+                subtracer(id) {}
+            };
+            static tracer=this.Tracer.create("ModulerV6");
             static createResolvable() {
                 let promise, resolve, reject;
                 promise = new Promise((_resolve, _reject) => {
@@ -766,6 +791,17 @@
                     return null;
                 }
             }
+            static _alphabet="abcdefghijklmnopqrstuvwxyz".split("");
+            static _getRandomString(len = 10) {
+                let out = "";
+                while (out.length < len) {
+                    out += this._getRandomCharacter();
+                }
+                return out;
+            }
+            static _getRandomCharacter(alphabet = this._alphabet) {
+                return alphabet[Math.floor(Math.random() * alphabet.length)];
+            }
             static includeScript=Object.assign(src => {
                 this.assert(this.isBrowser, `ModulerV6.includeScript cannot include scripts in environments that are not browser and so file «${src}» cannot be loaded`);
                 return new Promise((resolve, reject) => {
@@ -803,6 +839,7 @@
                 REGEX_FOR_ABSOLUTE_WINDOWS_PATH: /^(([A-Za-z]:(\\|\/))|((\\|\/){2}))/g
             };
             static getEnvironmentDirectory() {
+                this.tracer.trace("ModulerV6.static.getEnvironmentDirectory");
                 if (this.isBrowser) {
                     Apply_github_io_configurations_if_so: {
                         const projectName = this.isGithubIo();
@@ -837,6 +874,7 @@
             static create(...args) {
                 return new this(...args);
             }
+            tracer=this.constructor.Tracer.create("ModulerV6.globalInstance");
             _formatImportParameters(signature) {
                 this.assert(Array.isArray(signature), "Parameter «signature» must be array on «ModulerV6.prototype._formatImportParameters»");
                 this.assert(signature.length !== 0, "ModulerV6.prototype.import cannot have 0 arguments");
@@ -1782,37 +1820,56 @@
             return path.join(dir, nombre + nuevaExt);
         }
         static beautifyJs(code) {
-            return require("prettier").format(code, {
-                parser: "babel"
-            });
+            try {
+                return require("prettier").format(code, {
+                    parser: "babel"
+                });
+            } catch (error) {
+                console.error(`[!] ERROR DESDE EL BEAUTIFIER:`, error);
+                return code;
+            }
         }
-        static softMinifyJs(code) {
-            return require("terser").minify(code, {
-                compress: {
-                    sequences: true
-                },
-                mangle: false,
-                toplevel: true,
-                format: {
-                    comments: false,
-                    beautify: true,
-                    indent_level: 2,
-                    max_line_len: true
-                }
-            });
+        static async softMinifyJs(code) {
+            try {
+                return await require("terser").minify(code, {
+                    compress: {
+                        sequences: true
+                    },
+                    mangle: false,
+                    toplevel: true,
+                    format: {
+                        comments: false,
+                        beautify: true,
+                        indent_level: 2,
+                        max_line_len: true
+                    }
+                });
+            } catch (error) {
+                console.log(`[!] ERROR EN EL SOFT-MINIFIER:`, error);
+                return {
+                    code: code
+                };
+            }
         }
-        static hardMinifyJs(code) {
-            return require("terser").minify(code, {
-                compress: {
-                    defaults: true,
-                    passes: 5,
-                    unsafe: true,
-                    toplevel: true
-                },
-                mangle: {
-                    toplevel: true
-                }
-            });
+        static async hardMinifyJs(code) {
+            try {
+                return await require("terser").minify(code, {
+                    compress: {
+                        defaults: true,
+                        passes: 5,
+                        unsafe: true,
+                        toplevel: true
+                    },
+                    mangle: {
+                        toplevel: true
+                    }
+                });
+            } catch (error) {
+                console.log(`[!] ERROR EN EL HARD-MINIFIER:`, error);
+                return {
+                    code: code
+                };
+            }
         }
         static getStringSize(text) {
             let bytes = undefined;
@@ -2374,91 +2431,109 @@
         async _compileAsInjectSource(compilationFile, compilationProcess, {token: token, tokenIndex: tokenIndex}, options = {}) {
             this._traceIn("_compileAsInjectSource", arguments);
             let parameters, targetPath, targetCompilation, targetCaches = {};
-            const {tokenization: tokenization, source: source, resource: resource, isRoot: isRoot} = compilationFile;
-            Evaluate_parameters: {
-                parameters = await this._getDataForTokenCompilation({
-                    compilationFile: compilationFile,
-                    compilationProcess: compilationProcess,
-                    token: token,
-                    tokenIndex: tokenIndex
-                });
-            }
-            Extend_token: {
-                this._extendToken(token, [ "referenceOf" ]);
-            }
-            Extract_target_path: {
-                this.assert(token.referenceOf.fullpath === this.fullpathOf(parameters[0]), "DesignError: The first parameter and the token.referenceOf.fullpath should be the same on «CompilerV6.prototype._compileAsInjectSource»");
-                targetPath = token.referenceOf.fullpath;
-            }
-            Compile_target: {
-                Use_processedEntries_cache_if_possible: {
-                    if (compilationProcess.to === "data" || compilationProcess.uncacheInjections) {
-                        break Use_processedEntries_cache_if_possible;
-                    }
-                    if (Object.keys(compilationProcess.processedEntries).length && targetPath in compilationProcess.processedEntries) {
-                        const previousCache = compilationProcess.processedEntries[targetPath];
-                        targetCaches.js = await require("fs").promises.readFile(previousCache.distJs, "utf8");
-                        if (previousCache.distCss) targetCaches.css = await this._tryToReadFile(previousCache.distCss, null);
-                        if (previousCache.distMd) targetCaches.md = await this._tryToReadFile(previousCache.distMd, null);
-                        break Compile_target;
-                    }
+            const currentStep = [];
+            try {
+                const {tokenization: tokenization, source: source, resource: resource, isRoot: isRoot} = compilationFile;
+                Evaluate_parameters: {
+                    currentStep.push("1. evaluate parameters");
+                    parameters = await this._getDataForTokenCompilation({
+                        compilationFile: compilationFile,
+                        compilationProcess: compilationProcess,
+                        token: token,
+                        tokenIndex: tokenIndex
+                    });
                 }
-                Create_file_unless_it_exists_or_option_dontCreateOnInjectSource_is_true: {
-                    if (!compilationProcess.dontCreateOnInjectSource) {
-                        const existsFile = await this._existsFile(targetPath);
-                        if (!existsFile) {
-                            const path = require("path");
-                            const targetId = this.rootdirOf(targetPath).replace(/\.(js|css|html)$/g, "");
-                            await this._createDefaultInjectedFile(targetPath, targetId);
+                Extend_token: {
+                    currentStep.push("2. extend token");
+                    this._extendToken(token, [ "referenceOf" ]);
+                }
+                Extract_target_path: {
+                    currentStep.push("3. extract target path");
+                    this.assert(token.referenceOf.fullpath === this.fullpathOf(parameters[0]), "DesignError: The first parameter and the token.referenceOf.fullpath should be the same on «CompilerV6.prototype._compileAsInjectSource»");
+                    targetPath = token.referenceOf.fullpath;
+                }
+                Compile_target: {
+                    currentStep.push("4. compile target");
+                    Use_processedEntries_cache_if_possible: {
+                        if (compilationProcess.to === "data" || compilationProcess.uncacheInjections) {
+                            break Use_processedEntries_cache_if_possible;
+                        }
+                        if (Object.keys(compilationProcess.processedEntries).length && targetPath in compilationProcess.processedEntries) {
+                            currentStep.push("4.a. get compiled source from cache");
+                            const previousCache = compilationProcess.processedEntries[targetPath];
+                            targetCaches.js = await require("fs").promises.readFile(previousCache.distJs, "utf8");
+                            if (previousCache.distCss) targetCaches.css = await this._tryToReadFile(previousCache.distCss, null);
+                            if (previousCache.distMd) targetCaches.md = await this._tryToReadFile(previousCache.distMd, null);
+                            break Compile_target;
                         }
                     }
-                }
-                Make_compilation_finally: {
-                    targetCompilation = await this._compileRecursively({
-                        resource: targetPath,
-                        isRoot: false,
-                        parentCompilation: compilationFile
-                    }, compilationProcess);
-                }
-            }
-            Inject_in_compilation_text: {
-                const isFromHtml = compilationFile.extension === "html";
-                if (isFromHtml) {
-                    const targetIsJs = targetPath.endsWith(".js");
-                    const targetIsCss = targetPath.endsWith(".css");
-                    this.assert(targetIsJs || targetIsCss, `Syntax of «$compiler.inject.source» from html files can only inject «js,css» files and not when importing «${targetPath}» from «${compilationFile.resource}»`);
-                    if (!targetCaches.js) targetCaches.js = targetCompilation.js;
-                    targetCaches.css = targetCaches.css || targetCompilation?.css;
-                    targetCaches.md = targetCaches.md || targetCompilation?.md;
-                    let newContent = targetCompilation[targetIsJs ? "js" : "css"];
-                    Escape_html_tags_in_this_case: {
-                        if (targetIsJs) newContent = newContent.replace(/(\< *)\/( *script *\>)/gi, (match, g1, g2) => `${g1}\\/${g2}`);
-                        if (targetIsCss) newContent = newContent.replace(/(\< *)\/( *style *\>)/gi, (match, g1, g2) => `${g1}\\/${g2}`);
+                    currentStep.push("4.b. compiled target newly");
+                    Create_file_unless_it_exists_or_option_dontCreateOnInjectSource_is_true: {
+                        if (!compilationProcess.dontCreateOnInjectSource) {
+                            const existsFile = await this._existsFile(targetPath);
+                            if (!existsFile) {
+                                currentStep.push("4.b.1. create injected file as it does not exist");
+                                const path = require("path");
+                                const targetId = this.rootdirOf(targetPath).replace(/\.(js|css|html)$/g, "");
+                                await this._createDefaultInjectedFile(targetPath, targetId);
+                            }
+                        }
                     }
-                    compilationFile.compilation.html = this._replaceTextRange(compilationFile.compilation.html, token.location[0], token.location[1], newContent, token);
-                } else {
-                    this.assert(compilationFile.extension === "js", `Syntax of «$compiler.inject.source» can only inject files from «js,html» files and not on «${compilationFile.extension}» when importing «${targetPath}» from «${compilationFile.resource}»`);
-                    this.assert(targetPath.endsWith(".js"), `Syntax of «$compiler.inject.source» is trying to import foraneous extension format file «${targetPath}» from «${compilationFile.resource}» on «CompilerV6.prototype._compileAsInjectSource»`);
-                    if (!targetCaches.js) targetCaches.js = targetCompilation.js;
-                    targetCaches.css = targetCaches.css || targetCompilation?.css;
-                    targetCaches.md = targetCaches.md || targetCompilation?.md;
-                    let outputJs = targetCaches.js;
-                    if (options?.modifySource) {
-                        outputJs = options.modifySource(outputJs);
+                    Make_compilation_finally: {
+                        currentStep.push("4.b.2. compile target recursively");
+                        targetCompilation = await this._compileRecursively({
+                            resource: targetPath,
+                            isRoot: false,
+                            parentCompilation: compilationFile
+                        }, compilationProcess);
                     }
-                    compilationFile.compilation.js = this._replaceTextRange(compilationFile.compilation.js, token.location[0], token.location[1], outputJs, token);
                 }
-                Esto_tiene_que_hacerse_desde_dentro_del_compileRecursively: {}
-            }
-            Inject_in_report_object: {
-                if (compilationProcess.to !== "data") {}
-                if (!compilationFile?.report?.tree || !targetCompilation) {
-                    break Inject_in_report_object;
+                Inject_in_compilation_text: {
+                    currentStep.push("5. inject text in compilation");
+                    const isFromHtml = compilationFile.extension === "html";
+                    if (isFromHtml) {
+                        currentStep.push("5.a. from html");
+                        const targetIsJs = targetPath.endsWith(".js");
+                        const targetIsCss = targetPath.endsWith(".css");
+                        this.assert(targetIsJs || targetIsCss, `Syntax of «$compiler.inject.source» from html files can only inject «js,css» files and not when importing «${targetPath}» from «${compilationFile.resource}»`);
+                        if (typeof targetCaches.js !== "string") targetCaches.js = targetCompilation.js;
+                        targetCaches.css = targetCaches.css || targetCompilation?.css;
+                        targetCaches.md = targetCaches.md || targetCompilation?.md;
+                        let newContent = targetCompilation[targetIsJs ? "js" : "css"];
+                        Escape_html_tags_in_this_case: {
+                            if (targetIsJs) newContent = newContent.replace(/(\< *)\/( *script *\>)/gi, (match, g1, g2) => `${g1}\\/${g2}`);
+                            if (targetIsCss) newContent = newContent.replace(/(\< *)\/( *style *\>)/gi, (match, g1, g2) => `${g1}\\/${g2}`);
+                        }
+                        compilationFile.compilation.html = this._replaceTextRange(compilationFile.compilation.html, token.location[0], token.location[1], newContent, token);
+                    } else {
+                        currentStep.push("5.a. from js");
+                        this.assert(compilationFile.extension === "js", `Syntax of «$compiler.inject.source» can only inject files from «js,html» files and not on «${compilationFile.extension}» when importing «${targetPath}» from «${compilationFile.resource}»`);
+                        this.assert(targetPath.endsWith(".js"), `Syntax of «$compiler.inject.source» is trying to import foraneous extension format file «${targetPath}» from «${compilationFile.resource}» on «CompilerV6.prototype._compileAsInjectSource»`);
+                        if (typeof targetCaches.js !== "string") targetCaches.js = targetCompilation.js;
+                        targetCaches.css = targetCaches.css || targetCompilation?.css;
+                        targetCaches.md = targetCaches.md || targetCompilation?.md;
+                        let outputJs = targetCaches.js;
+                        if (options?.modifySource) {
+                            outputJs = options.modifySource(outputJs);
+                        }
+                        compilationFile.compilation.js = this._replaceTextRange(compilationFile.compilation.js, token.location[0], token.location[1], outputJs, token);
+                    }
+                    Esto_tiene_que_hacerse_desde_dentro_del_compileRecursively: {}
                 }
-                this._reportFileToken(compilationFile, targetPath, token);
-                Object.assign(compilationFile.report.tree, targetCompilation.report.tree);
+                Inject_in_report_object: {
+                    if (compilationProcess.to !== "data") {}
+                    if (!compilationFile?.report?.tree || !targetCompilation) {
+                        break Inject_in_report_object;
+                    }
+                    currentStep.push("6. report tree of tokens");
+                    this._reportFileToken(compilationFile, targetPath, token);
+                    Object.assign(compilationFile.report.tree, targetCompilation.report.tree);
+                }
+                this._traceOut("_compileAsInjectSource", arguments);
+            } catch (error) {
+                console.log(`[!] Error on method «_compileAsInjectSource» on root «${this.rootdir}» on resource «${this.rootdirOf(compilationFile.resource)}» and target «${this.rootdirOf(targetPath || "?")}» on step «${currentStep.reverse().join(" < ")}»`, error);
+                throw error;
             }
-            this._traceOut("_compileAsInjectSource", arguments);
         }
         async _compileAsInjectString(compilationFile, compilationProcess, {token: token, tokenIndex: tokenIndex}) {
             this._traceIn("_compileAsInjectString", arguments);

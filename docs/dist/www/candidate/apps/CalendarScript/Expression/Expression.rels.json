@@ -1,0 +1,17 @@
+{
+  "tree": {
+    "@/src/www/candidate/apps/CalendarScript/Expression/Expression.entry.js": {
+      "0-36": {
+        "syntax": "@Injects",
+        "inner": "\"./Expression.class.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "./Expression.class.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/candidate/apps/CalendarScript/Expression/Expression.class.js",
+          "rootpath": "@/src/www/candidate/apps/CalendarScript/Expression/Expression.class.js"
+        }
+      }
+    },
+    "@/src/www/candidate/apps/CalendarScript/Expression/Expression.class.js": {}
+  }
+}

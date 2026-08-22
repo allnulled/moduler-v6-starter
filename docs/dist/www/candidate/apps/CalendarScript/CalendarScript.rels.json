@@ -1,0 +1,198 @@
+{
+  "tree": {
+    "@/src/www/candidate/apps/CalendarScript/CalendarScript.entry.js": {
+      "390-427": {
+        "syntax": "@Injects",
+        "inner": "\"./static.Expression.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "./static.Expression.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/candidate/apps/CalendarScript/static.Expression.js",
+          "rootpath": "@/src/www/candidate/apps/CalendarScript/static.Expression.js"
+        }
+      },
+      "352-385": {
+        "syntax": "@Injects",
+        "inner": "\"./static.Parser.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "./static.Parser.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/candidate/apps/CalendarScript/static.Parser.js",
+          "rootpath": "@/src/www/candidate/apps/CalendarScript/static.Parser.js"
+        }
+      },
+      "314-347": {
+        "syntax": "@Injects",
+        "inner": "\"./static.assert.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "./static.assert.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/candidate/apps/CalendarScript/static.assert.js",
+          "rootpath": "@/src/www/candidate/apps/CalendarScript/static.assert.js"
+        }
+      },
+      "268-309": {
+        "syntax": "@Injects",
+        "inner": "\"./static.AssertionError.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "./static.AssertionError.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/candidate/apps/CalendarScript/static.AssertionError.js",
+          "rootpath": "@/src/www/candidate/apps/CalendarScript/static.AssertionError.js"
+        }
+      }
+    },
+    "@/src/www/candidate/apps/CalendarScript/static.Expression.js": {
+      "20-67": {
+        "syntax": "@Injects",
+        "inner": "\"./Expression/Expression.class.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "./Expression/Expression.class.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/candidate/apps/CalendarScript/Expression/Expression.class.js",
+          "rootpath": "@/src/www/candidate/apps/CalendarScript/Expression/Expression.class.js"
+        }
+      }
+    },
+    "@/src/www/candidate/apps/CalendarScript/Expression/Expression.class.js": {
+      "234-266": {
+        "syntax": "@Injects",
+        "inner": "\"./static.types.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "./static.types.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/candidate/apps/CalendarScript/Expression/static.types.js",
+          "rootpath": "@/src/www/candidate/apps/CalendarScript/Expression/static.types.js"
+        }
+      },
+      "203-231": {
+        "syntax": "@Injects",
+        "inner": "\"./set.data.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "./set.data.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/candidate/apps/CalendarScript/Expression/set.data.js",
+          "rootpath": "@/src/www/candidate/apps/CalendarScript/Expression/set.data.js"
+        }
+      },
+      "172-200": {
+        "syntax": "@Injects",
+        "inner": "\"./set.text.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "./set.text.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/candidate/apps/CalendarScript/Expression/set.text.js",
+          "rootpath": "@/src/www/candidate/apps/CalendarScript/Expression/set.text.js"
+        }
+      },
+      "138-169": {
+        "syntax": "@Injects",
+        "inner": "\"./constructor.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "./constructor.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/candidate/apps/CalendarScript/Expression/constructor.js",
+          "rootpath": "@/src/www/candidate/apps/CalendarScript/Expression/constructor.js"
+        }
+      },
+      "101-135": {
+        "syntax": "@Injects",
+        "inner": "\"./prototype.name.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "./prototype.name.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/candidate/apps/CalendarScript/Expression/prototype.name.js",
+          "rootpath": "@/src/www/candidate/apps/CalendarScript/Expression/prototype.name.js"
+        }
+      },
+      "65-98": {
+        "syntax": "@Injects",
+        "inner": "\"./static.assert.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "./static.assert.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/candidate/apps/CalendarScript/Expression/static.assert.js",
+          "rootpath": "@/src/www/candidate/apps/CalendarScript/Expression/static.assert.js"
+        }
+      },
+      "21-62": {
+        "syntax": "@Injects",
+        "inner": "\"./static.CalendarScript.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "./static.CalendarScript.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/candidate/apps/CalendarScript/Expression/static.CalendarScript.js",
+          "rootpath": "@/src/www/candidate/apps/CalendarScript/Expression/static.CalendarScript.js"
+        }
+      }
+    },
+    "@/src/www/candidate/apps/CalendarScript/Expression/static.types.js": {
+      "183-243": {
+        "syntax": "Inject Module",
+        "type": "$compiler.inject.module(",
+        "text": "$compiler.inject.module(\"./types/Duracion/Duracion.entry.js\"",
+        "inner": "\"./types/Duracion/Duracion.entry.js\"",
+        "outer": "$compiler.inject.module(\"./types/Duracion/Duracion.entry.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "./types/Duracion/Duracion.entry.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/candidate/apps/CalendarScript/Expression/types/Duracion/Duracion.entry.js",
+          "rootpath": "@/src/www/candidate/apps/CalendarScript/Expression/types/Duracion/Duracion.entry.js"
+        }
+      },
+      "116-168": {
+        "syntax": "Inject Module",
+        "type": "$compiler.inject.module(",
+        "text": "$compiler.inject.module(\"./types/Hora/Hora.entry.js\"",
+        "inner": "\"./types/Hora/Hora.entry.js\"",
+        "outer": "$compiler.inject.module(\"./types/Hora/Hora.entry.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "./types/Hora/Hora.entry.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/candidate/apps/CalendarScript/Expression/types/Hora/Hora.entry.js",
+          "rootpath": "@/src/www/candidate/apps/CalendarScript/Expression/types/Hora/Hora.entry.js"
+        }
+      },
+      "51-105": {
+        "syntax": "Inject Module",
+        "type": "$compiler.inject.module(",
+        "text": "$compiler.inject.module(\"./types/Fecha/Fecha.entry.js\"",
+        "inner": "\"./types/Fecha/Fecha.entry.js\"",
+        "outer": "$compiler.inject.module(\"./types/Fecha/Fecha.entry.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "./types/Fecha/Fecha.entry.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/candidate/apps/CalendarScript/Expression/types/Fecha/Fecha.entry.js",
+          "rootpath": "@/src/www/candidate/apps/CalendarScript/Expression/types/Fecha/Fecha.entry.js"
+        }
+      }
+    },
+    "@/src/www/candidate/apps/CalendarScript/Expression/types/Duracion/Duracion.entry.js": {},
+    "@/src/www/candidate/apps/CalendarScript/Expression/types/Hora/Hora.entry.js": {},
+    "@/src/www/candidate/apps/CalendarScript/Expression/types/Fecha/Fecha.entry.js": {},
+    "@/src/www/candidate/apps/CalendarScript/Expression/set.data.js": {},
+    "@/src/www/candidate/apps/CalendarScript/Expression/set.text.js": {},
+    "@/src/www/candidate/apps/CalendarScript/Expression/constructor.js": {},
+    "@/src/www/candidate/apps/CalendarScript/Expression/prototype.name.js": {},
+    "@/src/www/candidate/apps/CalendarScript/Expression/static.assert.js": {},
+    "@/src/www/candidate/apps/CalendarScript/Expression/static.CalendarScript.js": {},
+    "@/src/www/candidate/apps/CalendarScript/static.Parser.js": {
+      "16-83": {
+        "syntax": "Inject Module",
+        "type": "$compiler.inject.module(",
+        "text": "$compiler.inject.module(\"./Parser/CalendarScriptParser.peg.dist.js\"",
+        "inner": "\"./Parser/CalendarScriptParser.peg.dist.js\"",
+        "outer": "$compiler.inject.module(\"./Parser/CalendarScriptParser.peg.dist.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "./Parser/CalendarScriptParser.peg.dist.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/candidate/apps/CalendarScript/Parser/CalendarScriptParser.peg.dist.js",
+          "rootpath": "@/src/www/candidate/apps/CalendarScript/Parser/CalendarScriptParser.peg.dist.js"
+        }
+      }
+    },
+    "@/src/www/candidate/apps/CalendarScript/Parser/CalendarScriptParser.peg.dist.js": {},
+    "@/src/www/candidate/apps/CalendarScript/static.assert.js": {},
+    "@/src/www/candidate/apps/CalendarScript/static.AssertionError.js": {}
+  }
+}
