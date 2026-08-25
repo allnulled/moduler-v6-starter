@@ -1,25 +1,6 @@
-- [ ] Limpiar el starter:
-   - [x] vaciar el src excepto lib
-   - [x] pasar lib a external
-      - [ ] con los cambios en el devbin
-   - [ ] vaciar el test/unit
-   - [ ] vaciar el test/{feature,integrity}/runner.js
-      - [ ] incorporar un método para llamar a todos los tests de 1 directorio
-         - [ ] a los js directos (opción A)
-         - [ ] a 1 js específico dentro de las carpetas (opción B)
-- [ ] Preparar el starter mínimo bien limpio
-   - [ ] un $moduler.css.link iría bien
-      - [ ] sin trackeo ahora no importa
-   - [ ] un $moduler.js.script iría bien
-      - [ ] sin trackeo ahora no importa
-   - [ ] y que en el index.html
-      - [ ] ya sabiendo si es test o no automáticamente $moduler
-      - [ ] te meta el $moduler.js.script contra el socket.io + client porque sabe que está con refrescador
-      - [ ] y ese condicional inicial (de si es test o dev, vaya, pues incluyo), encapsularlo en un Runtime.initialize o algo así.
-   - [ ] sobre todo la idea es empezar con un boilerplate:
-      - [ ] limpio, despejado: sin ficheros haciendo bulto, solo ficheros customizables o estrictamente necesarios
-      - [ ] experto, entendido: que sabe por qué es así y no asá
-         - [ ] por ejemplo, moduler, compiler, devbin, van en el src y el src/www, pero no en dist
-            - [ ] porque así los puedes inyectar (aunque habrá problemas con eso, seguramente)
-            - [ ] pero no es necesario que contaminen el dist de serie
-            - [ ] y el moduler va en el www porque es compatible con nodejs y browser
+- [ ] VirtualFilesystem API + test
+   - [ ] nodejs
+   - [ ] normalizar test browser
+   - [ ] localstorage
+   - [ ] indexeddb
+   - [ ] sockets no

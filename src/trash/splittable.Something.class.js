@@ -1,0 +1,3 @@
+class Whatever {
+  version = "whatever";
+}
