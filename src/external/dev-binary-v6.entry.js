@@ -7264,7 +7264,16 @@
                       break Touch_event;
                     }
                   }
-                  Caso_previo_2_dev_settings_exportar_a_www_dev_settings_las_partes_exportables: {
+                  Caso_previo_2_splittable_method: {
+                    const result = await this.synchronizeSplittableMethod(
+                      filepath,
+                      event,
+                    );
+                    if (result) {
+                      break Touch_event;
+                    }
+                  }
+                  Caso_previo_3_dev_settings_exportar_a_www_dev_settings_las_partes_exportables: {
                     if (
                       filepath ===
                       this.devbin.compiler.fullpathOf("@/dev/settings.js")
@@ -7274,7 +7283,7 @@
                       break Touch_event;
                     }
                   }
-                  Caso_previo_3_caso_src_html: {
+                  Caso_previo_4_caso_src_html: {
                     if (event.isHtml) {
                       currentStep.push("3.2. found html file");
                       if (event.isSrcWww) {
@@ -8208,10 +8217,8 @@
               // ------------------------------------------------------------
               // 7. Escribir la clase reconstruida
               // ------------------------------------------------------------
-              reconstructedClass =
-                await this.devbin.compiler.constructor.beautifyJs(
-                  reconstructedClass,
-                );
+              // @MEJOR: mejor sin el beautifier que me descuajeringa las cosas.
+              // reconstructedClass = await this.devbin.compiler.constructor.beautifyJs(reconstructedClass);
               await fs.writeFile(filepath, reconstructedClass, "utf8");
               return {
                 filepath,
@@ -8224,7 +8231,7 @@
                 })),
               };
             } catch (error) {
-              // throw error;
+              throw error;
             } finally {
               // ------------------------------------------------------------
               // 8. Desmutear el directorio porque los cambios han terminado
@@ -8240,6 +8247,178 @@
           getMemberFragmentCodeFor(content, member) {
             console.log(member);
             return content;
+          }
+          /**
+           * @name DevBinaryV6.Utils.prototype.synchronizeSplittableMethod
+           * @type Function
+           * @description
+           * Sincroniza un método de un fichero splittable con las clases
+           * splittable que puedan contenerlo.
+           */
+          async synchronizeSplittableMethod(filepath, event) {
+            const fs = require("fs").promises;
+            const path = require("path");
+            const parser = require("@babel/parser");
+            const directory = path.dirname(filepath);
+            const methodFilename = path.basename(filepath);
+            let output = 0;
+            let _error = false;
+            try {
+              // ------------------------------------------------------------
+              // 0. Mutear el directorio por si se vienen cambios
+              // ------------------------------------------------------------
+              await this.devbin.muteTouchListenerOf(`${directory}/**/*`);
+              // ------------------------------------------------------------
+              // 1. Determinar el tipo y nombre del miembro desde filepath
+              // ------------------------------------------------------------
+              const methodMatch = methodFilename.match(
+                /^(static|prototype)\.(.+)\.js$/,
+              );
+              if (!methodMatch) {
+                // Dismissed por
+                return (output = false);
+              }
+              const methodKind = methodMatch[1];
+              const methodName = methodMatch[2];
+              const isStatic = methodKind === "static";
+              // ------------------------------------------------------------
+              // 2. Leer el contenido del método
+              // ------------------------------------------------------------
+              const methodSource = await fs.readFile(filepath, "utf8");
+              // ------------------------------------------------------------
+              // 3. Buscar los splittable class del directorio
+              // ------------------------------------------------------------
+              const entries = await fs.readdir(directory);
+              const splittableClassFiles = entries
+                .filter(
+                  (entry) =>
+                    entry.startsWith("splittable.") &&
+                    entry.endsWith(".class.js"),
+                )
+                .map((entry) => path.join(directory, entry));
+              if (!splittableClassFiles.length) {
+                return (output = false);
+              }
+              // ------------------------------------------------------------
+              // 4. Iterar sobre los splittable class encontrados
+              // ------------------------------------------------------------
+              for (const splittableClassFile of splittableClassFiles) {
+                // ----------------------------------------------------------
+                // 4.1. Leer splittable class
+                // ----------------------------------------------------------
+                const source = await fs.readFile(splittableClassFile, "utf8");
+                // ----------------------------------------------------------
+                // 4.2. Parsear splittable class
+                // ----------------------------------------------------------
+                const ast = parser.parse(source, {
+                  sourceType: "unambiguous",
+                  plugins: [
+                    "classProperties",
+                    "classPrivateProperties",
+                    "classStaticBlock",
+                    "decorators-legacy",
+                  ],
+                });
+                // ----------------------------------------------------------
+                // 4.3. Buscar las clases existentes
+                // ----------------------------------------------------------
+                const classes = [];
+                function walk(node) {
+                  if (!node || typeof node !== "object") {
+                    return;
+                  }
+                  if (
+                    node.type === "ClassDeclaration" ||
+                    node.type === "ClassExpression"
+                  ) {
+                    classes.push(node);
+                  }
+                  for (const key of Object.keys(node)) {
+                    if (key === "loc" || key === "start" || key === "end") {
+                      continue;
+                    }
+                    const value = node[key];
+                    if (Array.isArray(value)) {
+                      for (const child of value) {
+                        walk(child);
+                      }
+                    } else if (value && typeof value === "object") {
+                      walk(value);
+                    }
+                  }
+                }
+                walk(ast);
+                // ----------------------------------------------------------
+                // 4.4. La clase debe ser única
+                // ----------------------------------------------------------
+                if (classes.length !== 1) {
+                  throw new Error(
+                    `synchronizeSplittableMethod(): se esperaba exactamente una clase en "${splittableClassFile}", pero se encontraron ${classes.length}.`,
+                  );
+                }
+                const classNode = classes[0];
+                // ----------------------------------------------------------
+                // 4.5. Buscar el método
+                // ----------------------------------------------------------
+                let targetMethod = null;
+                for (const member of classNode.body.body) {
+                  if (
+                    member.type !== "ClassMethod" &&
+                    member.type !== "ClassPrivateMethod"
+                  ) {
+                    continue;
+                  }
+                  let name;
+                  if (member.key.type === "Identifier") {
+                    name = member.key.name;
+                  } else if (member.key.type === "StringLiteral") {
+                    name = member.key.value;
+                  } else if (member.key.type === "NumericLiteral") {
+                    name = String(member.key.value);
+                  } else if (member.key.type === "PrivateName") {
+                    name = `#${member.key.id.name}`;
+                  } else {
+                    continue;
+                  }
+                  if (name === methodName && member.static === isStatic) {
+                    targetMethod = member;
+                    break;
+                  }
+                }
+                // ----------------------------------------------------------
+                // 4.6. Si no existe el método, esta clase no corresponde
+                // ----------------------------------------------------------
+                if (!targetMethod) {
+                  continue;
+                }
+                // ----------------------------------------------------------
+                // 4.7. Sustituir exclusivamente el método
+                // ----------------------------------------------------------
+                const reconstructedSource =
+                  source.slice(0, targetMethod.start) +
+                  methodSource +
+                  source.slice(targetMethod.end);
+                // ----------------------------------------------------------
+                // 4.8. Escribir splittable class
+                // ----------------------------------------------------------
+                await fs.writeFile(
+                  splittableClassFile,
+                  reconstructedSource,
+                  "utf8",
+                );
+              }
+              output = true;
+            } catch (error) {
+              console.log("Error synchronizing splittable method:", error);
+              _error = error;
+            } finally {
+              // ------------------------------------------------------------
+              // 5. Desmutear el directorio porque los cambios han terminado
+              // ------------------------------------------------------------
+              await this.devbin.unmuteTouchListenerOf(`${directory}/**/*`);
+              if (_error) throw _error;
+              return output;
+            }
           }
           /**
            * @name DevBinaryV6.Utils.constructor
@@ -8855,12 +9034,11 @@
           "@/dev/unlistened.json",
         );
         try {
-          let unlistenedList = [];
-          if (await this.utils.existsFile(unlistenedFile)) {
-            unlistenedList = JSON.parse(
-              await require("fs").promises.readFile(unlistenedFile, "utf8"),
-            );
-          }
+          let unlistenedList = !(await this.utils.existsFile(unlistenedFile))
+            ? []
+            : JSON.parse(
+                await require("fs").promises.readFile(unlistenedFile, "utf8"),
+              );
           if (!unlistenedList.includes(filepattern)) {
             unlistenedList.push(filepattern);
           }
@@ -8870,6 +9048,7 @@
             "utf8",
           );
         } catch (error) {
+          if (error.code === "ENOENT") return -1;
           console.log(
             `[!] Could not mute filepattern «${filepattern}» due to following error:`,
             error,
@@ -8886,12 +9065,11 @@
           "@/dev/unlistened.json",
         );
         try {
-          let unlistenedList = [];
-          if (await this.utils.existsFile(unlistenedFile)) {
-            unlistenedList = JSON.parse(
-              await require("fs").promises.readFile(unlistenedFile, "utf8"),
-            );
-          }
+          let unlistenedList = !(await this.utils.existsFile(unlistenedFile))
+            ? []
+            : JSON.parse(
+                await require("fs").promises.readFile(unlistenedFile, "utf8"),
+              );
           const pos = unlistenedList.indexOf(filepattern);
           if (pos !== -1) {
             unlistenedList.splice(pos, 1);
@@ -8902,6 +9080,7 @@
             "utf8",
           );
         } catch (error) {
+          if (error.code === "ENOENT") return -1;
           console.log(
             `[!] Could not unmute filepattern «${filepattern}» due to following error:`,
             error,

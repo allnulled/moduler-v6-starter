@@ -1,4 +1,4 @@
-module.exports = $moduler.import(function() {
+module.exports = $moduler.import(function () {
   return class VirtualFilesystem {
     static assert(condition, message) {
       if (!condition) throw new Error(message);
@@ -6,241 +6,247 @@ module.exports = $moduler.import(function() {
     static create(...args) {
       return new this(...args);
     }
-    static Drivers=class {
-      static Vfs=VirtualFilesystem;
-      static assert=VirtualFilesystem.assert;
-      static Abstraction=class {
-        static create(...args) {
-          return new this(...args);
-        }
-        static load() {
-          throw new Error(`Method «static.load» must be overriden on class «${this.name}»`);
-        }
-        normalizePath(node) {
-          return this._normalizePath({
-            node: node
-          });
-        }
-        readFile(file) {
-          return this._readFile({
-            file: file
-          });
-        }
-        readDirectory(directory) {
-          return this._readDirectory({
-            directory: directory
-          });
-        }
-        writeFile(file, content) {
-          return this._writeFile({
-            file: file,
-            content: content
-          });
-        }
-        makeDirectory(directory) {
-          return this._makeDirectory({
-            directory: directory
-          });
-        }
-        deleteFile=Object.assign(file => this._deleteFile({
-          file: file
-        }), {
-          onlyTry: (...args) => this._deleteFile.onlyTry(...args)
-        });
-        deleteDirectory(directory) {
-          return this._deleteDirectory({
-            directory: directory
-          });
-        }
-        ensureFile(file) {
-          return this._ensureFile({
-            file: file
-          });
-        }
-        ensureDirectory(directory) {
-          return this._ensureDirectory({
-            directory: directory
-          });
-        }
-        existsFile(file) {
-          return this._existsFile({
-            file: file
-          });
-        }
-        existsDirectory(directory) {
-          return this._existsDirectory({
-            directory: directory
-          });
-        }
-        existsNode(node) {
-          return this._existsNode({
-            node: node
-          });
-        }
-        copyFile(origin, destination) {
-          return this._copyFile({
-            origin: origin,
-            destination: destination
-          });
-        }
-        copyDirectory(origin, destination) {
-          return this._copyDirectory({
-            origin: origin,
-            destination: destination
-          });
-        }
-        moveFile(origin, destination) {
-          return this._moveFile({
-            origin: origin,
-            destination: destination
-          });
-        }
-        moveDirectory(origin, destination) {
-          return this._moveDirectory({
-            origin: origin,
-            destination: destination
-          });
-        }
-        _normalizePath() {
-          throw new Error(`Method «normalizePath» must be overriden on class «${this.constructor.name}»`);
-        }
-        _readFile() {
-          throw new Error(`Method «readFile» must be overriden on class «${this.constructor.name}»`);
-        }
-        _readDirectory() {
-          throw new Error(`Method «readDirectory» must be overriden on class «${this.constructor.name}»`);
-        }
-        _writeFile() {
-          throw new Error(`Method «writeFile» must be overriden on class «${this.constructor.name}»`);
-        }
-        _makeDirectory() {
-          throw new Error(`Method «makeDirectory» must be overriden on class «${this.constructor.name}»`);
-        }
-        _deleteFile() {
-          throw new Error(`Method «deleteFile» must be overriden on class «${this.constructor.name}»`);
-        }
-        _deleteDirectory() {
-          throw new Error(`Method «deleteDirectory» must be overriden on class «${this.constructor.name}»`);
-        }
-        _ensureFile() {
-          throw new Error(`Method «ensureDirectory» must be overriden on class «${this.constructor.name}»`);
-        }
-        _ensureDirectory() {
-          throw new Error(`Method «ensureDirectory» must be overriden on class «${this.constructor.name}»`);
-        }
-        _existsFile() {
-          throw new Error(`Method «existsFile» must be overriden on class «${this.constructor.name}»`);
-        }
-        _existsDirectory() {
-          throw new Error(`Method «existsDirectory» must be overriden on class «${this.constructor.name}»`);
-        }
-        _existsNode() {
-          throw new Error(`Method «existsNode» must be overriden on class «${this.constructor.name}»`);
-        }
-        _copyFile() {
-          throw new Error(`Method «copyFile» must be overriden on class «${this.constructor.name}»`);
-        }
-        _copyDirectory() {
-          throw new Error(`Method «copyDirectory» must be overriden on class «${this.constructor.name}»`);
-        }
-        _moveFile() {
-          throw new Error(`Method «moveFile» must be overriden on class «${this.constructor.name}»`);
-        }
-        _moveDirectory() {
-          throw new Error(`Method «moveDirectory» must be overriden on class «${this.constructor.name}»`);
-        }
-        constructor(basedir = !1) {
-          this.basedir = basedir, this.basedir = basedir;
-        }
+    static Drivers = class VirtualFilesystemDrivers {
+      static Vfs = VirtualFilesystem;
+      static assert = VirtualFilesystem.assert;
+      static Abstraction = class VfsDriverAbstraction {
+        /**
+         * # VfsDriverAbstraction.class
+         * - section: std.filesystem.VirtualFilesystem.Drivers.Abstraction.VfsDriverAbstraction.class
+         * - file:    @/src/candidate/std/filesystem/VirtualFilesystem/Drivers/Abstraction/VfsDriverAbstraction.class.js
+         */
       };
       static load(driverId) {
-        this.assert(driverId in this, `«$std.filesystem.VirtualFilesystem.Drivers.load» cannot load driver «${driverId}» because it has not a defined class`);
+        this.assert(
+          driverId in this,
+          `«$std.filesystem.VirtualFilesystem.Drivers.load» cannot load driver «${driverId}» because it has not a defined class`,
+        );
         const DriverClass = this[driverId];
-        return this.assert(DriverClass.prototype instanceof this.Abstraction, `«$std.filesystem.VirtualFilesystem.Drivers.load» cannot accept driver «${driverId}» because it is not a «Vfs.Drivers.Abstraction» class extension`), 
-        DriverClass.load();
+        this.assert(
+          DriverClass.prototype instanceof this.Abstraction,
+          `«$std.filesystem.VirtualFilesystem.Drivers.load» cannot accept driver «${driverId}» because it is not a «Vfs.Drivers.Abstraction» class extension`,
+        );
+        return DriverClass.load();
       }
     };
     static {
+      // Se tiene que hacer así porque si no, no podrías alcanzar el Abstraction para los extends:
       Object.assign(this.Drivers, {
-        ForIndexeddb: class extends VirtualFilesystem.Drivers.Abstraction {
+        ForIndexeddb: class VfsDriverForIndexeddb
+          extends VirtualFilesystem.Drivers.Abstraction
+        {
           static async load() {
             console.log("Loading driver for indexeddb");
           }
         },
-        ForLocalStorage: class extends VirtualFilesystem.Drivers.Abstraction {
+        ForLocalStorage: class VfsDriverForLocalStorage
+          extends VirtualFilesystem.Drivers.Abstraction
+        {
           static async load() {
             console.log("Loading driver for localstorage");
           }
         },
-        ForNodejs: class extends VirtualFilesystem.Drivers.Abstraction {
-          static async load() {}
-          _normalizePath() {}
-          _readFile() {}
-          _readDirectory() {}
+        ForNodejs: class VfsDriverForNodejs
+          extends VirtualFilesystem.Drivers.Abstraction
+        {
+          static async load() {
+            // @OK empty is ok for nodejs driver.
+          }
+          _normalizePath() {
+            /**
+             * # prototype._normalizePath
+             * - section: std.filesystem.VirtualFilesystem.Drivers.ForNodejs.prototype._normalizePath
+             * - file:    @/src/candidate/std/filesystem/VirtualFilesystem/Drivers/ForNodejs/prototype._normalizePath.js
+             */
+          }
+          _readFile() {
+            /**
+             * # prototype._readFile
+             * - section: std.filesystem.VirtualFilesystem.Drivers.ForNodejs.prototype._readFile
+             * - file:    @/src/candidate/std/filesystem/VirtualFilesystem/Drivers/ForNodejs/prototype._readFile.js
+             */
+          }
+          _readDirectory() {
+            /**
+             * # prototype._readDirectory
+             * - section: std.filesystem.VirtualFilesystem.Drivers.ForNodejs.prototype._readDirectory
+             * - file:    @/src/candidate/std/filesystem/VirtualFilesystem/Drivers/ForNodejs/prototype._readDirectory.js
+             */
+          }
           _writeFile(params, options) {
-            const {file: file, content: content} = $moduler.toolkit.normalizeParams(params), {tracer: tracer} = $moduler.toolkit.normalizeOptions(options);
-            return tracer.log("VirtualFilesystem.Drivers.ForNodejs.prototype._writeFile", arguments), 
-            require("fs").promises.writeFile($moduler.normalizationOf(file), content, "utf8");
+            const { file, content } = $moduler.toolkit.normalizeParams(params);
+            const { tracer } = $moduler.toolkit.normalizeOptions(options);
+            tracer.log(
+              "VirtualFilesystem.Drivers.ForNodejs.prototype._writeFile",
+              arguments,
+            );
+            return require("fs").promises.writeFile(
+              $moduler.normalizationOf(file),
+              content,
+              "utf8",
+            );
           }
           _makeDirectory(params, options) {
-            const {directory: directory} = $moduler.toolkit.normalizeParams(params), {tracer: tracer} = $moduler.toolkit.normalizeOptions(options);
-            return tracer.log("VirtualFilesystem.Drivers.ForNodejs.prototype._makeDirectory", arguments), 
-            require("fs").promises.mkdir($moduler.normalizationOf(directory));
+            const { directory } = $moduler.toolkit.normalizeParams(params);
+            const { tracer } = $moduler.toolkit.normalizeOptions(options);
+            tracer.log(
+              "VirtualFilesystem.Drivers.ForNodejs.prototype._makeDirectory",
+              arguments,
+            );
+            return require("fs").promises.mkdir(
+              $moduler.normalizationOf(directory),
+            );
           }
-          _deleteFile=Object.assign((...args) => {
-            const [params, options] = args, {file: file} = $moduler.toolkit.normalizeParams(params), {tracer: tracer} = $moduler.toolkit.normalizeOptions(options);
-            return tracer.log("VirtualFilesystem.Drivers.ForNodejs.prototype._deleteFile", args), 
-            require("fs").promises.unlink($moduler.normalizationOf(file));
-          }, {
-            onlyTry: (...args) => this.__trify(this.deleteFile, args)
-          });
+          _deleteFile = Object.assign(
+            (...args) => {
+              const [params, options] = args;
+              const { file } = $moduler.toolkit.normalizeParams(params);
+              const { tracer } = $moduler.toolkit.normalizeOptions(options);
+              // @ESTAMOSAQUI
+              tracer.log(
+                "VirtualFilesystem.Drivers.ForNodejs.prototype._deleteFile",
+                args,
+              );
+              return require("fs").promises.unlink(
+                $moduler.normalizationOf(file),
+              );
+            },
+            {
+              onlyTry: (...args) => {
+                return this.__trify(this.deleteFile, args);
+              },
+            },
+          );
           _deleteDirectory(params, options) {
-            const {directory: directory} = $moduler.toolkit.normalizeParams(params), {tracer: tracer} = $moduler.toolkit.normalizeOptions(options);
-            return tracer.log("VirtualFilesystem.Drivers.ForNodejs.prototype._makeDirectory", arguments), 
-            require("fs").promises.rmdir($moduler.normalizationOf(directory));
+            const { directory } = $moduler.toolkit.normalizeParams(params);
+            const { tracer } = $moduler.toolkit.normalizeOptions(options);
+            tracer.log(
+              "VirtualFilesystem.Drivers.ForNodejs.prototype._makeDirectory",
+              arguments,
+            );
+            return require("fs").promises.rmdir(
+              $moduler.normalizationOf(directory),
+            );
           }
-          _ensureFile() {}
-          _ensureDirectory() {}
+          _ensureFile() {
+            /**
+             * # prototype._ensureFile
+             * - section: std.filesystem.VirtualFilesystem.Drivers.ForNodejs.prototype._ensureFile
+             * - file:    @/src/candidate/std/filesystem/VirtualFilesystem/Drivers/ForNodejs/prototype._ensureFile.js
+             */
+          }
+          _ensureDirectory() {
+            /**
+             * # prototype._ensureDirectory
+             * - section: std.filesystem.VirtualFilesystem.Drivers.ForNodejs.prototype._ensureDirectory
+             * - file:    @/src/candidate/std/filesystem/VirtualFilesystem/Drivers/ForNodejs/prototype._ensureDirectory.js
+             */
+          }
           async _existsFile(params, options) {
-            const {file: file, contents: contents} = $moduler.toolkit.normalizeParams(params), {tracer: tracer} = $moduler.toolkit.normalizeOptions(options);
-            tracer.log("VirtualFilesystem.Drivers.ForNodejs.prototype._existsDirectory", arguments);
+            /**
+             * # prototype._existsFile
+             * - section: std.filesystem.VirtualFilesystem.Drivers.ForNodejs.prototype._existsFile
+             * - file:    @/src/candidate/std/filesystem/VirtualFilesystem/Drivers/ForNodejs/prototype._existsFile.js
+             */
+            const { file, contents } = $moduler.toolkit.normalizeParams(params);
+            const { tracer } = $moduler.toolkit.normalizeOptions(options);
+            tracer.log(
+              "VirtualFilesystem.Drivers.ForNodejs.prototype._existsDirectory",
+              arguments,
+            );
             try {
-              return (await require("fs").promises.stat($moduler.normalizationOf(file))).isFile();
+              const info = await require("fs").promises.stat(
+                $moduler.normalizationOf(file),
+              );
+              return info.isFile();
             } catch (error) {
-              if ("ENOENT" === error.code) return !1;
-              throw error;
+              if (error.code === "ENOENT") return false;
+              throw error; // Otro problema: permisos, I/O, etc.
             }
           }
           async _existsDirectory(params, options) {
-            const {directory: directory, contents: contents} = $moduler.toolkit.normalizeParams(params), {tracer: tracer} = $moduler.toolkit.normalizeOptions(options);
-            tracer.log("VirtualFilesystem.Drivers.ForNodejs.prototype._existsDirectory", arguments);
+            /**
+             * # prototype._existsDirectory
+             * - section: std.filesystem.VirtualFilesystem.Drivers.ForNodejs.prototype._existsDirectory
+             * - file:    @/src/candidate/std/filesystem/VirtualFilesystem/Drivers/ForNodejs/prototype._existsDirectory.js
+             */
+            const { directory, contents } =
+              $moduler.toolkit.normalizeParams(params);
+            const { tracer } = $moduler.toolkit.normalizeOptions(options);
+            tracer.log(
+              "VirtualFilesystem.Drivers.ForNodejs.prototype._existsDirectory",
+              arguments,
+            );
             try {
-              return (await require("fs").promises.stat($moduler.normalizationOf(directory))).isDirectory();
+              const info = await require("fs").promises.stat(
+                $moduler.normalizationOf(directory),
+              );
+              return info.isDirectory();
             } catch (error) {
-              if ("ENOENT" === error.code) return !1;
-              throw error;
+              if (error.code === "ENOENT") return false;
+              throw error; // Otro problema: permisos, I/O, etc.
             }
           }
           _existsNode(params, settings) {
-            const {file: file} = $moduler.toolkit.normalizeParams(params), {tracer: tracer} = $moduler.toolkit.normalizeOptions(options);
-            return tracer.log("VirtualFilesystem.Drivers.ForNodejs.prototype._existsNode", arguments), 
-            require("fs").promises.access($moduler.normalizationOf(file)).then(() => !0).catch(error => !1);
+            /**
+             * # prototype._existsNode
+             * - section: std.filesystem.VirtualFilesystem.Drivers.ForNodejs.prototype._existsNode
+             * - file:    @/src/candidate/std/filesystem/VirtualFilesystem/Drivers/ForNodejs/prototype._existsNode.js
+             */
+            const { file } = $moduler.toolkit.normalizeParams(params);
+            const { tracer } = $moduler.toolkit.normalizeOptions(options);
+            tracer.log(
+              "VirtualFilesystem.Drivers.ForNodejs.prototype._existsNode",
+              arguments,
+            );
+            return require("fs")
+              .promises.access($moduler.normalizationOf(file))
+              .then(() => true)
+              .catch((error) => false);
           }
-          _copyFile() {}
-          _copyDirectory() {}
-          _moveFile() {}
-          _moveDirectory() {}
+          _copyFile() {
+            /**
+             * # prototype._copyFile
+             * - section: std.filesystem.VirtualFilesystem.Drivers.ForNodejs.prototype._copyFile
+             * - file:    @/src/candidate/std/filesystem/VirtualFilesystem/Drivers/ForNodejs/prototype._copyFile.js
+             */
+          }
+          _copyDirectory() {
+            /**
+             * # prototype._copyDirectory
+             * - section: std.filesystem.VirtualFilesystem.Drivers.ForNodejs.prototype._copyDirectory
+             * - file:    @/src/candidate/std/filesystem/VirtualFilesystem/Drivers/ForNodejs/prototype._copyDirectory.js
+             */
+          }
+          _moveFile() {
+            /**
+             * # prototype._moveFile
+             * - section: std.filesystem.VirtualFilesystem.Drivers.ForNodejs.prototype._moveFile
+             * - file:    @/src/candidate/std/filesystem/VirtualFilesystem/Drivers/ForNodejs/prototype._moveFile.js
+             */
+          }
+          _moveDirectory() {
+            /**
+             * # prototype._moveDirectory
+             * - section: std.filesystem.VirtualFilesystem.Drivers.ForNodejs.prototype._moveDirectory
+             * - file:    @/src/candidate/std/filesystem/VirtualFilesystem/Drivers/ForNodejs/prototype._moveDirectory.js
+             */
+          }
         },
-        ForWebsocketServer: class extends VirtualFilesystem.Drivers.Abstraction {
+        ForWebsocketServer: class VfsDriverForWebsocketServer
+          extends VirtualFilesystem.Drivers.Abstraction
+        {
           static async load() {
             console.log("Loading driver for websocket server");
           }
         },
-        ForWebsocketClient: class extends VirtualFilesystem.Drivers.Abstraction {
+        ForWebsocketClient: class VfsDriverForWebsocketClient
+          extends VirtualFilesystem.Drivers.Abstraction
+        {
           static async load() {
             console.log("Loading driver for websocket client");
           }
-        }
+        },
       });
     }
   };
