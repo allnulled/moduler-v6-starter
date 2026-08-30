@@ -82,7 +82,7 @@
                 trace = Object.assign(
                   (method) => {
                     console.log(
-                      `[·] [${this.id}] [${this.level}] [=] ${method}`,
+                      `[·] ${this.id} at level ${this.level} [·] ${method}`,
                     );
                   },
                   {
@@ -90,21 +90,21 @@
                       this.level++;
                       if (this.isTracing)
                         console.log(
-                          `[·] [${this.id}] [${this.level}] [+] ${method}`,
+                          `[·] ${this.id} at level ${this.level}] [+] ${method}`,
                         );
                     },
                     out: (method) => {
                       this.level--;
                       if (this.isTracing)
                         console.log(
-                          `[·] [${this.id}] [${this.level}] [-] ${method}`,
+                          `[·] ${this.id} at level ${this.level}] [-] ${method}`,
                         );
                     },
                     error: (method, error, levelDiff = 0) => {
                       this.level += levelDiff;
                       if (this.isTracing)
                         console.log(
-                          `[!] [${this.id}] [${this.level}] [!] ${method}`,
+                          `[!] ${this.id} at level ${this.level}] [!] ${method}`,
                           error,
                         );
                     },
@@ -800,25 +800,72 @@
                   this.moduler = moduler;
                 }
 
-                /**
-                 * @name ModulerV6.Toolkit.prototype.normalizeParams
-                 * @type
-                 * @description
-                 */
-                normalizeParams(params = {}) {
-                  return params;
+                normalizeParameters(parameters, normalization = null) {
+                  /**
+                   * @name ModulerV6.Toolkit.prototype.normalizeParameters
+                   * @type
+                   * @description
+                   */
+                  return this.normalizeObject(parameters, normalization);
                 }
-                /**
-                 * @name ModulerV6.Toolkit.prototype.normalizeOptions
-                 * @type
-                 * @description
-                 */
-                normalizeOptions(options = {}) {
-                  const normalization = Object.assign({}, options);
-                  if (typeof normalization.tracer === "undefined") {
-                    normalization.tracer = this.moduler.tracer;
+                normalizeOptions(options, normalization = null) {
+                  /**
+                   * @name ModulerV6.Toolkit.prototype.normalizeOptions
+                   * @type
+                   * @description
+                   */
+                  return this.normalizeObject(options, normalization);
+                }
+                normalizeObject(parameters = {}, normalization = null) {
+                  /**
+                   * @name ModulerV6.Toolkit.prototype.normalizeObject
+                   * @type
+                   * @description
+                   */
+                  let output = { ...parameters };
+                  if (normalization) {
+                    Apply_default: for (const property in normalization) {
+                      const configuration = normalization[property];
+                      if ("default" in configuration) {
+                        output[property] =
+                          property in output
+                            ? output[property]
+                            : typeof configuration.default === "function"
+                              ? configuration.default(configuration)
+                              : configuration.default;
+                      }
+                    }
+                    Validate: for (const property in normalization) {
+                      const configuration = normalization[property];
+                      if ("validate" in configuration) {
+                        const result = configuration.validate(
+                          output[property],
+                          this.moduler.constructor.assert,
+                          output,
+                          normalization,
+                        );
+                        if (typeof result === "undefined") {
+                          // @OK
+                        } else if (result !== true) {
+                          throw new Error(
+                            result ||
+                              `Validation of property «${property}» should return «true» but «${typeof result}» was found instead on «ModulerV6.Toolkit.normalizeObject»`,
+                          );
+                        }
+                      }
+                    }
+                    Format: for (const property in normalization) {
+                      const configuration = normalization[property];
+                      if ("format" in configuration) {
+                        output[property] = configuration.format(
+                          output[property],
+                          output,
+                          normalization,
+                        );
+                      }
+                    }
                   }
-                  return normalization;
+                  return output;
                 }
               };
               /**
@@ -1167,6 +1214,13 @@
                     return { syntax: "Inject Module", ...token };
                   },
                 ],
+                InjectModules: [
+                  "$" + "compiler.inject.modules(",
+                  this.Parser.symbols.PARENTHESYS_BALANCE,
+                  function (token) {
+                    return { syntax: "Inject Modules", ...token };
+                  },
+                ],
                 ImportJs: [
                   "$" + "moduler.import(",
                   this.Parser.symbols.PARENTHESYS_BALANCE,
@@ -1392,6 +1446,7 @@
                   this.nativeGrammars.InjectSource,
                   this.nativeGrammars.InjectString,
                   this.nativeGrammars.InjectTemplate,
+                  this.nativeGrammars.InjectModules,
                   this.nativeGrammars.InjectModule,
                   this.nativeGrammars.ImportJs,
                   this.nativeGrammars.ExportJs,
@@ -2275,9 +2330,6 @@
                */
               setBasedir(basedir) {
                 this.basedir = this.normalizationOf(basedir);
-                if (this.compiler) {
-                  this.compiler.basedir = this.basedir;
-                }
               }
               /**
                * @name ModulerV6.prototype.setRootdir
@@ -2286,9 +2338,6 @@
                */
               setRootdir(rootdir) {
                 this.rootdir = this.normalizationOf(rootdir);
-                if (this.compiler) {
-                  this.compiler.rootdir = this.rootdir;
-                }
               }
               /**
                * @name ModulerV6.prototype.normalizationOf
@@ -2300,7 +2349,12 @@
                   typeof subpath === "string",
                   `Parameter «subpath» must be string on «ModulerV6.prototype.normalizationOf»`,
                 );
-                return this._joinPaths([subpath], "normalizationOf");
+                return this._joinPaths(
+                  subpath.startsWith("./") && this.basedir
+                    ? [this.basedir, subpath]
+                    : [subpath],
+                  "normalizationOf",
+                );
               }
               /**
                * @name ModulerV6.prototype.basedirOf
@@ -2340,6 +2394,73 @@
               cloneForFile(filepath) {
                 const dirpath = this._joinPaths([filepath, ".."]);
                 return new ModulerV6(dirpath, this);
+              }
+              /**
+               * @name ModulerV6.prototype.reserveFile
+               * @type
+               * @description
+               */
+              reserveFile(file) {
+                const filepath = this.normalizationOf(file);
+                const rootpath = this.rootdirOf(filepath);
+                if (filepath in this.modules) {
+                  throw new Error(
+                    `Cannot reserve file module because it is already solved on file «${rootpath}» on method «ModulerV6.prototype.reserveFile»`,
+                  );
+                }
+                const resolvable = this.constructor.createResolvable();
+                Export_promise_of_reserve_as_module: {
+                  this.modules[filepath] = resolvable.promise;
+                  this.reserves[filepath] = resolvable;
+                }
+                const _module = { exports: {} };
+                return {
+                  module: _module,
+                  exports: _module.exports,
+                  file: filepath,
+                };
+              }
+              /**
+               * @name ModulerV6.prototype.releaseFile
+               * @type
+               * @description
+               */
+              releaseFile(file, reserve, returnment) {
+                const filepath = this.normalizationOf(file);
+                const rootpath = this.rootdirOf(filepath);
+                this.assert(
+                  filepath in this.reserves,
+                  `File «${filepath}» is called to be released by «ModulerV6.prototype.releaseFile» but it was not reserved before. Methods «reserveFile,releaseFile» are not human-usage oriented, in case of «${rootpath}». Stop playing with out-of-domain methods, please.`,
+                );
+                this.assert(
+                  reserve.file === filepath,
+                  `File «${filepath}» is called to be released by «ModulerV6.prototype.releaseFile» but it does not match with reserved file «${reserve.file}». Stop playing with not human-usage oriented methods, I told you!`,
+                );
+                if (typeof returnment !== "undefined") {
+                  reserve.module = returnment;
+                }
+                const state = this.reserves[filepath];
+                state.resolve(reserve.module.exports);
+                delete this.reserves[filepath];
+                return state.promise;
+              }
+              /**
+               * @name ModulerV6.prototype.lockFiles
+               * @type
+               * @description
+               */
+              lockFiles(list) {
+                return {
+                  until: function (promise) {
+                    return promise.then((output) => {
+                      // @AQUI hay que resolver los módulos con el crédito de lockFiles
+                      console.log(
+                        `[*] Unlocked files: ${list.join(", ")}`,
+                        output,
+                      );
+                    });
+                  },
+                };
               }
 
               /**
@@ -2558,13 +2679,19 @@
                   typeof basedir === "string",
                   `Parameter «basedir» must be string on «Moduler.constructor»`,
                 );
-                this.basedir = basedir;
+                this.basedir = this._joinPaths([basedir]);
                 /**
                  * @name ModulerV6.prototype.rootdir
                  * @type
                  * @description
                  */
-                this.rootdir = cloneOf ? cloneOf.rootdir : basedir;
+                this.rootdir = cloneOf ? cloneOf.rootdir : this.basedir;
+                /**
+                 * @name ModulerV6.prototype.reserves
+                 * @type
+                 * @description
+                 */
+                this.reserves = cloneOf ? cloneOf.reserves : {};
                 /**
                  * @name ModulerV6.prototype.modules
                  * @type
@@ -2626,7 +2753,8 @@
                  */
                 this.settings = new ModulerV6.Settings(this);
                 if (cloneOf) {
-                  this.settings.data = cloneOf.settings.data;
+                  // @CUIDADO: HE PUESTO UN ? PARA PASAR UN FALLO
+                  this.settings.data = cloneOf.settings?.data;
                 }
                 /**
                  * @name ModulerV6.prototype.runtime
@@ -2664,6 +2792,38 @@
                 await this.globalInstance.runtime.load();
                 this.onLoaded.resolve();
               })();
+              /**
+               * @name ModulerV6.static.1
+               * @type
+               * @description
+               */
+              static {
+                Promise_polyfills: {
+                  if (typeof Promise.fromObject !== "function") {
+                    Promise.fromObject = async function (map) {
+                      const output = {};
+                      const keys = Object.keys(map);
+                      const list = await Promise.all(Object.values(map));
+                      for (let index = 0; index < keys.length; index++) {
+                        const key = keys[index];
+                        output[key] = list[index];
+                      }
+                      return output;
+                    };
+                  }
+                  if (typeof Promise.fromCollection !== "function") {
+                    Promise.fromCollection = async function (collection) {
+                      ModulerV6.assert(
+                        typeof collection === "object",
+                        `Method «Promise.fromCollection» only accepts object or array as first argument but «${typeof collection}» was found instead`,
+                      );
+                      return Array.isArray(collection)
+                        ? Promise.all(collection)
+                        : Promise.fromObject(collection);
+                    };
+                  }
+                }
+              }
             };
           }.call(),
         );
@@ -3321,6 +3481,16 @@
                 },
               );
               /**
+               * @name CompilerV6.Files.prototype.readDirectory
+               * @type
+               * @description
+               */
+              readDirectory(dir) {
+                return require("fs").promises.readdir(
+                  this.compiler.moduler.normalizationOf(dir),
+                );
+              }
+              /**
                * @name CompilerV6.Files.prototype.readFile
                * @type
                * @description
@@ -3349,6 +3519,7 @@
                   await this.ensureDirectory(fullDst);
                   return await require("fs").promises.cp(fullSrc, fullDst, {
                     recursive: true,
+                    force: true,
                   });
                 },
                 {
@@ -4052,8 +4223,13 @@
             this._trace("constructor", arguments);
             const basedir = parent
               ? parent.fullpathOf(basedirInput)
-              : this.fullpathOf(basedirInput);
-            // const basedir = this.normalizationOf(basedirInput);
+              : basedirInput;
+            /**
+             * @name CompilerV6.prototype.moduler
+             * @type
+             * @description
+             */
+            this.moduler = new ModulerV6(basedir, parent);
             /**
              * @name CompilerV6.prototype.isBrowser
              * @type
@@ -4061,30 +4237,11 @@
              */
             this.isBrowser = typeof window !== "undefined";
             /**
-             * @name CompilerV6.prototype.basedir
-             * @type
-             * @description
-             */
-            this.basedir = basedir;
-            /**
              * @name CompilerV6.prototype.previousdir
              * @type
              * @description
              */
-            this.previousdir = parent ? parent.basedir : basedir;
-            /**
-             * @name CompilerV6.prototype.rootdir
-             * @type
-             * @description
-             */
-            this.rootdir = parent ? parent.rootdir : basedir;
-            /**
-             * @name CompilerV6.prototype.moduler
-             * @type
-             * @description
-             */
-            this.moduler = new ModulerV6(basedir);
-            this.moduler.compiler = this;
+            this.previousdir = parent ? parent.basedir : null;
             /**
              * @name DevBinaryV6.prototype.files
              * @type
@@ -4157,7 +4314,7 @@
            * @type
            * @description
            */
-          async assertThrows(callback, message, checker = () => true) {
+          async assertThrows(callback, message, errorChecker = () => true) {
             const localError = new Error("Should have thrown: " + message);
             try {
               await callback();
@@ -4168,7 +4325,7 @@
                   `Should have thrown: ${err.name}: ${err.message} | ${err.stack}`,
                 );
               }
-              if (!checker(err)) {
+              if (!errorChecker(err)) {
                 throw new this.constructor.AssertionError(
                   `Should have thrown but not specific error: ${err.name}: ${err.message} | ${err.stack}`,
                 );
@@ -4380,6 +4537,7 @@
               "Inject String": this._compileAsInjectString,
               "Inject Template": this._compileAsInjectTemplate,
               "Inject Module": this._compileAsInjectModule,
+              "Inject Modules": this._compileAsInjectModules,
               "Multiline Comment Code Injection":
                 this._compileAsMultilineCommentCodeInjection,
               "Multiline Comment Value Injection":
@@ -4596,6 +4754,7 @@
            * @description
            */
           _fetchCompilable(compilationFile, compilationProcess) {
+            this._trace("_fetchCompilable", arguments);
             this.assert(
               typeof compilationFile === "object",
               "Parameter «compilationFile» must be object on «CompilerV6.prototype._fetchCompilable»",
@@ -4699,6 +4858,20 @@
             //     compilationFile.parentCompilation.compilation[extension] = content + compilationFile.parentCompilation.compilation[extension];
             // }
             // compilationFile.compilation[extension] = content + compilationFile.compilation[extension];
+          }
+          /**
+           * @name CompilerV6.prototype._wrapAsModuleInjection
+           * @type
+           * @description
+           */
+          _wrapAsModuleInjection(source, rootpath) {
+            return [
+              `(function({ module, exports }) {`,
+              `  return $moduler.releaseFile("${rootpath}", arguments[0], (function() {`,
+              `    ${source}`,
+              `  }).call(this));`,
+              `}).call(this, $moduler.reserveFile("${rootpath}"))`,
+            ].join("\n");
           }
 
           /**
@@ -4828,7 +5001,8 @@
               Extract_target_path: {
                 currentStep.push("3. extract target path");
                 this.assert(
-                  token.referenceOf.fullpath === this.fullpathOf(parameters[0]),
+                  token.referenceOf.fullpath ===
+                    this.normalizationOf(parameters[0]),
                   "DesignError: The first parameter and the token.referenceOf.fullpath should be the same on «CompilerV6.prototype._compileAsInjectSource»",
                 );
                 targetPath = token.referenceOf.fullpath;
@@ -5117,41 +5291,117 @@
             compilationProcess,
             { token, tokenIndex },
           ) {
+            const parameters = this._getDataForTokenCompilation({ token });
+            const rootpath = this.moduler.rootdirOf(parameters[0]);
             return this._compileAsInjectSource(
               compilationFile,
               compilationProcess,
               { token, tokenIndex },
               {
-                modifySource: function (source) {
-                  return [
-                    `(() => {`,
-                    `let __firstHolder = {};`,
-                    `let __originalHolder = __firstHolder;`,
-                    `const module = {`,
-                    `  get exports() {`,
-                    `    return __originalHolder;`,
-                    `  },`,
-                    `  set exports(value) {`,
-                    `    __originalHolder = value;`,
-                    `  }`,
-                    `};`,
-                    `const exports = module.exports;`,
-                    `const __result = (() => {`,
-                    source,
-                    `})();`,
-                    `let __output = undefined;`,
-                    `const __returnsUndefined = () => typeof __result === "undefined";`,
-                    `const __isSameEmptyObject = () => (module.exports === __firstHolder) && ((Object.keys(__firstHolder).length === 0));`,
-                    `if(!__returnsUndefined()) {`,
-                    `  __output = module.exports = __result;`,
-                    `} else if(!__isSameEmptyObject()) {`,
-                    `  __output = module.exports;`,
-                    `}`,
-                    `return __output;`,
-                    `})()`,
-                  ].join("\n");
+                modifySource: (source) => {
+                  return this._wrapAsModuleInjection(source, rootpath);
                 },
               },
+            );
+          }
+          /**
+           * @name CompilerV6.prototype._compileAsInjectModules
+           * @type
+           * @description
+           */
+          async _compileAsInjectModules(
+            compilationFile,
+            compilationProcess,
+            { token, tokenIndex },
+          ) {
+            // @TODO: CHATGPT, estyo en esta funcionalidad.
+            let out = "";
+            let subcompiler = undefined;
+            let subcode1 = "";
+            let subcode2 = "";
+            const parameters = this._getDataForTokenCompilation({ token });
+            const collection = parameters[0];
+            const isArray = Array.isArray(collection);
+            const isObject = !isArray && typeof collection === "object";
+            this.moduler.assert(
+              isArray || isObject,
+              `Syntax «$compiler.inject.modules» only accepts array or object as first parameter but «${typeof collection}» was found instead`,
+            );
+            Compile_modules: {
+              subcode1 = "";
+              subcompiler = this._cloneForFile(compilationFile.resource);
+              const targetPaths = isArray
+                ? [].concat(collection)
+                : Object.values(collection);
+              const targetKeys = Object.keys(collection);
+              const compilationPromises = [];
+              const compilationPairs = [];
+              Compile: for (
+                let indexTargets = 0;
+                indexTargets < targetPaths.length;
+                indexTargets++
+              ) {
+                const file = targetPaths[indexTargets];
+                const targetCompilation = subcompiler._compileRecursively(
+                  {
+                    resource: file,
+                    isRoot: false,
+                    parentCompilation: compilationFile,
+                  },
+                  compilationProcess,
+                );
+                compilationPromises.push(targetCompilation);
+                compilationPairs.push({
+                  index: indexTargets,
+                  file: file,
+                  rootpath: subcompiler.rootdirOf(file),
+                });
+              }
+              const compilations = await Promise.all(compilationPromises);
+              Unify: for (
+                let indexCompilations = 0;
+                indexCompilations < compilations.length;
+                indexCompilations++
+              ) {
+                const targetCompilation = compilations[indexCompilations];
+                const targetInfo = compilationPairs[indexCompilations];
+                if (isArray) {
+                  subcode1 += this._wrapAsModuleInjection(
+                    targetCompilation.js,
+                    rootpath,
+                  );
+                  subcode1 += ",\n";
+                } else if (isObject) {
+                  subcode1 += targetKeys[targetInfo.index];
+                  subcode1 += ": ";
+                  subcode1 += this._wrapAsModuleInjection(
+                    targetCompilation.js,
+                    targetInfo.rootpath,
+                  );
+                  subcode1 += ",\n";
+                }
+              }
+              if (isArray) {
+                subcode1 = `[\n${subcode1}]`;
+              } else {
+                subcode1 = `{\n${subcode1} }`;
+              }
+            }
+            Generate_output: {
+              out += `$moduler.lockFiles([\n`;
+              out += Object.values(collection)
+                .map((key) =>
+                  JSON.stringify(subcompiler.moduler.rootdirOf(key)),
+                )
+                .join(",\n  ");
+              out += `\n]).until(Promise.fromCollection(${subcode1}))`;
+            }
+            compilationFile.compilation.js = this._replaceTextRange(
+              compilationFile.compilation.js,
+              token.location[0],
+              token.location[1],
+              out,
+              token,
             );
           }
           /**
@@ -5925,7 +6175,7 @@
                 const tokenId = tokens[indexToken];
                 const token = file[tokenId];
                 const bestId = (() => {
-                  if (!token.referenceOf?.rootpath) {
+                  if (!token.referenceOf.rootpath) {
                     return token.inner;
                   } else {
                     return token.referenceOf.rootpath;
@@ -6039,7 +6289,7 @@
            * @type
            * @description
            */
-          _extendToken(token, fields = [], submoduler = false) {
+          _extendToken(token, fields = [], submoduler = this) {
             this._trace("_extendToken", arguments);
             return Object.assign(
               token,
@@ -6048,8 +6298,9 @@
                 : {
                     referenceOf: (() => {
                       const entry = this._hydrateParameters(token.inner)[0];
-                      const fullpath = this.fullpathOf(entry);
-                      const rootpath = this.rootdirOf(fullpath);
+                      const fullpath = submoduler.normalizationOf(entry);
+                      // const fullpath = submoduler.fullpathOf(entry);
+                      const rootpath = submoduler.rootdirOf(fullpath);
                       return { type: "file", entry, fullpath, rootpath };
                     })(),
                   },
@@ -6060,7 +6311,7 @@
            * @type
            * @description
            */
-          async _getDataForTokenCompilation(input, options = {}) {
+          _getDataForTokenCompilation(input, options = {}) {
             this._traceIn("_getDataForTokenCompilation", arguments);
             this.assert(
               typeof input === "object",
@@ -6263,7 +6514,9 @@
             if (!tokens.length) {
               return templateSource;
             }
-            console.log(tokens, argsBrute.compilationFile);
+            console.log(
+              `[*] Rendering template of ${tokens.length} tokens from: ${argsBrute.compilationFile.resource}`,
+            );
             const tokenType1 = ["/", "*", "%"].join("");
             const tokenType2 = ["/", "*", "%", "="].join("");
             const args = Object.assign({}, argsBrute);
@@ -6388,11 +6641,7 @@
            */
           rootdirOf(fullpath) {
             this._trace("rootdirOf", arguments);
-            // return this.moduler.rootdirOf(fullpath);
-            const normalization = this.normalizationOf(fullpath);
-            return normalization.startsWith(this.rootdir + "/")
-              ? normalization.replace(this.rootdir + "/", "@/")
-              : normalization;
+            return this.moduler.rootdirOf(fullpath);
           }
           /**
            * @name CompilerV6.prototype.fullpathOf
@@ -6450,6 +6699,39 @@
               this._logger = new this.constructor.Logger({ file: false }, this);
             }
             this._logger.log(...args);
+          }
+
+          /**
+           * @name CompilerV6.get.rootdir
+           * @type
+           * @description
+           */
+          get rootdir() {
+            return this.moduler.rootdir;
+          }
+          /**
+           * @name CompilerV6.get.basedir
+           * @type
+           * @description
+           */
+          get basedir() {
+            return this.moduler.basedir;
+          }
+          /**
+           * @name CompilerV6.set.rootdir
+           * @type
+           * @description
+           */
+          set rootdir(value) {
+            this.moduler.rootdir = value;
+          }
+          /**
+           * @name CompilerV6.set.basedir
+           * @type
+           * @description
+           */
+          set basedir(value) {
+            this.moduler.basedir = value;
           }
         };
         return CompilerV6;
@@ -6739,23 +7021,32 @@
                 "Parameter «args» cannot be null on «DevBinary.Utils.prototype.formatCliArgs»",
               );
             }
-            let args, result, usedKeys;
+            let output, args, usedKeys;
+            // Inicializamos argumentos con parseo normal:
             Initialize_args: {
               args = Array.isArray(argsBrute)
                 ? this.parseCliArgs(argsBrute)
                 : argsBrute;
             }
-            result = {};
+            // Inicializamos posicionales en el outputado
             Initialize_positionals: {
-              result._ = args ? args._ : [];
+              output = {};
+              output._ = args ? args._ : [];
             }
-            usedKeys = new Set(["_"]);
+            // Inicializamos claves usadas
+            Inicialize_keys: {
+              usedKeys = new Set(["_"]);
+            }
+            // Iteramos definiciones para ir cargando el resultado
             Iterating_definition_entries: for (const [
               name,
               config,
             ] of Object.entries(definition)) {
               const longKey = "--" + name;
               const aliases = config.alias || [];
+              const aliasesMap = Object.fromEntries(
+                aliases.map((alias) => [alias, name]),
+              );
               const sources = [];
               if (longKey in args) {
                 sources.push({
@@ -6763,11 +7054,13 @@
                   value: args[longKey],
                 });
               }
-              Iterating_aliases: for (const alias of aliases) {
-                if (alias in args) {
+              Iterating_aliases: for (const [key, value] of Object.entries(
+                args,
+              )) {
+                if (this.normalizeCliPropertyName(key, aliasesMap) === name) {
                   sources.push({
-                    key: alias,
-                    value: args[alias],
+                    key,
+                    value,
                   });
                 }
               }
@@ -6779,11 +7072,14 @@
               }
               if (sources.length === 0) {
                 if ("default" in config) {
-                  result[name] = config.default;
+                  output[name] = config.default;
                 }
                 continue Iterating_definition_entries;
               }
-              usedKeys.add(longKey);
+              // @ANTES:
+              // usedKeys.add(longKey);
+              // @AHORA:
+              usedKeys.add(sources[0].key);
               for (const alias of aliases) {
                 usedKeys.add(alias);
               }
@@ -6791,7 +7087,7 @@
               if (typeof config.onFormat === "function") {
                 value = config.onFormat.call(this, [...value]);
               }
-              result[name] = value;
+              output[name] = value;
             }
             // Detectar opciones desconocidas
             Iterating_keys: for (const key of Object.keys(args)) {
@@ -6801,9 +7097,27 @@
               if (key.startsWith("-")) {
                 throw new Error(`Unknown option "${key}".`);
               }
-              result[key] = args[key];
+              output[key] = args[key];
             }
-            return result;
+            return output;
+          }
+          /**
+           * @name DevBinaryV6.Utils.prototype.normalizeCliPropertyName
+           * @type
+           * @description
+           */
+          normalizeCliPropertyName(k, aliasesMap) {
+            if (k === "_") return k;
+            if (k.startsWith("--")) {
+              return k
+                .replace(/^\-/g, "")
+                .replace(/\-./g, (match) => match.substr(1).toUpperCase());
+            } else if (k.startsWith("-")) {
+              return aliasesMap[k];
+            } else
+              throw new Error(
+                `Demanded to normalize cli property name that does not start with «-» in the case of «${k}»`,
+              );
           }
           /**
            * @name DevBinaryV6.Utils.prototype.compileDistribuiblesOf
@@ -6873,10 +7187,7 @@
                   distMd.endsWith(".md"),
                   `File should end with «.md» but it is not the case on «${distMd}»`,
                 );
-                this.assert(
-                  distJs.includes("/dist/"),
-                  `File should include «/dist/» but it is not the case on «${distJs}»`,
-                );
+                // this.assert(distJs.includes("/dist/"), `File should include «/dist/» but it is not the case on «${distJs}»`);
               }
               Overwrite_dist_files: {
                 currentStep.push("5. ensure output directory");
@@ -7016,7 +7327,9 @@
             }
             return {
               file: fileBrute,
-              rootdir: this.devbin.compiler.rootdirOf(fileBrute),
+              rootdir: this.devbin.compiler.rootdirOf(
+                this.devbin.compiler.normalizationOf(fileBrute),
+              ),
               rootdirDirectory: require("path").dirname(
                 this.devbin.compiler.rootdirOf(fileBrute),
               ),
@@ -7042,17 +7355,28 @@
               // Si no tiene distribution.js no hay test
               return -3;
             }
+            // @NOTA: Porque he perdido algo de tiempo con esto
+            // Sí, es sin el / del final, porque se refiere a un directorio, así que la barra se entiende por el paso anterior, donde ha extraído 1 directorio
+            // Este caso de esta forma subre los casos de @/src/fichero-inmediato.js
+            if (
+              !event.distribution.names.rootdirDirectory.startsWith("@/src")
+            ) {
+              // Si no es del src, ignorar
+              return -4;
+            }
             const path = require("path");
             const fs = require("fs");
-            const testunitFile = path.resolve(
+            const testunitDir =
               event.distribution.names.rootdirDirectory.replace(
-                /^\@\/src/g,
-                this.devbin.compiler.fullpathOf("@/test/unit/src"),
-              ),
+                "@/src",
+                this.devbin.compiler.normalizationOf("@/test/unit/src"),
+              );
+            const testunitFile = path.resolve(
+              testunitDir,
               event.distribution.names.test,
             );
             const devBinaryV6Filepath =
-              this.devbin.compiler.fullpathOf("@/dev/bin.js");
+              this.devbin.compiler.normalizationOf("@/dev/bin.js");
             const devBinaryV6RelativeFilepath = path.relative(
               path.dirname(testunitFile),
               devBinaryV6Filepath,
@@ -7066,7 +7390,6 @@
   devbin.assert(true, "Test is empty right now");
 
 })();`;
-            const testunitDir = path.dirname(testunitFile);
             if (!(await this.existsFile(testunitFile))) {
               await fs.promises.mkdir(testunitDir, { recursive: true });
               await fs.promises.writeFile(
@@ -7088,13 +7411,27 @@
            * @description
            */
           async executeUnitTestFileOf(filepath, event) {
+            const $ = this.devbin.compiler.constructor.ansi.colors;
             if (event.isSrcWww) {
               console.log(
-                `[*] DevBinaryV6 ignored test for browser file: ${filepath}`,
+                $.style("blackBright").text(
+                  `[*] DevBinaryV6 ignored test for browser file: ${filepath}`,
+                ),
+              );
+            } else if (!event.testFabrication.unitFile) {
+              console.log(
+                $.style("blackBright").text(
+                  `[*] DevBinaryV6 missed test for file: ${filepath}`,
+                ),
               );
             } else {
+              const unitRootpath = this.devbin.moduler.rootdirOf(
+                event.testFabrication.unitFile,
+              );
               console.log(
-                `[*] Executing unit test file of: ${event.testFabrication.unitFile}`,
+                $.style("cyan").text(
+                  `[*] DevBinary is executing unit test file of: ${unitRootpath}`,
+                ),
               );
               let testUnitFile = undefined;
               Get_unit_test_filepath: {
@@ -7107,7 +7444,6 @@
                 }
               }
               delete require.cache[testUnitFile];
-              const $ = this.devbin.compiler.constructor.ansi.colors;
               try {
                 const testCallback = await require(testUnitFile);
                 if (typeof testCallback === "function") {
@@ -7117,10 +7453,15 @@
                     event,
                   });
                 }
+                console.log(
+                  $.style("greenBright").text(
+                    `[*] DevBinary has successfully passed unit test file of: ${unitRootpath}`,
+                  ),
+                );
               } catch (error) {
                 console.log(
                   $.style("red,bold").text(
-                    `[!] Unit test error on file «${testUnitFile}»:`,
+                    `[!] DevBinary has failed unit test with error on file «${testUnitFile}»:`,
                   ),
                 );
                 console.log(error);
@@ -7205,10 +7546,14 @@
            * @type
            * @description
            */
-          async touchFile(file, optionsInput = {}) {
+          async touchFile(fileBrute, optionsInput = {}) {
             this.assert(
-              typeof file === "string",
-              `Parameter «--file» must be string and not «${typeof file}» on «DevBinaryV6.Utils.prototype.touchFile»`,
+              typeof fileBrute === "string",
+              `Parameter «--file» must be string and not «${typeof fileBrute}» on «DevBinaryV6.Utils.prototype.touchFile»`,
+            );
+            const file = this.devbin.moduler.normalizationOf(fileBrute);
+            console.log(
+              "[*] Touched file: " + this.devbin.moduler.rootdirOf(file),
             );
             const currentStep = [];
             try {
@@ -7219,14 +7564,15 @@
                 currentStep.push("1. initialize dependencies");
                 fs = require("fs");
                 path = require("path");
-                filepath = this.devbin.compiler.fullpathOf(file);
+                filepath = this.devbin.compiler.normalizationOf(file);
                 rootPath = this.devbin.moduler.rootdirOf(filepath);
               }
               // this.assert(this.devbin.compiler.rootdirOf(filepath).startsWith("@/src"), `Parameter «--file» must start with «${this.devbin.compiler.rootdir}» but it is «${rootPath}» on «DevBinaryV6.Utils.prototype.touchFile»`);
               let event;
               let isEntry;
+              let isProcessable;
               Initialize_event: {
-                currentStep.push("1. initialize event for: " + rootPath);
+                currentStep.push("2. initialize event for: " + rootPath);
                 event = this.constructor.defaultTouchFileOptions({
                   type: "TouchFileEvent",
                   propagateUp: true,
@@ -7250,8 +7596,12 @@
                   event.filename.endsWith(".class.js");
                 event.isSrcWww = rootPath.startsWith("@/src/www/");
                 event.isSrc = rootPath.startsWith("@/src/");
+                event.isInTestDir = rootPath.startsWith("@/test/");
+                event.isRunnableTest =
+                  event.isInTestDir && rootPath.endsWith(".run.js");
                 isEntry =
                   event.isJsEntry || event.isCssEntry || event.isMdEntry;
+                isProcessable = isEntry || event.isJsTest;
               }
               // console.log(this.devbin.compiler.constructor.ansi.colors.style("blackBright").text(event.uncacheInjections));
 
@@ -7318,7 +7668,18 @@
                   }
                   Caso_js_o_test_js: {
                     Paso_0_descartar_si_no_es_entry_o_test: {
-                      if (!isEntry && !event.isJsTest) {
+                      if (!isProcessable) {
+                        if (event.isRunnableTest) {
+                          delete require.cache[filepath];
+                          const module = require(filepath);
+                          if (module instanceof Promise) {
+                            await module;
+                          }
+                          if (typeof module === "function") {
+                            module.call({ devbin: this.devbin, event });
+                          }
+                          return event;
+                        }
                         currentStep.push("3.3.a. is not entry nor test");
                         console.log(
                           this.devbin.compiler.constructor.ansi.colors
@@ -7538,7 +7899,7 @@
                       "--origin",
                       filepath,
                     ]);
-                    if (output) console.log(output);
+                    // if (output) console.log(output);
                   }
                 }
               }
@@ -7685,6 +8046,8 @@
             await createDirectoryIfNotExists(`${targetDir}/dev/bin/test`);
             await createDirectoryIfNotExists(`${targetDir}/dev/coverage`);
             await createDirectoryIfNotExists(`${targetDir}/dev/files`);
+            await createDirectoryIfNotExists(`${targetDir}/dev/settings`);
+            await createDirectoryIfNotExists(`${targetDir}/dev/events`);
             await createDirectoryIfNotExists(`${targetDir}/src`);
             await createDirectoryIfNotExists(`${targetDir}/src/external`);
             await createDirectoryIfNotExists(`${targetDir}/src/www`);
@@ -7770,6 +8133,8 @@
               `${__dirname}/../src/DevBinaryV6/Utils/core/controllers.js`,
               `${targetDir}/dev/controllers.js`,
             );
+            await saveFileIfNotExists(`${targetDir}/dev/listened.json`, "[]");
+            await saveFileIfNotExists(`${targetDir}/dev/unlistened.json`, "[]");
 
             await duplicateFile(
               `${__dirname}/moduler-v6.dist.js`,
@@ -7827,10 +8192,11 @@
            * @description
            */
           async triggerCallbackFromFile(
-            file,
+            fileBrute,
             injection = {},
             dontThrow = false,
           ) {
+            const file = this.devbin.moduler.normalizationOf(fileBrute);
             if (!(await this.existsFile(file))) {
               return -1;
             }
@@ -7999,7 +8365,10 @@
             const path = require("path");
             const parser = require("@babel/parser");
             const classDirectory = path.dirname(filepath);
+            const $ = this.devbin.compiler.constructor.ansi.colors;
             try {
+              // Chutar si está sincronizando por el origen:
+              if (event.isSynchronizingSplittable) return -1;
               // ------------------------------------------------------------
               // 0. Mutear el directorio por si se vienen cambios
               // ------------------------------------------------------------
@@ -8058,9 +8427,13 @@
               const classNode = classes[0];
               const className = classNode.id?.name || "AnonymousClass";
               // ------------------------------------------------------------
-              // Directorio donde vivirán los fragmentos
+              // 3.
               // ------------------------------------------------------------
-              await fs.mkdir(classDirectory, { recursive: true });
+              console.log(
+                $.style("blackBright").text(
+                  `[*] DevBinaryV6 ignored test for browser file: ${filepath}`,
+                ),
+              );
               // ------------------------------------------------------------
               // 4. Extraer miembros
               // ------------------------------------------------------------
@@ -8185,6 +8558,11 @@
                 // --------------------------------------------------------
                 if (member.content !== null) {
                   content = member.content;
+                  console.log(
+                    $.style("blackBright").text(
+                      `[*] DevBinaryV6 is updating splittable member: ${this.devbin.moduler.rootdirOf(targetFile)}`,
+                    ),
+                  );
                   await fs.writeFile(
                     targetFile,
                     this.getMemberFragmentCodeFor(content, member),
@@ -8210,7 +8588,9 @@
                 // Añadir el miembro a la clase reconstruida
                 // --------------------------------------------------------
                 if (content.trim()) {
-                  reconstructedClass += content.trimEnd() + "\n\n";
+                  reconstructedClass +=
+                    this.getClassMemberFragmentCodeFor(content.trimEnd()) +
+                    "\n\n";
                 }
               }
               reconstructedClass += "}\n";
@@ -8219,6 +8599,11 @@
               // ------------------------------------------------------------
               // @MEJOR: mejor sin el beautifier que me descuajeringa las cosas.
               // reconstructedClass = await this.devbin.compiler.constructor.beautifyJs(reconstructedClass);
+              console.log(
+                $.style("blackBright").text(
+                  `[*] DevBinaryV6 is updating splittable class: ${this.devbin.moduler.rootdirOf(filepath)}`,
+                ),
+              );
               await fs.writeFile(filepath, reconstructedClass, "utf8");
               return {
                 filepath,
@@ -8240,13 +8625,74 @@
             }
           }
           /**
+           * @name DevBinaryV6.Utils.prototype.neutralizeIndentation
+           * @type
+           * @description
+           */
+          neutralizeIndentation(input) {
+            const lines = input.split(/\n/g);
+            // omite primera línea al contar
+            const minIndentation = Math.min(
+              ...lines
+                .concat([])
+                .splice(1)
+                .map((line) =>
+                  this.countSubstringOcurrencesAtStart(line, "  "),
+                ),
+            );
+            const removableIndentation = "  ".repeat(minIndentation);
+            // omite primera línea al reemplazar
+            const output = lines
+              .map((line, index) => {
+                return !removableIndentation.length || index === 0
+                  ? line
+                  : line.replace(removableIndentation, "");
+              })
+              .join("\n");
+            console.log(input, output);
+            return output;
+          }
+          /**
            * @name DevBinaryV6.Utils.prototype.getMemberFragmentCodeFor
            * @type
            * @description
            */
           getMemberFragmentCodeFor(content, member) {
-            console.log(member);
-            return content;
+            let output = content;
+            Deindent_source: {
+              output = this.neutralizeIndentation(output);
+            }
+            return output;
+          }
+          /**
+           * @name DevBinaryV6.Utils.prototype.countSubstringOcurrencesAtStart
+           * @type
+           * @description
+           */
+          countSubstringOcurrencesAtStart(text, subtext) {
+            let param = text;
+            let counter = 0;
+            while (param.startsWith(subtext)) {
+              counter++;
+              param = param.substr(subtext.length);
+            }
+            return counter;
+          }
+          /**
+           * @name DevBinaryV6.Utils.prototype.getClassMemberFragmentCodeFor
+           * @type
+           * @description
+           */
+          getClassMemberFragmentCodeFor(content, member) {
+            let output = content;
+            Indent_source: {
+              output = this.neutralizeIndentation(output);
+              output = output
+                .split(/\n/g)
+                .map((line) => `  ${line}`)
+                .join("\n");
+            }
+            return output;
           }
           /**
            * @name DevBinaryV6.Utils.prototype.synchronizeSplittableMethod
@@ -8261,9 +8707,13 @@
             const parser = require("@babel/parser");
             const directory = path.dirname(filepath);
             const methodFilename = path.basename(filepath);
+            const $ = this.devbin.compiler.constructor.ansi.colors;
             let output = 0;
             let _error = false;
+            let classFiles = undefined;
             try {
+              // Chutar si viene de splittable anterior:
+              if (event.isSynchronizingSplittable) return 0;
               // ------------------------------------------------------------
               // 0. Mutear el directorio por si se vienen cambios
               // ------------------------------------------------------------
@@ -8396,18 +8846,40 @@
                 // ----------------------------------------------------------
                 const reconstructedSource =
                   source.slice(0, targetMethod.start) +
-                  methodSource +
+                  this.getClassMemberFragmentCodeFor(methodSource) +
                   source.slice(targetMethod.end);
                 // ----------------------------------------------------------
                 // 4.8. Escribir splittable class
                 // ----------------------------------------------------------
+                console.log(
+                  $.style("blackBright").text(
+                    `[*] DevBinaryV6 is updating splittable class: ${this.devbin.moduler.rootdirOf(splittableClassFile)}`,
+                  ),
+                );
+                // @ATENCIÓN: ESTE ES EL QUE CREA LA RECURSIVIDAD:
                 await fs.writeFile(
                   splittableClassFile,
                   reconstructedSource,
                   "utf8",
                 );
               }
-              output = true;
+              classFiles = splittableClassFiles.map((file) => {
+                return path.join(
+                  path.dirname(file),
+                  path.basename(file).replace(/^splittable\./g, ""),
+                );
+              });
+              /*
+    for(let index=0; index<classFiles.length; index++) {
+      const classFile = classFiles[index];
+      await this.touchFile(classFile, {
+        propagateUp: false,
+        processedEntries: event.processedEntries || {},
+        isSynchronizingSplittable: true,
+      });
+    }
+    //*/
+              output = classFiles;
             } catch (error) {
               console.log("Error synchronizing splittable method:", error);
               _error = error;
@@ -8418,6 +8890,22 @@
               await this.devbin.unmuteTouchListenerOf(`${directory}/**/*`);
               if (_error) throw _error;
               return output;
+            }
+          }
+          /**
+           * @name DevBinaryV6.Utils.prototype.readJsonOrReturn
+           * @type
+           * @description
+           */
+          async readJsonOrReturn(file, fallbackValue = undefined) {
+            try {
+              const content = await require("fs").promises.readFile(
+                file,
+                "utf8",
+              );
+              return JSON.parse(content);
+            } catch (error) {
+              return fallbackValue;
             }
           }
           /**
@@ -8552,22 +9040,144 @@
            * @description
            */
           async "build github pages"(args, devbin) {
-            await devbin.compiler.files.copyDirectory(
+            await this.devbin.compiler.files.copyDirectory(
               "@/dist/www",
               "@/docs/dist/www",
             );
-            await devbin.compiler.files.copyFile.try(
+            await this.devbin.compiler.files.readDirectory("@/dist");
+            await this.devbin.compiler.files.copyFile.try(
               "@/dist/www/index.html",
               "@/docs/index.html",
             );
-            await devbin.compiler.files.copyFile.try(
+            await this.devbin.compiler.files.copyFile.try(
               "@/dist/www/app.dist.js",
               "@/docs/app.dist.js",
             );
-            await devbin.compiler.files.copyFile.try(
+            await this.devbin.compiler.files.copyFile.try(
               "@/dist/www/app.dist.css",
               "@/docs/app.dist.css",
             );
+          }
+          /**
+           * @name DevBinaryV6.ShadowCommands.prototype["bundle node module"]
+           * @type
+           * @description
+           */
+          async "bundle node module"(args, devbin) {
+            const parameters = devbin.utils.formatCliArgs(
+              {
+                from: {
+                  onFormat: devbin.constructor.Formatters.asString,
+                  default: false,
+                  alias: ["-f"],
+                  description:
+                    "Specifies the name of the node_module to be bundled",
+                },
+                output: {
+                  onFormat: devbin.constructor.Formatters.asString,
+                  default: false,
+                  alias: ["-o"],
+                  description:
+                    "Specifies the name of the node_module to be bundled",
+                },
+                asWww: {
+                  onFormat: devbin.constructor.Formatters.asBoolean,
+                  default: false,
+                  alias: ["-aw"],
+                  description:
+                    "Builds entry version for browser: @/src/www/external/<lib>/<lib>.entry.js",
+                },
+                asSrc: {
+                  onFormat: devbin.constructor.Formatters.asBoolean,
+                  default: false,
+                  alias: ["-as"],
+                  description:
+                    "Builds entry version for node: @/src/external/<lib>/<lib>.entry.js",
+                },
+              },
+              args,
+            );
+
+            this.assert(
+              typeof parameters.from === "string",
+              `Parameter «--from» is required as string on «DevBinaryV6.ShadowCommands.prototype['bundle node module']»`,
+            );
+
+            Validate_parameters: {
+              const { asWww, asSrc } = parameters;
+              this.assert(
+                asWww || asSrc,
+                `Command «devbin bundle node modules» requires at least 1 option from «--asSrc,--asWww» but none of them was found`,
+              );
+            }
+
+            const fs = require("fs");
+            const esbuild = require("esbuild");
+            const info = { name: parameters.from, files: {} };
+
+            info.files.package = this.devbin.moduler.normalizationOf(
+              `@/node_modules/${info.name}/package.json`,
+            );
+            info.files.main = this.devbin.moduler.normalizationOf(
+              `@/node_modules/${info.name}/${require(info.files.package).main}`,
+            );
+
+            let bundle, source, outputs;
+
+            Bundle_entry: {
+              console.log(
+                `[*] Bundling node module «${info.name}» from: ${this.devbin.moduler.rootdirOf(info.files.main)}`,
+              );
+              bundle = await esbuild.build({
+                entryPoints: [info.files.main],
+                bundle: true,
+                platform: "browser",
+                format: "iife",
+                write: false,
+              });
+              console.log(
+                `[*] Bundled node module «${info.name}» successfully`,
+              );
+            }
+
+            Get_source_and_init_output: {
+              source = bundle.outputFiles[0].text;
+              outputs = [];
+            }
+
+            Collect_outputs: {
+              if (parameters.asWww)
+                outputs.push(
+                  `@/src/www/external/${info.name}/${info.name}.entry.js`,
+                );
+              if (parameters.asSrc)
+                outputs.push(
+                  `@/src/external/${info.name}/${info.name}.entry.js`,
+                );
+              if (parameters.asDist) {
+                if (parameters.asWww)
+                  outputs.push(
+                    `@/dist/www/external/${info.name}/${info.name}.dist.js`,
+                  );
+                if (parameters.asSrc)
+                  outputs.push(
+                    `@/dist/external/${info.name}/${info.name}.dist.js`,
+                  );
+              }
+              if (parameters.output) outputs.push(parameters.output);
+            }
+
+            Write_outputs: {
+              for (let index = 0; index < outputs.length; index++) {
+                const outputBrute = outputs[index];
+                const output = this.devbin.moduler.normalizationOf(outputBrute);
+                console.log(
+                  `[*] Exporting node module «${info.name}» to (${index + 1}/${outputs.length}): ${this.devbin.moduler.rootdirOf(output)}`,
+                );
+                await this.devbin.utils.ensureDirectoryOf(output);
+                await fs.promises.writeFile(output, source, "utf8");
+              }
+            }
           }
           /**
            * @name DevBinaryV6.ShadowCommands.prototype.loop
@@ -8598,25 +9208,36 @@
             ))
               ? [devControllersFile]
               : [];
+            Run_setup_callback_file_first: {
+              await this.devbin.utils.triggerCallbackFromFile(
+                `@/dev/e.onStartLoop.js`,
+                { devbin: this.devbin, rootdir: targetRoot },
+              );
+            }
             return this.devbin.constructor.Refrescador.run({
               watch: targetDirs,
               bulletproof: false,
-              ignore: [
+              ignoreFiles: [
                 "**/node_modules/" + "**/*",
                 "**/dist/" + "**/*",
                 "**/*.dist.*",
                 "**/logs/" + "**/*",
-                "**/test/unit/" + "**/*",
-                "dev/unlistened.json",
+                "**/test/" + "**/*.js",
+                "**/dev/listened.json",
+                "**/dev/unlistened.json",
               ],
-              port,
+              ignoreCallback: `${targetRoot}/dev/unlistened.json`,
+              listenFiles: [
+                // "**/test/"+"**/*.run.js",
+              ],
+              listenCallback: `${targetRoot}/dev/listened.json`,
+              port: port,
               debounce: 0,
               extensions: ["js", "css", "html", "md"],
               execute: ["dev/run.js touch --file @{refrescador.file}"],
               message: "El tiempo de refrescar ha llegado",
               messageFile: "TODO.md",
               payload: 'console.log("📟 Evento de refrescar activado");',
-              ignoreCallback: `${targetRoot}/dev/unlistened.json`,
               // executeCallback: ["file/from/cwd/target.js",],
               // payloadFile: 'browser-payload.js',
               serve: this.devbin.compiler.fullpathOf("@/dist/www"),
@@ -8815,8 +9436,12 @@
             );
             const ansiTool = this.devbin.compiler.constructor.ansi.colors;
             console.log(
-              `[*] DevBinaryV6 found ${testFiles.length} tests` +
-                (title ? ` for «${title}»` : ""),
+              ansiTool
+                .style("blackBright")
+                .text(
+                  `[*] DevBinaryV6 found ${testFiles.length} tests` +
+                    (title ? ` for «${title}»` : ""),
+                ),
             );
             const errors = [];
             const crono = this.devbin.constructor.Cronometer();
@@ -8956,7 +9581,7 @@
         }
         Load_command_callback_from_file_or_shadowCommands: {
           let isReadable = undefined;
-          First_file: {
+          First_try_with_file: {
             try {
               // Check if its readable:
               await require("fs").promises.readFile(commandSubpath, "utf8");
@@ -8965,7 +9590,7 @@
               isReadable = false;
             }
           }
-          Second_hook: {
+          Second_try_with_hook: {
             if (isReadable) {
               commandType = "file";
               commandCallback = require(commandSubpath);
@@ -8982,7 +9607,11 @@
         }
         Execute_command_callback: {
           try {
-            console.log(`[*] DevBinaryV6 executing command: ${commandName}`);
+            console.log(
+              this.compiler.constructor.ansi.colors
+                .style("blackBright")
+                .text(`[*] DevBinaryV6 executing command: ${commandName}`),
+            );
             return await commandCallback.call(
               this.shadowCommands,
               commandParameters,
@@ -9021,7 +9650,7 @@
         const dirpath = require("path").dirname(
           this.compiler.fullpathOf(resource),
         );
-        const clone = new this.constructor(dirpath, devbin);
+        const clone = new this.constructor(dirpath, devbin || this);
         return clone;
       }
       /**
@@ -9034,21 +9663,20 @@
           "@/dev/unlistened.json",
         );
         try {
-          let unlistenedList = !(await this.utils.existsFile(unlistenedFile))
-            ? []
-            : JSON.parse(
-                await require("fs").promises.readFile(unlistenedFile, "utf8"),
-              );
+          let unlistenedList = await this.utils.readJsonOrReturn(
+            unlistenedFile,
+            [],
+          );
           if (!unlistenedList.includes(filepattern)) {
             unlistenedList.push(filepattern);
           }
-          await require("fs").promises.writeFile(
+          return await require("fs").promises.writeFile(
             unlistenedFile,
             JSON.stringify(unlistenedList, null, 2),
             "utf8",
           );
         } catch (error) {
-          if (error.code === "ENOENT") return -1;
+          //if(error.code === "ENOENT") return -1;
           console.log(
             `[!] Could not mute filepattern «${filepattern}» due to following error:`,
             error,
@@ -9065,27 +9693,34 @@
           "@/dev/unlistened.json",
         );
         try {
-          let unlistenedList = !(await this.utils.existsFile(unlistenedFile))
-            ? []
-            : JSON.parse(
-                await require("fs").promises.readFile(unlistenedFile, "utf8"),
-              );
+          let unlistenedList = await this.utils.readJsonOrReturn(
+            unlistenedFile,
+            [],
+          );
           const pos = unlistenedList.indexOf(filepattern);
           if (pos !== -1) {
             unlistenedList.splice(pos, 1);
           }
-          await require("fs").promises.writeFile(
+          return await require("fs").promises.writeFile(
             unlistenedFile,
             JSON.stringify(unlistenedList, null, 2),
             "utf8",
           );
         } catch (error) {
-          if (error.code === "ENOENT") return -1;
+          //if(error.code === "ENOENT") return -1;
           console.log(
             `[!] Could not unmute filepattern «${filepattern}» due to following error:`,
             error,
           );
         }
+      }
+      /**
+       * @name DevBinaryV6.prototype.files
+       * @type
+       * @description
+       */
+      get files() {
+        return this.compiler.files;
       }
       /**
        * @name DevBinaryV6.static.globalInstance
@@ -9119,7 +9754,8 @@
          * @type
          * @description
          */
-        this.utils = parent ? parent.utils : new this.constructor.Utils(this);
+        this.utils = new this.constructor.Utils(this);
+        // this.utils = parent ? parent.utils : new this.constructor.Utils(this);
         /**
          * @name DevBinaryV6.prototype.settings
          * @type
@@ -9131,25 +9767,22 @@
          * @type
          * @description
          */
-        this.shadowCommands = parent
-          ? parent.shadowCommands
-          : new this.constructor.ShadowCommands(this);
+        this.shadowCommands = new this.constructor.ShadowCommands(this);
+        // this.shadowCommands = parent ? parent.shadowCommands : new this.constructor.ShadowCommands(this);
         /**
          * @name DevBinaryV6.prototype.shadowFileEvents
          * @type
          * @description
          */
-        this.shadowFileEvents = parent
-          ? parent.shadowFileEvents
-          : new this.constructor.ShadowFileEvents(this);
+        this.shadowFileEvents = new this.constructor.ShadowFileEvents(this);
+        // this.shadowFileEvents = parent ? parent.shadowFileEvents : new this.constructor.ShadowFileEvents(this);
         /**
          * @name DevBinaryV6.prototype.tester
          * @type
          * @description
          */
-        this.tester = parent
-          ? parent.tester
-          : new this.constructor.Tester(this);
+        this.tester = new this.constructor.Tester(this);
+        // this.tester = parent ? parent.tester : new this.constructor.Tester(this);
       }
     };
   }.call(),

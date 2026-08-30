@@ -68,28 +68,30 @@
              */
             trace = Object.assign(
               (method) => {
-                console.log(`[·] [${this.id}] [${this.level}] [=] ${method}`);
+                console.log(
+                  `[·] ${this.id} at level ${this.level} [·] ${method}`,
+                );
               },
               {
                 in: (method) => {
                   this.level++;
                   if (this.isTracing)
                     console.log(
-                      `[·] [${this.id}] [${this.level}] [+] ${method}`,
+                      `[·] ${this.id} at level ${this.level}] [+] ${method}`,
                     );
                 },
                 out: (method) => {
                   this.level--;
                   if (this.isTracing)
                     console.log(
-                      `[·] [${this.id}] [${this.level}] [-] ${method}`,
+                      `[·] ${this.id} at level ${this.level}] [-] ${method}`,
                     );
                 },
                 error: (method, error, levelDiff = 0) => {
                   this.level += levelDiff;
                   if (this.isTracing)
                     console.log(
-                      `[!] [${this.id}] [${this.level}] [!] ${method}`,
+                      `[!] ${this.id} at level ${this.level}] [!] ${method}`,
                       error,
                     );
                 },
@@ -769,25 +771,72 @@
               this.moduler = moduler;
             }
 
-            /**
-             * @name ModulerV6.Toolkit.prototype.normalizeParams
-             * @type
-             * @description
-             */
-            normalizeParams(params = {}) {
-              return params;
+            normalizeParameters(parameters, normalization = null) {
+              /**
+               * @name ModulerV6.Toolkit.prototype.normalizeParameters
+               * @type
+               * @description
+               */
+              return this.normalizeObject(parameters, normalization);
             }
-            /**
-             * @name ModulerV6.Toolkit.prototype.normalizeOptions
-             * @type
-             * @description
-             */
-            normalizeOptions(options = {}) {
-              const normalization = Object.assign({}, options);
-              if (typeof normalization.tracer === "undefined") {
-                normalization.tracer = this.moduler.tracer;
+            normalizeOptions(options, normalization = null) {
+              /**
+               * @name ModulerV6.Toolkit.prototype.normalizeOptions
+               * @type
+               * @description
+               */
+              return this.normalizeObject(options, normalization);
+            }
+            normalizeObject(parameters = {}, normalization = null) {
+              /**
+               * @name ModulerV6.Toolkit.prototype.normalizeObject
+               * @type
+               * @description
+               */
+              let output = { ...parameters };
+              if (normalization) {
+                Apply_default: for (const property in normalization) {
+                  const configuration = normalization[property];
+                  if ("default" in configuration) {
+                    output[property] =
+                      property in output
+                        ? output[property]
+                        : typeof configuration.default === "function"
+                          ? configuration.default(configuration)
+                          : configuration.default;
+                  }
+                }
+                Validate: for (const property in normalization) {
+                  const configuration = normalization[property];
+                  if ("validate" in configuration) {
+                    const result = configuration.validate(
+                      output[property],
+                      this.moduler.constructor.assert,
+                      output,
+                      normalization,
+                    );
+                    if (typeof result === "undefined") {
+                      // @OK
+                    } else if (result !== true) {
+                      throw new Error(
+                        result ||
+                          `Validation of property «${property}» should return «true» but «${typeof result}» was found instead on «ModulerV6.Toolkit.normalizeObject»`,
+                      );
+                    }
+                  }
+                }
+                Format: for (const property in normalization) {
+                  const configuration = normalization[property];
+                  if ("format" in configuration) {
+                    output[property] = configuration.format(
+                      output[property],
+                      output,
+                      normalization,
+                    );
+                  }
+                }
               }
-              return normalization;
+              return output;
             }
           };
           /**
@@ -1133,6 +1182,13 @@
                 return { syntax: "Inject Module", ...token };
               },
             ],
+            InjectModules: [
+              "$" + "compiler.inject.modules(",
+              this.Parser.symbols.PARENTHESYS_BALANCE,
+              function (token) {
+                return { syntax: "Inject Modules", ...token };
+              },
+            ],
             ImportJs: [
               "$" + "moduler.import(",
               this.Parser.symbols.PARENTHESYS_BALANCE,
@@ -1349,6 +1405,7 @@
               this.nativeGrammars.InjectSource,
               this.nativeGrammars.InjectString,
               this.nativeGrammars.InjectTemplate,
+              this.nativeGrammars.InjectModules,
               this.nativeGrammars.InjectModule,
               this.nativeGrammars.ImportJs,
               this.nativeGrammars.ExportJs,
@@ -2215,9 +2272,6 @@
            */
           setBasedir(basedir) {
             this.basedir = this.normalizationOf(basedir);
-            if (this.compiler) {
-              this.compiler.basedir = this.basedir;
-            }
           }
           /**
            * @name ModulerV6.prototype.setRootdir
@@ -2226,9 +2280,6 @@
            */
           setRootdir(rootdir) {
             this.rootdir = this.normalizationOf(rootdir);
-            if (this.compiler) {
-              this.compiler.rootdir = this.rootdir;
-            }
           }
           /**
            * @name ModulerV6.prototype.normalizationOf
@@ -2240,7 +2291,12 @@
               typeof subpath === "string",
               `Parameter «subpath» must be string on «ModulerV6.prototype.normalizationOf»`,
             );
-            return this._joinPaths([subpath], "normalizationOf");
+            return this._joinPaths(
+              subpath.startsWith("./") && this.basedir
+                ? [this.basedir, subpath]
+                : [subpath],
+              "normalizationOf",
+            );
           }
           /**
            * @name ModulerV6.prototype.basedirOf
@@ -2276,6 +2332,70 @@
           cloneForFile(filepath) {
             const dirpath = this._joinPaths([filepath, ".."]);
             return new ModulerV6(dirpath, this);
+          }
+          /**
+           * @name ModulerV6.prototype.reserveFile
+           * @type
+           * @description
+           */
+          reserveFile(file) {
+            const filepath = this.normalizationOf(file);
+            const rootpath = this.rootdirOf(filepath);
+            if (filepath in this.modules) {
+              throw new Error(
+                `Cannot reserve file module because it is already solved on file «${rootpath}» on method «ModulerV6.prototype.reserveFile»`,
+              );
+            }
+            const resolvable = this.constructor.createResolvable();
+            Export_promise_of_reserve_as_module: {
+              this.modules[filepath] = resolvable.promise;
+              this.reserves[filepath] = resolvable;
+            }
+            const _module = { exports: {} };
+            return {
+              module: _module,
+              exports: _module.exports,
+              file: filepath,
+            };
+          }
+          /**
+           * @name ModulerV6.prototype.releaseFile
+           * @type
+           * @description
+           */
+          releaseFile(file, reserve, returnment) {
+            const filepath = this.normalizationOf(file);
+            const rootpath = this.rootdirOf(filepath);
+            this.assert(
+              filepath in this.reserves,
+              `File «${filepath}» is called to be released by «ModulerV6.prototype.releaseFile» but it was not reserved before. Methods «reserveFile,releaseFile» are not human-usage oriented, in case of «${rootpath}». Stop playing with out-of-domain methods, please.`,
+            );
+            this.assert(
+              reserve.file === filepath,
+              `File «${filepath}» is called to be released by «ModulerV6.prototype.releaseFile» but it does not match with reserved file «${reserve.file}». Stop playing with not human-usage oriented methods, I told you!`,
+            );
+            if (typeof returnment !== "undefined") {
+              reserve.module = returnment;
+            }
+            const state = this.reserves[filepath];
+            state.resolve(reserve.module.exports);
+            delete this.reserves[filepath];
+            return state.promise;
+          }
+          /**
+           * @name ModulerV6.prototype.lockFiles
+           * @type
+           * @description
+           */
+          lockFiles(list) {
+            return {
+              until: function (promise) {
+                return promise.then((output) => {
+                  // @AQUI hay que resolver los módulos con el crédito de lockFiles
+                  console.log(`[*] Unlocked files: ${list.join(", ")}`, output);
+                });
+              },
+            };
           }
 
           /**
@@ -2490,13 +2610,19 @@
               typeof basedir === "string",
               `Parameter «basedir» must be string on «Moduler.constructor»`,
             );
-            this.basedir = basedir;
+            this.basedir = this._joinPaths([basedir]);
             /**
              * @name ModulerV6.prototype.rootdir
              * @type
              * @description
              */
-            this.rootdir = cloneOf ? cloneOf.rootdir : basedir;
+            this.rootdir = cloneOf ? cloneOf.rootdir : this.basedir;
+            /**
+             * @name ModulerV6.prototype.reserves
+             * @type
+             * @description
+             */
+            this.reserves = cloneOf ? cloneOf.reserves : {};
             /**
              * @name ModulerV6.prototype.modules
              * @type
@@ -2556,7 +2682,8 @@
              */
             this.settings = new ModulerV6.Settings(this);
             if (cloneOf) {
-              this.settings.data = cloneOf.settings.data;
+              // @CUIDADO: HE PUESTO UN ? PARA PASAR UN FALLO
+              this.settings.data = cloneOf.settings?.data;
             }
             /**
              * @name ModulerV6.prototype.runtime
@@ -2594,6 +2721,38 @@
             await this.globalInstance.runtime.load();
             this.onLoaded.resolve();
           })();
+          /**
+           * @name ModulerV6.static.1
+           * @type
+           * @description
+           */
+          static {
+            Promise_polyfills: {
+              if (typeof Promise.fromObject !== "function") {
+                Promise.fromObject = async function (map) {
+                  const output = {};
+                  const keys = Object.keys(map);
+                  const list = await Promise.all(Object.values(map));
+                  for (let index = 0; index < keys.length; index++) {
+                    const key = keys[index];
+                    output[key] = list[index];
+                  }
+                  return output;
+                };
+              }
+              if (typeof Promise.fromCollection !== "function") {
+                Promise.fromCollection = async function (collection) {
+                  ModulerV6.assert(
+                    typeof collection === "object",
+                    `Method «Promise.fromCollection» only accepts object or array as first argument but «${typeof collection}» was found instead`,
+                  );
+                  return Array.isArray(collection)
+                    ? Promise.all(collection)
+                    : Promise.fromObject(collection);
+                };
+              }
+            }
+          }
         };
       }.call(),
     );
@@ -3245,6 +3404,16 @@
             },
           );
           /**
+           * @name CompilerV6.Files.prototype.readDirectory
+           * @type
+           * @description
+           */
+          readDirectory(dir) {
+            return require("fs").promises.readdir(
+              this.compiler.moduler.normalizationOf(dir),
+            );
+          }
+          /**
            * @name CompilerV6.Files.prototype.readFile
            * @type
            * @description
@@ -3270,6 +3439,7 @@
               await this.ensureDirectory(fullDst);
               return await require("fs").promises.cp(fullSrc, fullDst, {
                 recursive: true,
+                force: true,
               });
             },
             {
@@ -3954,10 +4124,13 @@
           this._tracer = parent._tracer;
         }
         this._trace("constructor", arguments);
-        const basedir = parent
-          ? parent.fullpathOf(basedirInput)
-          : this.fullpathOf(basedirInput);
-        // const basedir = this.normalizationOf(basedirInput);
+        const basedir = parent ? parent.fullpathOf(basedirInput) : basedirInput;
+        /**
+         * @name CompilerV6.prototype.moduler
+         * @type
+         * @description
+         */
+        this.moduler = new ModulerV6(basedir, parent);
         /**
          * @name CompilerV6.prototype.isBrowser
          * @type
@@ -3965,30 +4138,11 @@
          */
         this.isBrowser = typeof window !== "undefined";
         /**
-         * @name CompilerV6.prototype.basedir
-         * @type
-         * @description
-         */
-        this.basedir = basedir;
-        /**
          * @name CompilerV6.prototype.previousdir
          * @type
          * @description
          */
-        this.previousdir = parent ? parent.basedir : basedir;
-        /**
-         * @name CompilerV6.prototype.rootdir
-         * @type
-         * @description
-         */
-        this.rootdir = parent ? parent.rootdir : basedir;
-        /**
-         * @name CompilerV6.prototype.moduler
-         * @type
-         * @description
-         */
-        this.moduler = new ModulerV6(basedir);
-        this.moduler.compiler = this;
+        this.previousdir = parent ? parent.basedir : null;
         /**
          * @name DevBinaryV6.prototype.files
          * @type
@@ -4059,7 +4213,7 @@
        * @type
        * @description
        */
-      async assertThrows(callback, message, checker = () => true) {
+      async assertThrows(callback, message, errorChecker = () => true) {
         const localError = new Error("Should have thrown: " + message);
         try {
           await callback();
@@ -4070,7 +4224,7 @@
               `Should have thrown: ${err.name}: ${err.message} | ${err.stack}`,
             );
           }
-          if (!checker(err)) {
+          if (!errorChecker(err)) {
             throw new this.constructor.AssertionError(
               `Should have thrown but not specific error: ${err.name}: ${err.message} | ${err.stack}`,
             );
@@ -4282,6 +4436,7 @@
           "Inject String": this._compileAsInjectString,
           "Inject Template": this._compileAsInjectTemplate,
           "Inject Module": this._compileAsInjectModule,
+          "Inject Modules": this._compileAsInjectModules,
           "Multiline Comment Code Injection":
             this._compileAsMultilineCommentCodeInjection,
           "Multiline Comment Value Injection":
@@ -4486,6 +4641,7 @@
        * @description
        */
       _fetchCompilable(compilationFile, compilationProcess) {
+        this._trace("_fetchCompilable", arguments);
         this.assert(
           typeof compilationFile === "object",
           "Parameter «compilationFile» must be object on «CompilerV6.prototype._fetchCompilable»",
@@ -4589,6 +4745,20 @@
         //     compilationFile.parentCompilation.compilation[extension] = content + compilationFile.parentCompilation.compilation[extension];
         // }
         // compilationFile.compilation[extension] = content + compilationFile.compilation[extension];
+      }
+      /**
+       * @name CompilerV6.prototype._wrapAsModuleInjection
+       * @type
+       * @description
+       */
+      _wrapAsModuleInjection(source, rootpath) {
+        return [
+          `(function({ module, exports }) {`,
+          `  return $moduler.releaseFile("${rootpath}", arguments[0], (function() {`,
+          `    ${source}`,
+          `  }).call(this));`,
+          `}).call(this, $moduler.reserveFile("${rootpath}"))`,
+        ].join("\n");
       }
 
       /**
@@ -4717,7 +4887,8 @@
           Extract_target_path: {
             currentStep.push("3. extract target path");
             this.assert(
-              token.referenceOf.fullpath === this.fullpathOf(parameters[0]),
+              token.referenceOf.fullpath ===
+                this.normalizationOf(parameters[0]),
               "DesignError: The first parameter and the token.referenceOf.fullpath should be the same on «CompilerV6.prototype._compileAsInjectSource»",
             );
             targetPath = token.referenceOf.fullpath;
@@ -5003,41 +5174,115 @@
         compilationProcess,
         { token, tokenIndex },
       ) {
+        const parameters = this._getDataForTokenCompilation({ token });
+        const rootpath = this.moduler.rootdirOf(parameters[0]);
         return this._compileAsInjectSource(
           compilationFile,
           compilationProcess,
           { token, tokenIndex },
           {
-            modifySource: function (source) {
-              return [
-                `(() => {`,
-                `let __firstHolder = {};`,
-                `let __originalHolder = __firstHolder;`,
-                `const module = {`,
-                `  get exports() {`,
-                `    return __originalHolder;`,
-                `  },`,
-                `  set exports(value) {`,
-                `    __originalHolder = value;`,
-                `  }`,
-                `};`,
-                `const exports = module.exports;`,
-                `const __result = (() => {`,
-                source,
-                `})();`,
-                `let __output = undefined;`,
-                `const __returnsUndefined = () => typeof __result === "undefined";`,
-                `const __isSameEmptyObject = () => (module.exports === __firstHolder) && ((Object.keys(__firstHolder).length === 0));`,
-                `if(!__returnsUndefined()) {`,
-                `  __output = module.exports = __result;`,
-                `} else if(!__isSameEmptyObject()) {`,
-                `  __output = module.exports;`,
-                `}`,
-                `return __output;`,
-                `})()`,
-              ].join("\n");
+            modifySource: (source) => {
+              return this._wrapAsModuleInjection(source, rootpath);
             },
           },
+        );
+      }
+      /**
+       * @name CompilerV6.prototype._compileAsInjectModules
+       * @type
+       * @description
+       */
+      async _compileAsInjectModules(
+        compilationFile,
+        compilationProcess,
+        { token, tokenIndex },
+      ) {
+        // @TODO: CHATGPT, estyo en esta funcionalidad.
+        let out = "";
+        let subcompiler = undefined;
+        let subcode1 = "";
+        let subcode2 = "";
+        const parameters = this._getDataForTokenCompilation({ token });
+        const collection = parameters[0];
+        const isArray = Array.isArray(collection);
+        const isObject = !isArray && typeof collection === "object";
+        this.moduler.assert(
+          isArray || isObject,
+          `Syntax «$compiler.inject.modules» only accepts array or object as first parameter but «${typeof collection}» was found instead`,
+        );
+        Compile_modules: {
+          subcode1 = "";
+          subcompiler = this._cloneForFile(compilationFile.resource);
+          const targetPaths = isArray
+            ? [].concat(collection)
+            : Object.values(collection);
+          const targetKeys = Object.keys(collection);
+          const compilationPromises = [];
+          const compilationPairs = [];
+          Compile: for (
+            let indexTargets = 0;
+            indexTargets < targetPaths.length;
+            indexTargets++
+          ) {
+            const file = targetPaths[indexTargets];
+            const targetCompilation = subcompiler._compileRecursively(
+              {
+                resource: file,
+                isRoot: false,
+                parentCompilation: compilationFile,
+              },
+              compilationProcess,
+            );
+            compilationPromises.push(targetCompilation);
+            compilationPairs.push({
+              index: indexTargets,
+              file: file,
+              rootpath: subcompiler.rootdirOf(file),
+            });
+          }
+          const compilations = await Promise.all(compilationPromises);
+          Unify: for (
+            let indexCompilations = 0;
+            indexCompilations < compilations.length;
+            indexCompilations++
+          ) {
+            const targetCompilation = compilations[indexCompilations];
+            const targetInfo = compilationPairs[indexCompilations];
+            if (isArray) {
+              subcode1 += this._wrapAsModuleInjection(
+                targetCompilation.js,
+                rootpath,
+              );
+              subcode1 += ",\n";
+            } else if (isObject) {
+              subcode1 += targetKeys[targetInfo.index];
+              subcode1 += ": ";
+              subcode1 += this._wrapAsModuleInjection(
+                targetCompilation.js,
+                targetInfo.rootpath,
+              );
+              subcode1 += ",\n";
+            }
+          }
+          if (isArray) {
+            subcode1 = `[\n${subcode1}]`;
+          } else {
+            subcode1 = `{\n${subcode1} }`;
+          }
+        }
+        Generate_output: {
+          out += `$moduler.lockFiles([\n`;
+          out += Object.values(collection)
+            .map((key) => JSON.stringify(subcompiler.moduler.rootdirOf(key)))
+            .join(",\n  ");
+          out += `\n]).until(Promise.fromCollection(${subcode1}))`;
+        }
+        compilationFile.compilation.js = this._replaceTextRange(
+          compilationFile.compilation.js,
+          token.location[0],
+          token.location[1],
+          out,
+          token,
         );
       }
       /**
@@ -5803,7 +6048,7 @@
             const tokenId = tokens[indexToken];
             const token = file[tokenId];
             const bestId = (() => {
-              if (!token.referenceOf?.rootpath) {
+              if (!token.referenceOf.rootpath) {
                 return token.inner;
               } else {
                 return token.referenceOf.rootpath;
@@ -5919,7 +6164,7 @@
        * @type
        * @description
        */
-      _extendToken(token, fields = [], submoduler = false) {
+      _extendToken(token, fields = [], submoduler = this) {
         this._trace("_extendToken", arguments);
         return Object.assign(
           token,
@@ -5928,8 +6173,9 @@
             : {
                 referenceOf: (() => {
                   const entry = this._hydrateParameters(token.inner)[0];
-                  const fullpath = this.fullpathOf(entry);
-                  const rootpath = this.rootdirOf(fullpath);
+                  const fullpath = submoduler.normalizationOf(entry);
+                  // const fullpath = submoduler.fullpathOf(entry);
+                  const rootpath = submoduler.rootdirOf(fullpath);
                   return { type: "file", entry, fullpath, rootpath };
                 })(),
               },
@@ -5940,7 +6186,7 @@
        * @type
        * @description
        */
-      async _getDataForTokenCompilation(input, options = {}) {
+      _getDataForTokenCompilation(input, options = {}) {
         this._traceIn("_getDataForTokenCompilation", arguments);
         this.assert(
           typeof input === "object",
@@ -6141,7 +6387,9 @@
         if (!tokens.length) {
           return templateSource;
         }
-        console.log(tokens, argsBrute.compilationFile);
+        console.log(
+          `[*] Rendering template of ${tokens.length} tokens from: ${argsBrute.compilationFile.resource}`,
+        );
         const tokenType1 = ["/", "*", "%"].join("");
         const tokenType2 = ["/", "*", "%", "="].join("");
         const args = Object.assign({}, argsBrute);
@@ -6265,11 +6513,7 @@
        */
       rootdirOf(fullpath) {
         this._trace("rootdirOf", arguments);
-        // return this.moduler.rootdirOf(fullpath);
-        const normalization = this.normalizationOf(fullpath);
-        return normalization.startsWith(this.rootdir + "/")
-          ? normalization.replace(this.rootdir + "/", "@/")
-          : normalization;
+        return this.moduler.rootdirOf(fullpath);
       }
       /**
        * @name CompilerV6.prototype.fullpathOf
@@ -6327,6 +6571,39 @@
           this._logger = new this.constructor.Logger({ file: false }, this);
         }
         this._logger.log(...args);
+      }
+
+      /**
+       * @name CompilerV6.get.rootdir
+       * @type
+       * @description
+       */
+      get rootdir() {
+        return this.moduler.rootdir;
+      }
+      /**
+       * @name CompilerV6.get.basedir
+       * @type
+       * @description
+       */
+      get basedir() {
+        return this.moduler.basedir;
+      }
+      /**
+       * @name CompilerV6.set.rootdir
+       * @type
+       * @description
+       */
+      set rootdir(value) {
+        this.moduler.rootdir = value;
+      }
+      /**
+       * @name CompilerV6.set.basedir
+       * @type
+       * @description
+       */
+      set basedir(value) {
+        this.moduler.basedir = value;
       }
     };
     return CompilerV6;

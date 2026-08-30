@@ -389,10 +389,12 @@ var require_from_glob_watcher_to_socketio_emit = __commonJS({
       extensions: ["html", "css", "js", "json"],
       watch: ["src/**/*.html", "src/**/*.js"],
       // globs
-      ignore: ["node_modules/**", ".git/**"],
+      ignoreFiles: ["node_modules/**", ".git/**"],
       // ignore patterns
       ignoreCallback: "",
       // js file exporting ignore callback
+      listenFiles: [],
+      listenCallback: "",
       debounce: 50,
       // ms para agrupar eventos
       message: "",
@@ -419,7 +421,9 @@ var require_from_glob_watcher_to_socketio_emit = __commonJS({
       const colorSuccess = (text) => console.log(colors.style("green,bold").text(text));
       const colorError = (text) => console.log(colors.style("red,bold").text(text));
       const colorWarn = (text) => console.log(colors.style("yellow,bold").text(text));
+      const colorPurple = (text) => console.log(colors.style("magenta").text(text));
       const colorInform = (text) => console.log(colors.style("cyan,bold").text(text));
+      const colorDark = (text) => console.log(colors.style("blackBright").text(text));
       const config = Object.assign({}, defaultConfig, userConfig);
       const listSeparator = "\n       - ";
       const staticDir = path.resolve(config.serve || process.cwd());
@@ -430,8 +434,10 @@ var require_from_glob_watcher_to_socketio_emit = __commonJS({
         color1(`   - watch:           ${colors.endToken}${listSeparator}${!config.watch.length ? "(none)" : config.watch.map((f) => path.resolve(f)).join(listSeparator)}`);
         color1(`   - debounce:        ${colors.endToken}${listSeparator}${config.debounce}`);
         color1(`   - extensions:      ${colors.endToken}${listSeparator}${!config.extensions.length ? "(none)" : config.extensions.join(listSeparator)}`);
-        color1(`   - ignore:          ${colors.endToken}${listSeparator}${!config.ignore.length ? "(none)" : config.ignore.map((f) => path.resolve(f)).join(listSeparator)}`);
+        color1(`   - ignoreFiles:     ${colors.endToken}${listSeparator}${!config.ignoreFiles.length ? "(none)" : config.ignoreFiles.join(listSeparator)}`);
         color1(`   - ignoreCallback:  ${colors.endToken}${listSeparator}${!config.ignoreCallback.length ? "(none)" : config.ignoreCallback}`);
+        color1(`   - listenFiles:     ${colors.endToken}${listSeparator}${!config.listenFiles.length ? "(none)" : config.listenFiles.join(listSeparator)}`);
+        color1(`   - listenCallback:  ${colors.endToken}${listSeparator}${!config.listenCallback.length ? "(none)" : config.listenCallback}`);
         color1(`   - urlPrefix:       ${colors.endToken}${listSeparator}${!config.urlPrefix ? "(none)" : config.urlPrefix}`);
         color1(`   - serve:           ${colors.endToken}${listSeparator}${staticDir}`);
         color1(`   - staticPath:      ${colors.endToken}${listSeparator}${!config.staticPath.length ? "(none)" : config.staticPath}`);
@@ -521,8 +527,9 @@ var require_from_glob_watcher_to_socketio_emit = __commonJS({
       });
       let timeout = null;
       let running = false;
-      const triggerReload = function(path2) {
-        console.log(`[refrescador] [triggered] ${path2}`);
+      const triggerReload = function(filepath, event) {
+        console.log(`[refrescador] [triggered] ${filepath}`);
+        const rootedPath = filepath.startsWith(config.basedir + "/") ? filepath.replace(config.basedir + "/", "@/") : filepath;
         return new Promise((resolve, reject) => {
           if (running) return;
           if (timeout) clearTimeout(timeout);
@@ -531,8 +538,10 @@ var require_from_glob_watcher_to_socketio_emit = __commonJS({
             const timings = [];
             try {
               console.clear();
+              const operationMessage = event.operation === "add" ? "\u{1F300}ADD=" + rootedPath : event.operation === "edit" ? "\u{1F300}CHANGE=" + rootedPath : event.operation === "delete" ? "\u{1F300}UNLINK=" + rootedPath : null;
+              colorInform(colors.box(operationMessage));
               printUrls();
-              colorWarn(`\u267B\uFE0F  Changes detected on: \u{1F4C4}=${shortenPath(path2)}`);
+              colorWarn(`\u267B\uFE0F  Changes detected on: \u{1F4C4}=${shortenPath(filepath)}`);
               if (config.executeCallback.length) {
                 Iterating_execution_callbacks:
                   for (let index = 0; index < config.executeCallback.length; index++) {
@@ -571,7 +580,7 @@ var require_from_glob_watcher_to_socketio_emit = __commonJS({
               if (config.execute.length) {
                 Iterating_executions:
                   for (let index = 0; index < config.execute.length; index++) {
-                    const command = config.execute[index].replace("@{refrescador.file}", JSON.stringify(path2));
+                    const command = config.execute[index].replace("@{refrescador.file}", JSON.stringify(filepath));
                     colorWarn(`\u{1F7E8} \u26A1\uFE0F Started [\u{1F4BB}=${command}] [${index + 1}/${config.execute.length}]`);
                     const init = /* @__PURE__ */ new Date();
                     try {
@@ -613,17 +622,17 @@ var require_from_glob_watcher_to_socketio_emit = __commonJS({
             } finally {
               running = false;
               const diffEvent = /* @__PURE__ */ new Date() - initEvent;
-              colorInform(" \u{1F4CA} Timings:");
+              color1(" \u{1F4CA} Timings:");
               if (timings.length) {
                 let atomicSummatory = 0;
                 for (let index = 0; index < timings.length; index++) {
                   const timing = timings[index];
-                  colorInform(`  \u231B\uFE0F \u2795 ${timing.diff / 1e3}s [\u{1F4BB}=${timing.command.replace(/\n/g, " ")}]`);
+                  color1(`  \u231B\uFE0F \u2795 ${timing.diff / 1e3}s [\u{1F4BB}=${timing.command.replace(/\n/g, " ")}]`);
                   atomicSummatory += timing.diff;
                 }
-                colorInform(`  \u231B\uFE0F \u{1F7F0} ${atomicSummatory / 1e3}s in summatory`);
+                color1(`  \u231B\uFE0F \u{1F7F0} ${atomicSummatory / 1e3}s in summatory`);
               }
-              colorInform(`  \u{1F30F} \u23F3 ${(diffEvent - config.debounce) / 1e3}s | ${diffEvent / 1e3}s with debounce of ${config.debounce} milliseconds for the whole event`);
+              color1(`  \u{1F30F} \u23F3 ${(diffEvent - config.debounce) / 1e3}s | ${diffEvent / 1e3}s with debounce of ${config.debounce} milliseconds for the whole event`);
               if (config.message) console.log(`\u{1F7E6} ${config.message}`);
               if (config.messageFile) {
                 const text = await fs.promises.readFile(config.messageFile, "utf8");
@@ -633,30 +642,60 @@ var require_from_glob_watcher_to_socketio_emit = __commonJS({
           }, config.debounce);
         });
       };
-      const matchesIgnoreCallback = function(filepath) {
-        if (!config.ignoreCallback) {
-          return false;
+      const matchesListenCallback = function(filepath) {
+        if (!config.listenCallback) return false;
+        const rootedPath = filepath.startsWith(config.basedir + "/") ? filepath.replace(config.basedir + "/", "@/") : filepath;
+        try {
+          delete require.cache[config.listenCallback];
+          const listenedEntity = require(config.listenCallback);
+          if (Array.isArray(listenedEntity)) {
+            return require("picomatch")(listenedEntity)(filepath);
+          } else if (typeof listenedEntity === "function") {
+            return listenedEntity(filepath);
+          } else {
+            throw new Error(`Option \xABlistenCallback\xBB requires file \xAB${filepath}\xBB to export array or function on \xAB${config.listenCallback}\xBB but \xAB${typeof listenedEntity}\xBB was found instead`);
+          }
+        } catch (error) {
+          console.error(`Error loading \xABconfig.listenCallback\xBB file \xAB${rootedPath}\xBB:`, error);
         }
+      };
+      const matchesListenFiles = function(filepath) {
+        for (let index = 0; index < config.listenFiles.length; index++) {
+          const isMatch = require("picomatch")(config.listenFiles[index])(filepath);
+          if (isMatch) return true;
+        }
+        return false;
+      };
+      const shouldTrigger = function(filepath) {
+        if (matchesListenFiles(filepath)) return true;
+        if (matchesListenCallback(filepath)) return true;
+        if (matchesIgnoreFiles(filepath)) return false;
+        if (matchesIgnoreCallback(filepath)) return false;
+        if (!matchesExtension(filepath)) return false;
+        return true;
+      };
+      const matchesIgnoreCallback = function(filepath) {
+        if (!config.ignoreCallback) return false;
+        const rootedPath = filepath.startsWith(config.basedir + "/") ? filepath.replace(config.basedir + "/", "@/") : filepath;
         try {
           delete require.cache[config.ignoreCallback];
           const ignoredEntity = require(config.ignoreCallback);
           if (Array.isArray(ignoredEntity)) {
-            return require("picomatch")(ignoredEntity)(filepath);
+            const result = require("picomatch")(ignoredEntity)(filepath);
+            if (!result) colorDark(`[*] Ignored filewatcher event by selector glob expression: ${rootedPath}`);
+            return result;
           } else if (typeof ignoredEntity === "function") {
             return ignoredEntity(filepath);
           } else {
-            throw new Error(`Ignored pattern must export array or function on \xAB${config.ignoreCallback}\xBB but \xAB${typeof ignoredEntity}\xBB was found instead`);
+            throw new Error(`Option \xABignoreCallback\xBB requires file \xAB${filepath}\xBB to export array or function on \xAB${config.ignoreCallback}\xBB but \xAB${typeof ignoredEntity}\xBB was found instead`);
           }
         } catch (error) {
-          console.error(`Error loading ignore callback file \xAB${filepath}\xBB:`, error);
+          console.error(`Error loading \xABconfig.ignoreCallback\xBB file \xAB${rootedPath}\xBB:`, error);
         }
       };
-      const matchesIgnore = function(filepath) {
-        for (let index = 0; index < config.ignore.length; index++) {
-          const ignoreExpression = config.ignore[index];
-          const ignoreExpressionPath = path.resolve(ignoreExpression);
-          const ignoreSelector = ignoreExpression === ignoreExpressionPath ? ignoreExpression : [ignoreExpression, ignoreExpressionPath];
-          const isMatch = require("picomatch")(ignoreSelector)(filepath);
+      const matchesIgnoreFiles = function(filepath) {
+        for (let index = 0; index < config.ignoreFiles.length; index++) {
+          const isMatch = require("picomatch")(config.ignoreFiles[index])(filepath);
           if (isMatch) return true;
         }
         return false;
@@ -676,24 +715,15 @@ var require_from_glob_watcher_to_socketio_emit = __commonJS({
         persistent: true
       });
       let initEvent = false;
-      watcher.on("add", async (path2) => {
-        if (matchesIgnore(path2)) return;
-        if (!matchesExtension(path2)) return;
-        if (matchesIgnoreCallback(path2)) return;
-        console.log("\n\u2795  Add event from:" + listSeparator + path2);
-        await triggerReload(path2);
-      }).on("change", async (path2) => {
-        if (matchesIgnore(path2)) return;
-        if (!matchesExtension(path2)) return;
-        if (matchesIgnoreCallback(path2)) return;
-        console.log("\n\u270F\uFE0F  Change event from:" + listSeparator + path2);
-        await triggerReload(path2);
-      }).on("unlink", async (path2) => {
-        if (matchesIgnore(path2)) return;
-        if (!matchesExtension(path2)) return;
-        if (matchesIgnoreCallback(path2)) return;
-        console.log("\n\u274C  Unlink event from:" + listSeparator + path2);
-        await triggerReload(path2);
+      watcher.on("add", async (filepath) => {
+        if (!await shouldTrigger(filepath)) return;
+        await triggerReload(filepath, { operation: "add" });
+      }).on("change", async (filepath) => {
+        if (!await shouldTrigger(filepath)) return;
+        await triggerReload(filepath, { operation: "edit" });
+      }).on("unlink", async (filepath) => {
+        if (!await shouldTrigger(filepath)) return;
+        await triggerReload(filepath, { operation: "delete" });
       }).on("error", (err) => {
         console.error("Watcher error:", err);
       });
@@ -789,13 +819,23 @@ var require_from_object_to_window_reloader_server = __commonJS({
           default: ["html", "css", "js"],
           type: Array
         },
-        ignore: {
+        ignoreFiles: {
           alias: "i",
           default: ["**/node_modules/**", "**/dist/**", "**/*.dist.*", "**/dist.*"],
           type: Array
         },
         ignoreCallback: {
           alias: "ic",
+          default: "",
+          type: String
+        },
+        listenFiles: {
+          alias: "l",
+          default: [],
+          type: Array
+        },
+        listenCallback: {
+          alias: "lc",
           default: "",
           type: String
         },
@@ -898,8 +938,10 @@ var require_from_object_to_window_reloader_server = __commonJS({
       trace("from-object-to-window-reloader-server:step-2(input)", input);
       validateParameters(input, {
         watch: { type: Array },
-        ignore: { type: Array },
+        ignoreFiles: { type: Array },
         ignoreCallback: { type: String },
+        listenFiles: { type: Array },
+        listenCallback: { type: String },
         extensions: { type: Array },
         debounce: { type: Number },
         port: { type: Number },

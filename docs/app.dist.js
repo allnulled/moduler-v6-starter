@@ -52,24 +52,28 @@
          */
         trace = Object.assign(
           (method) => {
-            console.log(`[·] [${this.id}] [${this.level}] [=] ${method}`);
+            console.log(`[·] ${this.id} at level ${this.level} [·] ${method}`);
           },
           {
             in: (method) => {
               this.level++;
               if (this.isTracing)
-                console.log(`[·] [${this.id}] [${this.level}] [+] ${method}`);
+                console.log(
+                  `[·] ${this.id} at level ${this.level}] [+] ${method}`,
+                );
             },
             out: (method) => {
               this.level--;
               if (this.isTracing)
-                console.log(`[·] [${this.id}] [${this.level}] [-] ${method}`);
+                console.log(
+                  `[·] ${this.id} at level ${this.level}] [-] ${method}`,
+                );
             },
             error: (method, error, levelDiff = 0) => {
               this.level += levelDiff;
               if (this.isTracing)
                 console.log(
-                  `[!] [${this.id}] [${this.level}] [!] ${method}`,
+                  `[!] ${this.id} at level ${this.level}] [!] ${method}`,
                   error,
                 );
             },
@@ -738,25 +742,72 @@
           this.moduler = moduler;
         }
 
-        /**
-         * @name ModulerV6.Toolkit.prototype.normalizeParams
-         * @type
-         * @description
-         */
-        normalizeParams(params = {}) {
-          return params;
+        normalizeParameters(parameters, normalization = null) {
+          /**
+           * @name ModulerV6.Toolkit.prototype.normalizeParameters
+           * @type
+           * @description
+           */
+          return this.normalizeObject(parameters, normalization);
         }
-        /**
-         * @name ModulerV6.Toolkit.prototype.normalizeOptions
-         * @type
-         * @description
-         */
-        normalizeOptions(options = {}) {
-          const normalization = Object.assign({}, options);
-          if (typeof normalization.tracer === "undefined") {
-            normalization.tracer = this.moduler.tracer;
+        normalizeOptions(options, normalization = null) {
+          /**
+           * @name ModulerV6.Toolkit.prototype.normalizeOptions
+           * @type
+           * @description
+           */
+          return this.normalizeObject(options, normalization);
+        }
+        normalizeObject(parameters = {}, normalization = null) {
+          /**
+           * @name ModulerV6.Toolkit.prototype.normalizeObject
+           * @type
+           * @description
+           */
+          let output = { ...parameters };
+          if (normalization) {
+            Apply_default: for (const property in normalization) {
+              const configuration = normalization[property];
+              if ("default" in configuration) {
+                output[property] =
+                  property in output
+                    ? output[property]
+                    : typeof configuration.default === "function"
+                      ? configuration.default(configuration)
+                      : configuration.default;
+              }
+            }
+            Validate: for (const property in normalization) {
+              const configuration = normalization[property];
+              if ("validate" in configuration) {
+                const result = configuration.validate(
+                  output[property],
+                  this.moduler.constructor.assert,
+                  output,
+                  normalization,
+                );
+                if (typeof result === "undefined") {
+                  // @OK
+                } else if (result !== true) {
+                  throw new Error(
+                    result ||
+                      `Validation of property «${property}» should return «true» but «${typeof result}» was found instead on «ModulerV6.Toolkit.normalizeObject»`,
+                  );
+                }
+              }
+            }
+            Format: for (const property in normalization) {
+              const configuration = normalization[property];
+              if ("format" in configuration) {
+                output[property] = configuration.format(
+                  output[property],
+                  output,
+                  normalization,
+                );
+              }
+            }
           }
-          return normalization;
+          return output;
         }
       };
       /**
@@ -1090,6 +1141,13 @@
             return { syntax: "Inject Module", ...token };
           },
         ],
+        InjectModules: [
+          "$" + "compiler.inject.modules(",
+          this.Parser.symbols.PARENTHESYS_BALANCE,
+          function (token) {
+            return { syntax: "Inject Modules", ...token };
+          },
+        ],
         ImportJs: [
           "$" + "moduler.import(",
           this.Parser.symbols.PARENTHESYS_BALANCE,
@@ -1300,6 +1358,7 @@
           this.nativeGrammars.InjectSource,
           this.nativeGrammars.InjectString,
           this.nativeGrammars.InjectTemplate,
+          this.nativeGrammars.InjectModules,
           this.nativeGrammars.InjectModule,
           this.nativeGrammars.ImportJs,
           this.nativeGrammars.ExportJs,
@@ -2163,9 +2222,6 @@
        */
       setBasedir(basedir) {
         this.basedir = this.normalizationOf(basedir);
-        if (this.compiler) {
-          this.compiler.basedir = this.basedir;
-        }
       }
       /**
        * @name ModulerV6.prototype.setRootdir
@@ -2174,9 +2230,6 @@
        */
       setRootdir(rootdir) {
         this.rootdir = this.normalizationOf(rootdir);
-        if (this.compiler) {
-          this.compiler.rootdir = this.rootdir;
-        }
       }
       /**
        * @name ModulerV6.prototype.normalizationOf
@@ -2188,7 +2241,12 @@
           typeof subpath === "string",
           `Parameter «subpath» must be string on «ModulerV6.prototype.normalizationOf»`,
         );
-        return this._joinPaths([subpath], "normalizationOf");
+        return this._joinPaths(
+          subpath.startsWith("./") && this.basedir
+            ? [this.basedir, subpath]
+            : [subpath],
+          "normalizationOf",
+        );
       }
       /**
        * @name ModulerV6.prototype.basedirOf
@@ -2224,6 +2282,70 @@
       cloneForFile(filepath) {
         const dirpath = this._joinPaths([filepath, ".."]);
         return new ModulerV6(dirpath, this);
+      }
+      /**
+       * @name ModulerV6.prototype.reserveFile
+       * @type
+       * @description
+       */
+      reserveFile(file) {
+        const filepath = this.normalizationOf(file);
+        const rootpath = this.rootdirOf(filepath);
+        if (filepath in this.modules) {
+          throw new Error(
+            `Cannot reserve file module because it is already solved on file «${rootpath}» on method «ModulerV6.prototype.reserveFile»`,
+          );
+        }
+        const resolvable = this.constructor.createResolvable();
+        Export_promise_of_reserve_as_module: {
+          this.modules[filepath] = resolvable.promise;
+          this.reserves[filepath] = resolvable;
+        }
+        const _module = { exports: {} };
+        return {
+          module: _module,
+          exports: _module.exports,
+          file: filepath,
+        };
+      }
+      /**
+       * @name ModulerV6.prototype.releaseFile
+       * @type
+       * @description
+       */
+      releaseFile(file, reserve, returnment) {
+        const filepath = this.normalizationOf(file);
+        const rootpath = this.rootdirOf(filepath);
+        this.assert(
+          filepath in this.reserves,
+          `File «${filepath}» is called to be released by «ModulerV6.prototype.releaseFile» but it was not reserved before. Methods «reserveFile,releaseFile» are not human-usage oriented, in case of «${rootpath}». Stop playing with out-of-domain methods, please.`,
+        );
+        this.assert(
+          reserve.file === filepath,
+          `File «${filepath}» is called to be released by «ModulerV6.prototype.releaseFile» but it does not match with reserved file «${reserve.file}». Stop playing with not human-usage oriented methods, I told you!`,
+        );
+        if (typeof returnment !== "undefined") {
+          reserve.module = returnment;
+        }
+        const state = this.reserves[filepath];
+        state.resolve(reserve.module.exports);
+        delete this.reserves[filepath];
+        return state.promise;
+      }
+      /**
+       * @name ModulerV6.prototype.lockFiles
+       * @type
+       * @description
+       */
+      lockFiles(list) {
+        return {
+          until: function (promise) {
+            return promise.then((output) => {
+              // @AQUI hay que resolver los módulos con el crédito de lockFiles
+              console.log(`[*] Unlocked files: ${list.join(", ")}`, output);
+            });
+          },
+        };
       }
 
       /**
@@ -2432,13 +2554,19 @@
           typeof basedir === "string",
           `Parameter «basedir» must be string on «Moduler.constructor»`,
         );
-        this.basedir = basedir;
+        this.basedir = this._joinPaths([basedir]);
         /**
          * @name ModulerV6.prototype.rootdir
          * @type
          * @description
          */
-        this.rootdir = cloneOf ? cloneOf.rootdir : basedir;
+        this.rootdir = cloneOf ? cloneOf.rootdir : this.basedir;
+        /**
+         * @name ModulerV6.prototype.reserves
+         * @type
+         * @description
+         */
+        this.reserves = cloneOf ? cloneOf.reserves : {};
         /**
          * @name ModulerV6.prototype.modules
          * @type
@@ -2497,7 +2625,8 @@
          */
         this.settings = new ModulerV6.Settings(this);
         if (cloneOf) {
-          this.settings.data = cloneOf.settings.data;
+          // @CUIDADO: HE PUESTO UN ? PARA PASAR UN FALLO
+          this.settings.data = cloneOf.settings?.data;
         }
         /**
          * @name ModulerV6.prototype.runtime
@@ -2535,6 +2664,38 @@
         await this.globalInstance.runtime.load();
         this.onLoaded.resolve();
       })();
+      /**
+       * @name ModulerV6.static.1
+       * @type
+       * @description
+       */
+      static {
+        Promise_polyfills: {
+          if (typeof Promise.fromObject !== "function") {
+            Promise.fromObject = async function (map) {
+              const output = {};
+              const keys = Object.keys(map);
+              const list = await Promise.all(Object.values(map));
+              for (let index = 0; index < keys.length; index++) {
+                const key = keys[index];
+                output[key] = list[index];
+              }
+              return output;
+            };
+          }
+          if (typeof Promise.fromCollection !== "function") {
+            Promise.fromCollection = async function (collection) {
+              ModulerV6.assert(
+                typeof collection === "object",
+                `Method «Promise.fromCollection» only accepts object or array as first argument but «${typeof collection}» was found instead`,
+              );
+              return Array.isArray(collection)
+                ? Promise.all(collection)
+                : Promise.fromObject(collection);
+            };
+          }
+        }
+      }
     };
   }.call(),
 );

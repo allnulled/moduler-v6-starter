@@ -2241,12 +2241,7 @@
           typeof subpath === "string",
           `Parameter «subpath» must be string on «ModulerV6.prototype.normalizationOf»`,
         );
-        return this._joinPaths(
-          subpath.startsWith("./") && this.basedir
-            ? [this.basedir, subpath]
-            : [subpath],
-          "normalizationOf",
-        );
+        return this._joinPaths([subpath], "normalizationOf");
       }
       /**
        * @name ModulerV6.prototype.basedirOf
@@ -2267,10 +2262,16 @@
        * @description
        */
       rootdirOf(subpath) {
-        const normalized = this._joinPaths([subpath], "rootdirOf");
+        const normalized = this.normalizationOf(subpath);
         const rootdirSeparated = this._appendPathSeparator(this.rootdir);
         if (normalized.startsWith(rootdirSeparated)) {
           return normalized.replace(rootdirSeparated, "@/");
+        } else {
+          console.log(
+            "[?] rootdirOf could not find root in:",
+            subpath,
+            this.rootdir,
+          );
         }
         return normalized;
       }
@@ -2554,13 +2555,13 @@
           typeof basedir === "string",
           `Parameter «basedir» must be string on «Moduler.constructor»`,
         );
-        this.basedir = this._joinPaths([basedir]);
+        this.basedir = basedir;
         /**
          * @name ModulerV6.prototype.rootdir
          * @type
          * @description
          */
-        this.rootdir = cloneOf ? cloneOf.rootdir : this.basedir;
+        this.rootdir = cloneOf ? cloneOf.rootdir : basedir;
         /**
          * @name ModulerV6.prototype.reserves
          * @type
@@ -2699,3 +2700,7 @@
     };
   }.call(),
 );
+
+window.addEventListener("load", async function () {
+  console.log("[*] Page loaded");
+});

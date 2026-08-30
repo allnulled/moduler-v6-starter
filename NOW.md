@@ -1,0 +1,14 @@
+- [ ] Reactor
+   - [ ] Reactor.prototype.do
+   - [ ] Reactor.prototype.on
+   - [ ] Reactor.Causalism.prototype.do
+   - [ ] Reactor.Causalism.prototype.dont
+- [x] SimpleRegistry
+   - [x] SimpleRegistry.prototype.define
+   - [x] SimpleRegistry.prototype.find
+   - [x] SimpleRegistry.prototype.pick
+   - [x] SimpleRegistry.prototype.modify
+   - [x] SimpleRegistry.prototype.delete
+   - [x] SimpleRegistry.prototype.all
+   - [x] SimpleRegistry.constructor
+   - [x] SimpleRegistry test en 408
