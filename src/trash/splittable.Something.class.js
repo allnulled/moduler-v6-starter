@@ -1,7 +1,13 @@
 class Whatever {
-  version = "whatever";
+
+  version = "whatevertttt";
 
   static what(a, b) {
-    console.log("ok");
+    console.log("opop");
   }
+
+  static whats(a, b) {
+    console.log("Cualquire cosa");
+  }
+
 }

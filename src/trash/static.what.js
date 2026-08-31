@@ -1,3 +1,3 @@
-static what(a,b) {
-  console.log("ok");
+static what(a, b) {
+  console.log("opop");
 }

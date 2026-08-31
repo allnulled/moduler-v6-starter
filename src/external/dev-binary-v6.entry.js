@@ -2791,6 +2791,16 @@ copyFile = Object.assign(async (src, dst) => {
 ensureDirectory(dir) {
   return require("fs").promises.mkdir(dir, { recursive: true }).catch(error => -2);
 };
+  /**
+ * @name CompilerV6.Files.prototype.getDirectoryOf
+ * @type 
+ * @description 
+ */
+getDirectoryOf(file) {
+  const normalized = this.compiler.normalizationOf(file);
+  const pos = normalized.lastIndexOf("/");
+  return [0,-1].includes(pos) ? "/" : normalized.substr(0, pos);
+}
 };
   /**
  * @name CompilerV6.CompilationProcess
@@ -5247,6 +5257,49 @@ static fromRootDirectoryOf(dir, file = "package.json") {
   return this.Utils.findFirstParentDirectoryContaining(dir, file).then(upperDir => new this(upperDir));
 }
   /**
+ * @name DevBinaryV6.static.Console
+ * @type 
+ * @description 
+ */
+static Console = class Console {
+  /**
+ * @name DevBinaryV6.Console.static.create
+ * @type 
+ * @description 
+ */
+static create(...args) {
+  return new this(...args);
+}
+  /**
+ * @name DevBinaryV6.Console.constructor
+ * @type 
+ * @description 
+ */
+constructor(devbin) {
+  this.devbin = devbin;
+  this.profile = null;
+}
+  /**
+ * @name DevBinaryV6.Console.prototype.setProfile
+ * @type 
+ * @description 
+ */
+setProfile(profile) {
+  this.profile = profile;
+  return this;
+}
+  /**
+ * @name DevBinaryV6.Console.prototype.print
+ * @type 
+ * @description 
+ */
+print(message) {
+  let out = "";
+  console.log(out = this.profile ? this.devbin.compiler.constructor.ansi.colors.style(this.profile).text(message) : message);
+  return out;
+}
+};
+  /**
  * @name DevBinaryV6.static.Refrescador
  * @type 
  * @description 
@@ -5857,17 +5910,18 @@ ensureDirectoryOf(file) {
 async touchFile(fileBrute, optionsInput = {}) {
   this.assert(typeof fileBrute === "string", `Parameter «--file» must be string and not «${typeof fileBrute}» on «DevBinaryV6.Utils.prototype.touchFile»`);
   const file = this.devbin.moduler.normalizationOf(fileBrute);
-  console.log("[*] Touched file: " + this.devbin.moduler.rootdirOf(file));
+  this.devbin.console.setProfile("underline").print("[*] Touched file: " + this.devbin.moduler.rootdirOf(file));
   const currentStep = [];
   try {
     let outputFile = false;
     currentStep.push("0. begin with: " + file);
-    let fs, path, filepath, rootPath;
+    let fs, path, filepath, rootPath, filedir;
     Initialize_dependencies: {
       currentStep.push("1. initialize dependencies");
       fs = require("fs");
       path = require("path");
       filepath = this.devbin.compiler.normalizationOf(file);
+      filedir = this.devbin.files.getDirectoryOf(filepath);
       rootPath = this.devbin.moduler.rootdirOf(filepath);
     }
     // this.assert(this.devbin.compiler.rootdirOf(filepath).startsWith("@/src"), `Parameter «--file» must start with «${this.devbin.compiler.rootdir}» but it is «${rootPath}» on «DevBinaryV6.Utils.prototype.touchFile»`);
@@ -5892,6 +5946,7 @@ async touchFile(fileBrute, optionsInput = {}) {
       event.isMdEntry = filepath.endsWith(".entry.md");
       event.isJsTest = filepath.endsWith(".test.js");
       event.isSplittableClass = event.filename.startsWith("splittable.") && event.filename.endsWith(".class.js");
+      event.currentSplittableClasses = await this.getSplittableClassesFrom(filedir);
       event.isSrcWww = rootPath.startsWith("@/src/www/");
       event.isSrc = rootPath.startsWith("@/src/");
       event.isInTestDir = rootPath.startsWith("@/test/");
@@ -5901,29 +5956,39 @@ async touchFile(fileBrute, optionsInput = {}) {
     }
     // console.log(this.devbin.compiler.constructor.ansi.colors.style("blackBright").text(event.uncacheInjections));
 
-    Touch_event: {
+    Evento_touch: {
       currentStep.push("3. run touch event");
-      Processing_entry: {
-        Caso_previo_1_splittable_class: {
-          if(event.isSplittableClass) {
-            await this.synchronizeSplittableClass(filepath, event);
-            break Touch_event;
+      Procesando_entrada: {
+        Caso_previo_1_mutedir: {
+          const mutedirPath = require("path").resolve(filedir, ".mutedir");
+          if(await this.devbin.compiler.files.hasFile(mutedirPath)) {
+            this.devbin.console.setProfile("blackBright").print(`[*] DevBinaryV6 ignores touch event because .mutedir was found`);
+            break Evento_touch;
           }
         }
-        Caso_previo_2_splittable_method: {
+        Caso_previo_2_splittable_class: {
+          if(!event.isSplittableClass) break Caso_previo_2_splittable_class;
+          const result = await this.synchronizeSplittableClass(filepath, event);
+          if(result) {
+            break Evento_touch;
+          }
+        }
+        Caso_previo_3_splittable_method: {
+          if(event.isSplittableClass) break Caso_previo_3_splittable_method;
+          if(!event.currentSplittableClasses.length) break Caso_previo_3_splittable_method;
           const result = await this.synchronizeSplittableMethod(filepath, event);
           if(result) {
-            break Touch_event;
+            break Evento_touch;
           }
         }
-        Caso_previo_3_dev_settings_exportar_a_www_dev_settings_las_partes_exportables: {
+        Caso_previo_4_dev_settings_exportar_a_www_dev_settings_las_partes_exportables: {
           if (filepath === this.devbin.compiler.fullpathOf("@/dev/settings.js")) {
             currentStep.push("3.1. exporting dev/settings");
             await this.exportDevSettings(filepath);
-            break Touch_event;
+            break Evento_touch;
           }
         }
-        Caso_previo_4_caso_src_html: {
+        Caso_previo_5_caso_src_html: {
           if (event.isHtml) {
             currentStep.push("3.2. found html file");
             if (event.isSrcWww) {
@@ -5935,7 +6000,7 @@ async touchFile(fileBrute, optionsInput = {}) {
             } else {
               currentStep.push("3.2.c. html is not src/**/*.html");
               console.log(this.devbin.compiler.constructor.ansi.colors.style("blackBright").text(`[-] DevBinaryV6 dismissed touch event from an *.html not under «@/src/»: ${rootPath}`));
-              break Touch_event;
+              break Evento_touch;
             }
             currentStep.push("3.2.{a,b}. compiling html file");
             const outputCompilation = await this.devbin.compiler.compile(filepath);
@@ -5960,7 +6025,7 @@ async touchFile(fileBrute, optionsInput = {}) {
               }
               currentStep.push("3.3.a. is not entry nor test");
               console.log(this.devbin.compiler.constructor.ansi.colors.style("blackBright").text(`[-] DevBinaryV6 dismissed touch event from not entry or test: ${rootPath}`));
-              break Processing_entry;
+              break Procesando_entrada;
             } else {
               currentStep.push("3.3.b. is entry or test");
               console.log(this.devbin.compiler.constructor.ansi.colors.style("blackBright").text(`[*] DevBinaryV6 triggered touch event from: ${rootPath}`));
@@ -6009,7 +6074,7 @@ async touchFile(fileBrute, optionsInput = {}) {
         if (event.isJsTest) {
           currentStep.push("4. run file because it is a test");
           await this.executeUnitTestFileOf(filepath, { testFabrication: { unitFile: filepath } });
-          break Touch_event;
+          break Evento_touch;
         }
       }
       Triggering_onTouch_file: {
@@ -6414,18 +6479,18 @@ async installNpmDependencies(files, rootdir = this.devbin.moduler.rootdir) {
  * donde cada miembro de la clase puede vivir en su propio fichero.
  */
 async synchronizeSplittableClass(filepath, event) {
+  if(!event.isSplittableClass) return false;
   const fs = require("fs").promises;
   const path = require("path");
   const parser = require("@babel/parser");
   const classDirectory = path.dirname(filepath);
   const $ = this.devbin.compiler.constructor.ansi.colors;
+  let mutedir;
   try {
-    // Chutar si está sincronizando por el origen:
-    if(event.isSynchronizingSplittable) return -1;
     // ------------------------------------------------------------
     // 0. Mutear el directorio por si se vienen cambios
     // ------------------------------------------------------------
-    await this.devbin.muteTouchListenerOf(`${classDirectory}/**/*`);
+    mutedir = await this.devbin.utils.addTouchMutedirTo(classDirectory);
     // ------------------------------------------------------------
     // 1. Leer filepath
     // ------------------------------------------------------------
@@ -6629,7 +6694,7 @@ async synchronizeSplittableClass(filepath, event) {
     // ------------------------------------------------------------
     // 8. Desmutear el directorio porque los cambios han terminado
     // ------------------------------------------------------------
-    await this.devbin.unmuteTouchListenerOf(`${classDirectory}/**/*`);
+    if(mutedir) await mutedir.cancel();
   }
 }
   /**
@@ -6640,7 +6705,10 @@ async synchronizeSplittableClass(filepath, event) {
 neutralizeIndentation(input) {
   const lines = input.split(/\n/g);
   // omite primera línea al contar
-  const minIndentation = Math.min(...lines.concat([]).splice(1).map(line => this.countSubstringOcurrencesAtStart(line, "  ")));
+  let allLines = lines.concat([]);
+  if(allLines.length) allLines.shift();
+  if(!allLines.length) return input;
+  const minIndentation = Math.min(...allLines.map(line => this.countSubstringOcurrencesAtStart(line, "  ")));
   const removableIndentation = "  ".repeat(minIndentation);
   // omite primera línea al reemplazar
   const output = lines.map((line, index) => {
@@ -6696,6 +6764,7 @@ getClassMemberFragmentCodeFor(content, member) {
  * splittable que puedan contenerlo.
  */
 async synchronizeSplittableMethod(filepath, event) {
+  if(!event.currentSplittableClasses.length) return false;
   const fs = require("fs").promises;
   const path = require("path");
   const parser = require("@babel/parser");
@@ -6705,38 +6774,35 @@ async synchronizeSplittableMethod(filepath, event) {
   let output = 0;
   let _error = false;
   let classFiles = undefined;
+  let mutedir;
   try {
-    // Chutar si viene de splittable anterior:
-    if(event.isSynchronizingSplittable) return 0;
     // ------------------------------------------------------------
     // 0. Mutear el directorio por si se vienen cambios
     // ------------------------------------------------------------
-    await this.devbin.muteTouchListenerOf(`${directory}/**/*`);
+    mutedir = await this.devbin.utils.addTouchMutedirTo(directory);
     // ------------------------------------------------------------
     // 1. Determinar el tipo y nombre del miembro desde filepath
     // ------------------------------------------------------------
     const methodMatch = methodFilename.match(/^(static|prototype)\.(.+)\.js$/);
     if (!methodMatch) {
-      // Dismissed por
-      return output = false;
+      // Dismissed por no ser ni prototype ni static
+      return false;
     }
     const methodKind = methodMatch[1];
     const methodName = methodMatch[2];
     const isStatic = methodKind === "static";
     // ------------------------------------------------------------
+    // 3. Buscar los splittable class del directorio
+    // ------------------------------------------------------------
+    const splittableClassFiles = event.currentSplittableClasses.map(file => path.resolve(directory, file));
+    if (!splittableClassFiles.length) {
+      // Dismissed por no tener splittable classes
+      return false;
+    }
+    // ------------------------------------------------------------
     // 2. Leer el contenido del método
     // ------------------------------------------------------------
     const methodSource = await fs.readFile(filepath, "utf8");
-    // ------------------------------------------------------------
-    // 3. Buscar los splittable class del directorio
-    // ------------------------------------------------------------
-    const entries = await fs.readdir(directory);
-    const splittableClassFiles = entries
-      .filter(entry => entry.startsWith("splittable.") && entry.endsWith(".class.js"))
-      .map(entry => path.join(directory, entry));
-    if (!splittableClassFiles.length) {
-      return output = false;
-    }
     // ------------------------------------------------------------
     // 4. Iterar sobre los splittable class encontrados
     // ------------------------------------------------------------
@@ -6787,6 +6853,8 @@ async synchronizeSplittableMethod(filepath, event) {
       // 4.4. La clase debe ser única
       // ----------------------------------------------------------
       if (classes.length !== 1) {
+        console.log("synchronizeSplittableMethod", ast);
+        this.devbin.compiler._die(ast, "synchronizeSplittableMethod");
         throw new Error(`synchronizeSplittableMethod(): se esperaba exactamente una clase en "${splittableClassFile}", pero se encontraron ${classes.length}.`);
       }
       const classNode = classes[0];
@@ -6853,7 +6921,7 @@ async synchronizeSplittableMethod(filepath, event) {
     // ------------------------------------------------------------
     // 5. Desmutear el directorio porque los cambios han terminado
     // ------------------------------------------------------------
-    await this.devbin.unmuteTouchListenerOf(`${directory}/**/*`);
+    if(mutedir) await mutedir.cancel();
     if(_error) throw _error;
     return output;
   }
@@ -6870,6 +6938,52 @@ async readJsonOrReturn(file, fallbackValue = undefined) {
   } catch (error) {
     return fallbackValue;
   }
+}
+  /**
+ * @name DevBinaryV6.Utils.prototype.addTouchMutedirTo
+ * @type 
+ * @description 
+ */
+async addTouchMutedirTo(dir) {
+  const mutedirDir = this.devbin.moduler.normalizationOf(dir);
+  const mutedirFile = require("path").resolve(mutedirDir, ".mutedir");
+  const wasMuted = await this.devbin.files.hasFile(mutedirFile);
+  if(!wasMuted) {
+    this.devbin.console.setProfile("blackBright").print(`[*] DevBinaryV6 mutes directory through .mutedir: ${mutedirDir}`);
+    await this.devbin.files.writeFile(mutedirFile, `Directory captured by process: ${process.pid}`);
+  } else {
+    this.devbin.console.setProfile("blackBright").print(`[*] DevBinaryV6 ignores to mute directory through .mutedir: ${mutedirDir}`);
+  }
+  return {
+    cancel: () => {
+      if(wasMuted) {
+        this.devbin.console.setProfile("blackBright").print(`[*] DevBinaryV6 ignores to unmute directory through .mutedir: ${mutedirDir}`);
+        return false;
+      }
+      this.devbin.console.setProfile("blackBright").print(`[*] DevBinaryV6 unmutes directory through .mutedir: ${mutedirDir}`);
+      // @ATENCIÓN: solución aparentemente "guarra" pero la conclusión con ChatGPT ha sido que probablemente la race condition
+      // se esté dando porque el refrescador tarda demasiado en empezar el trigger de fichero modificado
+      // y para cuando lo hace, el directorio ya ha sido liberado.
+      // @PORESO esta función. Porque es la que libera el directorio.
+      // @SI simplemente se demora, el dev tiene medio segundo, porque esto no bloquea, medio segundo para poder volver a guardar otra vez
+      // Solo pierde medio segundo que no va a usar. Y va en paralelo y todo.
+      // Pues.... feature conseguida, parece, de momento, demo ok.
+      // @INFO: te lo digo porque con 200 todavía se cuela alguno, así que no te puedes fiar, el paso del chokidar es donde se hace el bottleneck.
+      // @BUENDATOESE eh. Je. No, sí, no te escarrasis aquí, hay un bottleneck desde el S.O. o los bindings, de momento si funciona así, me intentaría conformar.
+      setTimeout(() => {
+        return this.devbin.files.deleteFile.try(mutedirFile);
+      }, 500);
+    }
+  };
+}
+  /**
+ * @name DevBinaryV6.Utils.prototype.getSplittableClassesFrom
+ * @type 
+ * @description 
+ */
+async getSplittableClassesFrom(dir){
+  const files = await this.devbin.files.readDirectory(dir);
+  return files.filter(file => file.startsWith("splittable.") && file.endsWith(".class.js"));
 }
   /**
  * @name DevBinaryV6.Utils.constructor
@@ -7115,12 +7229,14 @@ async loop(args) {
       "**/*.dist.*",
       "**/logs/"+"**/*",
       "**/test/"+"**/*.js",
+      "**/test/unit/"+"**/*.js",
       "**/dev/listened.json",
       "**/dev/unlistened.json",
+      "**/.mutedir",
     ],
     ignoreCallback: `${targetRoot}/dev/unlistened.json`,
     listenFiles: [
-      // "**/test/"+"**/*.run.js",
+      "**/test/"+"**/*.run.js",
     ],
     listenCallback: `${targetRoot}/dev/listened.json`,
     port: port,
@@ -7371,6 +7487,71 @@ this.devbin = devbin;
 }
 };
   /**
+ * @name DevBinaryV6.static.System
+ * @type 
+ * @description 
+ */
+static System = class System {
+  /**
+   * @name DevBinaryV6.System
+   * @type 
+   * @description 
+   */
+  /**
+ * @name DevBinaryV6.System.static.Process
+ * @type 
+ * @description 
+ */
+static Process = class Process {
+  /**
+   * @name DevBinaryV6.System.Process
+   * @type 
+   * @description 
+   */
+  /**
+ * @name DevBinaryV6.System.Process.static.listeners
+ * @type 
+ * @description 
+ */
+static listeners = {};
+  /**
+ * @name DevBinaryV6.System.Process.static.on
+ * @type 
+ * @description 
+ */
+static on(event) {
+  this.listeners[event] ??= [];
+  return {
+    add: (callback) => {
+      if (typeof callback !== "function") throw new Error(`«Process.on(event:String).add» only accepts function but «${typeof callback}» was found instead`);
+      this.listeners[event].push(callback);
+      return {
+        cancel: () => {
+          const pos = this.listeners[event].indexOf(callback);
+          if (pos === -1) return false;
+          return this.listeners[event].splice(pos, 1);
+        },
+      };
+    },
+  };
+}
+  /**
+ * @name DevBinaryV6.System.Process.static.1
+ * @type 
+ * @description 
+ */
+static {
+  Global_initialization: {
+    global.process.on("exit", () => {
+      let out = undefined;
+      (this.listeners["exit"] || []).forEach(listener => out = listener());
+      return out;
+    });
+  }
+}
+};
+};
+  /**
  * @name DevBinaryV6.prototype.cronometer
  * @type 
  * @description 
@@ -7465,43 +7646,6 @@ cloneForFile(resource, devbin = false) {
   return clone;
 }
   /**
- * @name DevBinaryV6.prototype.muteTouchListenerOf
- * @type 
- * @description 
- */
-async muteTouchListenerOf(filepattern) {
-  const unlistenedFile = this.moduler.normalizationOf("@/dev/unlistened.json");
-  try {
-    let unlistenedList = await this.utils.readJsonOrReturn(unlistenedFile, []);
-    if(!unlistenedList.includes(filepattern)) {
-      unlistenedList.push(filepattern);
-    }
-    return await require("fs").promises.writeFile(unlistenedFile, JSON.stringify(unlistenedList, null, 2), "utf8");
-  } catch (error) {
-    //if(error.code === "ENOENT") return -1;
-    console.log(`[!] Could not mute filepattern «${filepattern}» due to following error:`, error);
-  }
-}
-  /**
- * @name DevBinaryV6.prototype.unmuteTouchListenerOf
- * @type 
- * @description 
- */
-async unmuteTouchListenerOf(filepattern) {
-  const unlistenedFile = this.moduler.normalizationOf("@/dev/unlistened.json");
-  try {
-    let unlistenedList = await this.utils.readJsonOrReturn(unlistenedFile, []);
-    const pos = unlistenedList.indexOf(filepattern);
-    if(pos !== -1) {
-      unlistenedList.splice(pos, 1);
-    }
-    return await require("fs").promises.writeFile(unlistenedFile, JSON.stringify(unlistenedList, null, 2), "utf8");
-  } catch (error) {
-    //if(error.code === "ENOENT") return -1;
-    console.log(`[!] Could not unmute filepattern «${filepattern}» due to following error:`, error);
-  }
-}
-  /**
  * @name DevBinaryV6.prototype.files
  * @type 
  * @description 
@@ -7538,35 +7682,38 @@ this.moduler = this.compiler.moduler;
  * @type 
  * @description 
  */
-this.utils = new this.constructor.Utils(this);
-// this.utils = parent ? parent.utils : new this.constructor.Utils(this);
+this.utils = parent ? parent.utils : new this.constructor.Utils(this);
   /**
  * @name DevBinaryV6.prototype.settings
  * @type 
  * @description 
  */
-this.settings = new this.constructor.Settings(this);
+this.settings = parent ? parent.settings : new this.constructor.Settings(this);
   /**
  * @name DevBinaryV6.prototype.shadowCommands
  * @type 
  * @description 
  */
-this.shadowCommands = new this.constructor.ShadowCommands(this);
-// this.shadowCommands = parent ? parent.shadowCommands : new this.constructor.ShadowCommands(this);
+this.shadowCommands = parent ? parent.shadowCommands : new this.constructor.ShadowCommands(this);
+// this.shadowCommands = new this.constructor.ShadowCommands(this);
   /**
  * @name DevBinaryV6.prototype.shadowFileEvents
  * @type 
  * @description 
  */
-this.shadowFileEvents = new this.constructor.ShadowFileEvents(this);
-// this.shadowFileEvents = parent ? parent.shadowFileEvents : new this.constructor.ShadowFileEvents(this);
+this.shadowFileEvents = parent ? parent.shadowFileEvents : new this.constructor.ShadowFileEvents(this);
   /**
  * @name DevBinaryV6.prototype.tester
  * @type 
  * @description 
  */
-this.tester = new this.constructor.Tester(this);
-// this.tester = parent ? parent.tester : new this.constructor.Tester(this);
+this.tester = parent ? parent.tester : new this.constructor.Tester(this);
+  /**
+ * @name DevBinaryV6.prototype.console
+ * @type 
+ * @description 
+ */
+this.console = parent ? parent.console : this.constructor.Console.create(this);
 }
 };
 }.call());
