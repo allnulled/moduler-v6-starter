@@ -24,6 +24,7 @@
     "istanbul-lib-report": "^3.0.1",
     "istanbul-reports": "^3.2.0",
     "neo-blessed": "^0.2.0",
+    "peggy": "^5.1.0",
     "picomatch": "^4.0.5",
     "socket.io": "^4.8.3",
     "terminal-kit": "^3.1.3",
