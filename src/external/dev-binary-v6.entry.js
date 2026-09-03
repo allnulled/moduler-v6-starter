@@ -5277,9 +5277,9 @@ static create(...args) {
  * @type 
  * @description 
  */
-constructor({ devbin, parent = {}, profile = null }) {
+constructor({ devbin, cloneOf = {}, profile = null }) {
   this.devbin = devbin;
-  Object.assign(this, parent);
+  Object.assign(this, cloneOf);
   this.profile = profile;
 }
   /**
@@ -5288,7 +5288,11 @@ constructor({ devbin, parent = {}, profile = null }) {
  * @description 
  */
 setProfile(profile) {
-  return this.constructor.create({ parent: this, profile });
+  return this.constructor.create({
+    devbin: this.devbin,
+    cloneOf: this,
+    profile: profile,
+  });
 }
   /**
  * @name DevBinaryV6.Console.prototype.print
@@ -6189,7 +6193,8 @@ async touchFile(fileBrute, optionsInput = {}) {
     }
     return event;
   } catch (error) {
-    console.log(`[!] Error on method «touchFile» on step «${currentStep.reverse()[0]}»`, error);
+    // console.log(`[!] Error on method «touchFile» on step «${currentStep.reverse()[0]}»`, error);
+    this.devbin.console.setProfile("redBright").print(`[!] Error on method «touchFile» on step «${currentStep.reverse()[0]}»`);
     throw error;
   }
 }
@@ -6361,6 +6366,7 @@ async ensureCoreFrom(basedirInput, parametersInput = {}) {
   await duplicateFile(`${__dirname}/compiler-v6.dist.js`, `${targetDir}/src/external/compiler-v6.entry.js`);
   await duplicateFile(`${__dirname}/dev-binary-v6.dist.js`, `${targetDir}/src/external/dev-binary-v6.entry.js`);
   await duplicateFile(`${__dirname}/refrescador.dist.js`, `${targetDir}/src/external/refrescador.entry.js`);
+  await duplicateFile(`${__dirname}/../src/lib/colors.js`, `${targetDir}/src/external/colors.entry.js`);
   await duplicateDirectory(`${__dirname}/refrescador`, `${targetDir}/src/external/refrescador`, { recursive: true });
 
   if(parameters.installDependencies) await this.installNpmDependencies([], targetDir);
@@ -7747,7 +7753,7 @@ async command(args = []) {
       console.log(this.compiler.constructor.ansi.colors.style("blackBright").text(`[*] DevBinaryV6 executing command: ${commandName}`));
       return await commandCallback.call(this.shadowCommands, commandParameters, this, commandType, commandSubpath);
     } catch (error) {
-      console.error(`[!] The «devbin ${commandName}» command threw an error:`, error);
+      this.console.setProfile("redBright").print(`[!] Error on «devbin ${commandName}» command`);
       throw error;
     }
   }

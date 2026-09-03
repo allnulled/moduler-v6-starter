@@ -1,3 +1,72 @@
+- [ ] Las APIs del Std Core (Nivel 1)
+   - [x] Tracer
+   - [x] Checker
+   - [x] Asserter
+   - [x] ErrorFactory
+   - [x] ErrorHandler
+   - [x] Isolate
+   - [x] Cycler
+   - [x] Timeout
+   - [ ] Debug
+      - [ ] print
+      - [ ] deep
+   - [ ] Unificar Isolate y Cycler en Isolate
+   - [ ] ErrorProsecutor
+   - [ ] ErrorDissector
+   - [ ] Unificar ErrorFactory, ErrorHandler, ErrorProsecutor y ErrorDissector en Errors
+   - [ ] Timeout
+- [ ] Las APIs del Std Utils (Nivel 2)
+   - [ ] String
+      - [ ] `intersect(text, start, end, replacement:Function|String)`
+      - [ ] `randomize(size, alphabet = ...)`
+   - [ ] Object
+      - [ ] `excludeKeys(data, list:Array<String>)`
+      - [ ] `includeKeys(data, list:Array<String>)`
+   - [ ] Array
+   - [ ] Boolean
+      - [ ] `check` = Checker
+   - [ ] Number
+   - [ ] Function
+      - [ ] `createSync`
+      - [ ] `createAsync`
+   - [ ] Class
+   - [ ] Merger
+      - [ ] `mergeByStrategies(strategies:Object<prop:String,merger:Function>, list)`
+- [ ] Las APIs del Std Tools (Nivel 3)
+   - [ ] Filesystem (Virtual pero común) + tol rollo
+   - [ ] WebsocketChannel
+      - [ ] ClientRock - WebsocketClient
+      - [ ] ServerRock - WebsocketServer
+- [ ] Las APIs del Std Architecture o Stdarch (Nivel 4)
+   - [ ] CommonRock
+      - [ ] - no tiene 1 método de inicio, es solo API
+   - [ ] NodejsRock
+      - [ ] - no tiene 1 método de inicio, es solo API
+   - [ ] BinaryRock
+      - [ ] `dispatch(command)`
+   - [ ] ClientRock
+      - [ ] `connect(url)`
+   - [ ] ServerRock
+      - [ ] `up(port)`
+   - [ ] WebRock
+      - [ ] `startFrom(el:HTMLElement)`
+      - [ ] `goTo(path) // vía BrowserRouter, ya llegará`
+
+```
+stdarch === Stdarch.globalInstance
+stdarch.common:CommonRock
+stdarch.nodejs:NodejsRock
+stdarch.binary:BinaryRock
+stdarch.client:ClientRock
+stdarch.server:ServerRock
+stdarch.web:WebRock
+```
+
+-----
+
+De aquí para abajo, creo que nada.
+
+
 - [ ] BUG: conseguir que al guardar un unit test se ejecute solamente él.
 
 

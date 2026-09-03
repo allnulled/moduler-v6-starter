@@ -3354,7 +3354,8 @@
            * @type
            * @description
            */
-          hasFile(file) {
+          hasFile(fileBrute) {
+            const file = this.compiler.moduler.normalizationOf(fileBrute);
             return require("fs")
               .promises.access(file)
               .then(() => true)
