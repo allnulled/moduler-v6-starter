@@ -1,0 +1,1 @@
+static Server = $compiler.inject.source("./Server/Server.class.js");

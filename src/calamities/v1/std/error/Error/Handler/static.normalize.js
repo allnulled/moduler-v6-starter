@@ -1,0 +1,1 @@
+static normalize = ErrorFactory.normalize;

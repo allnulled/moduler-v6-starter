@@ -1,0 +1,1 @@
+static Reaction = $compiler.inject.source("./Reaction/Reaction.class.js");

@@ -14,43 +14,47 @@ module.exports = $moduler.import([], function () {
     assert(condition, message) {
       if (!condition) throw new Error(message);
     }
-    findIndex(key, defaultValue = -1) {
-      const selection = this.items.findIndex((item) => item[0] === key);
-      this.assert(
-        selection.length <= 1,
-        `Duplicated key detected on «${key}» on «PointerList.prototype.findIndex»`,
-      );
-      return selection ? selection[0][1] : defaultValue;
+    findPosition(key, defaultValue = -1) {
+      const pos = this.items.findIndex((item) => item[0] === key);
+      return pos === -1 ? defaultValue : pos;
     }
-    find(key, defaultValue = -1) {
-      const selection = this.items.find((item) => item[1] === key);
+    find(key, defaultValue = undefined) {
+      const selection = this.items.filter((item) => item[0] === key);
       this.assert(
         selection.length <= 1,
-        `Duplicated key detected on «${key}» on «PointerList.prototype.find`,
+        `Duplication of key detected on key «${key}» on «PointerList.prototype.find`,
       );
-      return selection ? selection[0][1] : defaultValue;
+      return selection.length ? selection[0][1] : defaultValue;
     }
     select(key, defaultValue = undefined) {
       const selection = this.items.filter((item) => item[0] === key);
       this.assert(
         selection.length <= 1,
-        `Duplicated key detected on «${key}» on «PointerList.prototype.select»`,
+        `Duplication of key detected on key «${key}» on «PointerList.prototype.select»`,
       );
       return selection.length ? selection[0][1] : defaultValue;
     }
-    insert(key, value) {
+    insert(entry) {
+      this._validateEntry(entry, "insert");
       this.assert(
         !this.items.filter((item) => item[0] === key).length,
-        "Cannot insert key because it already exists",
+        `Cannot insert because a duplication of key detected on key «${key}» on «PointerList.prototype.insert»`,
       );
       this.items.push([key, value]);
       return this;
+    }
+    insertAll(...entries) {
+      for (let index = 0; index < entries.length; index++) {
+        const entry = entries[index];
+        this._validateEntry(entry, "insertAll");
+        this.insert(entry);
+      }
     }
     update(key, value) {
       const pos = this.items.findIndex((item) => item[0] === key);
       this.assert(
         pos !== -1,
-        "Cannot update key because it does not exist on «PointerList.prototype.update»",
+        `Cannot update key ${key} because it does not exist on «PointerList.prototype.update»`,
       );
       this.items.push([key, value]);
       return this;
@@ -59,7 +63,7 @@ module.exports = $moduler.import([], function () {
       const pos = this.items.findIndex((item) => item[0] === key);
       if (pos === -1)
         throw new Error(
-          "Cannot update key because it does not exist on «PointerList.prototype.delete»",
+          `Cannot update key ${key} because it does not exist on «PointerList.prototype.delete»`,
         );
       this.items.splice(pos, 1);
       return this;
@@ -67,21 +71,21 @@ module.exports = $moduler.import([], function () {
     precede(key) {
       return this.constructor.LocutionOfWith.create({
         list: this,
-        operation: "precedeKey",
+        operation: "precedeKeyWith",
         key,
       });
     }
     follow(key) {
       return this.constructor.LocutionOfWith.create({
         list: this,
-        operation: "followKey",
+        operation: "followKeyWith",
         key,
       });
     }
     replace(key) {
       return this.constructor.LocutionOfWith.create({
         list: this,
-        operation: "replaceKey",
+        operation: "replaceKeyWith",
         key,
       });
     }

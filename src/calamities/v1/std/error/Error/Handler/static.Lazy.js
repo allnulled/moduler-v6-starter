@@ -1,0 +1,1 @@
+static Lazy = $compiler.inject.source("./Lazy/Lazy.class.js");

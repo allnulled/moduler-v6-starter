@@ -1,0 +1,3 @@
+rethrow() {
+  throw this.error;
+}

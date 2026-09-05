@@ -774,10 +774,10 @@ static Parser = (function (mod) {
           };
         }
         this.assert(typeof grammar === "object", `Grammar «${index}» must be object`);
-        this.assert(typeof grammar[0] === "string", `Item «0» in grammar «${index}» must be string`);
-        this.assert(typeof grammar[1] === "string" || typeof grammar[1] === "object", `Item «1» in grammar «${index}» must be string or object`);
-        this.assert(typeof grammar[2] === "function", `Item «2» in grammar «${index}» must be function`);
-        this.assert(typeof grammar[3] === "object", `Item «3» in grammar «${index}» must be object`);
+        this.assert(typeof grammar[0] === "string", `Grammar «start», at position «0», on grammar «${index}» must be string`);
+        this.assert(typeof grammar[1] === "string" || typeof grammar[1] === "object" || typeof grammar[1] === "function", `Grammar «end», at position «1», on grammar «${index}» must be string, object or function`);
+        this.assert(typeof grammar[2] === "function", `Grammar «formatter», at position «2», on grammar «${index}» must be function`);
+        this.assert(typeof grammar[3] === "object", `Grammar «settings», at position «3», on grammar «${index}» must be object`);
         if (("allowInside" in grammar[3]) && (typeof grammar[3].allowInside !== "undefined")) {
           this.assert(typeof grammar[3].allowInside === "boolean", `Property «allowInside» in item «3» in grammar «${index}» must be boolean or none`);
         }
@@ -813,7 +813,7 @@ static Parser = (function (mod) {
       return state.output.push({
         type: starter,
         location: [state.position, lastPosition],
-        text: text.substring(state.position, lastPosition),
+        // text: text.substring(state.position, lastPosition),
         inner: text.substring(countingFrom, currentPosition),
         outer: text.substring(state.position, lastPosition),
       });
@@ -873,7 +873,6 @@ static Parser = (function (mod) {
             let wasEnded = false;
             while ((countingFrom + offset) < text.length) {
               const currentPosition = countingFrom + offset;
-              // @TODO: meterse dentro de los strings y escapar paréntesis internos
               if (text[currentPosition] === "(") {
                 openedParenthesys++;
               } else if (text[currentPosition] === ")") {
@@ -887,6 +886,16 @@ static Parser = (function (mod) {
               offset++;
             }
             if (!wasEnded) throw new Error(`Unclosed starter of grammar «${starter}» reached end of text but the first parenthesys was not closed on grammar index «${index}»`);
+          } else if(typeof ender === "function") {
+            // @MUST: call to parser._pushToken with: { state:Object, starter:String, currentPosition:Number, countingFrom:Number, text:String, enderLength:Number=1, extraOffset:Number=0 }
+            ender({
+              parser: this,
+              starter,
+              countingFrom,
+              state,
+              text,
+              grammar,
+            });
           } else {
             throw new Error(`Ender (2nd argument) of grammar «${starter}» at grammar index «${index}» has not valid type: «${typeof ender}»`);
           }
@@ -903,6 +912,38 @@ static Parser = (function (mod) {
   };
   return TextParserV1;
 }.call());;
+  /**
+ * @name ModulerV6.static.ParserUtils
+ * @type 
+ * @description 
+ */
+static ParserUtils = class ParserUtils {
+  /**
+   * @name ModulerV6.ParserUtils.ParserUtils.class
+   * @type 
+   * @description 
+   */
+  static stringOrArrayOfStringsContinuation({ state, grammar, countingFrom, text, parser, }) {
+  let pos;
+  Find_end_position: {
+    pos = ModulerV6.prototype._findStringOrArrayEnd(text, countingFrom);
+  }
+  Push_token: {
+    parser._pushToken({
+      starter: grammar[0],
+      state,
+      countingFrom,
+      text,
+      currentPosition: pos,
+      enderLength: 0,
+      extraOffset: 0,
+    });
+  }
+  Update_state: {
+    state.position = pos + (">".length);
+  }
+}
+};
   
   /**
  * @name ModulerV6.nativeGrammars
@@ -927,34 +968,34 @@ static nativeGrammars = {
   InjectModules: ["$"+"compiler.inject.modules(", this.Parser.symbols.PARENTHESYS_BALANCE, function (token) {
     return { syntax: "Inject Modules", ...token, };
   }],
-  ImportJs: ["$"+"moduler.import(", this.Parser.symbols.PARENTHESYS_BALANCE, function (token) {
+  ImportJs: ["$"+"moduler.import(", this.ParserUtils.stringOrArrayOfStringsContinuation, function (token) {
     return { syntax: "Moduler Import", ...token, };
-  }, {allowInside:true}],
-  ExportJs: ["$"+"moduler.export(", this.Parser.symbols.PARENTHESYS_BALANCE, function (token) {
+  }, {}],
+  ExportJs: ["$"+"moduler.export(", this.ParserUtils.stringOrArrayOfStringsContinuation, function (token) {
     return { syntax: "Moduler Export", ...token, };
-  }, {allowInside:true}],
+  }, {}],
   //*
-  SectionGet: ["$"+"moduler.section.get(", this.Parser.symbols.PARENTHESYS_BALANCE, function (token) {
+  SectionGet: ["$"+"moduler.section.get(", this.ParserUtils.stringOrArrayOfStringsContinuation, function (token) {
     return { syntax: "Moduler Section Get", ...token, };
-  }, {allowInside:true}],
-  SectionSet: ["$"+"moduler.section.set(", this.Parser.symbols.PARENTHESYS_BALANCE, function (token) {
+  }, {}],
+  SectionSet: ["$"+"moduler.section.set(", this.ParserUtils.stringOrArrayOfStringsContinuation, function (token) {
     return { syntax: "Moduler Section Set", ...token, };
-  }, {allowInside:true}],
-  SectionOverwrite: ["$"+"moduler.section.overwrite(", this.Parser.symbols.PARENTHESYS_BALANCE, function (token) {
+  }, {}],
+  SectionOverwrite: ["$"+"moduler.section.overwrite(", this.ParserUtils.stringOrArrayOfStringsContinuation, function (token) {
     return { syntax: "Moduler Section Overwrite", ...token, };
-  }, {allowInside:true}],
-  SectionExpand: ["$"+"moduler.section.expand(", this.Parser.symbols.PARENTHESYS_BALANCE, function (token) {
+  }, {}],
+  SectionExpand: ["$"+"moduler.section.expand(", this.ParserUtils.stringOrArrayOfStringsContinuation, function (token) {
     return { syntax: "Moduler Section Expand", ...token, };
-  }, {allowInside:true}],
-  SectionFill: ["$"+"moduler.section.fill(", this.Parser.symbols.PARENTHESYS_BALANCE, function (token) {
+  }, {}],
+  SectionFill: ["$"+"moduler.section.fill(", this.ParserUtils.stringOrArrayOfStringsContinuation, function (token) {
     return { syntax: "Moduler Section Fill", ...token, };
-  }, {allowInside:true}],
-  SectionHas: ["$"+"moduler.section.has(", this.Parser.symbols.PARENTHESYS_BALANCE, function (token) {
+  }, {}],
+  SectionHas: ["$"+"moduler.section.has(", this.ParserUtils.stringOrArrayOfStringsContinuation, function (token) {
     return { syntax: "Moduler Section Has", ...token, };
-  }, {allowInside:true}],
-  SectionInitialize: ["$"+"moduler.section.initialize(", this.Parser.symbols.PARENTHESYS_BALANCE, function (token) {
+  }, {}],
+  SectionInitialize: ["$"+"moduler.section.initialize(", this.ParserUtils.stringOrArrayOfStringsContinuation, function (token) {
     return { syntax: "Moduler Section Initialize", ...token, };
-  }, {allowInside:true}],
+  }, {}],
   //*/
   EmbeddedFormFieldOpener: ["/"+"*=¿", "*/", function (token) {
     return { syntax: "Embedded Form Field Opener", ...token, };
@@ -1266,8 +1307,15 @@ tracer = this.constructor.Tracer.create("ModulerV6.globalInstance");
  */
 _formatImportParameters(signature) {
   this.assert(Array.isArray(signature), "Parameter «signature» must be array on «ModulerV6.prototype._formatImportParameters»");
-  this.assert(signature.length !== 0, "ModulerV6.prototype.import cannot have 0 arguments");
-  if(signature.length === 1) {
+  // this.assert(signature.length !== 0, "ModulerV6.prototype.import cannot have 0 arguments");
+  if(signature.length === 0) {
+    return {
+      id: null,
+      file: null,
+      dependencies: [],
+      factory: null
+    };
+  } else if(signature.length === 1) {
     if(typeof signature[0] === "string") {
       // By file or id
       const isId = signature[0].startsWith("#");
@@ -1320,10 +1368,20 @@ _formatImportParameters(signature) {
 _formatExportParameters(signature) {
   this.assert(Array.isArray(signature), "Parameter «signature» must be array on «ModulerV6.prototype._formatExportParameters»");
   this.assert(signature.length !== 0, "ModulerV6.prototype.export cannot have 0 arguments");
-  this.assert(signature.length !== 1, "ModulerV6.prototype.export cannot have 1 argument only");
+  // this.assert(signature.length !== 1, "ModulerV6.prototype.export cannot have 1 argument only");
   this.assert(typeof signature[0] === "string", "ModulerV6.prototype.export first argument must be a string");
   this.assert(signature[0].startsWith("#"), "ModulerV6.prototype.export first argument must be a string starting with «#»");
-  if(signature.length === 2) {
+  if(signature.length === 1) {
+    if(typeof signature[0] === "string") {
+      // Factory module to name
+      return {
+        id: signature[0],
+        file: null,
+        dependencies: [],
+        factory: null,
+      };
+    }
+  } else if(signature.length === 2) {
     if(typeof signature[0] === "string" && typeof signature[1] === "function") {
       // Factory module to name
       return {
@@ -1699,6 +1757,74 @@ _removeSymbolsFromFilepath(filepathInput, returnData = false) {
     return [output, activeOptions];
   }
   return output;
+}
+  /**
+ * @name CompilerV6.prototype._findStringEnd
+ * @type 
+ * @description 
+ */
+_findStringEnd(source, position) {
+  let escaped = false;
+  for (let i = position + 1; i < source.length; i++) {
+    const char = source[i];
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (char === "\\") {
+      escaped = true;
+      continue;
+    }
+    if (char === '"') return i + 1;
+  }
+  throw new SyntaxError("Unterminated string");
+}
+  _findStringOrArrayEnd(source, position) {
+  // @CHATGPT-MADE:
+  let i = position;
+  while(i < source.length) {
+    // 1. Espacios
+    while(/\s/.test(source[i])) i++;
+    // 2. String
+    if(source[i] === '"') {
+      i = this._findStringEnd(source, i);
+    } else if(source[i] === "[") {
+      // 3. Array de strings
+      i++;
+      while(true) {
+        while(/\s/.test(source[i])) i++;
+        if(source[i] === "]") {
+          i++;
+          break;
+        }
+        if(source[i] !== '"') {
+          return i;
+        }
+        i = this._findStringEnd(source, i);
+        while(/\s/.test(source[i])) i++;
+        if(source[i] === ",") {
+          i++;
+          continue;
+        }
+        if(source[i] === "]") {
+          i++;
+          break;
+        }
+        return i;
+      }
+    } else {
+      // 4. Ya no es string ni array
+      return i;
+    }
+    // 5. Después del argumento
+    while(/\s/.test(source[i])) i++;
+    if(source[i] === ",") {
+      i++;
+      continue;
+    }
+    return i;
+  }
+  return i;
 }
   
   /**
@@ -4842,8 +4968,13 @@ _getPreferredOutput(compilationFile, compilationProcess) {
  */
 _hydrateParameters(parametersSource) {
   this._trace("_hydrateParameters", arguments);
-  // @ATTENTION: Diu-a-fondiskiuts
-  return (new Function(`return [${parametersSource}]`)).call();
+  // console.log(parametersSource);
+  try {
+    // @ATTENTION: Diu-a-fondiskiuts
+    return (new Function(`return [${parametersSource}]`)).call();
+  } catch (error) {
+    return [`[#ERROR]=${error.name}:${error.message}`];
+  }
 }
   /**
  * @name CompilerV6.prototype._cloneForFile
@@ -5470,7 +5601,7 @@ static removeNullPropertiesFromObject(obj) {
     if(val !== null) {
       output[prop] = val;
     } else {
-      console.log("Removed: " + prop, val);
+      // console.log("Removed: " + prop, val);
     }
   }
   return output;
@@ -5854,9 +5985,9 @@ async executeUnitTestFileOf(filepath, event) {
       if(typeof testCallback === "function") {
         await testCallback.call({ devbin: this.devbin, filepath, event });
       }
-      console.log($.style("greenBright").text(`[*] DevBinary has successfully passed unit test file of: ${unitRootpath}`));
+      console.log($.style("greenBright,underline").text(`[*] DevBinary has successfully passed unit test file of: ${unitRootpath}`));
     } catch (error) {
-      console.log($.style("red,bold").text(`[!] DevBinary has failed unit test with error on file «${testUnitFile}»:`));
+      console.log($.style("red,underline").text(`[!] DevBinary has failed unit test with error on file «${filepath}»:`));
       console.log(error);
     }
   }
@@ -6032,7 +6163,7 @@ async touchFile(fileBrute, optionsInput = {}) {
         Caso_previo_6_test_de_test_dir: {
           if (event.isTestItself) {
             // caso a: empieza en "@/test/" y acaba en ".test.js"
-            await this.devbin.utils.resolveFunction(this.devbin.utils.requireAgain(filepath), { event });
+            await this.executeUnitTestFileOf(filepath, { ...event, testFabrication: { unitFile: filepath }});
             return event;
           }
           if (event.isRunnableTest) {
@@ -6105,7 +6236,7 @@ async touchFile(fileBrute, optionsInput = {}) {
         const onVersionateFile = path.join(path.dirname(filepath), "e.onVersionate.js");
         try {
           const versionDefinitions = await this.triggerCallbackFromFile(onVersionateFile, { file: filepath, event, onVersionateFile });
-          if(versionDefinitions) await this.versionateEntry(versionDefinitions, { file: filepath, event, onVersionateFile });
+          if (versionDefinitions) await this.versionateEntry(versionDefinitions, { file: filepath, event, onVersionateFile });
         } catch (error) {
           console.log(error);
           console.log(this.devbin.compiler.constructor.ansi.colors.style("blackBright,italic").text(`[!] DevBinaryV6 found errors loading «e.onVersionate.js» as object at «${this.devbin.moduler.rootdirOf(onVersionateFile)}» but it just ignored it`));
@@ -6750,7 +6881,7 @@ neutralizeIndentation(input) {
   const output = lines.map((line, index) => {
     return ((!removableIndentation.length) || (index === 0)) ? line : line.replace(removableIndentation, "");
   }).join("\n");
-  console.log(input, output);
+  // console.log(input, output);
   return output;
 }
   /**
@@ -7063,9 +7194,9 @@ async versionateEntry(versions, { file: fileBrute, onVersionateFile }) {
   const outputFile = `@/dist/src/${subpath}/v/${id}.${currentVersion}.dist.js`;
   const inputFile = `@/dist/src/${subpath}/${id}.dist.js`;
   const outputDir = require("path").dirname(outputFile);
-  console.log(outputDir);
-  console.log(outputFile);
-  console.log(inputFile);
+  // console.log(outputDir);
+  // console.log(outputFile);
+  // console.log(inputFile);
   await this.devbin.files.ensureDirectory(outputDir);
   await this.devbin.files.copyFile(inputFile, outputFile);
 }

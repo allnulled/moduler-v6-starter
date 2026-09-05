@@ -1,0 +1,1 @@
+static Client = $compiler.inject.source("./Client/Client.class.js");

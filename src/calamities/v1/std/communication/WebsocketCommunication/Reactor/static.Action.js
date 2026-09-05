@@ -1,0 +1,1 @@
+static Action = $compiler.inject.source("./Action/Action.class.js");

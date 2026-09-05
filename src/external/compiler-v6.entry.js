@@ -762,10 +762,10 @@ static Parser = (function (mod) {
           };
         }
         this.assert(typeof grammar === "object", `Grammar «${index}» must be object`);
-        this.assert(typeof grammar[0] === "string", `Item «0» in grammar «${index}» must be string`);
-        this.assert(typeof grammar[1] === "string" || typeof grammar[1] === "object", `Item «1» in grammar «${index}» must be string or object`);
-        this.assert(typeof grammar[2] === "function", `Item «2» in grammar «${index}» must be function`);
-        this.assert(typeof grammar[3] === "object", `Item «3» in grammar «${index}» must be object`);
+        this.assert(typeof grammar[0] === "string", `Grammar «start», at position «0», on grammar «${index}» must be string`);
+        this.assert(typeof grammar[1] === "string" || typeof grammar[1] === "object" || typeof grammar[1] === "function", `Grammar «end», at position «1», on grammar «${index}» must be string, object or function`);
+        this.assert(typeof grammar[2] === "function", `Grammar «formatter», at position «2», on grammar «${index}» must be function`);
+        this.assert(typeof grammar[3] === "object", `Grammar «settings», at position «3», on grammar «${index}» must be object`);
         if (("allowInside" in grammar[3]) && (typeof grammar[3].allowInside !== "undefined")) {
           this.assert(typeof grammar[3].allowInside === "boolean", `Property «allowInside» in item «3» in grammar «${index}» must be boolean or none`);
         }
@@ -801,7 +801,7 @@ static Parser = (function (mod) {
       return state.output.push({
         type: starter,
         location: [state.position, lastPosition],
-        text: text.substring(state.position, lastPosition),
+        // text: text.substring(state.position, lastPosition),
         inner: text.substring(countingFrom, currentPosition),
         outer: text.substring(state.position, lastPosition),
       });
@@ -861,7 +861,6 @@ static Parser = (function (mod) {
             let wasEnded = false;
             while ((countingFrom + offset) < text.length) {
               const currentPosition = countingFrom + offset;
-              // @TODO: meterse dentro de los strings y escapar paréntesis internos
               if (text[currentPosition] === "(") {
                 openedParenthesys++;
               } else if (text[currentPosition] === ")") {
@@ -875,6 +874,16 @@ static Parser = (function (mod) {
               offset++;
             }
             if (!wasEnded) throw new Error(`Unclosed starter of grammar «${starter}» reached end of text but the first parenthesys was not closed on grammar index «${index}»`);
+          } else if(typeof ender === "function") {
+            // @MUST: call to parser._pushToken with: { state:Object, starter:String, currentPosition:Number, countingFrom:Number, text:String, enderLength:Number=1, extraOffset:Number=0 }
+            ender({
+              parser: this,
+              starter,
+              countingFrom,
+              state,
+              text,
+              grammar,
+            });
           } else {
             throw new Error(`Ender (2nd argument) of grammar «${starter}» at grammar index «${index}» has not valid type: «${typeof ender}»`);
           }
@@ -891,6 +900,38 @@ static Parser = (function (mod) {
   };
   return TextParserV1;
 }.call());;
+  /**
+ * @name ModulerV6.static.ParserUtils
+ * @type 
+ * @description 
+ */
+static ParserUtils = class ParserUtils {
+  /**
+   * @name ModulerV6.ParserUtils.ParserUtils.class
+   * @type 
+   * @description 
+   */
+  static stringOrArrayOfStringsContinuation({ state, grammar, countingFrom, text, parser, }) {
+  let pos;
+  Find_end_position: {
+    pos = ModulerV6.prototype._findStringOrArrayEnd(text, countingFrom);
+  }
+  Push_token: {
+    parser._pushToken({
+      starter: grammar[0],
+      state,
+      countingFrom,
+      text,
+      currentPosition: pos,
+      enderLength: 0,
+      extraOffset: 0,
+    });
+  }
+  Update_state: {
+    state.position = pos + (">".length);
+  }
+}
+};
   
   /**
  * @name ModulerV6.nativeGrammars
@@ -915,34 +956,34 @@ static nativeGrammars = {
   InjectModules: ["$"+"compiler.inject.modules(", this.Parser.symbols.PARENTHESYS_BALANCE, function (token) {
     return { syntax: "Inject Modules", ...token, };
   }],
-  ImportJs: ["$"+"moduler.import(", this.Parser.symbols.PARENTHESYS_BALANCE, function (token) {
+  ImportJs: ["$"+"moduler.import(", this.ParserUtils.stringOrArrayOfStringsContinuation, function (token) {
     return { syntax: "Moduler Import", ...token, };
-  }, {allowInside:true}],
-  ExportJs: ["$"+"moduler.export(", this.Parser.symbols.PARENTHESYS_BALANCE, function (token) {
+  }, {}],
+  ExportJs: ["$"+"moduler.export(", this.ParserUtils.stringOrArrayOfStringsContinuation, function (token) {
     return { syntax: "Moduler Export", ...token, };
-  }, {allowInside:true}],
+  }, {}],
   //*
-  SectionGet: ["$"+"moduler.section.get(", this.Parser.symbols.PARENTHESYS_BALANCE, function (token) {
+  SectionGet: ["$"+"moduler.section.get(", this.ParserUtils.stringOrArrayOfStringsContinuation, function (token) {
     return { syntax: "Moduler Section Get", ...token, };
-  }, {allowInside:true}],
-  SectionSet: ["$"+"moduler.section.set(", this.Parser.symbols.PARENTHESYS_BALANCE, function (token) {
+  }, {}],
+  SectionSet: ["$"+"moduler.section.set(", this.ParserUtils.stringOrArrayOfStringsContinuation, function (token) {
     return { syntax: "Moduler Section Set", ...token, };
-  }, {allowInside:true}],
-  SectionOverwrite: ["$"+"moduler.section.overwrite(", this.Parser.symbols.PARENTHESYS_BALANCE, function (token) {
+  }, {}],
+  SectionOverwrite: ["$"+"moduler.section.overwrite(", this.ParserUtils.stringOrArrayOfStringsContinuation, function (token) {
     return { syntax: "Moduler Section Overwrite", ...token, };
-  }, {allowInside:true}],
-  SectionExpand: ["$"+"moduler.section.expand(", this.Parser.symbols.PARENTHESYS_BALANCE, function (token) {
+  }, {}],
+  SectionExpand: ["$"+"moduler.section.expand(", this.ParserUtils.stringOrArrayOfStringsContinuation, function (token) {
     return { syntax: "Moduler Section Expand", ...token, };
-  }, {allowInside:true}],
-  SectionFill: ["$"+"moduler.section.fill(", this.Parser.symbols.PARENTHESYS_BALANCE, function (token) {
+  }, {}],
+  SectionFill: ["$"+"moduler.section.fill(", this.ParserUtils.stringOrArrayOfStringsContinuation, function (token) {
     return { syntax: "Moduler Section Fill", ...token, };
-  }, {allowInside:true}],
-  SectionHas: ["$"+"moduler.section.has(", this.Parser.symbols.PARENTHESYS_BALANCE, function (token) {
+  }, {}],
+  SectionHas: ["$"+"moduler.section.has(", this.ParserUtils.stringOrArrayOfStringsContinuation, function (token) {
     return { syntax: "Moduler Section Has", ...token, };
-  }, {allowInside:true}],
-  SectionInitialize: ["$"+"moduler.section.initialize(", this.Parser.symbols.PARENTHESYS_BALANCE, function (token) {
+  }, {}],
+  SectionInitialize: ["$"+"moduler.section.initialize(", this.ParserUtils.stringOrArrayOfStringsContinuation, function (token) {
     return { syntax: "Moduler Section Initialize", ...token, };
-  }, {allowInside:true}],
+  }, {}],
   //*/
   EmbeddedFormFieldOpener: ["/"+"*=¿", "*/", function (token) {
     return { syntax: "Embedded Form Field Opener", ...token, };
@@ -1254,8 +1295,15 @@ tracer = this.constructor.Tracer.create("ModulerV6.globalInstance");
  */
 _formatImportParameters(signature) {
   this.assert(Array.isArray(signature), "Parameter «signature» must be array on «ModulerV6.prototype._formatImportParameters»");
-  this.assert(signature.length !== 0, "ModulerV6.prototype.import cannot have 0 arguments");
-  if(signature.length === 1) {
+  // this.assert(signature.length !== 0, "ModulerV6.prototype.import cannot have 0 arguments");
+  if(signature.length === 0) {
+    return {
+      id: null,
+      file: null,
+      dependencies: [],
+      factory: null
+    };
+  } else if(signature.length === 1) {
     if(typeof signature[0] === "string") {
       // By file or id
       const isId = signature[0].startsWith("#");
@@ -1308,10 +1356,20 @@ _formatImportParameters(signature) {
 _formatExportParameters(signature) {
   this.assert(Array.isArray(signature), "Parameter «signature» must be array on «ModulerV6.prototype._formatExportParameters»");
   this.assert(signature.length !== 0, "ModulerV6.prototype.export cannot have 0 arguments");
-  this.assert(signature.length !== 1, "ModulerV6.prototype.export cannot have 1 argument only");
+  // this.assert(signature.length !== 1, "ModulerV6.prototype.export cannot have 1 argument only");
   this.assert(typeof signature[0] === "string", "ModulerV6.prototype.export first argument must be a string");
   this.assert(signature[0].startsWith("#"), "ModulerV6.prototype.export first argument must be a string starting with «#»");
-  if(signature.length === 2) {
+  if(signature.length === 1) {
+    if(typeof signature[0] === "string") {
+      // Factory module to name
+      return {
+        id: signature[0],
+        file: null,
+        dependencies: [],
+        factory: null,
+      };
+    }
+  } else if(signature.length === 2) {
     if(typeof signature[0] === "string" && typeof signature[1] === "function") {
       // Factory module to name
       return {
@@ -1687,6 +1745,74 @@ _removeSymbolsFromFilepath(filepathInput, returnData = false) {
     return [output, activeOptions];
   }
   return output;
+}
+  /**
+ * @name CompilerV6.prototype._findStringEnd
+ * @type 
+ * @description 
+ */
+_findStringEnd(source, position) {
+  let escaped = false;
+  for (let i = position + 1; i < source.length; i++) {
+    const char = source[i];
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (char === "\\") {
+      escaped = true;
+      continue;
+    }
+    if (char === '"') return i + 1;
+  }
+  throw new SyntaxError("Unterminated string");
+}
+  _findStringOrArrayEnd(source, position) {
+  // @CHATGPT-MADE:
+  let i = position;
+  while(i < source.length) {
+    // 1. Espacios
+    while(/\s/.test(source[i])) i++;
+    // 2. String
+    if(source[i] === '"') {
+      i = this._findStringEnd(source, i);
+    } else if(source[i] === "[") {
+      // 3. Array de strings
+      i++;
+      while(true) {
+        while(/\s/.test(source[i])) i++;
+        if(source[i] === "]") {
+          i++;
+          break;
+        }
+        if(source[i] !== '"') {
+          return i;
+        }
+        i = this._findStringEnd(source, i);
+        while(/\s/.test(source[i])) i++;
+        if(source[i] === ",") {
+          i++;
+          continue;
+        }
+        if(source[i] === "]") {
+          i++;
+          break;
+        }
+        return i;
+      }
+    } else {
+      // 4. Ya no es string ni array
+      return i;
+    }
+    // 5. Después del argumento
+    while(/\s/.test(source[i])) i++;
+    if(source[i] === ",") {
+      i++;
+      continue;
+    }
+    return i;
+  }
+  return i;
 }
   
   /**
@@ -4830,8 +4956,13 @@ _getPreferredOutput(compilationFile, compilationProcess) {
  */
 _hydrateParameters(parametersSource) {
   this._trace("_hydrateParameters", arguments);
-  // @ATTENTION: Diu-a-fondiskiuts
-  return (new Function(`return [${parametersSource}]`)).call();
+  // console.log(parametersSource);
+  try {
+    // @ATTENTION: Diu-a-fondiskiuts
+    return (new Function(`return [${parametersSource}]`)).call();
+  } catch (error) {
+    return [`[#ERROR]=${error.name}:${error.message}`];
+  }
 }
   /**
  * @name CompilerV6.prototype._cloneForFile

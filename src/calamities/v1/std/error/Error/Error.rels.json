@@ -1,0 +1,50 @@
+{
+  "tree": {
+    "@/test/unit/src/candidate/std/error/Error/Error.entry.js": {
+      "310-368": {
+        "syntax": "Inject Source",
+        "inner": "\"./Prosecutor/Prosecutor.class.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "./Prosecutor/Prosecutor.class.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/test/unit/src/candidate/std/error/Error/Prosecutor/Prosecutor.class.js",
+          "rootpath": "@/test/unit/src/candidate/std/error/Error/Prosecutor/Prosecutor.class.js"
+        }
+      },
+      "227-283": {
+        "syntax": "Inject Source",
+        "inner": "\"./Dissector/Dissector.class.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "./Dissector/Dissector.class.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/test/unit/src/candidate/std/error/Error/Dissector/Dissector.class.js",
+          "rootpath": "@/test/unit/src/candidate/std/error/Error/Dissector/Dissector.class.js"
+        }
+      },
+      "149-201": {
+        "syntax": "Inject Source",
+        "inner": "\"./Handler/Handler.class.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "./Handler/Handler.class.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/test/unit/src/candidate/std/error/Error/Handler/Handler.class.js",
+          "rootpath": "@/test/unit/src/candidate/std/error/Error/Handler/Handler.class.js"
+        }
+      },
+      "73-125": {
+        "syntax": "Inject Source",
+        "inner": "\"./Factory/Factory.class.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "./Factory/Factory.class.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/test/unit/src/candidate/std/error/Error/Factory/Factory.class.js",
+          "rootpath": "@/test/unit/src/candidate/std/error/Error/Factory/Factory.class.js"
+        }
+      }
+    },
+    "@/test/unit/src/candidate/std/error/Error/Prosecutor/Prosecutor.class.js": {},
+    "@/test/unit/src/candidate/std/error/Error/Dissector/Dissector.class.js": {},
+    "@/test/unit/src/candidate/std/error/Error/Handler/Handler.class.js": {},
+    "@/test/unit/src/candidate/std/error/Error/Factory/Factory.class.js": {}
+  }
+}

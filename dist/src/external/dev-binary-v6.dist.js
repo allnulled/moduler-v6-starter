@@ -919,20 +919,21 @@
                         );
                         this.assert(
                           typeof grammar[0] === "string",
-                          `Item «0» in grammar «${index}» must be string`,
+                          `Grammar «start», at position «0», on grammar «${index}» must be string`,
                         );
                         this.assert(
                           typeof grammar[1] === "string" ||
-                            typeof grammar[1] === "object",
-                          `Item «1» in grammar «${index}» must be string or object`,
+                            typeof grammar[1] === "object" ||
+                            typeof grammar[1] === "function",
+                          `Grammar «end», at position «1», on grammar «${index}» must be string, object or function`,
                         );
                         this.assert(
                           typeof grammar[2] === "function",
-                          `Item «2» in grammar «${index}» must be function`,
+                          `Grammar «formatter», at position «2», on grammar «${index}» must be function`,
                         );
                         this.assert(
                           typeof grammar[3] === "object",
-                          `Item «3» in grammar «${index}» must be object`,
+                          `Grammar «settings», at position «3», on grammar «${index}» must be object`,
                         );
                         if (
                           "allowInside" in grammar[3] &&
@@ -1016,7 +1017,7 @@
                       return state.output.push({
                         type: starter,
                         location: [state.position, lastPosition],
-                        text: text.substring(state.position, lastPosition),
+                        // text: text.substring(state.position, lastPosition),
                         inner: text.substring(countingFrom, currentPosition),
                         outer: text.substring(state.position, lastPosition),
                       });
@@ -1120,7 +1121,6 @@
                             let wasEnded = false;
                             while (countingFrom + offset < text.length) {
                               const currentPosition = countingFrom + offset;
-                              // @TODO: meterse dentro de los strings y escapar paréntesis internos
                               if (text[currentPosition] === "(") {
                                 openedParenthesys++;
                               } else if (text[currentPosition] === ")") {
@@ -1150,6 +1150,15 @@
                               throw new Error(
                                 `Unclosed starter of grammar «${starter}» reached end of text but the first parenthesys was not closed on grammar index «${index}»`,
                               );
+                          } else if (typeof ender === "function") {
+                            // @MUST: call to parser._pushToken with: { state:Object, starter:String, currentPosition:Number, countingFrom:Number, text:String, enderLength:Number=1, extraOffset:Number=0 }
+                            ender({
+                              parser: this,
+                              countingFrom,
+                              state,
+                              text,
+                              grammar,
+                            });
                           } else {
                             throw new Error(
                               `Ender (2nd argument) of grammar «${starter}» at grammar index «${index}» has not valid type: «${typeof ender}»`,
@@ -1169,6 +1178,66 @@
                   return TextParserV1;
                 }.call(),
               );
+              /**
+               * @name ModulerV6.static.ParserUtils
+               * @type
+               * @description
+               */
+              static ParserUtils = class ParserUtils {
+                /**
+                 * @name ModulerV6.ParserUtils.ParserUtils.class
+                 * @type
+                 * @description
+                 */
+                static stringOrArrayOfStringsContinuation({
+                  state,
+                  grammar,
+                  countingFrom,
+                  text,
+                  parser,
+                }) {
+                  const pos = ModulerV6.prototype._findStringOrArrayEnd(
+                    text,
+                    countingFrom,
+                  );
+                  Push_token: {
+                    parser._pushToken({
+                      starter: grammar.starter,
+                      state,
+                      countingFrom,
+                      text,
+                      currentPosition: pos,
+                      enderLength: 0,
+                      extraOffset: 0,
+                    });
+                  }
+                  Update_state: {
+                    state.position = pos + ">".length;
+                  }
+                  El_que_funcionaba_para_html: {
+                    break El_que_funcionaba_para_html;
+                    const pos = text.indexOf(">", countingFrom);
+                    if (pos === -1)
+                      throw new Error(
+                        "Unclosed expression starting with «<» which misses its «>»",
+                      );
+                    Push_token: {
+                      parser._pushToken({
+                        starter: "<",
+                        state,
+                        countingFrom,
+                        text,
+                        currentPosition: pos,
+                        enderLength: ">".length,
+                        extraOffset: 0,
+                      });
+                    }
+                    Update_state: {
+                      state.position = pos + ">".length;
+                    }
+                  }
+                }
+              };
 
               /**
                * @name ModulerV6.nativeGrammars
@@ -1223,7 +1292,7 @@
                 ],
                 ImportJs: [
                   "$" + "moduler.import(",
-                  this.Parser.symbols.PARENTHESYS_BALANCE,
+                  this.ParserUtils.stringOrArrayOfStringsContinuation,
                   function (token) {
                     return { syntax: "Moduler Import", ...token };
                   },
@@ -1231,7 +1300,7 @@
                 ],
                 ExportJs: [
                   "$" + "moduler.export(",
-                  this.Parser.symbols.PARENTHESYS_BALANCE,
+                  this.ParserUtils.stringOrArrayOfStringsContinuation,
                   function (token) {
                     return { syntax: "Moduler Export", ...token };
                   },
@@ -1240,7 +1309,7 @@
                 //*
                 SectionGet: [
                   "$" + "moduler.section.get(",
-                  this.Parser.symbols.PARENTHESYS_BALANCE,
+                  this.ParserUtils.stringOrArrayOfStringsContinuation,
                   function (token) {
                     return { syntax: "Moduler Section Get", ...token };
                   },
@@ -1248,7 +1317,7 @@
                 ],
                 SectionSet: [
                   "$" + "moduler.section.set(",
-                  this.Parser.symbols.PARENTHESYS_BALANCE,
+                  this.ParserUtils.stringOrArrayOfStringsContinuation,
                   function (token) {
                     return { syntax: "Moduler Section Set", ...token };
                   },
@@ -1256,7 +1325,7 @@
                 ],
                 SectionOverwrite: [
                   "$" + "moduler.section.overwrite(",
-                  this.Parser.symbols.PARENTHESYS_BALANCE,
+                  this.ParserUtils.stringOrArrayOfStringsContinuation,
                   function (token) {
                     return { syntax: "Moduler Section Overwrite", ...token };
                   },
@@ -1264,7 +1333,7 @@
                 ],
                 SectionExpand: [
                   "$" + "moduler.section.expand(",
-                  this.Parser.symbols.PARENTHESYS_BALANCE,
+                  this.ParserUtils.stringOrArrayOfStringsContinuation,
                   function (token) {
                     return { syntax: "Moduler Section Expand", ...token };
                   },
@@ -1272,7 +1341,7 @@
                 ],
                 SectionFill: [
                   "$" + "moduler.section.fill(",
-                  this.Parser.symbols.PARENTHESYS_BALANCE,
+                  this.ParserUtils.stringOrArrayOfStringsContinuation,
                   function (token) {
                     return { syntax: "Moduler Section Fill", ...token };
                   },
@@ -1280,7 +1349,7 @@
                 ],
                 SectionHas: [
                   "$" + "moduler.section.has(",
-                  this.Parser.symbols.PARENTHESYS_BALANCE,
+                  this.ParserUtils.stringOrArrayOfStringsContinuation,
                   function (token) {
                     return { syntax: "Moduler Section Has", ...token };
                   },
@@ -1288,7 +1357,7 @@
                 ],
                 SectionInitialize: [
                   "$" + "moduler.section.initialize(",
-                  this.Parser.symbols.PARENTHESYS_BALANCE,
+                  this.ParserUtils.stringOrArrayOfStringsContinuation,
                   function (token) {
                     return { syntax: "Moduler Section Initialize", ...token };
                   },
@@ -2299,6 +2368,74 @@
                   return [output, activeOptions];
                 }
                 return output;
+              }
+              /**
+               * @name CompilerV6.prototype._findStringEnd
+               * @type
+               * @description
+               */
+              _findStringEnd(source, position) {
+                let escaped = false;
+                for (let i = position + 1; i < source.length; i++) {
+                  const char = source[i];
+                  if (escaped) {
+                    escaped = false;
+                    continue;
+                  }
+                  if (char === "\\") {
+                    escaped = true;
+                    continue;
+                  }
+                  if (char === '"') return i + 1;
+                }
+                throw new SyntaxError("Unterminated string");
+              }
+              _findStringOrArrayEnd(source, position) {
+                // @CHATGPT-MADE:
+                let i = position;
+                while (i < source.length) {
+                  // 1. Espacios
+                  while (/\s/.test(source[i])) i++;
+                  // 2. String
+                  if (source[i] === '"') {
+                    i = this._findStringEnd(source, i);
+                  } else if (source[i] === "[") {
+                    // 3. Array de strings
+                    i++;
+                    while (true) {
+                      while (/\s/.test(source[i])) i++;
+                      if (source[i] === "]") {
+                        i++;
+                        break;
+                      }
+                      if (source[i] !== '"') {
+                        return i;
+                      }
+                      i = this._findStringEnd(source, i);
+                      while (/\s/.test(source[i])) i++;
+                      if (source[i] === ",") {
+                        i++;
+                        continue;
+                      }
+                      if (source[i] === "]") {
+                        i++;
+                        break;
+                      }
+                      return i;
+                    }
+                  } else {
+                    // 4. Ya no es string ni array
+                    return i;
+                  }
+                  // 5. Después del argumento
+                  while (/\s/.test(source[i])) i++;
+                  if (source[i] === ",") {
+                    i++;
+                    continue;
+                  }
+                  return i;
+                }
+                return i;
               }
 
               /**
@@ -6269,8 +6406,13 @@
            */
           _hydrateParameters(parametersSource) {
             this._trace("_hydrateParameters", arguments);
-            // @ATTENTION: Diu-a-fondiskiuts
-            return new Function(`return [${parametersSource}]`).call();
+            // console.log(parametersSource);
+            try {
+              // @ATTENTION: Diu-a-fondiskiuts
+              return new Function(`return [${parametersSource}]`).call();
+            } catch (error) {
+              return [`[#ERROR]=${error.name}:${error.message}`];
+            }
           }
           /**
            * @name CompilerV6.prototype._cloneForFile
@@ -7009,7 +7151,7 @@
               if (val !== null) {
                 output[prop] = val;
               } else {
-                console.log("Removed: " + prop, val);
+                // console.log("Removed: " + prop, val);
               }
             }
             return output;
@@ -7543,14 +7685,14 @@
                   });
                 }
                 console.log(
-                  $.style("greenBright").text(
+                  $.style("greenBright,underline").text(
                     `[*] DevBinary has successfully passed unit test file of: ${unitRootpath}`,
                   ),
                 );
               } catch (error) {
                 console.log(
-                  $.style("red,bold").text(
-                    `[!] DevBinary has failed unit test with error on file «${testUnitFile}»:`,
+                  $.style("red,underline").text(
+                    `[!] DevBinary has failed unit test with error on file «${filepath}»:`,
                   ),
                 );
                 console.log(error);
@@ -7786,10 +7928,10 @@
                   Caso_previo_6_test_de_test_dir: {
                     if (event.isTestItself) {
                       // caso a: empieza en "@/test/" y acaba en ".test.js"
-                      await this.devbin.utils.resolveFunction(
-                        this.devbin.utils.requireAgain(filepath),
-                        { event },
-                      );
+                      await this.executeUnitTestFileOf(filepath, {
+                        ...event,
+                        testFabrication: { unitFile: filepath },
+                      });
                       return event;
                     }
                     if (event.isRunnableTest) {
@@ -8060,9 +8202,11 @@
               return event;
             } catch (error) {
               // console.log(`[!] Error on method «touchFile» on step «${currentStep.reverse()[0]}»`, error);
-              console.log(
-                `[!] Error on method «touchFile» on step «${currentStep.reverse()[0]}»`,
-              );
+              this.devbin.console
+                .setProfile("redBright")
+                .print(
+                  `[!] Error on method «touchFile» on step «${currentStep.reverse()[0]}»`,
+                );
               throw error;
             }
           }
@@ -8808,7 +8952,7 @@
                   : line.replace(removableIndentation, "");
               })
               .join("\n");
-            console.log(input, output);
+            // console.log(input, output);
             return output;
           }
           /**
@@ -9181,9 +9325,9 @@
             const outputFile = `@/dist/src/${subpath}/v/${id}.${currentVersion}.dist.js`;
             const inputFile = `@/dist/src/${subpath}/${id}.dist.js`;
             const outputDir = require("path").dirname(outputFile);
-            console.log(outputDir);
-            console.log(outputFile);
-            console.log(inputFile);
+            // console.log(outputDir);
+            // console.log(outputFile);
+            // console.log(inputFile);
             await this.devbin.files.ensureDirectory(outputDir);
             await this.devbin.files.copyFile(inputFile, outputFile);
           }
@@ -10043,7 +10187,7 @@
             );
           } catch (error) {
             this.console
-              .setProfile("red")
+              .setProfile("redBright")
               .print(`[!] Error on «devbin ${commandName}» command`);
             throw error;
           }

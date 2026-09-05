@@ -1,0 +1,1 @@
+static Reactor = $compiler.inject.source("./Reactor/Reactor.class.js");

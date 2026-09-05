@@ -1,0 +1,1 @@
+static Settings = $compiler.inject.source("./Settings/Settings.class.js");
