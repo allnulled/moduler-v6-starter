@@ -1243,7 +1243,7 @@ static symbols = {
  * @description 
  */
 static getEnvironmentDirectory() {
-  this.tracer.trace("ModulerV6.static.getEnvironmentDirectory");
+  // this.tracer.trace("ModulerV6.static.getEnvironmentDirectory");
   if (this.isBrowser) {
     Apply_github_io_configurations_if_so: {
       const projectName = this.isGithubIo();
@@ -5968,7 +5968,7 @@ async executeUnitTestFileOf(filepath, event) {
     console.log($.style("blackBright").text(`[*] DevBinaryV6 missed test for file: ${filepath}`));
   } else {
     const unitRootpath = this.devbin.moduler.rootdirOf(event.testFabrication.unitFile);
-    console.log($.style("cyan").text(`[*] DevBinary is executing unit test file of: ${unitRootpath}`));
+    console.log($.style("cyan").text(`[*] Started unit test on:`) + " " + $.style("").text(unitRootpath));
     let testUnitFile = undefined;
     Get_unit_test_filepath: {
       if(event.testFabrication.unitFile) {
@@ -5985,9 +5985,9 @@ async executeUnitTestFileOf(filepath, event) {
       if(typeof testCallback === "function") {
         await testCallback.call({ devbin: this.devbin, filepath, event });
       }
-      console.log($.style("greenBright,underline").text(`[*] DevBinary has successfully passed unit test file of: ${unitRootpath}`));
+      console.log($.style("bgGreen,black,underline").text(`[*] Passed unit test on:`) + " " + $.style("").text(unitRootpath));
     } catch (error) {
-      console.log($.style("red,underline").text(`[!] DevBinary has failed unit test with error on file «${filepath}»:`));
+      console.log($.style("bgRed,black,underline").text(`[!] Failed unit test on:`) + " " + $.style("underline").text(unitRootpath));
       console.log(error);
     }
   }
@@ -6008,6 +6008,8 @@ async propagateUpTouchEventFrom(filepath, event = {}) {
   let firstFile = undefined;
   Propagate_to_directory_main_entry: {
     const possibleMainEntry = `${currentDirectory}/${currentDirectoryName}.entry.js`;
+    // Esta línea es para que no se duplique el trigger al unit test cuando guardas el entry:
+    if(possibleMainEntry === filepath) break Propagate_to_directory_main_entry;
     if(await this.existsFile(possibleMainEntry)) {
       await this.touchFile(possibleMainEntry, {
         propagateUp: false,
@@ -6060,8 +6062,9 @@ ensureDirectoryOf(file) {
  */
 async touchFile(fileBrute, optionsInput = {}) {
   this.assert(typeof fileBrute === "string", `Parameter «--file» must be string and not «${typeof fileBrute}» on «DevBinaryV6.Utils.prototype.touchFile»`);
+  const $ = this.devbin.compiler.constructor.ansi.colors;
   const file = this.devbin.moduler.normalizationOf(fileBrute);
-  this.devbin.console.setProfile("underline").print("[*] Touched file: " + this.devbin.moduler.rootdirOf(file));
+  console.log($.style("yellow").text("[*] Touched:") + " " + $.style("underline").text(" " + this.devbin.moduler.rootdirOf(file) + " "));
   const currentStep = [];
   try {
     let outputFile = false;
