@@ -1165,10 +1165,13 @@
               text,
               parser,
             }) {
-              const pos = ModulerV6.prototype._findStringOrArrayEnd(
-                text,
-                countingFrom,
-              );
+              let pos;
+              Find_end_position: {
+                pos = ModulerV6.prototype._findStringOrArrayEnd(
+                  text,
+                  countingFrom,
+                );
+              }
               Push_token: {
                 parser._pushToken({
                   starter: grammar[0],
@@ -1182,28 +1185,6 @@
               }
               Update_state: {
                 state.position = pos + ">".length;
-              }
-              El_que_funcionaba_para_html: {
-                break El_que_funcionaba_para_html;
-                const pos = text.indexOf(">", countingFrom);
-                if (pos === -1)
-                  throw new Error(
-                    "Unclosed expression starting with «<» which misses its «>»",
-                  );
-                Push_token: {
-                  parser._pushToken({
-                    starter: "<",
-                    state,
-                    countingFrom,
-                    text,
-                    currentPosition: pos,
-                    enderLength: ">".length,
-                    extraOffset: 0,
-                  });
-                }
-                Update_state: {
-                  state.position = pos + ">".length;
-                }
               }
             }
           };
