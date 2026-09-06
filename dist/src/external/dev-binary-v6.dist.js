@@ -1154,6 +1154,7 @@
                             // @MUST: call to parser._pushToken with: { state:Object, starter:String, currentPosition:Number, countingFrom:Number, text:String, enderLength:Number=1, extraOffset:Number=0 }
                             ender({
                               parser: this,
+                              starter,
                               countingFrom,
                               state,
                               text,
@@ -1196,13 +1197,16 @@
                   text,
                   parser,
                 }) {
-                  const pos = ModulerV6.prototype._findStringOrArrayEnd(
-                    text,
-                    countingFrom,
-                  );
+                  let pos;
+                  Find_end_position: {
+                    pos = ModulerV6.prototype._findStringOrArrayEnd(
+                      text,
+                      countingFrom,
+                    );
+                  }
                   Push_token: {
                     parser._pushToken({
-                      starter: grammar.starter,
+                      starter: grammar[0],
                       state,
                       countingFrom,
                       text,
@@ -1213,28 +1217,6 @@
                   }
                   Update_state: {
                     state.position = pos + ">".length;
-                  }
-                  El_que_funcionaba_para_html: {
-                    break El_que_funcionaba_para_html;
-                    const pos = text.indexOf(">", countingFrom);
-                    if (pos === -1)
-                      throw new Error(
-                        "Unclosed expression starting with «<» which misses its «>»",
-                      );
-                    Push_token: {
-                      parser._pushToken({
-                        starter: "<",
-                        state,
-                        countingFrom,
-                        text,
-                        currentPosition: pos,
-                        enderLength: ">".length,
-                        extraOffset: 0,
-                      });
-                    }
-                    Update_state: {
-                      state.position = pos + ">".length;
-                    }
                   }
                 }
               };
@@ -1296,7 +1278,7 @@
                   function (token) {
                     return { syntax: "Moduler Import", ...token };
                   },
-                  { allowInside: true },
+                  {},
                 ],
                 ExportJs: [
                   "$" + "moduler.export(",
@@ -1304,7 +1286,7 @@
                   function (token) {
                     return { syntax: "Moduler Export", ...token };
                   },
-                  { allowInside: true },
+                  {},
                 ],
                 //*
                 SectionGet: [
@@ -1313,7 +1295,7 @@
                   function (token) {
                     return { syntax: "Moduler Section Get", ...token };
                   },
-                  { allowInside: true },
+                  {},
                 ],
                 SectionSet: [
                   "$" + "moduler.section.set(",
@@ -1321,7 +1303,7 @@
                   function (token) {
                     return { syntax: "Moduler Section Set", ...token };
                   },
-                  { allowInside: true },
+                  {},
                 ],
                 SectionOverwrite: [
                   "$" + "moduler.section.overwrite(",
@@ -1329,7 +1311,7 @@
                   function (token) {
                     return { syntax: "Moduler Section Overwrite", ...token };
                   },
-                  { allowInside: true },
+                  {},
                 ],
                 SectionExpand: [
                   "$" + "moduler.section.expand(",
@@ -1337,7 +1319,7 @@
                   function (token) {
                     return { syntax: "Moduler Section Expand", ...token };
                   },
-                  { allowInside: true },
+                  {},
                 ],
                 SectionFill: [
                   "$" + "moduler.section.fill(",
@@ -1345,7 +1327,7 @@
                   function (token) {
                     return { syntax: "Moduler Section Fill", ...token };
                   },
-                  { allowInside: true },
+                  {},
                 ],
                 SectionHas: [
                   "$" + "moduler.section.has(",
@@ -1353,7 +1335,7 @@
                   function (token) {
                     return { syntax: "Moduler Section Has", ...token };
                   },
-                  { allowInside: true },
+                  {},
                 ],
                 SectionInitialize: [
                   "$" + "moduler.section.initialize(",
@@ -1361,7 +1343,7 @@
                   function (token) {
                     return { syntax: "Moduler Section Initialize", ...token };
                   },
-                  { allowInside: true },
+                  {},
                 ],
                 //*/
                 EmbeddedFormFieldOpener: [
@@ -1714,7 +1696,7 @@
                * @description
                */
               static getEnvironmentDirectory() {
-                this.tracer.trace("ModulerV6.static.getEnvironmentDirectory");
+                // this.tracer.trace("ModulerV6.static.getEnvironmentDirectory");
                 if (this.isBrowser) {
                   Apply_github_io_configurations_if_so: {
                     const projectName = this.isGithubIo();
@@ -1788,11 +1770,15 @@
                   Array.isArray(signature),
                   "Parameter «signature» must be array on «ModulerV6.prototype._formatImportParameters»",
                 );
-                this.assert(
-                  signature.length !== 0,
-                  "ModulerV6.prototype.import cannot have 0 arguments",
-                );
-                if (signature.length === 1) {
+                // this.assert(signature.length !== 0, "ModulerV6.prototype.import cannot have 0 arguments");
+                if (signature.length === 0) {
+                  return {
+                    id: null,
+                    file: null,
+                    dependencies: [],
+                    factory: null,
+                  };
+                } else if (signature.length === 1) {
                   if (typeof signature[0] === "string") {
                     // By file or id
                     const isId = signature[0].startsWith("#");
@@ -1863,10 +1849,7 @@
                   signature.length !== 0,
                   "ModulerV6.prototype.export cannot have 0 arguments",
                 );
-                this.assert(
-                  signature.length !== 1,
-                  "ModulerV6.prototype.export cannot have 1 argument only",
-                );
+                // this.assert(signature.length !== 1, "ModulerV6.prototype.export cannot have 1 argument only");
                 this.assert(
                   typeof signature[0] === "string",
                   "ModulerV6.prototype.export first argument must be a string",
@@ -1875,7 +1858,17 @@
                   signature[0].startsWith("#"),
                   "ModulerV6.prototype.export first argument must be a string starting with «#»",
                 );
-                if (signature.length === 2) {
+                if (signature.length === 1) {
+                  if (typeof signature[0] === "string") {
+                    // Factory module to name
+                    return {
+                      id: signature[0],
+                      file: null,
+                      dependencies: [],
+                      factory: null,
+                    };
+                  }
+                } else if (signature.length === 2) {
                   if (
                     typeof signature[0] === "string" &&
                     typeof signature[1] === "function"
@@ -2444,7 +2437,7 @@
                * @description
                */
               assert(condition, message) {
-                return this.constructor.assert(condition, message);
+                return ModulerV6.assert(condition, message);
               }
               /**
                * @name ModulerV6.prototype.trify
@@ -2458,7 +2451,7 @@
                * @description
                */
               createAssertFunction() {
-                return (...args) => this.assert(...args);
+                return (...args) => ModulerV6.assert(...args);
               }
               /**
                * @name ModulerV6.prototype.setBasedir
@@ -2595,6 +2588,7 @@
                         `[*] Unlocked files: ${list.join(", ")}`,
                         output,
                       );
+                      return output;
                     });
                   },
                 };
@@ -5482,7 +5476,7 @@
             );
             Compile_modules: {
               subcode1 = "";
-              subcompiler = this._cloneForFile(compilationFile.resource);
+              subcompiler = this._cloneForFile(compilationFile.resource, this);
               const targetPaths = isArray
                 ? [].concat(collection)
                 : Object.values(collection);
@@ -5494,7 +5488,8 @@
                 indexTargets < targetPaths.length;
                 indexTargets++
               ) {
-                const file = targetPaths[indexTargets];
+                const fileBrute = targetPaths[indexTargets];
+                const file = subcompiler.normalizationOf(fileBrute);
                 const targetCompilation = subcompiler._compileRecursively(
                   {
                     resource: file,
@@ -5703,6 +5698,7 @@
                 console.error(
                   `The load of inner parameters of token type «$moduler.export» on file «${compilationFile.resource}» could not be retrieved maybe because of runtime code that cannot be solved on compilation-time on «ModulerV6.prototype._compileAsModulerExport»`,
                 );
+                console.error(tokenization);
                 console.error(parameters);
               }
             } else {
@@ -6411,7 +6407,12 @@
               // @ATTENTION: Diu-a-fondiskiuts
               return new Function(`return [${parametersSource}]`).call();
             } catch (error) {
-              return [`[#ERROR]=${error.name}:${error.message}`];
+              console.error(
+                "[!] Parameters could not be hydrated due to some error on function compilation",
+              );
+              console.error("[!] Source that started the error:");
+              console.error(parametersSource);
+              throw error;
             }
           }
           /**
@@ -7660,9 +7661,9 @@
                 event.testFabrication.unitFile,
               );
               console.log(
-                $.style("cyan").text(
-                  `[*] DevBinary is executing unit test file of: ${unitRootpath}`,
-                ),
+                $.style("cyan").text(`[*] Started unit test on:`) +
+                  " " +
+                  $.style("").text(unitRootpath),
               );
               let testUnitFile = undefined;
               Get_unit_test_filepath: {
@@ -7685,15 +7686,19 @@
                   });
                 }
                 console.log(
-                  $.style("greenBright,underline").text(
-                    `[*] DevBinary has successfully passed unit test file of: ${unitRootpath}`,
-                  ),
+                  $.style("bgGreen,black,underline").text(
+                    `[*] Passed unit test on:`,
+                  ) +
+                    " " +
+                    $.style("").text(unitRootpath),
                 );
               } catch (error) {
                 console.log(
-                  $.style("red,underline").text(
-                    `[!] DevBinary has failed unit test with error on file «${filepath}»:`,
-                  ),
+                  $.style("bgRed,black,underline").text(
+                    `[!] Failed unit test on:`,
+                  ) +
+                    " " +
+                    $.style("underline").text(unitRootpath),
                 );
                 console.log(error);
               }
@@ -7715,6 +7720,9 @@
             let firstFile = undefined;
             Propagate_to_directory_main_entry: {
               const possibleMainEntry = `${currentDirectory}/${currentDirectoryName}.entry.js`;
+              // Esta línea es para que no se duplique el trigger al unit test cuando guardas el entry:
+              if (possibleMainEntry === filepath)
+                break Propagate_to_directory_main_entry;
               if (await this.existsFile(possibleMainEntry)) {
                 await this.touchFile(possibleMainEntry, {
                   propagateUp: false,
@@ -7782,12 +7790,15 @@
               typeof fileBrute === "string",
               `Parameter «--file» must be string and not «${typeof fileBrute}» on «DevBinaryV6.Utils.prototype.touchFile»`,
             );
+            const $ = this.devbin.compiler.constructor.ansi.colors;
             const file = this.devbin.moduler.normalizationOf(fileBrute);
-            this.devbin.console
-              .setProfile("underline")
-              .print(
-                "[*] Touched file: " + this.devbin.moduler.rootdirOf(file),
-              );
+            console.log(
+              $.style("yellow").text("[*] Touched:") +
+                " " +
+                $.style("underline").text(
+                  " " + this.devbin.moduler.rootdirOf(file) + " ",
+                ),
+            );
             const currentStep = [];
             try {
               let outputFile = false;
@@ -10110,7 +10121,7 @@
        * @description
        */
       assert(...args) {
-        return this.moduler.assert(...args);
+        return ModulerV6.assert(...args);
       }
       /**
        * @name DevBinaryV6.prototype.command

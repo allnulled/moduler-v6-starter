@@ -2326,7 +2326,7 @@
        * @description
        */
       assert(condition, message) {
-        return this.constructor.assert(condition, message);
+        return ModulerV6.assert(condition, message);
       }
       /**
        * @name ModulerV6.prototype.trify
@@ -2340,7 +2340,7 @@
        * @description
        */
       createAssertFunction() {
-        return (...args) => this.assert(...args);
+        return (...args) => ModulerV6.assert(...args);
       }
       /**
        * @name ModulerV6.prototype.setBasedir
@@ -2470,6 +2470,7 @@
             return promise.then((output) => {
               // @AQUI hay que resolver los módulos con el crédito de lockFiles
               console.log(`[*] Unlocked files: ${list.join(", ")}`, output);
+              return output;
             });
           },
         };

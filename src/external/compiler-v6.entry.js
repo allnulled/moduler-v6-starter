@@ -1821,7 +1821,7 @@ _findStringEnd(source, position) {
  * @description 
  */
 assert(condition, message) {
-  return this.constructor.assert(condition, message);
+  return ModulerV6.assert(condition, message);
 }
   /**
  * @name ModulerV6.prototype.trify
@@ -1835,7 +1835,7 @@ trify = this.constructor.trify;
  * @description 
  */
 createAssertFunction() {
-  return (...args) => this.assert(...args);
+  return (...args) => ModulerV6.assert(...args);
 }
   /**
  * @name ModulerV6.prototype.setBasedir
@@ -1949,6 +1949,7 @@ lockFiles(list) {
       return promise.then(output => {
         // @AQUI hay que resolver los módulos con el crédito de lockFiles
         console.log(`[*] Unlocked files: ${list.join(", ")}`, output);
+        return output;
       });
     }
   }
@@ -4270,14 +4271,15 @@ async _compileAsInjectModules(compilationFile, compilationProcess, { token, toke
   this.moduler.assert(isArray || isObject, `Syntax «$compiler.inject.modules» only accepts array or object as first parameter but «${typeof collection}» was found instead`);
   Compile_modules: {
     subcode1 = "";
-    subcompiler = this._cloneForFile(compilationFile.resource);
+    subcompiler = this._cloneForFile(compilationFile.resource, this);
     const targetPaths = isArray ? [].concat(collection) : Object.values(collection);
     const targetKeys = Object.keys(collection);
     const compilationPromises = [];
     const compilationPairs = [];
     Compile:
     for(let indexTargets=0; indexTargets<targetPaths.length; indexTargets++) {
-      const file = targetPaths[indexTargets];
+      const fileBrute = targetPaths[indexTargets];
+      const file = subcompiler.normalizationOf(fileBrute);
       const targetCompilation = subcompiler._compileRecursively({
         resource: file,
         isRoot: false,
@@ -4436,6 +4438,7 @@ async _compileAsModulerExport(compilationFile, compilationProcess, { token, toke
     Handle_errors_evaluating_parameters: {
       // @OK: no compilation or path guessing if parameters can not be evaluated
       console.error(`The load of inner parameters of token type «$moduler.export» on file «${compilationFile.resource}» could not be retrieved maybe because of runtime code that cannot be solved on compilation-time on «ModulerV6.prototype._compileAsModulerExport»`);
+      console.error(tokenization);
       console.error(parameters);
     }
   } else {
@@ -4961,7 +4964,10 @@ _hydrateParameters(parametersSource) {
     // @ATTENTION: Diu-a-fondiskiuts
     return (new Function(`return [${parametersSource}]`)).call();
   } catch (error) {
-    return [`[#ERROR]=${error.name}:${error.message}`];
+    console.error("[!] Parameters could not be hydrated due to some error on function compilation");
+    console.error("[!] Source that started the error:");
+    console.error(parametersSource);
+    throw error;
   }
 }
   /**

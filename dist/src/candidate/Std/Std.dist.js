@@ -1,13 +1,30 @@
-module.exports = $moduler.import([], function () {
-  // @ONRETAKE
-  // @ADVISE: empieza ya a usar la sintaxis de:
-  //    $compiler.inject.modules
-  // Y así vamos viendo si funciona bien o hay que hacer algo.
-  return class Std {
-    /**
-     * # Std.class
-     * - section: Std.Std.class
-     * - file:    @/src/candidate/Std/Std.class.js
-     */
-  };
+$moduler.section.set("Std", {});
+
+module.exports = $moduler.import([], async function () {
+  const Std = $moduler.section.get("Std");
+  const { Core } = await $moduler
+    .lockFiles(["@/src/candidate/Std/Core/Core.entry.js"])
+    .until(
+      Promise.fromCollection({
+        Core: function ({ module, exports }) {
+          return $moduler.releaseFile(
+            "@/src/candidate/Std/Core/Core.entry.js",
+            arguments[0],
+            function () {
+              module.exports = $moduler.import([], function () {
+                return class StdCore {
+                  static version = "1.0";
+                };
+              });
+            }.call(this),
+          );
+        }.call(
+          this,
+          $moduler.reserveFile("@/src/candidate/Std/Core/Core.entry.js"),
+        ),
+      }),
+    );
+  return Object.assign(Std, {
+    Core: Core,
+  });
 });
