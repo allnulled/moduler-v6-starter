@@ -2142,6 +2142,19 @@
             Normalize_file: {
               filepath = filepathMask = this.normalizationOf(filepathBrute);
             }
+            Get_distribution_version_if_src_and_entry_js_are_met_as_it_is_a_common_easy_error: {
+              const distpath = this._getDistRootpathFromSrc(filepath, true);
+              if (distpath !== filepath) {
+                console.log(
+                  "[*] ModulerV6 fixed path from «@/src/**/*.entry.js» to «@/dist/**/*.dist.js»: (*reasons on the guides)",
+                );
+                console.log(` - You wrote: ${this.rootdirOf(filepath)}`);
+                console.log(
+                  ` - You meant: ${this.rootdirOf(distpath)} (most probably)`,
+                );
+                filepath = filepathMask = distpath;
+              }
+            }
             Use_instrumentalized_if_conditions_are_met: {
               if (isJson) {
                 // console.log("[*] Dismissed instrumentalization for reason 4: the file is a json not a js");
@@ -2372,6 +2385,23 @@
             }
             return i;
           }
+          /**
+           * @name CompilerV6.prototype._getDistRootpathFromSrc
+           * @type
+           * @description
+           */
+          _getDistRootpathFromSrc(filepath, normalized = false) {
+            if (!filepath.endsWith(".entry.js")) return filepath;
+            let rootpath = this.rootdirOf(filepath);
+            if (rootpath.startsWith("@/src/www/")) {
+              rootpath = rootpath.replace("@/src/www/", "@/dist/www/");
+            } else if (rootpath.startsWith("@/src/")) {
+              rootpath = rootpath.replace("@/src/", "@/dist/src/");
+            }
+            rootpath = rootpath.replace(/\.entry\.js$/g, ".dist.js");
+            if (normalized) this.normalizationOf(rootpath);
+            return rootpath;
+          }
 
           /**
            * @name ModulerV6.prototype.assert
@@ -2483,6 +2513,7 @@
             }
             const _module = { exports: {} };
             return {
+              $moduler: this.cloneForFile(filepath),
               module: _module,
               exports: _module.exports,
               file: filepath,
@@ -3611,6 +3642,44 @@
             const normalized = this.compiler.normalizationOf(file);
             const pos = normalized.lastIndexOf("/");
             return [0, -1].includes(pos) ? "/" : normalized.substr(0, pos);
+          }
+          /**
+           * @name CompilerV6.Files.prototype.findByPattern
+           * @type
+           * @description
+           */
+          async findByPattern(expressionBrute, basedir = process.cwd()) {
+            const output = [];
+            const reduceExpression = (someExpression) => {
+              if (Array.isArray(someExpression))
+                return someExpression.map((subexpr) =>
+                  reduceExpression(subexpr, basedir),
+                );
+              if (!someExpression.startsWith("!"))
+                return this.compiler.normalizationOf(someExpression);
+              return (
+                "!" + this.compiler.normalizationOf(someExpression.substr(1))
+              );
+            };
+            const expression = reduceExpression(expressionBrute);
+            const isMatch = require("picomatch")(expression);
+            const walk = async function (directory) {
+              const entries = await require("fs").promises.readdir(directory, {
+                withFileTypes: true,
+              });
+              for (const entry of entries) {
+                const filepath = require("path").join(directory, entry.name);
+                if (isMatch(require("path").resolve(basedir, filepath))) {
+                  output.push(filepath);
+                }
+                if (entry.isDirectory()) {
+                  await walk(filepath);
+                  continue;
+                }
+              }
+            };
+            await walk(basedir);
+            return output;
           }
         };
       /**
@@ -4899,12 +4968,13 @@
        * @description
        */
       _wrapAsModuleInjection(source, rootpath) {
+        const distRootpath = this.moduler._getDistRootpathFromSrc(rootpath);
         return [
-          `(function({ module, exports }) {`,
-          `  return $moduler.releaseFile("${rootpath}", arguments[0], (function() {`,
+          `(function({ module, exports, $moduler }) {`,
+          `  return $moduler.releaseFile("${distRootpath}", arguments[0], (function() {`,
           `    ${source}`,
           `  }).call(this));`,
-          `}).call(this, $moduler.reserveFile("${rootpath}"))`,
+          `}).call(this, $moduler.reserveFile("${distRootpath}"))`,
         ].join("\n");
       }
 
@@ -5346,7 +5416,10 @@
       ) {
         // @TODO: CHATGPT, estyo en esta funcionalidad.
         let out = "";
-        let subcompiler = undefined;
+        let subcompilerForAll = this._cloneForFile(
+          compilationFile.resource,
+          this,
+        );
         let subcode1 = "";
         let subcode2 = "";
         const parameters = this._getDataForTokenCompilation({ token });
@@ -5357,9 +5430,13 @@
           isArray || isObject,
           `Syntax «$compiler.inject.modules» only accepts array or object as first parameter but «${typeof collection}» was found instead`,
         );
+        // console.log("[SUBCOMPILER ON INJECT MODULES]");
+        // console.log(this.basedir);
+        // console.log(subcompilerForAll.basedir);
+        // console.log(this.rootdir);
+        // console.log(subcompilerForAll.rootdir);
         Compile_modules: {
           subcode1 = "";
-          subcompiler = this._cloneForFile(compilationFile.resource, this);
           const targetPaths = isArray
             ? [].concat(collection)
             : Object.values(collection);
@@ -5372,8 +5449,15 @@
             indexTargets++
           ) {
             const fileBrute = targetPaths[indexTargets];
-            const file = subcompiler.normalizationOf(fileBrute);
-            const targetCompilation = subcompiler._compileRecursively(
+            const file = this.normalizationOf(fileBrute);
+            const subcompilerForTarget = subcompilerForAll._cloneForFile(
+              file,
+              this,
+            );
+            // console.log("[SUBCOMPILER ON INJECT MODULES BUT FOR TARGET]");
+            // console.log(subcompilerForTarget.basedir);
+            // console.log(subcompilerForTarget.rootdir);
+            const targetCompilation = subcompilerForTarget._compileRecursively(
               {
                 resource: file,
                 isRoot: false,
@@ -5385,7 +5469,7 @@
             compilationPairs.push({
               index: indexTargets,
               file: file,
-              rootpath: subcompiler.rootdirOf(file),
+              rootpath: subcompilerForTarget.rootdirOf(file),
             });
           }
           const compilations = await Promise.all(compilationPromises);
@@ -5421,7 +5505,13 @@
         Generate_output: {
           out += `$moduler.lockFiles([\n`;
           out += Object.values(collection)
-            .map((key) => JSON.stringify(subcompiler.moduler.rootdirOf(key)))
+            .map((key) => {
+              const rootpath1 = subcompilerForAll.moduler.rootdirOf(key);
+              const rootdist1 =
+                subcompilerForAll.moduler._getDistRootpathFromSrc(rootpath1);
+              const rootjson1 = JSON.stringify(rootdist1);
+              return rootjson1;
+            })
             .join(",\n  ");
           out += `\n]).until(Promise.fromCollection(${subcode1}))`;
         }
@@ -6656,6 +6746,7 @@
           }
         }
       }
+
       /**
        * @name CompilerV6.prototype.normalizationOf
        * @type

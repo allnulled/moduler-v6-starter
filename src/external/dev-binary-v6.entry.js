@@ -1613,6 +1613,15 @@ _importFile(filepathInput) {
   Normalize_file: {
     filepath = filepathMask = this.normalizationOf(filepathBrute);
   }
+  Get_distribution_version_if_src_and_entry_js_are_met_as_it_is_a_common_easy_error: {
+    const distpath = this._getDistRootpathFromSrc(filepath, true);
+    if(distpath !== filepath) {
+      console.log("[*] ModulerV6 fixed path from «@/src/**/*.entry.js» to «@/dist/**/*.dist.js»: (*reasons on the guides)");
+      console.log(`    You wrote ${this.rootdirOf(filepath)}`);
+      console.log(`    You meant ${this.rootdirOf(distpath)} (most probably)`);
+      filepath = filepathMask = distpath;
+    }
+  }
   Use_instrumentalized_if_conditions_are_met: {
     if (isJson) {
       // console.log("[*] Dismissed instrumentalization for reason 4: the file is a json not a js");
@@ -1826,6 +1835,27 @@ _findStringEnd(source, position) {
   }
   return i;
 }
+  /**
+ * @name CompilerV6.prototype._getDistRootpathFromSrc
+ * @type 
+ * @description 
+ */
+_getDistRootpathFromSrc(filepath, normalized = false) {
+  if (!filepath.endsWith(".entry.js")) return filepath;
+  let rootpath = this.rootdirOf(filepath);
+  Fix_prefix: {
+    if (rootpath.startsWith("@/src/www/")) {
+      rootpath = rootpath.replace("@/src/www/", "@/dist/www/");
+    } else if (rootpath.startsWith("@/src/")) {
+      rootpath = rootpath.replace("@/src/", "@/dist/src/");
+    }
+  }
+  Fix_suffix: {
+    rootpath = rootpath.replace(/\.entry\.js$/g, ".dist.js");
+  }
+  if (normalized) this.normalizationOf(rootpath);
+  return rootpath;
+}
   
   /**
  * @name ModulerV6.prototype.assert
@@ -1927,6 +1957,7 @@ reserveFile(file) {
   }
   const _module = { exports: {} };
   return {
+    $moduler: this.cloneForFile(filepath),
     module: _module,
     exports: _module.exports,
     file: filepath,
@@ -2929,6 +2960,38 @@ getDirectoryOf(file) {
   const normalized = this.compiler.normalizationOf(file);
   const pos = normalized.lastIndexOf("/");
   return [0,-1].includes(pos) ? "/" : normalized.substr(0, pos);
+}
+  /**
+ * @name CompilerV6.Files.prototype.findByPattern
+ * @type 
+ * @description 
+ */
+async findByPattern(expressionBrute, basedir = process.cwd()) {
+  const output = [];
+  const reduceExpression = (someExpression) => {
+    if(Array.isArray(someExpression)) return someExpression.map(subexpr => reduceExpression(subexpr, basedir));
+    if(!someExpression.startsWith("!")) return this.compiler.normalizationOf(someExpression);
+    return "!" + this.compiler.normalizationOf(someExpression.substr(1));
+  };
+  const expression = reduceExpression(expressionBrute);
+  const isMatch = require("picomatch")(expression);
+  const walk = async function(directory) {
+    const entries = await require("fs").promises.readdir(directory, {
+      withFileTypes: true
+    });
+    for(const entry of entries) {
+      const filepath = require("path").join(directory, entry.name);
+      if(isMatch(require("path").resolve(basedir, filepath))) {
+        output.push(filepath);
+      }
+      if(entry.isDirectory()) {
+        await walk(filepath);
+        continue;
+      }
+    }
+  }
+  await walk(basedir);
+  return output;
 }
 };
   /**
@@ -3953,12 +4016,13 @@ _prependToParentCompilationFile(compilationFile, content, extension = "md", bett
  * @description 
  */
 _wrapAsModuleInjection(source, rootpath) {
+  const distRootpath = this.moduler._getDistRootpathFromSrc(rootpath);
   return [
-    `(function({ module, exports }) {`,
-    `  return $moduler.releaseFile("${rootpath}", arguments[0], (function() {`,
+    `(function({ module, exports, $moduler }) {`,
+    `  return $moduler.releaseFile("${distRootpath}", arguments[0], (function() {`,
     `    ${source}`,
     `  }).call(this));`,
-    `}).call(this, $moduler.reserveFile("${rootpath}"))`,
+    `}).call(this, $moduler.reserveFile("${distRootpath}"))`,
   ].join("\n");
 }
   
@@ -4273,7 +4337,7 @@ _compileAsInjectModule(compilationFile, compilationProcess, { token, tokenIndex 
 async _compileAsInjectModules(compilationFile, compilationProcess, { token, tokenIndex }) {
   // @TODO: CHATGPT, estyo en esta funcionalidad.
   let out = "";
-  let subcompiler = undefined;
+  let subcompilerForAll = this._cloneForFile(compilationFile.resource, this);
   let subcode1 = "";
   let subcode2 = "";
   const parameters = this._getDataForTokenCompilation({ token });
@@ -4281,9 +4345,13 @@ async _compileAsInjectModules(compilationFile, compilationProcess, { token, toke
   const isArray = Array.isArray(collection);
   const isObject = (!isArray) && (typeof collection === "object");
   this.moduler.assert(isArray || isObject, `Syntax «$compiler.inject.modules» only accepts array or object as first parameter but «${typeof collection}» was found instead`);
+  // console.log("[SUBCOMPILER ON INJECT MODULES]");
+  // console.log(this.basedir);
+  // console.log(subcompilerForAll.basedir);
+  // console.log(this.rootdir);
+  // console.log(subcompilerForAll.rootdir);
   Compile_modules: {
     subcode1 = "";
-    subcompiler = this._cloneForFile(compilationFile.resource, this);
     const targetPaths = isArray ? [].concat(collection) : Object.values(collection);
     const targetKeys = Object.keys(collection);
     const compilationPromises = [];
@@ -4291,8 +4359,12 @@ async _compileAsInjectModules(compilationFile, compilationProcess, { token, toke
     Compile:
     for(let indexTargets=0; indexTargets<targetPaths.length; indexTargets++) {
       const fileBrute = targetPaths[indexTargets];
-      const file = subcompiler.normalizationOf(fileBrute);
-      const targetCompilation = subcompiler._compileRecursively({
+      const file = this.normalizationOf(fileBrute);
+      const subcompilerForTarget = subcompilerForAll._cloneForFile(file, this);
+      // console.log("[SUBCOMPILER ON INJECT MODULES BUT FOR TARGET]");
+      // console.log(subcompilerForTarget.basedir);
+      // console.log(subcompilerForTarget.rootdir);
+      const targetCompilation = subcompilerForTarget._compileRecursively({
         resource: file,
         isRoot: false,
         parentCompilation: compilationFile,
@@ -4301,7 +4373,7 @@ async _compileAsInjectModules(compilationFile, compilationProcess, { token, toke
       compilationPairs.push({
         index: indexTargets,
         file: file,
-        rootpath: subcompiler.rootdirOf(file),
+        rootpath: subcompilerForTarget.rootdirOf(file),
       });
     }
     const compilations = await Promise.all(compilationPromises);
@@ -4327,7 +4399,12 @@ async _compileAsInjectModules(compilationFile, compilationProcess, { token, toke
   }
   Generate_output: {
     out += `$moduler.lockFiles([\n`;
-    out += Object.values(collection).map(key => JSON.stringify(subcompiler.moduler.rootdirOf(key))).join(",\n  ");
+    out += Object.values(collection).map(key => {
+      const rootpath1 = subcompilerForAll.moduler.rootdirOf(key);
+      const rootdist1 = subcompilerForAll.moduler._getDistRootpathFromSrc(rootpath1);
+      const rootjson1 = JSON.stringify(rootdist1);
+      return rootjson1;
+    }).join(",\n  ");
     out += `\n]).until(Promise.fromCollection(${subcode1}))`;
   }
   compilationFile.compilation.js = this._replaceTextRange(compilationFile.compilation.js, token.location[0], token.location[1], out, token);
@@ -5264,6 +5341,7 @@ _unifyCompilationMarkdown(compilationFile, compilationProcess) {
     }
   }
 }
+
   /**
  * @name CompilerV6.prototype.normalizationOf
  * @type 
@@ -6181,6 +6259,14 @@ async touchFile(fileBrute, optionsInput = {}) {
             return event;
           }
         }
+        Caso_previo_7_filecom: {
+          const matches = rootPath.match(/\@\/dev\/filecom\/([^\/]+)\/in\//);
+          if(matches && (matches.length === 2)) {
+            const outputFile = rootPath.replace(`@/dev/filecom/${matches[1]}/in/`, `@/dev/filecom/${matches[1]}/out/`).replace(/\.md/g, ".json");
+            await this.devbin.command(["filecom", "--command", matches[1], "--in", rootPath, "--out", outputFile]);
+            return event;
+          }
+        }
         Caso_js_o_test_js: {
           Paso_0_descartar_si_no_es_entry_o_test: {
             if (!isProcessable) {
@@ -6206,6 +6292,9 @@ async touchFile(fileBrute, optionsInput = {}) {
           }
           Paso_3_ejecutar_test_unitario: {
             currentStep.push("3.6. run unit test");
+            const onUnitTestFile = path.join(path.dirname(filepath), "e.onUnitTestFile.js");
+            const result = await this.triggerCallbackFromFile(onUnitTestFile, { file: filepath, event, });
+            if(result === false) break Paso_3_ejecutar_test_unitario;
             Object.assign(event, {
               testExecution: await this.executeUnitTestFileOf(filepath, event),
             });
@@ -7322,6 +7411,83 @@ async "ensure core"(args, devbin) {
   console.log(devbin.compiler.rootdir);
 }
   /**
+ * @name DevBinaryV6.ShadowCommands.prototype["print directory"]
+ * @type 
+ * @description 
+ */
+async "print directory"(args, devbin) {
+
+  const fs = require("fs");
+  const path = require("path");
+
+  const parameters = devbin.utils.formatCliArgs({
+    patterns: {
+      onFormat: devbin.constructor.Formatters.asArray,
+      default: false,
+      alias: ["-p"],
+      description: "Glob expressions of files and directories to print"
+    },
+    output: {
+      onFormat: devbin.constructor.Formatters.asString,
+      default: false,
+      alias: ["-o"],
+      description: "File to output"
+    },
+  }, args);
+
+  devbin.assert(Array.isArray(parameters.patterns), "Parameter «--patterns» must be array on «devbin print directory»");
+  devbin.assert(parameters.patterns.length, "Parameter «--patterns» must provide 1 or more values on «devbin print directory»");
+
+  const printers = {
+    async format(file) {
+      const rootfile = devbin.moduler.rootdirOf(file);
+      const lstat = await fs.promises.lstat(file);
+      if (lstat.isFile()) return printers.file(file, await fs.promises.readFile(file, "utf8"));
+      else if (lstat.isDirectory()) return printers.directory(file, await fs.promises.readdir(file));
+      throw new Error(`Could not find file or directory of «${rootfile}»`);
+    },
+    async file(file, source) {
+      return `[#FILE=${devbin.moduler.rootdirOf(file)}]\n${source}\n`;
+    },
+    async directory(file, subfiles) {
+      let output = `[#DIRECTORY=${devbin.moduler.rootdirOf(file)}]${!subfiles.length ? ' (empty)' : '\n - ' + subfiles.join("\n - ")}\n`;
+      for (let index = 0; index < subfiles.length; index++) {
+        const subfile = subfiles[index];
+        output += await printers.format(`${(file)}/${subfile}`);
+      }
+      return output;
+    }
+  };
+
+  const allMatches = await devbin.compiler.files.findByPattern(parameters.patterns);
+  devbin.assert(allMatches.length, `No files matched for «--patterns» parameter: [${parameters.patterns.join(",")}]`);
+  console.log(`[*] Found ${allMatches.length} matches to print:`);
+  console.log(allMatches);
+  allMatches.forEach(match => console.log(` [x] ${match}`));
+  const lines = [];
+  for (let index = 0; index < allMatches.length; index++) {
+    const fileBrute = allMatches[index];
+    const file = devbin.moduler.normalizationOf(fileBrute);
+    const result = await printers.format(file);
+    lines.push(result);
+  }
+  const report = lines.join("");
+  if (parameters.output) {
+    try {
+      await devbin.files.writeFile(parameters.output, report);
+      devbin.console.setProfile("blackBright").print("[*] DevBinaryV6 printed directory at: " + devbin.moduler.rootdirOf(parameters.output));
+    } catch (error) {
+      console.log(report);
+      console.log(`[!] Could not write file to specified output: ${devbin.moduler.rootdirOf(parameters.output)}`);
+      console.log(error);
+    }
+  } else {
+    console.log(report);
+  }
+  return report;
+
+}
+  /**
  * @name DevBinaryV6.ShadowCommands.prototype["build github pages"]
  * @type 
  * @description 
@@ -7433,6 +7599,7 @@ async loop(args) {
   const settingsControllers = this.devbin.settings.data?.loop?.controllers || [];
   const targetDirs = [
     require("path").resolve(targetRoot, "src"),
+    require("path").resolve(targetRoot, "dev/filecom"),
     require("path").resolve(targetRoot, "dev/settings.js"),
     require("path").resolve(targetRoot, "test/unit/src"),
     require("path").resolve(targetRoot, "test/feature"),
@@ -7456,6 +7623,7 @@ async loop(args) {
       // "**/test/unit/"+"**/*.js",
       "**/dev/listened.json",
       "**/dev/unlistened.json",
+      "**/dev/filecom/*/out/**",
       "**/.mutedir",
     ],
     ignoreCallback: `${targetRoot}/dev/unlistened.json`,
@@ -7470,6 +7638,7 @@ async loop(args) {
       "css",
       "html",
       "md",
+      "txt",
     ],
     execute: [
       'dev/run.js touch --file @{refrescador.file}',

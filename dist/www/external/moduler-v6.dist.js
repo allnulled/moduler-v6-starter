@@ -1590,6 +1590,15 @@ _importFile(filepathInput) {
   Normalize_file: {
     filepath = filepathMask = this.normalizationOf(filepathBrute);
   }
+  Get_distribution_version_if_src_and_entry_js_are_met_as_it_is_a_common_easy_error: {
+    const distpath = this._getDistRootpathFromSrc(filepath, true);
+    if(distpath !== filepath) {
+      console.log("[*] ModulerV6 fixed path from «@/src/**/*.entry.js» to «@/dist/**/*.dist.js»: (*reasons on the guides)");
+      console.log(`    You wrote ${this.rootdirOf(filepath)}`);
+      console.log(`    You meant ${this.rootdirOf(distpath)} (most probably)`);
+      filepath = filepathMask = distpath;
+    }
+  }
   Use_instrumentalized_if_conditions_are_met: {
     if (isJson) {
       // console.log("[*] Dismissed instrumentalization for reason 4: the file is a json not a js");
@@ -1803,6 +1812,27 @@ _findStringEnd(source, position) {
   }
   return i;
 }
+  /**
+ * @name CompilerV6.prototype._getDistRootpathFromSrc
+ * @type 
+ * @description 
+ */
+_getDistRootpathFromSrc(filepath, normalized = false) {
+  if (!filepath.endsWith(".entry.js")) return filepath;
+  let rootpath = this.rootdirOf(filepath);
+  Fix_prefix: {
+    if (rootpath.startsWith("@/src/www/")) {
+      rootpath = rootpath.replace("@/src/www/", "@/dist/www/");
+    } else if (rootpath.startsWith("@/src/")) {
+      rootpath = rootpath.replace("@/src/", "@/dist/src/");
+    }
+  }
+  Fix_suffix: {
+    rootpath = rootpath.replace(/\.entry\.js$/g, ".dist.js");
+  }
+  if (normalized) this.normalizationOf(rootpath);
+  return rootpath;
+}
   
   /**
  * @name ModulerV6.prototype.assert
@@ -1904,6 +1934,7 @@ reserveFile(file) {
   }
   const _module = { exports: {} };
   return {
+    $moduler: this.cloneForFile(filepath),
     module: _module,
     exports: _module.exports,
     file: filepath,
