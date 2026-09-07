@@ -2197,6 +2197,13 @@
                 Get_distribution_version_if_src_and_entry_js_are_met_as_it_is_a_common_easy_error: {
                   const distpath = this._getDistRootpathFromSrc(filepath, true);
                   if (distpath !== filepath) {
+                    console.log(
+                      "[*] ModulerV6 fixed path from «@/src/**/*.entry.js» to «@/dist/**/*.dist.js»: (*reasons on the guides)",
+                    );
+                    console.log(`    You wrote ${this.rootdirOf(filepath)}`);
+                    console.log(
+                      `    You meant ${this.rootdirOf(distpath)} (most probably)`,
+                    );
                     filepath = filepathMask = distpath;
                   }
                 }
@@ -2444,12 +2451,16 @@
               _getDistRootpathFromSrc(filepath, normalized = false) {
                 if (!filepath.endsWith(".entry.js")) return filepath;
                 let rootpath = this.rootdirOf(filepath);
-                if (rootpath.startsWith("@/src/www/")) {
-                  rootpath = rootpath.replace("@/src/www/", "@/dist/www/");
-                } else if (rootpath.startsWith("@/src/")) {
-                  rootpath = rootpath.replace("@/src/", "@/dist/src/");
+                Fix_prefix: {
+                  if (rootpath.startsWith("@/src/www/")) {
+                    rootpath = rootpath.replace("@/src/www/", "@/dist/www/");
+                  } else if (rootpath.startsWith("@/src/")) {
+                    rootpath = rootpath.replace("@/src/", "@/dist/src/");
+                  }
                 }
-                rootpath = rootpath.replace(/\.entry\.js$/g, ".dist.js");
+                Fix_suffix: {
+                  rootpath = rootpath.replace(/\.entry\.js$/g, ".dist.js");
+                }
                 if (normalized) this.normalizationOf(rootpath);
                 return rootpath;
               }
@@ -8523,6 +8534,10 @@
               `${targetDir}/dev/bin/help/command.js`,
             );
             await duplicateFileIfNotExists(
+              `${__dirname}/../src/DevBinaryV6/Utils/core/e.onFileChange.js`,
+              `${targetDir}/dev/events/e.onFileChange.js`,
+            );
+            await duplicateFileIfNotExists(
               `${__dirname}/../src/DevBinaryV6/Utils/core/dev-bin.js`,
               `${targetDir}/dev/bin.js`,
             );
@@ -9908,10 +9923,10 @@
               debounce: 0,
               extensions: ["js", "css", "html", "md", "txt"],
               execute: ["dev/run.js touch --file @{refrescador.file}"],
+              executeCallback: [`${targetRoot}/dev/events/e.onFileChange.js`],
               message: "El tiempo de refrescar ha llegado",
               messageFile: "TODO.md",
               payload: 'console.log("📟 Evento de refrescar activado");',
-              // executeCallback: ["file/from/cwd/target.js",],
               // payloadFile: 'browser-payload.js',
               serve: this.devbin.compiler.fullpathOf("@/dist/www"),
               staticPath: "dist/www",

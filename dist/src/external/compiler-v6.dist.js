@@ -2148,9 +2148,9 @@
                 console.log(
                   "[*] ModulerV6 fixed path from «@/src/**/*.entry.js» to «@/dist/**/*.dist.js»: (*reasons on the guides)",
                 );
-                console.log(` - You wrote: ${this.rootdirOf(filepath)}`);
+                console.log(`    You wrote ${this.rootdirOf(filepath)}`);
                 console.log(
-                  ` - You meant: ${this.rootdirOf(distpath)} (most probably)`,
+                  `    You meant ${this.rootdirOf(distpath)} (most probably)`,
                 );
                 filepath = filepathMask = distpath;
               }
@@ -2393,12 +2393,16 @@
           _getDistRootpathFromSrc(filepath, normalized = false) {
             if (!filepath.endsWith(".entry.js")) return filepath;
             let rootpath = this.rootdirOf(filepath);
-            if (rootpath.startsWith("@/src/www/")) {
-              rootpath = rootpath.replace("@/src/www/", "@/dist/www/");
-            } else if (rootpath.startsWith("@/src/")) {
-              rootpath = rootpath.replace("@/src/", "@/dist/src/");
+            Fix_prefix: {
+              if (rootpath.startsWith("@/src/www/")) {
+                rootpath = rootpath.replace("@/src/www/", "@/dist/www/");
+              } else if (rootpath.startsWith("@/src/")) {
+                rootpath = rootpath.replace("@/src/", "@/dist/src/");
+              }
             }
-            rootpath = rootpath.replace(/\.entry\.js$/g, ".dist.js");
+            Fix_suffix: {
+              rootpath = rootpath.replace(/\.entry\.js$/g, ".dist.js");
+            }
             if (normalized) this.normalizationOf(rootpath);
             return rootpath;
           }

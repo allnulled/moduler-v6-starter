@@ -1836,13 +1836,14 @@ _getDistRootpathFromSrc(filepath, normalized = false) {
       rootpath = rootpath.replace("@/src/www/", "@/dist/www/");
     } else if (rootpath.startsWith("@/src/")) {
       rootpath = rootpath.replace("@/src/", "@/dist/src/");
+    } else {
+      // return filepath;
     }
   }
   Fix_suffix: {
     rootpath = rootpath.replace(/\.entry\.js$/g, ".dist.js");
   }
-  if (normalized) this.normalizationOf(rootpath);
-  return rootpath;
+  return normalized ? this.normalizationOf(rootpath) : rootpath;
 }
   
   /**
@@ -1979,7 +1980,8 @@ lockFiles(list) {
     until: function(promise) {
       return promise.then(output => {
         // @AQUI hay que resolver los módulos con el crédito de lockFiles
-        console.log(`[*] Unlocked files: ${list.join(", ")}`, output);
+        console.log(`[*] Unlocked files: ${list.join(", ")}`);
+        // console.log(output);
         return output;
       });
     }
@@ -3844,71 +3846,73 @@ async _compileRecursively(fileParameters = {}, processParameters = {}) {
   this.assert(typeof fileParameters.resource === "string", "Parameter «fileParameters.resource» must be string on «CompilerV6.prototype._compileRecursively»");
   this.assert(typeof processParameters === "object", "Parameter «processParameters» must be object on «CompilerV6.prototype._compileRecursively»");
   let compilationFile, compilationProcess, subcompiler, output;
-  Initialize_parameters: {
-    compilationFile = this.constructor.CompilationFile.from(fileParameters, processParameters, this);
-    compilationProcess = this.constructor.CompilationProcess.from(fileParameters, processParameters, this);
-  }
-  this.assert(processParameters.uncacheInjections === compilationProcess.uncacheInjections, "Las inyecciones 1");
-  Add_entry_in_tree: {
-    // compilationFile.resource = this.rootdirOf(compilationFile.resource);
-    const id = this.rootdirOf(compilationFile.resource);
-    compilationFile.report.tree[id] = compilationFile.report.tree[id] || {};
-  }
-  Update_md_title_indentation: {
-    compilationFile.titleIndentation = compilationFile.parentCompilation?.titleIndentation || 0;
-    if(compilationFile.resource.endsWith(".entry.js")) {
-      compilationFile.titleIndentation++;
+  Compilation_process: {
+    Initialize_parameters: {
+      compilationFile = this.constructor.CompilationFile.from(fileParameters, processParameters, this);
+      compilationProcess = this.constructor.CompilationProcess.from(fileParameters, processParameters, this);
     }
-  }
-  Compile_inner_files_recursively_with_subcompiler: {
-    subcompiler = this._cloneForFile(compilationFile.resource, this);
-    compilationFile.subcompiler = subcompiler;
-    await subcompiler._fetchCompilable(compilationFile, compilationProcess);
-    await subcompiler._renderSourceAsTemplate(compilationFile, compilationProcess);
-    subcompiler._tokenizeText(compilationFile, compilationProcess);
-    await subcompiler._compileTokens(compilationFile, compilationProcess);
-    output = subcompiler._getPreferredOutput(compilationFile, compilationProcess);
-  }
-  Beautify_and_minify: {
-    if (fileParameters.isRoot && (processParameters.beautify || processParameters.minify) && (!this.isBrowser) && (typeof output.js === "string")) {
-      const originalSize = this.constructor.getStringSize(output.js);
-      if (processParameters.beautify) {
-        const startedAt = new Date();
-        const beautifiedCode = await this.constructor.beautifyJs(output.js);
-        output.beautifiedJs = {
-          code: beautifiedCode,
-          chars: beautifiedCode.length,
-          originalSize: originalSize,
-          size: this.constructor.getStringSize(beautifiedCode),
-          sizeRelationOf: ((beautifiedCode.length / (output.js.length || 1)) * 100).toFixed(2) + "%",
-          time: ((((new Date()) - startedAt) / 1000).toFixed(3) + "s"),
-        };
-      }
-      if (processParameters.minify) {
-        const startedAt = new Date();
-        const minifiedCode = (await this.constructor.hardMinifyJs(output.js)).code;
-        output.minifiedJs = {
-          code: minifiedCode,
-          chars: minifiedCode.length,
-          originalSize: originalSize,
-          size: this.constructor.getStringSize(minifiedCode),
-          sizeRelationOf: ((minifiedCode.length / (output.js.length || 1)) * 100).toFixed(2) + "%",
-          time: ((((new Date()) - startedAt) / 1000).toFixed(3) + "s"),
-        };
+    this.assert(processParameters.uncacheInjections === compilationProcess.uncacheInjections, "Las inyecciones 1");
+    Add_entry_in_tree: {
+      // compilationFile.resource = this.rootdirOf(compilationFile.resource);
+      const id = this.rootdirOf(compilationFile.resource);
+      compilationFile.report.tree[id] = compilationFile.report.tree[id] || {};
+    }
+    Update_md_title_indentation: {
+      compilationFile.titleIndentation = compilationFile.parentCompilation?.titleIndentation || 0;
+      if (compilationFile.resource.endsWith(".entry.js")) {
+        compilationFile.titleIndentation++;
       }
     }
-  }
-
-  If_file_is_root:
-  if (fileParameters.isRoot) {
-    Bundle_as_CompilationResult: {
-      output = new this.constructor.CompilationResult(output, this);
+    Compile_inner_files_recursively_with_subcompiler: {
+      subcompiler = this._cloneForFile(compilationFile.resource, this);
+      compilationFile.subcompiler = subcompiler;
+      await subcompiler._fetchCompilable(compilationFile, compilationProcess);
+      await subcompiler._renderSourceAsTemplate(compilationFile, compilationProcess);
+      subcompiler._tokenizeText(compilationFile, compilationProcess);
+      await subcompiler._compileTokens(compilationFile, compilationProcess);
+      output = subcompiler._getPreferredOutput(compilationFile, compilationProcess);
     }
-    And_file_is_entry:
-    if (compilationFile.resource.endsWith(".entry.js")) {
-      Generate_rels_json_file: {
-        const relsFile = this.normalizationOf(this.rootdirOf(compilationFile.resource).replace(/^\@\/src\//g, "@/dist/").replace(/\.entry\.js$/g, ".rels.json"));
-        await this.files.writeFile.try(relsFile, JSON.stringify(compilationFile.report, null, 2), "utf8");
+    Beautify_and_minify: {
+      if (fileParameters.isRoot && (processParameters.beautify || processParameters.minify) && (!this.isBrowser) && (typeof output.js === "string")) {
+        const originalSize = this.constructor.getStringSize(output.js);
+        if (processParameters.beautify) {
+          const startedAt = new Date();
+          const beautifiedCode = await this.constructor.beautifyJs(output.js);
+          output.beautifiedJs = {
+            code: beautifiedCode,
+            chars: beautifiedCode.length,
+            originalSize: originalSize,
+            size: this.constructor.getStringSize(beautifiedCode),
+            sizeRelationOf: ((beautifiedCode.length / (output.js.length || 1)) * 100).toFixed(2) + "%",
+            time: ((((new Date()) - startedAt) / 1000).toFixed(3) + "s"),
+          };
+        }
+        if (processParameters.minify) {
+          const startedAt = new Date();
+          const minifiedCode = (await this.constructor.hardMinifyJs(output.js)).code;
+          output.minifiedJs = {
+            code: minifiedCode,
+            chars: minifiedCode.length,
+            originalSize: originalSize,
+            size: this.constructor.getStringSize(minifiedCode),
+            sizeRelationOf: ((minifiedCode.length / (output.js.length || 1)) * 100).toFixed(2) + "%",
+            time: ((((new Date()) - startedAt) / 1000).toFixed(3) + "s"),
+          };
+        }
+      }
+    }
+    If_file_is_root: {
+      if (fileParameters.isRoot) {
+        Bundle_as_CompilationResult: {
+          output = new this.constructor.CompilationResult(output, this);
+        }
+        And_file_is_entry:
+        if (compilationFile.resource.endsWith(".entry.js")) {
+          Generate_rels_json_file: {
+            const relsFile = this.normalizationOf(this.rootdirOf(compilationFile.resource).replace(/^\@\/src\//g, "@/dist/").replace(/\.entry\.js$/g, ".rels.json"));
+            await this.files.writeFile.try(relsFile, JSON.stringify(compilationFile.report, null, 2), "utf8");
+          }
+        }
       }
     }
   }
@@ -4460,8 +4464,10 @@ async _compileAsModulerImport(compilationFile, compilationProcess, { token, toke
       token.dependenciesOf = targetPaths;
     }
     Compile_all_targets: {
+      Iterating_targets:
       for(let indexTarget=0; indexTarget<targetPaths.length; indexTarget++) {
         const targetPath = targetPaths[indexTarget];
+        if(targetPath.startsWith("#")) continue Iterating_targets;
         const targetCompilation = await subcompiler._compileRecursively({
           resource: subcompiler.fullpathOf(targetPath),
           isRoot: false,

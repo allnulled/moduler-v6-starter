@@ -1825,13 +1825,14 @@ _getDistRootpathFromSrc(filepath, normalized = false) {
       rootpath = rootpath.replace("@/src/www/", "@/dist/www/");
     } else if (rootpath.startsWith("@/src/")) {
       rootpath = rootpath.replace("@/src/", "@/dist/src/");
+    } else {
+      // return filepath;
     }
   }
   Fix_suffix: {
     rootpath = rootpath.replace(/\.entry\.js$/g, ".dist.js");
   }
-  if (normalized) this.normalizationOf(rootpath);
-  return rootpath;
+  return normalized ? this.normalizationOf(rootpath) : rootpath;
 }
   
   /**
@@ -1968,7 +1969,8 @@ lockFiles(list) {
     until: function(promise) {
       return promise.then(output => {
         // @AQUI hay que resolver los módulos con el crédito de lockFiles
-        console.log(`[*] Unlocked files: ${list.join(", ")}`, output);
+        console.log(`[*] Unlocked files: ${list.join(", ")}`);
+        // console.log(output);
         return output;
       });
     }

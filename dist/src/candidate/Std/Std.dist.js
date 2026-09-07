@@ -1,14 +1,13 @@
-$moduler.section.set("Std", {});
+$moduler.section.set("#Std", {});
 
-module.exports = $moduler.import([], async function () {
-  const Std = $moduler.section.get("Std");
+module.exports = $moduler.import(["#Std"], async function ([Std]) {
   const { Core } = await $moduler
-    .lockFiles(["@/src/candidate/Std/Core/Core.entry.js"])
+    .lockFiles(["@/dist/src/candidate/Std/Core/Core.dist.js"])
     .until(
       Promise.fromCollection({
-        Core: function ({ module, exports }) {
+        Core: function ({ module, exports, $moduler }) {
           return $moduler.releaseFile(
-            "@/src/candidate/Std/Core/Core.entry.js",
+            "@/dist/src/candidate/Std/Core/Core.dist.js",
             arguments[0],
             function () {
               module.exports = $moduler.import([], function () {
@@ -20,7 +19,7 @@ module.exports = $moduler.import([], async function () {
           );
         }.call(
           this,
-          $moduler.reserveFile("@/src/candidate/Std/Core/Core.entry.js"),
+          $moduler.reserveFile("@/dist/src/candidate/Std/Core/Core.dist.js"),
         ),
       }),
     );

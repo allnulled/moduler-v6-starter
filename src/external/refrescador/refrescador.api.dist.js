@@ -557,14 +557,14 @@ var require_from_glob_watcher_to_socketio_emit = __commonJS({
                     let result = void 0;
                     Running_callback_file:
                       try {
-                        const callback = require(callbackFile);
+                        const callback = await require(callbackFile);
                         if (typeof callback !== "function") {
                           if (!isFresh) {
                             colorInform(`  \u26A0\uFE0F  Callback file not exporting a callback: ${shortenPath(callbackFile)}`);
                           }
                           break Running_callback_file;
                         }
-                        result = await callback(callbackFileBrute);
+                        result = await callback({ file: filepath, event });
                         diff = /* @__PURE__ */ new Date() - init;
                         colorSuccess(`\u{1F7E9} \u{1F38A} Done [\u23F3=${diff / 1e3}s] [\u{1F4BB}=${shortenPath(callbackFile)}] [${index + 1}/${config.execute.length}]`);
                       } catch (error) {
