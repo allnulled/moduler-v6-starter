@@ -3627,11 +3627,24 @@ async assertThrows(callback, message, errorChecker = () => true) {
     await callback();
     throw localError;
   } catch (err) {
-    if(err === localError) {
-      throw new this.constructor.AssertionError(`Should have thrown: ${err.name}: ${err.message} | ${err.stack}`);
+    if (err === localError) {
+      throw new this.constructor.AssertionError(`Should have thrown on «${message}» but it did not throw anything: ${err.name}: ${err.message} | ${err.stack}`);
     }
-    if (!errorChecker(err)) {
-      throw new this.constructor.AssertionError(`Should have thrown but not specific error: ${err.name}: ${err.message} | ${err.stack}`);
+    if (typeof errorChecker === "function") {
+      if (!errorChecker(err)) {
+        throw new this.constructor.AssertionError(`Should have thrown on «${message}» but not specific error: ${err.name}: ${err.message} | ${err.stack}`);
+      }
+    } else if (typeof errorChecker === "object") {
+      if (errorChecker.name) {
+        if (errorChecker.name !== err.name) throw new this.constructor.AssertionError(`Should have thrown on «${message}» but not specific «error.name»:\n  - should:  ${errorChecker.name}\n  - current: ${err.name}`);
+      }
+      if (errorChecker.message) {
+        if (errorChecker.message !== err.message) throw new this.constructor.AssertionError(`Should have thrown on «${message}» but not specific «error.message»:\n  - should:  ${errorChecker.message}\n  - current: ${err.message}`);
+      }
+    } else if(typeof errorChecker === "string") {
+      if (errorChecker) {
+        if (errorChecker !== err.message) throw new this.constructor.AssertionError(`Should have thrown on «${message}» but not specific «error.message»:\n  - should:  ${errorChecker}\n  - current: ${err.message}`);
+      }
     }
     this._notifyAssertion(message);
   }
@@ -5233,7 +5246,7 @@ _createDefaultInjectedFile(file, targetId) {
   headerComment += `   * - file:    ${targetRootdir}\n`;
   headerComment += `   ${closer}`;
   return require("fs").promises.writeFile(file, `${name} {
-  ${headerComment}
+  ${""}
 }`, "utf8").catch(error => {
     console.log(`[!] Could not create injected path «${file}» on «ModulerV6.prototype._compileAsInjectSource»`);
   });
@@ -7648,9 +7661,11 @@ async loop(args) {
       "txt",
     ],
     execute: [
-      // 'dev/run.js touch --file @{refrescador.file}',
+      'dev/run.js touch --file @{refrescador.file}',
     ],
-    executeCallback: [`${targetRoot}/dev/events/e.onFileChange.js`],
+    executeCallback: [
+      // `${targetRoot}/dev/events/e.onFileChange.js`
+    ],
     message: "El tiempo de refrescar ha llegado",
     messageFile: "TODO.md",
     payload: 'console.log("📟 Evento de refrescar activado");',
@@ -7884,7 +7899,7 @@ this.devbin = devbin;
   for (let index = 0; index < testFiles.length; index++) {
     const testName = testFiles[index];
     const testFile = `${dir}/${testName}` + (filename ? `/${filename}` : "");
-    console.log(ansiTool.style("cyanBright,italic").text(`🟢 Starting «${testName}» [${testsType}:${index + 1}/${testFiles.length}]`));
+    console.log(ansiTool.style("cyanBright,italic").text(`🟢 Start «${testName}» [${testsType}:${index + 1}/${testFiles.length}]`));
     let testCallback;
     try {
       const _testCallback = require(testFile);
@@ -7912,7 +7927,7 @@ this.devbin = devbin;
           ...injection
         });
         testCronometer.stop("Success");
-        const expression = `🟢 Done: «${testName}» [${testsType}:${index + 1}/${testFiles.length}] [⏳=${testCronometer.milliseconds()}]`;
+        const expression = `🟢 Done! «${testName}» [${testsType}:${index + 1}/${testFiles.length}] [⏳=${testCronometer.milliseconds()}]`;
         console.log(ansiTool.style("green,italic").text(expression));
       } catch (error) {
         testCronometer.stop("Failure");
@@ -7933,6 +7948,25 @@ this.devbin = devbin;
       console.log(ansiTool.style("greenBright,bold").text(ansiTool.box(`💎 No errors reported on «${testsType}» tests`)));
     }
   }
+}
+  /**
+ * @name DevBinaryV6.Tester.prototype.assertThrows
+ * @type 
+ * @description 
+ */
+assertThrows(...args) {
+  return this.devbin.compiler.assertThrows(...args);
+}
+  /**
+ * @name DevBinaryV6.Tester.prototype.asserters
+ * @type 
+ * @description 
+ */
+get asserters() {
+  return {
+    assert: (...args) => this.devbin.assert(...args),
+    assertThrows: (...args) => this.assertThrows(...args),
+  };
 }
 };
   /**

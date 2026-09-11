@@ -1,0 +1,1 @@
+static Parser = $compiler.inject.module("./Parser/CalendarScriptParser.peg.dist.js");

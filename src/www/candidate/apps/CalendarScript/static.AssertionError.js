@@ -1,0 +1,1 @@
+static AssertionError = class extends Error { constructor(...args) { super(...args); this.name = "AssertionError"; }} ;

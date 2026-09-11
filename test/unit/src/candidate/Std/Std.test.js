@@ -2,15 +2,16 @@ const devbin = require(__dirname + "/../../../../../dev/bin.js");
 const target = require(__dirname + "/../../../../../dist/src/candidate/Std/Std.dist.js");
 
 module.exports = (async function () {
-    
-    const { assert } = devbin;
 
-    assert(true, "Test is empty right now");
-    
+    devbin.assert(true, "Test is empty right now");
+
     const Std = await target;
 
-    assert(Std?.Core?.version === "1.0", "Can find Core version");
+    await Std.classes.Tester.evaluateDirectory({
+        directory: `${__dirname}/v1`,
+        title: "Std Official Tests",
+        filename: "test.js",
+        injection: { devbin, Std, },
+    });
 
-    console.log($moduler.section.get("Std"));
-    
 })();

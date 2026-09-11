@@ -1,0 +1,3 @@
+"EmptyConstructor.interface" () {
+  
+}

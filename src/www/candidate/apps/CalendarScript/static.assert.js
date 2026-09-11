@@ -1,0 +1,1 @@
+static assert(condition, message) { if(!condition) throw new this.AssertionError(message); }

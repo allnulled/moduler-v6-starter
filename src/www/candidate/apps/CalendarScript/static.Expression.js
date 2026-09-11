@@ -1,0 +1,1 @@
+static Expression = /*@injects:"./Expression/Expression.class.js"*/;
