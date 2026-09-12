@@ -120,28 +120,28 @@ module.exports = async function ({ devbin, Std }) {
     const exampleInterface1 = {
       static: {
         steps: [],
-        is1() {this.steps.push("is1")}
+        is1() { this.steps.push("is1") }
       },
       prototype: {
         protosteps: [],
-        ip1() {this.protosteps.push("ip1")}
+        ip1() { this.protosteps.push("ip1") }
       }
     };
     const exampleInterface2 = {
       static: {
-        is2() {this.steps.push("is2")}
+        is2() { this.steps.push("is2") }
       },
       prototype: {
-        ip2() {this.protosteps.push("ip2")}
+        ip2() { this.protosteps.push("ip2") }
       }
     };
     const exampleInterface3 = {
       static: {
-        is3() {this.steps.push("is3")},
+        is3() { this.steps.push("is3") },
         get clazzId() { return "zip" }
       },
       prototype: {
-        ip3() {this.protosteps.push("ip3")},
+        ip3() { this.protosteps.push("ip3") },
         get message() { return "uip" }
       }
     };
@@ -181,6 +181,119 @@ module.exports = async function ({ devbin, Std }) {
       assert(instanze.protosteps[0] === "ip1", "ClassSkiller.addInterface puede decorar una clase con prototype (66)");
       assert(instanze.protosteps[1] === "ip2", "ClassSkiller.addInterface puede decorar una clase con prototype (67)");
       assert(instanze.message === "uip", "ClassSkiller.addInterface puede decorar un objeto con prototype usando accesores (68)");
+    }
+
+    Metodo_definitivo_para_interfaces: {
+
+      const StdInstantiable = class {
+        static {
+          ClassSkiller.addInterfaces(this, [{
+            static: {
+              create: function (...args) {
+                return new this(...args);
+              },
+              get new() {
+                return new this();
+              },
+            },
+            prototype: {
+              config: function (props = {}) {
+                Object.assign(this, props);
+                return this;
+              },
+              get newClone() {
+                return this.clone({});
+              },
+              clone: function (props) {
+                return this.constructor.new.config(props);
+              }
+            }
+          }]);
+        }
+      };
+
+      const o1 = StdInstantiable;
+      const o2 = StdInstantiable.create();
+      const o3 = StdInstantiable.new.config({ id: "h" });
+      assert(o3 !== o2);
+      const o4 = o3.clone();
+      assert(o3 !== o4);
+      const o5 = o4.newClone;
+      assert(o5 !== o4);
+
+    }
+
+    Metodo_definitivo_en_practica_con_varias_interfaces: {
+
+      const CreableInterface = {
+        static: {
+          create: function (...args) {
+            return new this(...args);
+          },
+          get new() {
+            return new this();
+          },
+        },
+      };
+
+      const ConfigurableInterface = {
+        prototype: {
+          config: function (props = {}) {
+            Object.assign(this, props);
+            return this;
+          },
+        }
+      };
+
+      const ClonableInterface = {
+        prototype: {
+          get newClone() {
+            return this.clone({});
+          },
+          clone: function (props) {
+            return this.constructor.new.config(props);
+          }
+        }
+      }
+
+      Safe_example: {
+        const StdInstantiable = class {
+          static {
+            ClassSkiller.addInterfaces(this, [
+              CreableInterface,
+              ConfigurableInterface,
+              ClonableInterface,
+            ]);
+          }
+        };
+        const o1 = StdInstantiable;
+        const o2 = StdInstantiable.create();
+        const o3 = StdInstantiable.new.config({ id: "h" });
+        assert(o3 !== o2);
+        const o4 = o3.clone();
+        assert(o3 !== o4);
+        const o5 = o4.newClone;
+        assert(o5 !== o4);
+      }
+
+      Unsafe_example: {
+        await assertThrows(() => {
+          const StdInstantiable = class {
+            static {
+              ClassSkiller.addInterfaces(this, [
+                CreableInterface,
+                ConfigurableInterface,
+                ClonableInterface,
+                ClonableInterface,
+              ]);
+            }
+          };
+        }, "Std.all.ClassSkiller.addInterfaces puede avisarte cuando estás sobreescribiendo una propiedad (1)", {
+          name: "Error",
+          message: "Trying to mix conflictive properties «newClone, clone» on «Std.all.mixProperties»"
+        });
+      }
+
     }
 
   }

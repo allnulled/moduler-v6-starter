@@ -99,12 +99,26 @@ module.exports = $moduler.export("#Std", function () {
     mixProperties: (Std.functions.mixProperties = function mixProperties(
       base,
       _propertyBuses,
+      overridables = [],
     ) {
       const propertyBuses = Array.isArray(_propertyBuses)
         ? _propertyBuses
         : [_propertyBuses];
-      for (let index = 0; index < propertyBuses.length; index++) {
+      Iterating_buses: for (
+        let index = 0;
+        index < propertyBuses.length;
+        index++
+      ) {
         const bus = propertyBuses[index];
+        const baseProps = Object.getOwnPropertyNames(base);
+        const busProps = Object.getOwnPropertyNames(bus);
+        const conflictiveNames = busProps
+          .filter((key) => baseProps.includes(key))
+          .filter((name) => !overridables.includes(name));
+        if (conflictiveNames.length)
+          throw new Error(
+            `Trying to mix conflictive properties «${conflictiveNames.join(", ")}» on «Std.all.mixProperties»`,
+          );
         Object.defineProperties(base, Object.getOwnPropertyDescriptors(bus));
       }
       return base;
@@ -330,6 +344,13 @@ module.exports = $moduler.export("#Std", function () {
           keys.length <= 2,
           `Parameter «interfaceObject» cannot more than 2 properties on «ClassSkiller.addInterface»`,
         );
+        for (let index = 0; index < keys.length; index++) {
+          const key = keys[index];
+          this.assert(
+            ["static", "prototype"].includes(key),
+            `Parameter «interfaceObject» can only have properties «static» and «prototype» but «${key}» was found instead on «ClassSkiller.addInterface»`,
+          );
+        }
         if (keys.includes("static")) {
           Std.functions.mixProperties(base, interfaceObject.static);
         }
@@ -342,6 +363,13 @@ module.exports = $moduler.export("#Std", function () {
             interfaceObject.prototype,
           );
         }
+      }
+      static addInterfaces(base, others) {
+        for (let index = 0; index < others.length; index++) {
+          const other = others[index];
+          this.addInterface(base, other);
+        }
+        return base;
       }
     }),
   });

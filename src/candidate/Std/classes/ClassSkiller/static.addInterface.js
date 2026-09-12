@@ -6,6 +6,10 @@ static addInterface(base, interfaceObject) {
   const keys = Object.keys(interfaceObject);
   this.assert(keys.length !== 0, `Parameter «interfaceObject» cannot have 0 properties on «ClassSkiller.addInterface»`);
   this.assert(keys.length <= 2, `Parameter «interfaceObject» cannot more than 2 properties on «ClassSkiller.addInterface»`);
+  for(let index=0; index<keys.length; index++) {
+    const key = keys[index];
+    this.assert(["static","prototype"].includes(key), `Parameter «interfaceObject» can only have properties «static» and «prototype» but «${key}» was found instead on «ClassSkiller.addInterface»`);
+  }
   if (keys.includes("static")) {
     Std.functions.mixProperties(base, interfaceObject.static);
   }

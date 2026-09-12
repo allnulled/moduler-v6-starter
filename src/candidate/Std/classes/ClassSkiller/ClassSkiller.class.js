@@ -14,4 +14,5 @@ class ClassBuilder {
   /*@injects:"./static.addStatic.js"*/
   /*@injects:"./static.addPrototype.js"*/
   /*@injects:"./static.addInterface.js"*/
+  /*@injects:"./static.addInterfaces.js"*/
 }
