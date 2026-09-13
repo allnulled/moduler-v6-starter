@@ -1,0 +1,3 @@
+static addInterfaces (clazz, interfazes = []) {
+  
+}

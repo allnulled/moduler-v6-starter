@@ -734,6 +734,31 @@ this.moduler = moduler;
   }
   return output;
 }
+  /**
+ * @name ModulerV6.Toolkit.prototype.makeTrait
+ * @type 
+ * @description 
+ */
+makeTrait(...args) {
+  return ModulerV6.ClassSkiller.makeTrait(...args);
+}
+
+  /**
+ * @name ModulerV6.Toolkit.prototype.makeInterface
+ * @type 
+ * @description 
+ */
+makeInterface(...args) {
+  return ModulerV6.ClassSkiller.makeInterface(...args);
+}
+  /**
+ * @name ModulerV6.Toolkit.prototype.makeClass
+ * @type 
+ * @description 
+ */
+makeClass(...args) {
+  return ModulerV6.ClassSkiller.makeClass(...args);
+}
 };
   /**
  * @name ModulerV6.Parser
@@ -942,6 +967,160 @@ static ParserUtils = class ParserUtils {
   Update_state: {
     state.position = pos + (">".length);
   }
+}
+};
+  /**
+ * @name ModulerV6.static.ClassSkiller
+ * @type 
+ * @description 
+ */
+static ClassSkiller = class ClassSkiller {
+/**
+ * @name ModulerV6.ClassSkiller
+ * @type 
+ * @description 
+ */
+  /**
+ * @name ModulerV6.ClassSkiller.static.assert
+ * @type 
+ * @description 
+ */
+static assert(condition, message) {
+  if (!condition) throw new Error(message);
+}
+  /**
+ * @name ModulerV6.ClassSkiller.static.isInterface
+ * @type 
+ * @description 
+ */
+static isInterface(target, errorClue) {
+  this.assert(typeof target === "object", `Target must be object but «${typeof target}» was found instead${errorClue || ""}`);
+  const keys = Object.keys(target);
+  this.assert(keys.length <= 4, `Target cannot have more than 4 properties but «${keys.length}» keys were found instead${errorClue || ""}`);
+  const validKeys = ["static", "prototype", "signatures"];
+  const invalidKeys = keys.filter(key => !validKeys.includes(key));
+  this.assert(invalidKeys.length === 0, `Target can only have keys «${validKeys.join(",")}» but «${invalidKeys.join(",")}» ${invalidKeys.length === 1 ? "is" : "are"} not among them${errorClue || ""}`);
+}
+  /**
+ * @name ModulerV6.ClassSkiller.static.mixTraits
+ * @type 
+ * @description 
+ */
+static mixTraits(origin, mixable, options = {}) {
+  this.assert(typeof options === "object", `Parameter «options» must be object but «${typeof options}» was found instead on «ClassSkiller.mixTraits»`);
+  const { overridables = [], errorClue } = options;
+  this.assert(typeof origin === "object", `Parameter «origin» must be object but «${typeof origin}» was found instead ${errorClue||""} on «ClassSkiller.mixTraits»`);
+  this.assert(origin !== null, `Parameter «origin» cannot be null but «${typeof origin}» was found instead${errorClue||""} on «ClassSkiller.mixTraits»`);
+  this.assert(!Array.isArray(origin), `Parameter «origin» cannot be array but «${typeof origin}» was found instead${errorClue||""} on «ClassSkiller.mixTraits»`);
+  this.assert(typeof mixable === "object", `Parameter «mixable» must be object but «${typeof mixable}» was found instead${errorClue||""} on «ClassSkiller.mixTraits»`);
+  this.assert(mixable !== null, `Parameter «mixable» cannot be null but «${typeof mixable}» was found instead${errorClue||""} on «ClassSkiller.mixTraits»`);
+  this.assert(!Array.isArray(mixable), `Parameter «mixable» cannot be array but «${typeof mixable}» was found instead${errorClue||""} on «ClassSkiller.mixTraits»`);
+  const originDescriptors = Object.getOwnPropertyDescriptors(origin);
+  const mixableDescriptors = Object.getOwnPropertyDescriptors(mixable);
+  const originKeys = Object.keys(originDescriptors);
+  const mixableKeys = Object.keys(mixableDescriptors);
+  const conflictiveNames = originKeys.filter(bkey => mixableKeys.includes(bkey) && !overridables.includes(bkey));
+  if (conflictiveNames.length) throw new Error(`Cannot mix conflictive properties «${conflictiveNames.join(",")}»${errorClue || ""} on «ClassSkiller.mixTraits»`);
+  Object.defineProperties(origin, mixableDescriptors);
+}
+  /**
+ * @name ModulerV6.ClassSkiller.static.mixInterface
+ * @type 
+ * @description 
+ */
+static mixInterface(baseInterface, addedInterface, options = {}) {
+  this.assert(typeof baseInterface === "object", `Parameter «baseInterface» must be object but «${typeof baseInterface}» was found instead on «ClassSkiller.mixInterface»`);
+  this.assert(typeof addedInterface === "object", `Parameter «addedInterface» must be object but «${typeof addedInterface}» was found instead on «ClassSkiller.mixInterface»`);
+  this.assert(typeof options === "object", `Parameter «options» must be object but «${typeof options}» was found instead on «ClassSkiller.mixInterface»`);
+  this.isInterface(baseInterface, ` using «ClassSkiller.mixInterface» on parameter «baseInterface»`);
+  this.isInterface(addedInterface, ` using «ClassSkiller.mixInterface» on parameter «addedInterface»`);
+  const { overridables = [], errorClue = false } = options;
+  const interfaceables = ["static", "prototype"];
+  for (let indexInterfaceable = 0; indexInterfaceable < interfaceables.length; indexInterfaceable++) {
+    const interfaceableProperty = interfaceables[indexInterfaceable];
+    const origin = baseInterface[interfaceableProperty] || {};
+    const mixable = addedInterface[interfaceableProperty] || {};
+    this.mixTraits(origin, mixable, { overridables });
+  }
+  return baseInterface;
+}
+  /**
+ * @name ModulerV6.ClassSkiller.static.mixInterfaces
+ * @type 
+ * @description 
+ */
+static mixInterfaces(subinterfazes = [], options = {}) {
+  const {
+    overridables = [],
+    errorClue = false,
+    base: _base = false,
+  } = options;
+  const base = _base || { static: {}, prototype: {} };
+  this.isInterface(base, `${errorClue || ""} using «ClassSkiller.mixInterfaces» on parameter «options.base»`);
+  // @CAUTION: Sutilmente, hacemos garrafaladas.
+  // Este bucle es más caro de lo que debería.
+  // Pero se mantiene para no complicar ni suprimir la «chained compatibility validation»
+  for (let index = 0; index < subinterfazes.length; index++) {
+    const subinterfaze = subinterfazes[index];
+    this.isInterface(subinterfaze, `${errorClue || ""} using «ClassSkiller.mixInterfaces» on parameter «subinterfazes» at index «${index}»`);
+    this.mixInterface(base, subinterfaze, {
+      overridables,
+      errorClue: `${errorClue || ""} using «ClassSkiller.mixInterfaces» at index «${index}»`,
+    });
+  }
+  return base;
+}
+  /**
+ * @name ModulerV6.ClassSkiller.static.addInterfaces
+ * @type 
+ * @description 
+ */
+static addInterfaces(clazz, list, options) {
+  this.assert(typeof clazz === "function", `Parameter «clazz» must be function but «${typeof clazz}» was found instead on «ClassSkiller.addInterfaces»`);
+  const interfaze = this.mixInterfaces(list, { errorClue: "using «ClassSkiller.addInterfaces»", ...options });
+  Object.defineProperties(clazz, Object.getOwnPropertyDescriptors(interfaze.static));
+  Object.defineProperties(clazz.prototype, Object.getOwnPropertyDescriptors(interfaze.prototype));
+  return clazz;
+}
+  /**
+ * @name ModulerV6.ClassSkiller.static.makeClass
+ * @type 
+ * @description 
+ */
+static makeClass(allInterfaces, base = class {}) {
+  return this.addInterfaces(base, allInterfaces, {
+    errorClue: " using «ClassSkiller.makeClass»",
+  });
+}
+  /**
+ * @name ModulerV6.ClassSkiller.static.makeTrait
+ * @type 
+ * @description 
+ */
+static makeTrait(subtraits = [], options = {}) {
+  const base = options?.base || {};
+  // @CAUTION: Sutilmente, hacemos garrafaladas.
+  // Este bucle es más caro de lo que debería.
+  // Pero se mantiene para no complicar ni suprimir la «chained compatibility validation»
+  for(let index=0; index<subtraits.length; index++) {
+    const subtrait = subtraits[index];
+    this.mixTraits(base, subtrait, {
+      errorClue: " using «ClassSkiller.makeTrait»",
+    });
+  }
+  return base;
+}
+  /**
+ * @name ModulerV6.ClassSkiller.static.makeInterface
+ * @type 
+ * @description 
+ */
+static makeInterface(subinterfaces, options = {}, base = { static: {}, prototype: {} }) {
+  return this.mixInterfaces(subinterfaces, {
+    base,
+    errorClue: " using «ClassSkiller.makeInterface»",
+    ...options,
+  });
 }
 };
   
@@ -3525,6 +3704,32 @@ Object.assign({
 })
 }
   /**
+ * @name CompilerV6.static.sensitiveFileAttributes
+ * @type 
+ * @description 
+ */
+static sensitiveFileAttributes = [
+  "prototype",
+  "static",
+  "any",
+  "member",
+  "entry",
+  "class",
+  "object",
+  "function",
+  "trait",
+  "interface",
+  "fact",
+  "part",
+  "promise",
+  "constructor",
+  "get",
+  "set",
+  "construct",
+  "apply",
+  "deleteProperty",
+];
+  /**
  * @name CompilerV6.constructor  
  * @type 
  * @description 
@@ -3621,7 +3826,11 @@ assert(condition, message) {
  * @type 
  * @description 
  */
-async assertThrows(callback, message, errorChecker = () => true) {
+async assertThrows(...args) {
+  const isReversed = (typeof args[0] === "string") && (typeof args[1] === "function");
+  const callback = isReversed ? args[1] : args[0];
+  const message = isReversed ? args[0] : args[1];
+  const errorChecker = args[2] || (() => true);
   const localError = new Error("Should have thrown: " + message);
   try {
     await callback();
@@ -3654,15 +3863,15 @@ async assertThrows(callback, message, errorChecker = () => true) {
  * @type 
  * @description 
  */
-async assertDoesNotThrow(callback, message, checker = () => true) {
+async assertDoesNotThrow(...args) {
+  const isReversed = (typeof args[0] === "string") && (typeof args[1] === "function");
+  const callback = isReversed ? args[1] : args[0];
+  const message = isReversed ? args[0] : args[1];
   try {
     await callback();
     this._notifyAssertion(message);
   } catch (err) {
-    if (!checker(err)) {
-      throw new this.constructor.AssertionError(`Should not have thrown specific error: ${err.name}: ${err.message}`);
-    }
-    throw new this.constructor.AssertionError(`Should not have thrown: ${err.name}: ${err.message}`);
+    throw new this.constructor.AssertionError(`Should not have thrown: ${err.name}: ${err.message}`, err);
   }
 }
   /**
@@ -4042,6 +4251,28 @@ _wrapAsModuleInjection(source, rootpath) {
     `}).call(this, $moduler.reserveFile("${distRootpath}"))`,
   ].join("\n");
 }
+  /**
+ * @name CompilerV6.prototype._extractFilenameAttributes
+ * @type 
+ * @description 
+ */
+_extractFilenameAttributes(filepath) {
+  const filename = require("path").basename(filepath);
+  const parts = filename.split(".").filter(part => part !== "js");
+  let name = undefined;
+  const attr = {};
+  const hotwords = this.constructor.sensitiveFileAttributes;
+  for(let index=0; index<parts.length; index++) {
+    const part = parts[index];
+    const isHotword = hotwords.includes(part);
+    if(!isHotword) name = part;
+    else {
+      attr[part] = index+1;
+      if(!name) name = part;
+    }
+  }
+  return {name,attr,list:Object.keys(attr)};
+}
   
   /**
  * @name CompilerV6.prototype._compileAsModulerSectionGet
@@ -4165,9 +4396,7 @@ async _compileAsInjectSource(compilationFile, compilationProcess, { token, token
           const existsFile = await this._existsFile(targetPath);
           if (!existsFile) {
             currentStep.push("4.b.1. create injected file as it does not exist");
-            const path = require("path");
-            const targetId = this.rootdirOf(targetPath).replace(/\.(js|css|html)$/g, "");
-            await this._createDefaultInjectedFile(targetPath, targetId);
+            await this._createDefaultInjectedFile(targetPath);
           }
         }
       }
@@ -5178,76 +5407,60 @@ _existsFile(file) {
  */
 _createDefaultInjectedFile(file, targetId) {
   const path = require("path");
-  const filename = path.basename(file).replace(/\.js$/g,"");
-  let name, targetType, targetIsClass = false, targetRootdir;
-  targetType = "any";
-  targetRootdir = this.rootdirOf(file);
-  name = (() => {
-    const isPrototype = filename.startsWith("prototype.");
-    const isStatic = filename.startsWith("static.");
-    const isClass = filename.endsWith(".class");
-    const isAsync = filename.match(/(^async\.)|(\.async\.)|(\.async$)/g);
-    const isSync = filename.match(/(^sync\.)|(\.sync\.)|(\.sync$)/g);
-    const isConstructor = filename === "constructor";
-    const isOnlyClass = isClass && (!isPrototype) && (!isStatic);
-    const fileId = filename
-      .replace(/^(prototype|static)\./g, "")
-      .replace(/^a?sync\./g, "")
-      .replace(/\.a?sync$/g, "")
-      .replace(/\.class$/g, "");
-    const isJsFriendly = fileId.match(/^[A-Za-z_$][A-Za-z0-9_$]*$/g);
-    let out = "";
-    let prefixes = "";
-    let middle = "";
-    let suffixes = "";
-    if(isStatic) {
-      prefixes += `static `;
-      targetType = "static class member";
-    } else if(isPrototype) {
-      targetType = "prototype class member";
-    } else if(isClass) {
-      targetType = "only class"
-    }
-    if(isClass) {
-      if(isStatic || isPrototype)  {
-        suffixes += " = ";
+  const fileid = path.basename(file);
+  const filename = fileid.replace(/\.js$/g, "");
+  const fileattrs = this._extractFilenameAttributes(fileid);
+  const { name, attr, list: attrList } = fileattrs;
+  const notMethods = this.constructor.sensitiveFileAttributes;
+  let output = "";
+  Decide_output: {
+    const cannotBeMethod = !!attrList.filter(it => notMethods.includes(it)).length;
+    Intercept_one_solution_cases: {
+      if(name === "static") {
+        output = "static {\n  \n}";
       }
-      suffixes += `class ${fileId}`;
-      targetType = targetType === "class" ? targetType : targetType + " + class";
-    } else if(isAsync) {
-      prefixes += `async `;
-      suffixes += `()`;
-      targetType += " + async";
-    } else if(isSync) {
-      prefixes += ``;
-      suffixes += `()`;
-      targetType += " + sync";
-    } else {
-      suffixes = " ()";
-    }
-    if(!isOnlyClass) {
-      if(isJsFriendly) {
-        middle = fileId;
-      } else {
-        middle = JSON.stringify(fileId);
+      if(name === "constructor") {
+        output = "constructor() {\n  \n}";
       }
     }
-    out = prefixes + middle + suffixes;
-    return out;
-  })();
-  const opener = ['/','*','*'].join('');
-  const closer = ['*','/'].join('');
-  let headerComment = "";
-  headerComment += `${opener}\n`;
-  const nameByFile = targetRootdir.replace(/^\@\/src\/candidate\//g, "").replace(/^\@\/src\//g, "").replace(/\.js$/g, "").replace(/\//g, ".");
-  const basenameByFile = path.basename(targetRootdir).replace(/\.js$/g, "");
-  headerComment += `   * # ${basenameByFile}\n`;
-  headerComment += `   * - section: ${nameByFile}\n`;
-  headerComment += `   * - file:    ${targetRootdir}\n`;
-  headerComment += `   ${closer}`;
-  return require("fs").promises.writeFile(file, `${name} {
-  ${""}
-}`, "utf8").catch(error => {
+    First_type: {
+      if (attr.class) {
+        output = `class ${name || ""}{\n  \n}`;
+      } else if (attr.function) {
+        output = `function ${name || ""}() {\n  \n}`;
+      } else if (attr.member || attr.any) {
+        output = `0`;
+      } else if (attr.fact) {
+        output = `(function ${name || ""}() {\n  \n}).call(this)`;
+      } else if (attr.part) {
+        output = name ? `Step_${name}: {\n  \n}` : "";
+      } else if (attr.promise) {
+        output = `new Promise(async (resolve, reject) => {\n  \n})`;
+      } else if (attr.get) {
+        output = `get ${name || ""} () {\n  \n}`;
+      } else if (attr.set) {
+        output = `set ${name || ""} () {\n  \n}`;
+      } else if (attr.construct) {
+        output = `construct ${name || ""} () {\n  \n}`;
+      } else if (attr.apply) {
+        output = `apply ${name || ""} () {\n  \n}`;
+      } else if (attr.deleteProperty) {
+        output = `deleteProperty ${name || ""} () {\n  \n}`;
+      } else if (!cannotBeMethod) {
+        output = `${name || ""} () {\n  \n}`;
+      }
+    }
+    Second_presentation: {
+      if (attr.static && name && cannotBeMethod) {
+        output = `static ${name} = ${output};`;
+      } else if (attr.prototype && name && cannotBeMethod) {
+        output = `${name} = ${output};`;
+      } else if (attr.member && name) {
+        output = `${name}: ${output}`;
+      }
+    }
+  }
+  return require("fs").promises.writeFile(file, output, "utf8").catch(error => {
     console.log(`[!] Could not create injected path «${file}» on «ModulerV6.prototype._compileAsInjectSource»`);
   });
 }
@@ -7950,6 +8163,14 @@ this.devbin = devbin;
   }
 }
   /**
+ * @name DevBinaryV6.Tester.prototype.assertDoesNotThrow
+ * @type 
+ * @description 
+ */
+assertDoesNotThrow(...args) {
+  return this.devbin.compiler.assertDoesNotThrow(...args);
+}
+  /**
  * @name DevBinaryV6.Tester.prototype.assertThrows
  * @type 
  * @description 
@@ -7966,6 +8187,7 @@ get asserters() {
   return {
     assert: (...args) => this.devbin.assert(...args),
     assertThrows: (...args) => this.assertThrows(...args),
+    assertDoesNotThrow: (...args) => this.devbin.compiler.assertDoesNotThrow(...args),
   };
 }
 };
@@ -8135,6 +8357,34 @@ cloneForFile(resource, devbin = false) {
  */
 get files() {
   return this.compiler.files;
+}
+  /**
+ * @name DevBinaryV6.prototype.inspect
+ * @type 
+ * @description 
+ */
+inspect(obj) {
+  const properties = new Map();
+  for (let target = obj; target; target = Object.getPrototypeOf(target)) {
+    for (const key of Reflect.ownKeys(target)) {
+      if (!properties.has(key)) {
+        const descriptor = Object.getOwnPropertyDescriptor(target, key);
+        properties.set(key, {
+          type: "value" in descriptor
+            ? typeof descriptor.value
+            : descriptor.get && descriptor.set
+              ? "get/set"
+              : descriptor.get
+                ? "getter"
+                : "setter",
+          descriptor,
+          owner: target
+        });
+      }
+    }
+  }
+  console.log(properties);
+  return Object.fromEntries(properties);
 }
   /**
  * @name DevBinaryV6.static.globalInstance

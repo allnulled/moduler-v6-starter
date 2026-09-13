@@ -1,0 +1,3 @@
+static colateralEffects = function colateralEffects() {
+  
+}

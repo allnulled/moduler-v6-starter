@@ -711,6 +711,31 @@ this.moduler = moduler;
   }
   return output;
 }
+  /**
+ * @name ModulerV6.Toolkit.prototype.makeTrait
+ * @type 
+ * @description 
+ */
+makeTrait(...args) {
+  return ModulerV6.ClassSkiller.makeTrait(...args);
+}
+
+  /**
+ * @name ModulerV6.Toolkit.prototype.makeInterface
+ * @type 
+ * @description 
+ */
+makeInterface(...args) {
+  return ModulerV6.ClassSkiller.makeInterface(...args);
+}
+  /**
+ * @name ModulerV6.Toolkit.prototype.makeClass
+ * @type 
+ * @description 
+ */
+makeClass(...args) {
+  return ModulerV6.ClassSkiller.makeClass(...args);
+}
 };
   /**
  * @name ModulerV6.Parser
@@ -919,6 +944,160 @@ static ParserUtils = class ParserUtils {
   Update_state: {
     state.position = pos + (">".length);
   }
+}
+};
+  /**
+ * @name ModulerV6.static.ClassSkiller
+ * @type 
+ * @description 
+ */
+static ClassSkiller = class ClassSkiller {
+/**
+ * @name ModulerV6.ClassSkiller
+ * @type 
+ * @description 
+ */
+  /**
+ * @name ModulerV6.ClassSkiller.static.assert
+ * @type 
+ * @description 
+ */
+static assert(condition, message) {
+  if (!condition) throw new Error(message);
+}
+  /**
+ * @name ModulerV6.ClassSkiller.static.isInterface
+ * @type 
+ * @description 
+ */
+static isInterface(target, errorClue) {
+  this.assert(typeof target === "object", `Target must be object but «${typeof target}» was found instead${errorClue || ""}`);
+  const keys = Object.keys(target);
+  this.assert(keys.length <= 4, `Target cannot have more than 4 properties but «${keys.length}» keys were found instead${errorClue || ""}`);
+  const validKeys = ["static", "prototype", "signatures"];
+  const invalidKeys = keys.filter(key => !validKeys.includes(key));
+  this.assert(invalidKeys.length === 0, `Target can only have keys «${validKeys.join(",")}» but «${invalidKeys.join(",")}» ${invalidKeys.length === 1 ? "is" : "are"} not among them${errorClue || ""}`);
+}
+  /**
+ * @name ModulerV6.ClassSkiller.static.mixTraits
+ * @type 
+ * @description 
+ */
+static mixTraits(origin, mixable, options = {}) {
+  this.assert(typeof options === "object", `Parameter «options» must be object but «${typeof options}» was found instead on «ClassSkiller.mixTraits»`);
+  const { overridables = [], errorClue } = options;
+  this.assert(typeof origin === "object", `Parameter «origin» must be object but «${typeof origin}» was found instead ${errorClue||""} on «ClassSkiller.mixTraits»`);
+  this.assert(origin !== null, `Parameter «origin» cannot be null but «${typeof origin}» was found instead${errorClue||""} on «ClassSkiller.mixTraits»`);
+  this.assert(!Array.isArray(origin), `Parameter «origin» cannot be array but «${typeof origin}» was found instead${errorClue||""} on «ClassSkiller.mixTraits»`);
+  this.assert(typeof mixable === "object", `Parameter «mixable» must be object but «${typeof mixable}» was found instead${errorClue||""} on «ClassSkiller.mixTraits»`);
+  this.assert(mixable !== null, `Parameter «mixable» cannot be null but «${typeof mixable}» was found instead${errorClue||""} on «ClassSkiller.mixTraits»`);
+  this.assert(!Array.isArray(mixable), `Parameter «mixable» cannot be array but «${typeof mixable}» was found instead${errorClue||""} on «ClassSkiller.mixTraits»`);
+  const originDescriptors = Object.getOwnPropertyDescriptors(origin);
+  const mixableDescriptors = Object.getOwnPropertyDescriptors(mixable);
+  const originKeys = Object.keys(originDescriptors);
+  const mixableKeys = Object.keys(mixableDescriptors);
+  const conflictiveNames = originKeys.filter(bkey => mixableKeys.includes(bkey) && !overridables.includes(bkey));
+  if (conflictiveNames.length) throw new Error(`Cannot mix conflictive properties «${conflictiveNames.join(",")}»${errorClue || ""} on «ClassSkiller.mixTraits»`);
+  Object.defineProperties(origin, mixableDescriptors);
+}
+  /**
+ * @name ModulerV6.ClassSkiller.static.mixInterface
+ * @type 
+ * @description 
+ */
+static mixInterface(baseInterface, addedInterface, options = {}) {
+  this.assert(typeof baseInterface === "object", `Parameter «baseInterface» must be object but «${typeof baseInterface}» was found instead on «ClassSkiller.mixInterface»`);
+  this.assert(typeof addedInterface === "object", `Parameter «addedInterface» must be object but «${typeof addedInterface}» was found instead on «ClassSkiller.mixInterface»`);
+  this.assert(typeof options === "object", `Parameter «options» must be object but «${typeof options}» was found instead on «ClassSkiller.mixInterface»`);
+  this.isInterface(baseInterface, ` using «ClassSkiller.mixInterface» on parameter «baseInterface»`);
+  this.isInterface(addedInterface, ` using «ClassSkiller.mixInterface» on parameter «addedInterface»`);
+  const { overridables = [], errorClue = false } = options;
+  const interfaceables = ["static", "prototype"];
+  for (let indexInterfaceable = 0; indexInterfaceable < interfaceables.length; indexInterfaceable++) {
+    const interfaceableProperty = interfaceables[indexInterfaceable];
+    const origin = baseInterface[interfaceableProperty] || {};
+    const mixable = addedInterface[interfaceableProperty] || {};
+    this.mixTraits(origin, mixable, { overridables });
+  }
+  return baseInterface;
+}
+  /**
+ * @name ModulerV6.ClassSkiller.static.mixInterfaces
+ * @type 
+ * @description 
+ */
+static mixInterfaces(subinterfazes = [], options = {}) {
+  const {
+    overridables = [],
+    errorClue = false,
+    base: _base = false,
+  } = options;
+  const base = _base || { static: {}, prototype: {} };
+  this.isInterface(base, `${errorClue || ""} using «ClassSkiller.mixInterfaces» on parameter «options.base»`);
+  // @CAUTION: Sutilmente, hacemos garrafaladas.
+  // Este bucle es más caro de lo que debería.
+  // Pero se mantiene para no complicar ni suprimir la «chained compatibility validation»
+  for (let index = 0; index < subinterfazes.length; index++) {
+    const subinterfaze = subinterfazes[index];
+    this.isInterface(subinterfaze, `${errorClue || ""} using «ClassSkiller.mixInterfaces» on parameter «subinterfazes» at index «${index}»`);
+    this.mixInterface(base, subinterfaze, {
+      overridables,
+      errorClue: `${errorClue || ""} using «ClassSkiller.mixInterfaces» at index «${index}»`,
+    });
+  }
+  return base;
+}
+  /**
+ * @name ModulerV6.ClassSkiller.static.addInterfaces
+ * @type 
+ * @description 
+ */
+static addInterfaces(clazz, list, options) {
+  this.assert(typeof clazz === "function", `Parameter «clazz» must be function but «${typeof clazz}» was found instead on «ClassSkiller.addInterfaces»`);
+  const interfaze = this.mixInterfaces(list, { errorClue: "using «ClassSkiller.addInterfaces»", ...options });
+  Object.defineProperties(clazz, Object.getOwnPropertyDescriptors(interfaze.static));
+  Object.defineProperties(clazz.prototype, Object.getOwnPropertyDescriptors(interfaze.prototype));
+  return clazz;
+}
+  /**
+ * @name ModulerV6.ClassSkiller.static.makeClass
+ * @type 
+ * @description 
+ */
+static makeClass(allInterfaces, base = class {}) {
+  return this.addInterfaces(base, allInterfaces, {
+    errorClue: " using «ClassSkiller.makeClass»",
+  });
+}
+  /**
+ * @name ModulerV6.ClassSkiller.static.makeTrait
+ * @type 
+ * @description 
+ */
+static makeTrait(subtraits = [], options = {}) {
+  const base = options?.base || {};
+  // @CAUTION: Sutilmente, hacemos garrafaladas.
+  // Este bucle es más caro de lo que debería.
+  // Pero se mantiene para no complicar ni suprimir la «chained compatibility validation»
+  for(let index=0; index<subtraits.length; index++) {
+    const subtrait = subtraits[index];
+    this.mixTraits(base, subtrait, {
+      errorClue: " using «ClassSkiller.makeTrait»",
+    });
+  }
+  return base;
+}
+  /**
+ * @name ModulerV6.ClassSkiller.static.makeInterface
+ * @type 
+ * @description 
+ */
+static makeInterface(subinterfaces, options = {}, base = { static: {}, prototype: {} }) {
+  return this.mixInterfaces(subinterfaces, {
+    base,
+    errorClue: " using «ClassSkiller.makeInterface»",
+    ...options,
+  });
 }
 };
   
