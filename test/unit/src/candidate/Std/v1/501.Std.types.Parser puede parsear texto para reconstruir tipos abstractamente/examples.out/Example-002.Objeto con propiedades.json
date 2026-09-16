@@ -1,0 +1,99 @@
+{
+  "grammar": "evaluable type",
+  "core": {
+    "grammar": "object type",
+    "properties": {
+      "apartado_de_usuario": {
+        "grammar": "object property",
+        "optional": null,
+        "property": {
+          "grammar": "evaluable type",
+          "core": {
+            "grammar": "object type",
+            "properties": {
+              "name": {
+                "grammar": "object property",
+                "optional": null,
+                "property": {
+                  "grammar": "evaluable type",
+                  "core": {
+                    "grammar": "type id",
+                    "id": "string"
+                  }
+                }
+              },
+              "password": {
+                "grammar": "object property",
+                "optional": null,
+                "property": {
+                  "grammar": "evaluable type",
+                  "core": {
+                    "grammar": "type id",
+                    "id": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "apartado_de_otra_cosa": {
+        "grammar": "object property",
+        "optional": null,
+        "property": {
+          "grammar": "evaluable type",
+          "core": {
+            "grammar": "object type",
+            "properties": {
+              "session": {
+                "grammar": "object property",
+                "optional": null,
+                "property": {
+                  "grammar": "evaluable type",
+                  "core": {
+                    "grammar": "object type",
+                    "properties": {
+                      "id": {
+                        "grammar": "object property",
+                        "optional": null,
+                        "property": {
+                          "grammar": "evaluable type",
+                          "core": {
+                            "grammar": "type id",
+                            "id": "string"
+                          }
+                        }
+                      },
+                      "startedAt": {
+                        "grammar": "object property",
+                        "optional": null,
+                        "property": {
+                          "grammar": "evaluable type",
+                          "core": {
+                            "grammar": "type id",
+                            "id": "date"
+                          }
+                        }
+                      },
+                      "token": {
+                        "grammar": "object property",
+                        "optional": null,
+                        "property": {
+                          "grammar": "evaluable type",
+                          "core": {
+                            "grammar": "type id",
+                            "id": "uuid"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

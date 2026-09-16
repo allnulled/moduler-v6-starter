@@ -682,10 +682,12 @@ var require_from_glob_watcher_to_socketio_emit = __commonJS({
           const ignoredEntity = require(config.ignoreCallback);
           if (Array.isArray(ignoredEntity)) {
             const result = require("picomatch")(ignoredEntity)(filepath);
-            if (!result) colorDark(`[*] Ignored filewatcher event by selector glob expression: ${rootedPath}`);
+            if (!result) colorDark(`[*] Ignored filewatcher event because of a glob selector in \xABconfig.ignoreCallback\xBB with \xAB${ignoredEntity}\xBB on file \xAB${rootedPath}\xBB`);
             return result;
           } else if (typeof ignoredEntity === "function") {
-            return ignoredEntity(filepath);
+            const result = ignoredEntity(filepath);
+            if (!result) colorDark(`[*] Ignored filewatcher event because of the callback in \xABconfig.ignoreCallback\xBB with \xAB${ignoredEntity}\xBB on file \xAB${rootedPath}\xBB`);
+            return;
           } else {
             throw new Error(`Option \xABignoreCallback\xBB requires file \xAB${filepath}\xBB to export array or function on \xAB${config.ignoreCallback}\xBB but \xAB${typeof ignoredEntity}\xBB was found instead`);
           }
@@ -695,8 +697,13 @@ var require_from_glob_watcher_to_socketio_emit = __commonJS({
       };
       const matchesIgnoreFiles = function(filepath) {
         for (let index = 0; index < config.ignoreFiles.length; index++) {
-          const isMatch = require("picomatch")(config.ignoreFiles[index])(filepath);
-          if (isMatch) return true;
+          const globExpression = config.ignoreFiles[index];
+          const isMatch = require("picomatch")(globExpression)(filepath);
+          if (isMatch) {
+            const rootedPath = filepath.startsWith(config.basedir + "/") ? filepath.replace(config.basedir + "/", "@/") : filepath;
+            colorDark(`[*] Ignored filewatcher event because of a glob selector in \xABconfig.ignoreFiles\xBB with \xAB${globExpression}\xBB on file \xAB${rootedPath}\xBB`);
+            return true;
+          }
         }
         return false;
       };

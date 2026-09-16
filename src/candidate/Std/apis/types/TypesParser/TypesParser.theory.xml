@@ -1,0 +1,451 @@
+OR   |
+XOR  ¬|
+AND  &
+
+
+all (user) is a (person) and an (application member).
+all (live being) is a (vegetal) or an (animal).
+all (person) is an (animal).
+
+is a (person) also an (animal)? [yes, because it was said that «all (person) is an (animal)»]
+is a (person) also a (life being)? [yes, because it was said that «...»] *y aquí he parado de hacer el script, CHATGPT.
+is a (life being) also a (person)? [maybe]
+is a (person) also a (vegetal)? [no]
+is a (person) also an (application member)? [no]
+is a (person) also a (user)? [no]
+is a (user) also a (person)? [yes]
+
+every (user request) is 
+  (200 response) or
+  (201 response) or
+  (404 response) or 
+  (501 response).
+
+is a (200 response) also a (user request)? [possibly, because no other source was found]
+
+
+*CHATGPT: pues me he quedado pillado, porque primero:
+
+el 'all 
+
+Después:
+
+He visto que se crean un montón de relaciones, que en este caso pueden ser así, pero en otros no tiene por qué.
+
+Pero me cuesta seguirle el hilo mental, simplemente veo que no es tan fácil.
+
+Entonces, igual es que la expresión «a» y «an» me están dando a entender otra lectura.
+
+Como, si ahora te traigo a una persona, sabes decirme si es kukuriana?
+
+Bueno, puede que sea kukuriana.
+
+Y si te traigo un kukuriano, sabes decirme si es persona?
+
+Bueno, sí. Un kukuriano es una persona. Pero no siempre una persona es un kukuriano.
+
+Entonces, no es lo mismo referirse a «a» o «an», que a «any».
+
+Y pasa lo mismo con el complemento, si cambias el «a/an» por «any», la cosa cambia:
+
+all (user) is a (person) and an (application member)? - esta sería la oficial digamos, parece la expresión más programáticamente trazable
+all (user) is any (person) and any (application member)? -
+a (user) is a (person) and an (application member)? - esta era la que había pensado al principio, hasta que me he dado cuenta de que si hiciera el mismo cambio con los complementos, la cosa se lía
+any (user) is a (person) and an (application member)? - 
+
+Y no he seguido desarrollando la problemática, porque veo que es ganso, y no tengo perspectiva todavía.
+
+Y digo, a ver qué opina, ChatGPT, de todo esto?
+
+Claro, para ti al igual es trazable cada uno de estos sentidos.
+
+Para mí, estaríamos reventando el SQL. Y condiciones, anidadas, inversas, uiuiui. Me parece un terreno complicado.
+
+Entonces, mi pregunta es qué opinas. En general. Pero si tenemos que ir al detalle... pienso, a ver, qué orden.
+
+Qué, oraciones, elementales, sin fliparse.
+
+Tenemos: 
+
+- x and y
+- x or y
+- either x or y or ...
+- grupos con: (a and b) or (c and d)
+- multiplicadores siempre con grupos con:
+   - (word)  - 1
+   - (word)? - 0 o 1
+   - (word)* - 0 o más
+   - (word)+ - 1 o más
+- una operación de definir/igualar
+- una operación de "is compliant of" digamos
+   - estamos definiendo igualaciones
+   - si hay relaciones suficientemente trazables
+      - deberíamos poder discriminar si un tipo es subtipo de otro tipo
+      - o ya no subtipo, sino... tipo-compliant
+
+Son dudas, de equivalencia con el lenguaje natural.
+
+Y serían eso, 2 estructuras de momento solamente:
+
+- una para definir
+- una para comprobar subtipos
+- una para comprobar supertipos
+
+Todo usuario es persona.
+
+Un usuario es una persona? [Sí]
+
+Una persona es un usuario? 
+
+user = person
+
+person = {
+  name = string
+  age = integer
+  city = string
+  hobbies = string*
+}
+
+polite person = person & polite
+
+respectful person = person & not (noisy | dirty | annoying)
+
+is polite also not (noisy | dirty | annoying)?
+
+if (yes) then ...
+else if (no) then...
+
+Sigo haciendo pruebas, ChatGPT, pero creo que he detectado una dificultad.
+
+Yo estoy pensando en el operador instanceof de js, y ese, lo que hace es mirar 1 sola cadena de tipos.
+
+Entonces claro, la operación es mucho más directa y rápida.
+
+Aquí, la operación de instanceof sería el validate que estoy intentando... parametrizar con este lenguaje de scripting.
+
+Es decir, se plantea como un lenguaje para declarar tipos y validar estructuras.
+
+Y el operador que me estaba planteando es diferente, además de toda la complejidad extra, no es lo mismo instanceof que recorrer toda la cadena de constructor.
+
+Entonces, supertype y subtype serían recorrer la cadena constructor, abajo o arriba.
+
+Y instanceof, llamar al validate recursivamente.
+
+El problema de supertype y subtype es, que... no hay tal cadena, aquí. Hay relaciones de igualación, estructura y composición.
+
+E igualación y composición son los parámetros, y estructura es las funciones que quiero prefabricar y bundlear con el lenguaje.
+
+Que son esas:
+
+- and
+- or
+- xor
+- grupos con ( y )
+- multiplicadores con ? * +
+- definir con =
+- objetos con { y }
+- arrays con [ y ]
+- spread operator con ...
+
+Claro, aquí, no hay una traza de herencia lineal. Aquí hay relaciones estructurales, de igualación y de composición.
+
+Entonces, recorrer los supertipos y los subtipos no es una tarea directa, hay que dar muchas vueltas.
+
+Para empezar, que aquí ya es de dudosa concordia invertir cómputo en complejizar una tarea resuelta con prototype. Pero bueno, pongamos que para practicar y obtener un sistema robusto antes de. O para recrear la complejidad. Quizá hay features escondidas deseadas.
+
+El caso es que incluso la respuesta que tienes que dar, cuando preguntas supertipos y subtipos, porque claro, toda la operación queda entre arquetipos, en ningún momento utilizas instancias, solo tipos.
+
+Pues la respuesta pasa a ser, sí, o no, o es posible.
+
+Ya no es solo sí, o no, ahora también es, es posible.
+
+Porque si lifeBeing = animal | vegetal.
+
+Y yo pregunto: is lifeBeing also animal?
+
+La respuesta no sí, porque puede ser vegetal. Ni no, porque puede ser animal.
+
+Entonces, el punto medio es, es posible.
+
+3 respuestas: sí, posible, imposible.
+
+Un trileano. Y caro, aquí los caminos ya no son 2, aquí la cosa se va a la potencia de 3? puede ser?
+
+es decir.
+
+if a then A
+else then B
+
+Un if simple son 2 caminos.
+
+Un trileano es:
+
+if a then A
+else if no a then B
+else if maybe a then C
+
+Y en abstract-time pasa por C, pero en evaluation-time pasaría solo por A o B.
+
+Y el caso es que este problema parece lejano, pero... es solo 1 problema más del montón de problemas que va llevando la api de types, veo.
+
+Entonces, todo esto me plantea muchas dudas sobre cómo enfocar el diseño de la api y del lenguaje.
+
+Porque ni siquiera sé qué capacidades son realistas marcarse, y qué features es mejor desmarcarse.
+
+Y esta de is subtype|supertype of, parece una de las que habría que sacrificar.
+
+O resolver de forma más bruta.
+
+Porque cómo lo resuelves.
+
+Incluso había pensado incorporar el operador !.
+
+Entonces ahí, la simple mención, de un tipo en la definición de otro, ni siquiera te da esa garantía.
+
+Y me cuesta seguir el hilo de la traza lógica que habría que hacer para averiguar si un type es supetype o subtype de otro.
+
+No, porque, si yo pongo:
+
+Humano = Hombre | Mujer
+
+Hombre = !Mujer
+
+Mujer = !Hombre
+
+Antes, dices, bueno, "Hombre" aparece en la definición de "Humano", aunque sea parcialmente.
+
+Podemos decir que si aparece, pues algo habrá, ni que sea un maybe ya puedes darlo.
+
+Pero ahora, si introduzco, y me gustaría, el !, la cosa cambió.
+
+Y que aparezca, no da garantías de maybe.
+
+Y este es solo un caso, puede complicarse más:
+
+Documento de trabajo = Fichero & !Video & !Audio & !Aplicación
+
+Es un ejemplo tonto, pero digamos, en un reproche de un jefe a un empleado, puede llegar a decirse así:
+
+Esto es esto, no esto, ni esto, ni esto.
+
+Claro, trázalo. Abstractamente.
+
+Con una instancia, dices, vale, voy probando.
+
+Pero la relación de subtipo, supertipo, bueno, supongo que se puede resolver como, "parcialmente".
+
+Siendo, un antónimo, también, una "parte" de la relación subtípica y supertípica.
+
+Es decir.
+
+Si:
+
+Hombre = !Mujer
+
+Podría decirse que:
+
+Hombre is subtype of Mujer.
+
+Pero cuidado, no que:
+
+Mujer is subtype of Hombre.
+
+Por qué?
+
+Porque no se ha aport... o sí?
+
+O puedes decir, si sé Hombre?
+
+Y sé que en la definición de Hombre, puede incluirse la de Mujer?
+
+Entonces... puedo definir Mujer?
+
+Esto es álgebra de tipos.
+
+Hay un álgebra de tipos si los expresas así!
+
+Entonces, simplemente, concluyo que is supertype|subtype of, no son, preguntas sen...
+
+No son las preguntas más sencillas que hay, vaya.
+
+Y ya se nos complica validate.
+
+Tú qué opinas de todo esto?
+
+Yo solo veo estas relaciones, luego con el AND podrías ir decorando, que es lo que parece que va haciendo el lenguaje natural.
+
+No lo sé, me he tenido que parar, me gustaría saber, qué opinas de la ciencia de los tipos de las cosas, y su lenguaje elemental, y las estructuras que un lenguaje así tendría que cubrir de forma mínima para soportar el escalado que luego se viene, al fin y al cabo, de eso, decoradores cooperando juntos en trazas de significado temporal y localizado, que van armando significados y indiciando intenciones.
+
+Es decir, hay tema, porque principalmente noto que no veo claro, y que como me flipe un poco, empiezo a ampliar delimitaciones de responsabilidad que me sobrepasan y no puedo cubrir.
+
+Y esto de subtype, supertype, ha sido un claro caso de ejemplo.
+
+No puedo abarcar la embergadura de posibilidades que se puede llegar a tener que desplegar para simplemente averiguar si existe una relación entre 2 entidades.
+
+Y luego eso, lógica intermedia que podría llegar a resolverse si recreas el significado booleánico de las opciones. Para dar un maybe, o un partially hemos quedado que era más aproximado.
+
+Y cuya naturaleza igualativa no queda lo suficientemente clara, no?
+
+Es que ya ni el = queda claro.
+
+Porque si puedes deducir, el de Mujer, en el significado del ejemplo anterior.
+
+Ya no es:
+
+Receptáculo = Valor
+
+Ahora es:
+
+Receptáculo = Receptáculo
+
+Y es una relación BIDIRECCIONAL de consistencia.
+
+Donde incluso luego, ya verás, puedes irle dando vueltas, hasta aislarlo.
+
+Pero no, no está claro, esto. Por ejemplo:
+
+Si:
+
+Humano = Hombre | Mujer
+Hombre = Humano & !Mujer
+Mujer = Humano & !Hombre
+
+Ok, todo correcto, dejando el tema social y político, ahora no, estamos simplificando al máximo.
+
+Ok, sí, se puede decir.
+
+Pero, si es como antes?
+
+Hombre = Humano & !Mujer
+
+Y no he afirmado que:
+
+Humano = Hombre | Mujer
+
+Entonces, no puedo decir que:
+
+Mujer = Humano & !Hombre
+
+Cierto? Entonces... esto parece que se pone complicado.
+
+Y me hace cuestionar la misma definición de ser.
+
+La misma definición de ser, como William Shakespeare, está en discusión ahora mismo aquí con este problema.
+
+Creo que es un verbo muy amplio.
+
+En programación, el = es "poner en". Simplemente, lo escribimos en js como = pero es, a <nombre> le pongo <valor>.
+
+Vale. Lo que quiero decir es que aunque lo escribamos como una igualación de 2 valores, es una función que copia un dato en otro, no es una relación fuerte de ambivalencia, sino 2 holders que ahora tienen una misma referencia (o valor) como valor, y que ha ido de un sitio a otro.
+
+Entonces... no sé, si en este lenguaje, sí se puede dar esa relación fuerte de ambivalencia.
+
+Sé que el validate se puede complicar.
+
+Pero no hasta qué punto el = puede ser útil para... prevenir contradicciones, principalmente.
+
+Porque parece que aquí pueden hab... ah, no.
+
+Una cosa es describir, otra cosa es accionar.
+
+Habría 1 definición solamente. Ahí le pones todos los ands que haga falta, pero trabajar, solo con 1 definición por nombre.
+
+No por suma de descripciones.
+
+Que al final, es lo mismo, son ANDs.
+
+Pero que actúan al mismo tiempo, no son evaluaciones paralelas, son conjuntas, cohabitan en la palabra.
+
+Pero ahora mismo, 1 palabra solo soporta 1 definición en 1 sitio nada más.
+
+Por tanto, puedes:
+
+Cítrico = Limón | Naranja | Kiwi | Pino
+
+Pero... buah, me he perdido. Hay muchas cosas.
+
+Pero esto del subtype y supertype, creo que desistido, es una locura. Puedo validar 1 dato contra 2 estructuras.
+
+Pero decir qué relación hay entre 2 estructuras, hacia arriba o hacia abajo, uf.
+
+Con todas... estas... igual quitando la negación?
+
+Igual quitando la negación.
+
+Y en subtype, miras la definición del subject. { subject is subtype of complement ? }
+
+Y en supertype, miras la definición del complement. { subject is supertype of complement ? }
+
+Ui, o al revés. Uf... es tarde. Pero me gustaría mucho saber tu opinión sobre todo este tema. Lo más resolutivo posible, porque veo que hay muuuucha tela en types congregada.
+
+Y se puede complicar mucho. Y yo solo quería saber qué preguntas son las más sencillas de hacer.
+
+La primera está clara:
+
+¿Es, this.data, validable por, this.type?
+
+La segunda se debate, pero no ha llegado a esclarecerse:
+
+¿Es, this.type, un subtipo/supertipo de, this.anotherType?
+
+Pero se ha visto que esta relación, aunque parezca sencilla, hay expresiones booleanas abstractizadas que complican la resolución.
+
+Incluso eso, hay una responsabilidad ontológica implicita en el operador de = que no está clara, puede resultar ambigua, y es por esa ambidireccionalidad del ser.
+
+Si dices:
+
+a = b
+
+También estás hablando de qué es y qué no es b.
+
+La programación funciona, pero eso no se... no se cumple. Porque es lo que decíamos, la operación se escribe con un igual, pero al bajo nivel es más bien un:
+
+a <= b
+
+Ese símbolo representaría mucho mejor la operación de igualación.
+
+En tipos... bueno, podemos dar esta operación por buena así, también, supongo.
+
+Supongo, sí.
+
+Bueno, a ver, llevo bastante rato ya dándole vueltas a todo esto. Y no es la primera vez que he reflexionado sobre este tema, no es un tema... hay densidad. Es una zona de muchas carreteras cruzándose, yo lo sé, la api de types es... buah, es... no es de 1 día, nono, types es una locura, superpuesta con otra.
+
+Y veo que ahí hay como un juego algebraico.
+
+Pero es eso, en el álgebra, el = da más cosas por sentado que el = de la programación.
+
+En el álgebra, el símbolo es más bien así:
+
+2 <=> 1 + 1
+
+Ese símbolo representaría mucho mejor la operacion de igualación. En álgebra.
+
+Y esto me recuerda a que Angular tiene operadores diferentes para precisamente esto, binding, o double-binding, eeeesto.
+
+Entonces, en álgebra es equal sign of double-binding.
+
+Y en programación, es equal sign of one-binding.
+
+Y venía el debate de si en un sistema de tipos, cabe un double-binding.
+
+Pero me parece que esto sería ya bastante loco, no?
+
+Sería como... una api especulativa de tipos.
+
+Pero claro, especulativo está siendo ya la misma estructura, entonces... fuera de rango de maniobra lo considero esto del double-binding.
+
+Pero me parece curioso, y me figuro que algún día lo querré.
+
+Lo querré, querré el double-binding.
+
+No sé exactamente en qué cambiaría un double-binding en un sistema de tipos.
+
+Sería en plan... bueno, no sé, igual me sabes decir más, tú. TypeScript entiendo es one-binding. No hay inferencia inversa ni nada de eso.
+
+El double-binding... sería útil para deducir tipos.
+
+Pero vamos, sería un feature muy marginal, types es más para cuadrar.
+
+Bueno, al contrario, sería marginal hasta que fuera explotable.
+
+Ahí, el type reversing puede ser guai, puedes hasta sacar chistes, jej, qué gracioso, no lo había pensado.

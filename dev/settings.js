@@ -16,6 +16,7 @@ module.exports = async function() {
     loop: {
       port: 3007,
       controllers: [],
+      extensions: ["tyla"],
     }
   }
 };

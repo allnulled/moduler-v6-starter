@@ -15,6 +15,8 @@ module.exports = (async function () {
         return output;
     };
 
+    console.log($moduler)
+
     await Std.classes.Tester.evaluateDirectory({
         directory: `${__dirname}/v1`,
         title: "Std Official Tests",

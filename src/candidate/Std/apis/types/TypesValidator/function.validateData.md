@@ -1,0 +1,12 @@
+- si `validator.grammar === "string"`
+    - 
+- si `validator.grammar === "evaluable type"`
+    - 
+- si `validator.grammar === "object type"`
+    - 
+- si `validator.grammar === "array type"`
+    - 
+- si `validator.grammar === "type id"`
+    - 
+- si `validator.grammar === "type appendix"`
+    - 

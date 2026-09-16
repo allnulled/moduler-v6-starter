@@ -691,32 +691,38 @@ this.moduler = moduler;
    * @type 
    * @description 
    */
-  let output = {...parameters};
-  if(normalization) {
+  let output = { ...parameters };
+  if (normalization) {
     Apply_default:
-    for(const property in normalization) {
+    for (const property in normalization) {
       const configuration = normalization[property];
-      if("default" in configuration) {
+      if (typeof configuration !== "object") throw new Error(`Parameter «normalization["${property}"]» must be object but «${typeof configuratio}» was found instead on «ModulerV6.Toolkit.prototype.normalizeObject»`);
+      if ("default" in configuration) {
         output[property] = property in output ? output[property] : typeof configuration.default === "function" ? configuration.default(configuration) : configuration.default;
       }
     }
-    Validate:
-    for(const property in normalization) {
+    Inner_validations:
+    for (const property in normalization) {
       const configuration = normalization[property];
-      if("validate" in configuration) {
-        const result = configuration.validate(output[property], this.moduler.constructor.assert, output, normalization);
-        if(typeof result === "undefined") {
-          // @OK
-        } else if(result !== true) {
-          throw new Error(result || `Validation of property «${property}» should return «true» but «${typeof result}» was found instead on «ModulerV6.Toolkit.normalizeObject»`);
-        }
+      if ("validate" in configuration) {
+        if (typeof configuration.validate === "function") {
+          const result = configuration.validate(output[property], this.moduler.constructor.assert, output, normalization);
+          if (typeof result === "undefined") {
+            // @OK
+          } else if (result !== true) {
+            throw new Error(result || `Validation of property «${property}» should return true or undefined but «${typeof result}» was found instead on «ModulerV6.Toolkit.normalizeObject»`);
+          }
+        } else if (typeof configuration.validate === "object") {
+          output[property] = this.normalizeObject(output[property], configuration.validate);
+        } else throw new Error(`Parameters «parameters["${property}"].validate» must be function or object on «ModulerV6.Toolkit.prototype.normalizeObject»`);
       }
     }
     Format:
-    for(const property in normalization) {
+    for (const property in normalization) {
       const configuration = normalization[property];
-      if("format" in configuration) {
-        output[property] = configuration.format(output[property], output, normalization);
+      if ("format" in configuration) {
+        const result = configuration.format(output[property], output, normalization);
+        if(typeof result !== "undefined") output[property] = result;
       }
     }
   }
@@ -1120,6 +1126,9 @@ static makeInterface(subinterfaces, options = {}, base = { static: {}, prototype
  * @return ?
  */
 static nativeGrammars = {
+  InjectPlain: ["$"+"compiler.inject.plain(", this.Parser.symbols.PARENTHESYS_BALANCE, function (token) {
+    return { syntax: "Inject Plain", inner: token.inner, location: token.location };
+  }],
   InjectSource: ["$"+"compiler.inject.source(", this.Parser.symbols.PARENTHESYS_BALANCE, function (token) {
     return { syntax: "Inject Source", inner: token.inner, location: token.location };
   }],
@@ -1220,6 +1229,7 @@ static nativeGrammars = {
  */
 static defaultGrammars = {
   forJs: [
+    this.nativeGrammars.InjectPlain,
     this.nativeGrammars.InjectSource,
     this.nativeGrammars.InjectString,
     this.nativeGrammars.InjectTemplate,
@@ -1257,6 +1267,7 @@ static defaultGrammars = {
     ////////////////////////////////////////
   ],
   forCss: [
+    this.nativeGrammars.InjectPlain,
     this.nativeGrammars.InjectSource,
     this.nativeGrammars.InjectString,
     this.nativeGrammars.InjectTemplate,
@@ -1271,6 +1282,7 @@ static defaultGrammars = {
     /////////////////// this.nativeGrammars.JavadocComment,
   ],
   forMd: [
+    this.nativeGrammars.InjectPlain,
     this.nativeGrammars.InjectSource,
     this.nativeGrammars.InjectString,
     this.nativeGrammars.ImportJs,
@@ -1281,6 +1293,7 @@ static defaultGrammars = {
     /////////////////// this.nativeGrammars.JavadocComment,
   ],
   forHtml: [
+    this.nativeGrammars.InjectPlain,
     this.nativeGrammars.InjectSource,
     this.nativeGrammars.AtInjects,
   ],
@@ -4011,6 +4024,7 @@ async _compileTokens(compilationFile, compilationProcess) {
   this._traceIn("_compileTokens", arguments);
   const { resource, source, tokenization: { formatted: tokens } } = compilationFile;
   const _tokenCompilationSwitcher = {
+    "Inject Plain": this._compileAsInjectPlain,
     "Inject Source": this._compileAsInjectSource,
     "Inject String": this._compileAsInjectString,
     "Inject Template": this._compileAsInjectTemplate,
@@ -4330,6 +4344,52 @@ _compileAsModulerSectionFill(compilationFile, compilationProcess, { token, token
 }
 
   /**
+ * @name CompilerV6.prototype._compileAsInjectPlain
+ * @type 
+ * @description 
+ */
+async _compileAsInjectPlain(compilationFile, compilationProcess, { token, tokenIndex }, options = {}) {
+  this._traceIn("_compileAsInjectPlain", arguments);
+  let parameters, targetPath, targetCompilation, targetCaches = {};
+  const currentStep = [];
+  try {
+    const {
+      tokenization,
+      source,
+      resource,
+      isRoot,
+    } = compilationFile;
+    Evaluate_parameters: {
+      currentStep.push("1. evaluate parameters");
+      parameters = await this._getDataForTokenCompilation({
+        compilationFile,
+        compilationProcess,
+        token,
+        tokenIndex,
+      });
+    }
+    Extend_token: {
+      currentStep.push("2. extend token");
+      this._extendToken(token, ["referenceOf"]);
+    }
+    Extract_target_path: {
+      currentStep.push("3. extract target path");
+      this.assert(token.referenceOf.fullpath === this.normalizationOf(parameters[0]), "DesignError: The first parameter and the token.referenceOf.fullpath should be the same on «CompilerV6.prototype._compileAsInjectPlain»");
+      targetPath = token.referenceOf.fullpath;
+    }
+    let outputJs = "";
+    Read_source: {
+      outputJs = await this.files.readFile(targetPath);
+    }
+    Inject_content: {
+      compilationFile.compilation.js = this._replaceTextRange(compilationFile.compilation.js, token.location[0], token.location[1], outputJs, token);
+    }
+  } catch(error) {
+    console.log(`[!] Error on method «_compileAsInjectPlain» on root «${this.rootdir}» on resource «${this.rootdirOf(compilationFile.resource)}» and target «${this.rootdirOf(targetPath || "?")}» on step «${currentStep.reverse().join(" < ")}»`, error);
+    throw error;
+  }
+}
+  /**
  * @name CompilerV6.prototype._compileAsInjectSource
  * @type 
  * @description 
@@ -4536,6 +4596,10 @@ async _compileAsInjectTemplate(compilationFile, compilationProcess, { token, tok
     const templateOutput = await this._renderTemplate(fileContent, {
       __filename: targetPath,
       __dirname: require("path").dirname(targetPath),
+      _token: token,
+      _tokenIndex: tokenIndex,
+      compilationFile: compilationFile,
+      compilationProcess: compilationProcess,
       ...(parameters[1] || {})
     });
     compilationFile.compilation.js = this._replaceTextRange(compilationFile.compilation.js, token.location[0], token.location[1], templateOutput);
@@ -5376,7 +5440,7 @@ _getDataForTokenCompilation(input, options = {}) {
  */
 _getStringForDevelopment(text, tab = 0) {
   this._trace("_getStringForDevelopment", arguments);
-  return text.split("\n").map(line => JSON.stringify(line)).join("\n + ");
+  return text.split("\n").map(line => JSON.stringify(line)).join(" + '\\n'\n + ");
 }
   /**
  * @name CompilerV6.prototype._existsFile
@@ -5399,7 +5463,7 @@ _createDefaultInjectedFile(file, targetId) {
   const filename = fileid.replace(/\.js$/g, "");
   const fileattrs = this._extractFilenameAttributes(fileid);
   const { name, attr, list: attrList } = fileattrs;
-  const notMethods = this.constructor.sensitiveFileAttributes;
+  const notMethods = this.constructor.sensitiveFileAttributes.filter(it => !["static","prototype"].includes(it));
   let output = "";
   Decide_output: {
     const cannotBeMethod = !!attrList.filter(it => notMethods.includes(it)).length;
@@ -5413,7 +5477,7 @@ _createDefaultInjectedFile(file, targetId) {
     }
     First_type: {
       if (attr.class) {
-        output = `class ${name || ""}{\n  \n}`;
+        output = `class ${name || ""}{\n  static {\n    $moduler.toolkit.makeClass([\n      Std.interfaces.InstantiableInterface,\n    ], this);\n  }\n}`;
       } else if (attr.function) {
         output = `function ${name || ""}() {\n  \n}`;
       } else if (attr.member || attr.any) {
@@ -5434,6 +5498,8 @@ _createDefaultInjectedFile(file, targetId) {
         output = `apply ${name || ""} () {\n  \n}`;
       } else if (attr.deleteProperty) {
         output = `deleteProperty ${name || ""} () {\n  \n}`;
+      } else if (attr.interface) {
+        output = `// @interface:${name || ""}\n{\n  prototype: {},\n  static: {},\n}`;
       } else if (!cannotBeMethod) {
         output = `${name || ""} () {\n  \n}`;
       }
@@ -5441,8 +5507,12 @@ _createDefaultInjectedFile(file, targetId) {
     Second_presentation: {
       if (attr.static && name && cannotBeMethod) {
         output = `static ${name} = ${output};`;
+      } else if (attr.static && name) {
+        output = `static ${output}`;
       } else if (attr.prototype && name && cannotBeMethod) {
         output = `${name} = ${output};`;
+      } else if (attr.prototype && name) {
+        // @OK
       } else if (attr.member && name) {
         output = `${name}: ${output}`;
       }
@@ -5482,7 +5552,7 @@ async _renderTemplate(templateSource, argsBrute = {}) {
   if (!tokens.length) {
     return templateSource;
   }
-  console.log(`[*] Rendering template of ${tokens.length} tokens from: ${argsBrute.compilationFile.resource}`);
+  console.log(`[*] Rendering template of ${tokens.length} tokens from: ${argsBrute.compilationFile?.resource || 'unknown'}`);
   const tokenType1 = ['/','*','%'].join("");
   const tokenType2 = ['/','*','%','='].join("");
   const args = Object.assign({}, argsBrute);

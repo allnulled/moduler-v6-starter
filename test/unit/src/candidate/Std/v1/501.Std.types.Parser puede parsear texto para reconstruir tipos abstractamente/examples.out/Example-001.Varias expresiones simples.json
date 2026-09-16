@@ -1,0 +1,632 @@
+[
+  {
+    "grammar": "evaluable type",
+    "core": {
+      "grammar": "type id",
+      "id": "Rojo"
+    },
+    "appendix": [
+      {
+        "grammar": "type appendix",
+        "operator": "|",
+        "complement": {
+          "grammar": "evaluable type",
+          "core": {
+            "grammar": "type id",
+            "id": "Azul"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "grammar": "evaluable type",
+    "core": {
+      "grammar": "evaluable type",
+      "core": {
+        "grammar": "type id",
+        "id": "Brillante"
+      },
+      "appendix": [
+        {
+          "grammar": "type appendix",
+          "operator": "|",
+          "complement": {
+            "grammar": "evaluable type",
+            "core": {
+              "grammar": "type id",
+              "id": "Oscuro"
+            }
+          }
+        }
+      ]
+    },
+    "appendix": [
+      {
+        "grammar": "type appendix",
+        "operator": "&",
+        "complement": {
+          "grammar": "evaluable type",
+          "core": {
+            "grammar": "type id",
+            "id": "Flateneado"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "grammar": "evaluable type",
+    "core": {
+      "grammar": "evaluable type",
+      "core": {
+        "grammar": "type id",
+        "id": "Rosa"
+      },
+      "appendix": [
+        {
+          "grammar": "type appendix",
+          "operator": "&",
+          "complement": {
+            "grammar": "evaluable type",
+            "core": {
+              "grammar": "type id",
+              "id": "Naranja"
+            }
+          }
+        }
+      ]
+    },
+    "appendix": [
+      {
+        "grammar": "type appendix",
+        "operator": "|",
+        "complement": {
+          "grammar": "evaluable type",
+          "core": {
+            "grammar": "evaluable type",
+            "negation": "!",
+            "core": {
+              "grammar": "type id",
+              "id": "Verde"
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "grammar": "evaluable type",
+    "core": {
+      "grammar": "evaluable type",
+      "core": {
+        "grammar": "type id",
+        "id": "Color"
+      },
+      "parameters": [
+        {
+          "grammar": "evaluable type",
+          "core": {
+            "grammar": "type id",
+            "id": "Rojo"
+          },
+          "appendix": [
+            {
+              "grammar": "type appendix",
+              "operator": "|",
+              "complement": {
+                "grammar": "evaluable type",
+                "core": {
+                  "grammar": "type id",
+                  "id": "Verde"
+                }
+              }
+            },
+            {
+              "grammar": "type appendix",
+              "operator": "|",
+              "complement": {
+                "grammar": "evaluable type",
+                "core": {
+                  "grammar": "type id",
+                  "id": "Blanco"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "grammar": "evaluable type",
+    "core": {
+      "grammar": "evaluable type",
+      "core": {
+        "grammar": "type id",
+        "id": "Color"
+      },
+      "parameters": [
+        {
+          "grammar": "evaluable type",
+          "core": {
+            "grammar": "type id",
+            "id": "Rojo"
+          }
+        },
+        {
+          "grammar": "evaluable type",
+          "core": {
+            "grammar": "type id",
+            "id": "Verde"
+          }
+        },
+        {
+          "grammar": "evaluable type",
+          "core": {
+            "grammar": "type id",
+            "id": "Azul"
+          }
+        },
+        {
+          "grammar": "evaluable type",
+          "core": {
+            "grammar": "type id",
+            "id": "Opacidad"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "grammar": "evaluable type",
+    "core": {
+      "grammar": "evaluable type",
+      "core": {
+        "grammar": "type id",
+        "id": "Forma"
+      },
+      "parameters": [
+        {
+          "grammar": "evaluable type",
+          "core": {
+            "grammar": "type id",
+            "id": "EjeX"
+          }
+        },
+        {
+          "grammar": "evaluable type",
+          "core": {
+            "grammar": "type id",
+            "id": "EjeY"
+          }
+        },
+        {
+          "grammar": "evaluable type",
+          "core": {
+            "grammar": "type id",
+            "id": "EjeZ"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "grammar": "evaluable type",
+    "core": {
+      "grammar": "type id",
+      "id": "rojo"
+    },
+    "appendix": [
+      {
+        "grammar": "type appendix",
+        "operator": "|",
+        "complement": {
+          "grammar": "evaluable type",
+          "core": {
+            "grammar": "type id",
+            "id": "azul"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "grammar": "evaluable type",
+    "core": {
+      "grammar": "evaluable type",
+      "core": {
+        "grammar": "type id",
+        "id": "brillante"
+      },
+      "appendix": [
+        {
+          "grammar": "type appendix",
+          "operator": "|",
+          "complement": {
+            "grammar": "evaluable type",
+            "core": {
+              "grammar": "type id",
+              "id": "oscuro"
+            }
+          }
+        }
+      ]
+    },
+    "appendix": [
+      {
+        "grammar": "type appendix",
+        "operator": "&",
+        "complement": {
+          "grammar": "evaluable type",
+          "core": {
+            "grammar": "type id",
+            "id": "flateneado"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "grammar": "evaluable type",
+    "core": {
+      "grammar": "evaluable type",
+      "core": {
+        "grammar": "type id",
+        "id": "rosa"
+      },
+      "appendix": [
+        {
+          "grammar": "type appendix",
+          "operator": "&",
+          "complement": {
+            "grammar": "evaluable type",
+            "core": {
+              "grammar": "type id",
+              "id": "naranja"
+            }
+          }
+        }
+      ]
+    },
+    "appendix": [
+      {
+        "grammar": "type appendix",
+        "operator": "|",
+        "complement": {
+          "grammar": "evaluable type",
+          "negation": "!",
+          "core": {
+            "grammar": "type id",
+            "id": "Verde"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "grammar": "evaluable type",
+    "core": {
+      "grammar": "type id",
+      "id": "color"
+    },
+    "parameters": [
+      {
+        "grammar": "evaluable type",
+        "core": {
+          "grammar": "type id",
+          "id": "rojo"
+        },
+        "appendix": [
+          {
+            "grammar": "type appendix",
+            "operator": "|",
+            "complement": {
+              "grammar": "evaluable type",
+              "core": {
+                "grammar": "type id",
+                "id": "verde"
+              }
+            }
+          },
+          {
+            "grammar": "type appendix",
+            "operator": "|",
+            "complement": {
+              "grammar": "evaluable type",
+              "core": {
+                "grammar": "type id",
+                "id": "blanco"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "grammar": "evaluable type",
+    "core": {
+      "grammar": "type id",
+      "id": "color"
+    },
+    "parameters": [
+      {
+        "grammar": "evaluable type",
+        "core": {
+          "grammar": "type id",
+          "id": "rojo"
+        }
+      },
+      {
+        "grammar": "evaluable type",
+        "core": {
+          "grammar": "type id",
+          "id": "verde"
+        }
+      },
+      {
+        "grammar": "evaluable type",
+        "core": {
+          "grammar": "type id",
+          "id": "azul"
+        }
+      },
+      {
+        "grammar": "evaluable type",
+        "core": {
+          "grammar": "type id",
+          "id": "opacidad"
+        }
+      }
+    ]
+  },
+  {
+    "grammar": "evaluable type",
+    "core": {
+      "grammar": "type id",
+      "id": "// Este ejemplo usa un tipo con parámetros y nombres con espacios en blanco:.\nforma"
+    },
+    "parameters": [
+      {
+        "grammar": "evaluable type",
+        "core": {
+          "grammar": "type id",
+          "id": "eje x"
+        }
+      },
+      {
+        "grammar": "evaluable type",
+        "core": {
+          "grammar": "type id",
+          "id": "eje y"
+        }
+      },
+      {
+        "grammar": "evaluable type",
+        "core": {
+          "grammar": "type id",
+          "id": "eje z"
+        }
+      }
+    ]
+  },
+  {
+    "grammar": "evaluable type",
+    "core": {
+      "grammar": "type id",
+      "id": "// Este ejemplo usa objetos y listas:.\nfuncion"
+    },
+    "parameters": [
+      {
+        "grammar": "evaluable type",
+        "core": {
+          "grammar": "object type",
+          "properties": {
+            "entrada": {
+              "grammar": "object property",
+              "optional": null,
+              "property": {
+                "grammar": "evaluable type",
+                "core": {
+                  "grammar": "array type",
+                  "items": [
+                    {
+                      "grammar": "evaluable type",
+                      "core": {
+                        "grammar": "type id",
+                        "id": "parametro1"
+                      }
+                    },
+                    {
+                      "grammar": "evaluable type",
+                      "core": {
+                        "grammar": "type id",
+                        "id": "parametro2"
+                      }
+                    },
+                    {
+                      "grammar": "evaluable type",
+                      "core": {
+                        "grammar": "type id",
+                        "id": "parametro3"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "grammar": "evaluable type",
+    "core": {
+      "grammar": "type id",
+      "id": "// Este ejemplo usa varias de las anteriores y operador de opcionalidad en propiedades de objeto:\noperacion"
+    },
+    "parameters": [
+      {
+        "grammar": "evaluable type",
+        "core": {
+          "grammar": "type id",
+          "id": "string"
+        }
+      },
+      {
+        "grammar": "evaluable type",
+        "core": {
+          "grammar": "object type",
+          "properties": {
+            "target": {
+              "grammar": "object property",
+              "optional": null,
+              "property": {
+                "grammar": "evaluable type",
+                "core": {
+                  "grammar": "type id",
+                  "id": "string"
+                }
+              }
+            },
+            "start": {
+              "grammar": "object property",
+              "optional": "?",
+              "property": {
+                "grammar": "evaluable type",
+                "core": {
+                  "grammar": "type id",
+                  "id": "number"
+                }
+              }
+            },
+            "end": {
+              "grammar": "object property",
+              "optional": "?",
+              "property": {
+                "grammar": "evaluable type",
+                "core": {
+                  "grammar": "type id",
+                  "id": "number"
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "grammar": "evaluable type",
+    "core": {
+      "grammar": "type id",
+      "id": "// Este ejemplo usa spread operator que solo se puede poner al final de los parámetros:\notro tipo externo"
+    }
+  },
+  {
+    "grammar": "evaluable type",
+    "core": {
+      "grammar": "type id",
+      "id": "accion"
+    },
+    "parameters": [
+      {
+        "grammar": "evaluable type",
+        "core": {
+          "grammar": "type id",
+          "id": "otro tipo externo"
+        }
+      }
+    ]
+  },
+  {
+    "grammar": "evaluable type",
+    "core": {
+      "grammar": "type id",
+      "id": "array"
+    },
+    "parameters": [
+      {
+        "grammar": "evaluable type",
+        "core": {
+          "grammar": "type id",
+          "id": "string"
+        }
+      },
+      {
+        "grammar": "evaluable type",
+        "core": {
+          "grammar": "type id",
+          "id": "number"
+        }
+      },
+      {
+        "grammar": "evaluable type",
+        "core": {
+          "grammar": "object type",
+          "properties": {
+            "options": {
+              "grammar": "object property",
+              "optional": "?",
+              "property": {
+                "grammar": "evaluable type",
+                "core": {
+                  "grammar": "type id",
+                  "id": "null"
+                },
+                "appendix": [
+                  {
+                    "grammar": "type appendix",
+                    "operator": "|",
+                    "complement": {
+                      "grammar": "evaluable type",
+                      "core": {
+                        "grammar": "type id",
+                        "id": "object"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "author": {
+              "grammar": "object property",
+              "optional": "?",
+              "property": {
+                "grammar": "evaluable type",
+                "core": {
+                  "grammar": "type id",
+                  "id": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  {
+    "grammar": "evaluable type",
+    "core": {
+      "grammar": "type id",
+      "id": "tipo a devolver"
+    },
+    "parameters": [
+      {
+        "grammar": "evaluable type",
+        "core": {
+          "grammar": "type id",
+          "id": "tipo temporal"
+        }
+      }
+    ]
+  },
+  {
+    "grammar": "evaluable type",
+    "core": {
+      "grammar": "object type"
+    }
+  }
+]

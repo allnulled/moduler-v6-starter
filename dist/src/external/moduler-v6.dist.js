@@ -768,6 +768,10 @@
           if (normalization) {
             Apply_default: for (const property in normalization) {
               const configuration = normalization[property];
+              if (typeof configuration !== "object")
+                throw new Error(
+                  `Parameter «normalization["${property}"]» must be object but «${typeof configuratio}» was found instead on «ModulerV6.Toolkit.prototype.normalizeObject»`,
+                );
               if ("default" in configuration) {
                 output[property] =
                   property in output
@@ -777,33 +781,44 @@
                       : configuration.default;
               }
             }
-            Validate: for (const property in normalization) {
+            Inner_validations: for (const property in normalization) {
               const configuration = normalization[property];
               if ("validate" in configuration) {
-                const result = configuration.validate(
-                  output[property],
-                  this.moduler.constructor.assert,
-                  output,
-                  normalization,
-                );
-                if (typeof result === "undefined") {
-                  // @OK
-                } else if (result !== true) {
-                  throw new Error(
-                    result ||
-                      `Validation of property «${property}» should return «true» but «${typeof result}» was found instead on «ModulerV6.Toolkit.normalizeObject»`,
+                if (typeof configuration.validate === "function") {
+                  const result = configuration.validate(
+                    output[property],
+                    this.moduler.constructor.assert,
+                    output,
+                    normalization,
                   );
-                }
+                  if (typeof result === "undefined") {
+                    // @OK
+                  } else if (result !== true) {
+                    throw new Error(
+                      result ||
+                        `Validation of property «${property}» should return true or undefined but «${typeof result}» was found instead on «ModulerV6.Toolkit.normalizeObject»`,
+                    );
+                  }
+                } else if (typeof configuration.validate === "object") {
+                  output[property] = this.normalizeObject(
+                    output[property],
+                    configuration.validate,
+                  );
+                } else
+                  throw new Error(
+                    `Parameters «parameters["${property}"].validate» must be function or object on «ModulerV6.Toolkit.prototype.normalizeObject»`,
+                  );
               }
             }
             Format: for (const property in normalization) {
               const configuration = normalization[property];
               if ("format" in configuration) {
-                output[property] = configuration.format(
+                const result = configuration.format(
                   output[property],
                   output,
                   normalization,
                 );
+                if (typeof result !== "undefined") output[property] = result;
               }
             }
           }
@@ -815,7 +830,7 @@
          * @description
          */
         makeTrait(...args) {
-          return ModulerV6.ClassSkiller.mixTraits(...args);
+          return ModulerV6.ClassSkiller.makeTrait(...args);
         }
 
         /**
@@ -823,14 +838,16 @@
          * @type
          * @description
          */
-        makeInterface = ModulerV6.ClassSkiller.mixInterfaces;
+        makeInterface(...args) {
+          return ModulerV6.ClassSkiller.makeInterface(...args);
+        }
         /**
          * @name ModulerV6.Toolkit.prototype.makeClass
          * @type
          * @description
          */
         makeClass(...args) {
-          return ModulerV6.ClassSkiller.addInterfaces;
+          return ModulerV6.ClassSkiller.makeClass(...args);
         }
       };
       /**
@@ -1407,6 +1424,17 @@
        * @return ?
        */
       static nativeGrammars = {
+        InjectPlain: [
+          "$" + "compiler.inject.plain(",
+          this.Parser.symbols.PARENTHESYS_BALANCE,
+          function (token) {
+            return {
+              syntax: "Inject Plain",
+              inner: token.inner,
+              location: token.location,
+            };
+          },
+        ],
         InjectSource: [
           "$" + "compiler.inject.source(",
           this.Parser.symbols.PARENTHESYS_BALANCE,
@@ -1657,6 +1685,7 @@
        */
       static defaultGrammars = {
         forJs: [
+          this.nativeGrammars.InjectPlain,
           this.nativeGrammars.InjectSource,
           this.nativeGrammars.InjectString,
           this.nativeGrammars.InjectTemplate,
@@ -1694,6 +1723,7 @@
           ////////////////////////////////////////
         ],
         forCss: [
+          this.nativeGrammars.InjectPlain,
           this.nativeGrammars.InjectSource,
           this.nativeGrammars.InjectString,
           this.nativeGrammars.InjectTemplate,
@@ -1708,6 +1738,7 @@
           /////////////////// this.nativeGrammars.JavadocComment,
         ],
         forMd: [
+          this.nativeGrammars.InjectPlain,
           this.nativeGrammars.InjectSource,
           this.nativeGrammars.InjectString,
           this.nativeGrammars.ImportJs,
@@ -1718,6 +1749,7 @@
           /////////////////// this.nativeGrammars.JavadocComment,
         ],
         forHtml: [
+          this.nativeGrammars.InjectPlain,
           this.nativeGrammars.InjectSource,
           this.nativeGrammars.AtInjects,
         ],

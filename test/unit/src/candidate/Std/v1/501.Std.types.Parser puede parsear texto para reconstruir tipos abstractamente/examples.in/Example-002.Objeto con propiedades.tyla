@@ -1,0 +1,4 @@
+{
+    apartado_de_usuario:{name:string,password:string},
+    apartado_de_otra_cosa:{session:{id:string,startedAt:date,token:uuid}}
+}

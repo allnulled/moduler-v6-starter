@@ -1,0 +1,52 @@
+// Ejemplos:
+
+Rojo|Azul.
+(Brillante|Oscuro)&Flateneado.
+(Rosa&Naranja)|(!Verde).
+(Color(Rojo|Verde|Blanco)).
+(Color(Rojo,Verde,Azul,Opacidad)).
+(Forma(EjeX, EjeY, EjeZ)).
+
+rojo | azul.
+(brillante | oscuro) & flateneado.
+(rosa & naranja) | !Verde.
+color( rojo | verde | blanco ).
+color( rojo, verde, azul, opacidad ).
+// Este ejemplo usa un tipo con parámetros y nombres con espacios en blanco:.
+forma( eje x, eje y, eje z).
+// Este ejemplo usa objetos y listas:.
+funcion({
+    entrada: [parametro1, parametro2, parametro3]
+}).
+// Este ejemplo usa varias de las anteriores y operador de opcionalidad en propiedades de objeto:
+operacion(string, {
+    target: string,
+    start?: number,
+    end?: number
+}).
+// Este ejemplo usa spread operator que solo se puede poner al final de los parámetros:
+otro tipo externo.
+accion(otro tipo externo).
+
+array(
+    string,
+    number,
+    {
+        options?: null|object,
+        author?: string
+    }
+).
+
+tipo a devolver(tipo temporal).
+
+/*
+...
+()
+@
+=
+,
+?
+|
+*/
+
+{}.

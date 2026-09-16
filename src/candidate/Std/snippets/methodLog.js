@@ -1,0 +1,1 @@
+Std.all.Tracer?.globalInstance.log("/*%=name*/", arguments);
