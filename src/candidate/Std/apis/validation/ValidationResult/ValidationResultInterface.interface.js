@@ -2,6 +2,10 @@
 {
   static: {},
   prototype: {
-    newStep: $compiler.inject.source("./function.newStep.js"),
+    onCreate: function() {
+      this.output = {};
+      this.deambiguation = null;
+      this.errors = [];
+    }
   },
 }

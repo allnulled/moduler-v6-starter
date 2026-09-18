@@ -1,3 +1,0 @@
-colateralEffects = function colateralEffects() {
-  
-}

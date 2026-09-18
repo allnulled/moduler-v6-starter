@@ -4869,20 +4869,21 @@
             const callback = isReversed ? args[1] : args[0];
             const message = isReversed ? args[0] : args[1];
             const errorChecker = args[2] || (() => true);
-            const localError = new Error("Should have thrown: " + message);
+            const localError = new Error(message);
             try {
               await callback();
               throw localError;
             } catch (err) {
               if (err === localError) {
                 throw new this.constructor.AssertionError(
-                  `Should have thrown on «${message}» but it did not throw anything: ${err.name}: ${err.message} | ${err.stack}`,
+                  `Should have thrown on «${message}» but it did not throw anything`,
                 );
               }
               if (typeof errorChecker === "function") {
-                if (!errorChecker(err)) {
+                const checkResult = errorChecker(err);
+                if (typeof checkResult !== "undefined") {
                   throw new this.constructor.AssertionError(
-                    `Should have thrown on «${message}» but not specific error: ${err.name}: ${err.message} | ${err.stack}`,
+                    `Should have thrown on «${message}» but not specific error:\n  - name: ${err.name}\n  - message: ${err.message}\n  - error: ${checkResult}`,
                   );
                 }
               } else if (typeof errorChecker === "object") {
@@ -4924,7 +4925,7 @@
               this._notifyAssertion(message);
             } catch (err) {
               throw new this.constructor.AssertionError(
-                `Should not have thrown: ${err.name}: ${err.message}`,
+                `Should not have thrown, but it threw: ${err.name}: ${err.message}`,
                 err,
               );
             }
@@ -7115,7 +7116,7 @@
               }
               First_type: {
                 if (attr.class) {
-                  output = `class ${name || ""}{\n  static {\n    $moduler.toolkit.makeClass([\n      Std.interfaces.CreableInterface,\n    ], this);\n  }\n}`;
+                  output = `class ${name || ""}{\n  static {\n    $moduler.toolkit.makeClass([\n      Std.interfaces.InstantiableInterface,\n    ], this);\n  }\n}`;
                 } else if (attr.function) {
                   output = `function ${name || ""}() {\n  \n}`;
                 } else if (attr.member || attr.any) {
@@ -10115,6 +10116,7 @@
             }
             const report = lines.join("");
             if (parameters.output) {
+              console.log(parameters.output);
               try {
                 await devbin.files.writeFile(parameters.output, report);
                 devbin.console

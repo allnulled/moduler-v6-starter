@@ -1,0 +1,11 @@
+{
+  "grammar": "object type",
+  "properties": {
+    "name": {
+      "grammar": "type id",
+      "id": "string",
+      "optional": true,
+      "optionalProperty": true
+    }
+  }
+}

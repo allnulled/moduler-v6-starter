@@ -1,1 +1,1 @@
-Std.all.Tracer?.globalInstance.in("/*%=name*/", arguments);
+Std.all.Tracer?.globalInstance.in("/*%=name*/", arguments || []);

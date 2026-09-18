@@ -1,6 +1,6 @@
 // @interface:IntrospectorInterface
 {
-  prototype: { },
+  prototype: {},
   static: {
     get: $compiler.inject.source("./function.get.js"),
     set: $compiler.inject.source("./function.set.js"),

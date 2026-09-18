@@ -1,0 +1,19 @@
+{
+  "grammar": "object type",
+  "properties": {
+    "age": {
+      "grammar": "type id",
+      "id": "number",
+      "appendix": [
+        {
+          "grammar": "type appendix",
+          "operator": "|",
+          "complement": {
+            "grammar": "type id",
+            "id": "null"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,350 @@
+[#FILE=@/src/candidate/Std/apis/types/TypesParser/TypesParser.object.js]
+Std.parsers.peggy.generate($compiler.inject.string("./TypesParser.source.pegjs"), {
+  output: "parser" // also: "source", "parser"
+})
+[#FILE=@/src/candidate/Std/apis/types/TypesParser/TypesParser.source.pegjs]
+Types_script = ast:Evaluable { return ast }
+
+Evaluable = 
+  body:Prevaluable_2
+  appendix:Type_appendixes*
+    { return { ...body, grammar:"evaluable type", appendix: appendix?.length && appendix || undefined } }
+
+Prevaluable_2 = 
+  negation:Type_negation?
+  core:Prevaluable
+  parameters:Type_parameters?
+  modifiers:Type_modifiers?
+    { return { grammar:"evaluable type", negation: negation || undefined, core: core || undefined, parameters: parameters || undefined, modifiers: modifiers || undefined } }
+
+Prevaluable = Type_group / Type_atom / Type_object / Type_array
+
+Type_object =
+  token1:(_ "{" _)
+  props:Type_object_properties?
+  token2:(_ "}")
+    { return { grammar: "object type", properties: props || undefined } }
+
+Type_array =
+  token1:(_ "[" _)
+  items:Type_array_items?
+  token2:(_ "]")
+    { return { grammar: "array type", items: items || undefined } }
+
+Type_object_properties =
+  p_1:Type_object_property_first
+  p_n:Type_object_property_other*
+    { return Object.fromEntries([p_1].concat(p_n || [])) }
+Type_object_property_first = _
+  k:Property_name _ optional:"?"? _ ":" _
+  property:Evaluable
+    { return [k,{grammar: "object property",optional,property}] }
+Type_object_property_other = _ "," _
+  prop:Type_object_property_first
+    { return prop }
+
+Type_array_items =
+  p_1:Type_array_item_first
+  p_n:Type_array_item_other*
+    { return [p_1].concat(p_n || []) }
+Type_array_item_first = _ v:Evaluable { return v }
+Type_array_item_other = _ "," _ v:Evaluable { return v }
+
+Property_name = Property_chars
+
+Type_group = 
+  token1:(_ "(" _)
+  atom:Evaluable
+  token3:(_ ")" _)
+    { return atom }
+
+Type_atom = 
+  id:Type_identifier
+    { return { grammar: "type id", id } }
+
+Type_negation = _ "!" _ { return "!" }
+
+Type_appendixes = And_or_appendix
+
+Question_mark = _ "?" { return "?" }
+
+And_or_appendix = _
+  operator:("&" / "|") _
+  complement:Prevaluable_2
+    { return { grammar: "type appendix", operator, complement }}
+
+Type_identifier = _ Variable_name Variable_accessors*
+    { return text().trim() }
+
+Type_parameters =
+  token1:(_ "(" _)
+  list:Type_array_items?
+  token3:(_ ")" _)
+    { return list }
+
+Type_modifiers = modifier:(Question_mark)
+    { return modifier }
+
+Property_chars = [A-Za-z_$] [A-Za-z0-9_$]* { return text() }
+
+Variable_name = Unforbidden_tokens { return text() }
+
+Variable_accessors = Variable_accessor_by_dot+
+
+Variable_accessor_by_dot = "." name:Variable_name { return name }
+
+Comments = Comment_oneline / Comment_multiline
+Comment_oneline = __* "//" (!(___).)* {}
+Comment_multiline = __* "/*" (!("*/").)* "*/" {}
+
+Unforbidden_tokens = ((!Forbidden_tokens).)+ { return text() }
+Forbidden_tokens = "("
+  / ")"
+  / "|"
+  / "&"
+  / "{"
+  / "}"
+  / ","
+  / "."
+  / "!"
+  / ":"
+  / "/*"
+  / "["
+  / "]"
+  / "?"
+  / "*"
+  / "+"
+  / "//"
+  / "\n" {}
+
+_ = one_space*
+one_space = __ / ___ / Comments
+__ = "\t" / " "
+New_line = ___
+___ = "\r\n" / "\r" / "\n"
+[#FILE=@/src/candidate/Std/apis/types/TypesValidator/function.validateData.js]
+async function validateData(validator, data, pointers = {}, options = {}, validationResult = false) {
+  Validate_input: {
+    const state = $moduler.toolkit.normalizeObject({}, {
+      pointers: {
+        default: {},
+        validate: it => {
+          if(typeof it !== "object") throw new Error("Must be object");
+        },
+        format: it => {
+          if(!it.inData) it.inData = [];
+          if(!it.inValidator) it.inValidator = [];
+          return it;
+        }
+      }
+    });
+    console.log(state);
+    Std.assert(typeof validator.grammar === "string", `Parameter «validator» must have property «grammar» as string on «AsserterInterface.static.validateData»`);
+  }
+  Step_1_Initialize_pointers: {
+    const hasInData = Std.classes.Introspector.has(pointers, ["inData"]);
+    const hasInValidator = Std.classes.Introspector.has(pointers, ["inValidator"]);
+    if(!hasInData) Std.classes.Introspector.initialize(pointers, ["inData"], []);
+    if(!hasInValidator) Std.classes.Introspector.initialize(pointers, ["inValidator"], []);
+  }
+  let result;
+  Step_2_Initialize_result: {
+    result = validationResult || Std.classes.ValidationResult.new.config({ data, validator });
+    Std.assert(result instanceof Std.classes.ValidationResult, `Parameter «validationResult» must be instance of «Std.classes.ValidationResult» on «AsserterInterface.static.validateData»`);
+  }
+  Step_3_Digest_validation: {
+    if (validator.grammar === "evaluable type") {
+      this.validateEvaluableType(validator, data, { pointers, options, result });
+    } else if (validator.grammar === "object type") {
+      this.validateTypeObject(validator, data, { pointers, options, result });
+    } else if (validator.grammar === "array type") {
+      this.validateTypeArray(validator, data, { pointers, options, result });
+    } else if (validator.grammar === "type id") {
+      this.validateTypeId(validator, data, { pointers, options, result });
+    } else if (validator.grammar === "type appendix") {
+      this.validateTypeAppendix(validator, data, { pointers, options, result });
+    } else throw Error.create({ name: "ValidationError", message: `Validator contains grammar «${validator.grammar}» which is not known` });
+  }
+  Final_step_Return: {
+    return result;
+  }
+
+  /*
+
+  --------------------------
+
+  5 gens / 3 methods:
+  {}          - validateTypeObject
+  []          - validateTypeArray
+  ()          - [-]
+  type(__,__) - validateEvaluableType
+  type        - validateEvaluableType
+
+  1 prefix / 1 method:
+  !           - applyNegation
+
+  3 suffixes / 3 methods:
+  ?           - applyOptionality
+  & __        - applyLogicalAnd
+  | __        - applyLogicalOr
+
+  --------------------------
+
+  //*/
+}
+[#FILE=@/src/candidate/Std/apis/types/TypesValidator/function.validateEvaluableType.js]
+function validateEvaluableType(validator, data, { pointers, options, result }) {
+  Std.classes.Ansi.style("black,bgYellow").print("Evaluable type validator:");
+  console.log(validator);
+  Std.classes.Ansi.style("black,bgYellow").print("Evaluable type data:");
+}
+[#FILE=@/src/candidate/Std/apis/types/TypesValidator/function.validateTypeAppendix.js]
+function validateTypeAppendix(validator, data, { pointers, options, result }) {
+  
+}
+[#FILE=@/src/candidate/Std/apis/types/TypesValidator/function.validateTypeArray.js]
+function validateTypeArray(validator, data, { pointers, options, result }) {
+  
+}
+[#FILE=@/src/candidate/Std/apis/types/TypesValidator/function.validateTypeId.js]
+function validateTypeId(validator, data, { pointers, options, result }) {
+  
+}
+[#FILE=@/src/candidate/Std/apis/types/TypesValidator/function.validateTypeObject.js]
+function validateTypeObject(validator, data, { pointers, options, result }) {
+  
+}
+[#FILE=@/test/unit/src/candidate/Std/v1/501.Std.types.Parser puede parsear texto para reconstruir tipos abstractamente/examples.func/Example-003.Genérico 1.js]
+module.exports = async function({ Asserter, TypesParser, TypesValidator, Std, devbin }) {
+  const fs = require("fs");
+  const path = require("path");
+  const file = path.resolve(__dirname, "./../examples.out/Example-003.Genérico 1.json");
+  const content = JSON.parse(await fs.promises.readFile(file, "utf8"));
+  const validation = await TypesValidator.validateData(content, {});
+  console.log(validation);
+}
+[#FILE=@/test/unit/src/candidate/Std/v1/501.Std.types.Parser puede parsear texto para reconstruir tipos abstractamente/examples.in/Example-003.Genérico 1.tyla]
+{
+    name?: string,
+    password: string,
+    email?: string,
+    hobbies?: [{
+        name: string,
+        frequency: option(["low","medium","high"])
+    }]
+}
+[#FILE=@/test/unit/src/candidate/Std/v1/501.Std.types.Parser puede parsear texto para reconstruir tipos abstractamente/examples.out/Example-003.Genérico 1.json]
+{
+  "grammar": "evaluable type",
+  "core": {
+    "grammar": "object type",
+    "properties": {
+      "name": {
+        "grammar": "object property",
+        "optional": "?",
+        "property": {
+          "grammar": "evaluable type",
+          "core": {
+            "grammar": "type id",
+            "id": "string"
+          }
+        }
+      },
+      "password": {
+        "grammar": "object property",
+        "optional": null,
+        "property": {
+          "grammar": "evaluable type",
+          "core": {
+            "grammar": "type id",
+            "id": "string"
+          }
+        }
+      },
+      "email": {
+        "grammar": "object property",
+        "optional": "?",
+        "property": {
+          "grammar": "evaluable type",
+          "core": {
+            "grammar": "type id",
+            "id": "string"
+          }
+        }
+      },
+      "hobbies": {
+        "grammar": "object property",
+        "optional": "?",
+        "property": {
+          "grammar": "evaluable type",
+          "core": {
+            "grammar": "array type",
+            "items": [
+              {
+                "grammar": "evaluable type",
+                "core": {
+                  "grammar": "object type",
+                  "properties": {
+                    "name": {
+                      "grammar": "object property",
+                      "optional": null,
+                      "property": {
+                        "grammar": "evaluable type",
+                        "core": {
+                          "grammar": "type id",
+                          "id": "string"
+                        }
+                      }
+                    },
+                    "frequency": {
+                      "grammar": "object property",
+                      "optional": null,
+                      "property": {
+                        "grammar": "evaluable type",
+                        "core": {
+                          "grammar": "type id",
+                          "id": "option"
+                        },
+                        "parameters": [
+                          {
+                            "grammar": "evaluable type",
+                            "core": {
+                              "grammar": "array type",
+                              "items": [
+                                {
+                                  "grammar": "evaluable type",
+                                  "core": {
+                                    "grammar": "type id",
+                                    "id": "\"low\""
+                                  }
+                                },
+                                {
+                                  "grammar": "evaluable type",
+                                  "core": {
+                                    "grammar": "type id",
+                                    "id": "\"medium\""
+                                  }
+                                },
+                                {
+                                  "grammar": "evaluable type",
+                                  "core": {
+                                    "grammar": "type id",
+                                    "id": "\"high\""
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

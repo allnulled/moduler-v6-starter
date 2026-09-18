@@ -3,14 +3,14 @@ Types_script = ast:Evaluable { return ast }
 Evaluable = 
   body:Prevaluable_2
   appendix:Type_appendixes*
-    { return { ...body, grammar:"evaluable type", appendix: appendix?.length && appendix || undefined } }
+    { return { ...body, appendix: appendix?.length && appendix || undefined } }
 
 Prevaluable_2 = 
   negation:Type_negation?
   core:Prevaluable
   parameters:Type_parameters?
   modifiers:Type_modifiers?
-    { return { grammar:"evaluable type", negation: negation || undefined, core: core || undefined, parameters: parameters || undefined, modifiers: modifiers || undefined } }
+    { return { ...core, negation: negation || undefined, parameters: parameters || undefined, ...modifiers || undefined } }
 
 Prevaluable = Type_group / Type_atom / Type_object / Type_array
 
@@ -31,9 +31,9 @@ Type_object_properties =
   p_n:Type_object_property_other*
     { return Object.fromEntries([p_1].concat(p_n || [])) }
 Type_object_property_first = _
-  k:Property_name _ optional:"?"? _ ":" _
+  k:Property_name _ optionalProperty:Optional_sign? _ ":" _
   property:Evaluable
-    { return [k,{grammar: "object property",optional,property}] }
+    { return [k,{...property, optionalProperty}] }
 Type_object_property_other = _ "," _
   prop:Type_object_property_first
     { return prop }
@@ -61,7 +61,8 @@ Type_negation = _ "!" _ { return "!" }
 
 Type_appendixes = And_or_appendix
 
-Question_mark = _ "?" { return "?" }
+Optional_sign = it:(_ "?")? { return it ? true : undefined }
+Question_mark = _ "?" { return { optional: true } }
 
 And_or_appendix = _
   operator:("&" / "|") _

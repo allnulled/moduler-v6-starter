@@ -1,0 +1,40 @@
+{
+  "grammar": "object type",
+  "properties": {
+    "apartado_de_usuario": {
+      "grammar": "object type",
+      "properties": {
+        "name": {
+          "grammar": "type id",
+          "id": "string"
+        },
+        "password": {
+          "grammar": "type id",
+          "id": "string"
+        }
+      }
+    },
+    "apartado_de_otra_cosa": {
+      "grammar": "object type",
+      "properties": {
+        "session": {
+          "grammar": "object type",
+          "properties": {
+            "id": {
+              "grammar": "type id",
+              "id": "string"
+            },
+            "startedAt": {
+              "grammar": "type id",
+              "id": "date"
+            },
+            "token": {
+              "grammar": "type id",
+              "id": "uuid"
+            }
+          }
+        }
+      }
+    }
+  }
+}

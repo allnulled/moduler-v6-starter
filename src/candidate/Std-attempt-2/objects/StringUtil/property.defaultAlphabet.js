@@ -1,1 +1,0 @@
-defaultAlphabet = "abcdefghijklmnopqrstuvwxyz0123456789".split("")

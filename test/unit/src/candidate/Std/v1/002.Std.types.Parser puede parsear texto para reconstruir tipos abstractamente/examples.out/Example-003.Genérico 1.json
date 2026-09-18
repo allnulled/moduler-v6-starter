@@ -1,0 +1,79 @@
+{
+  "grammar": "object type",
+  "properties": {
+    "name": {
+      "grammar": "type id",
+      "id": "string",
+      "optionalProperty": true
+    },
+    "password": {
+      "grammar": "type id",
+      "id": "string"
+    },
+    "email": {
+      "grammar": "type id",
+      "id": "string",
+      "optionalProperty": true
+    },
+    "hobbies": {
+      "grammar": "array type",
+      "items": [
+        {
+          "grammar": "object type",
+          "properties": {
+            "name": {
+              "grammar": "type id",
+              "id": "string"
+            },
+            "frequency": {
+              "grammar": "type id",
+              "id": "option",
+              "parameters": [
+                {
+                  "grammar": "array type",
+                  "items": [
+                    {
+                      "grammar": "type id",
+                      "id": "\"low\""
+                    },
+                    {
+                      "grammar": "type id",
+                      "id": "\"medium\""
+                    },
+                    {
+                      "grammar": "type id",
+                      "id": "\"high\""
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "optionalProperty": true
+    },
+    "city": {
+      "grammar": "type id",
+      "id": "option.predefined",
+      "parameters": [
+        {
+          "grammar": "type id",
+          "id": "\"cities of the world\""
+        }
+      ],
+      "optional": true,
+      "appendix": [
+        {
+          "grammar": "type appendix",
+          "operator": "&",
+          "complement": {
+            "grammar": "type id",
+            "id": "available cities"
+          }
+        }
+      ],
+      "optionalProperty": true
+    }
+  }
+}

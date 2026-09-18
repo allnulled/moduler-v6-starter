@@ -17,6 +17,8 @@ module.exports = async function ({ devbin, parameters }) {
     }
     Resuelve_fichero_del_out: {
       if (!await devbin.files.hasFile(normalized.out)) {
+        // Esto estaba pero no parece que debería porque empalma las rutas
+        break Resuelve_fichero_del_out;
         normalized.out = devbin.moduler.normalizationOf(`@/dev/filecom/${normalized.command}/out/${parameters.out}`);
       }
     }

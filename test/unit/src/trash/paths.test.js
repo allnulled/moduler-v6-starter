@@ -1,0 +1,1 @@
+console.log($devbin.moduler.normalizationOf("@/ok"))

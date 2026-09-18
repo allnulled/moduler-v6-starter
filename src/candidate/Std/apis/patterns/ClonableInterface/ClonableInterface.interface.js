@@ -1,6 +1,10 @@
 // @interface:ClonableInterface
 {
   prototype: {
+    get newClone() {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"ClonableInterface.prototype.newClone"});
+      return this.clone();
+    },
     clone: function(config = {}) {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodIn.js", {name:"ClonableInterface.prototype.clone"});
       Validate_unclonable_properties: {

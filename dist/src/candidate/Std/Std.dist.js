@@ -7,6 +7,7 @@ module.exports = $moduler.export(
 
       Object.assign(Std, {
         all: {},
+        objects: {},
         functions: {},
         traits: {},
         interfaces: {},
@@ -14,6 +15,7 @@ module.exports = $moduler.export(
         parsers: {
           peggy: peggyjs,
         },
+        types: {},
       });
 
       Std.all.ErrorExtension = (() => {
@@ -45,7 +47,7 @@ module.exports = $moduler.export(
         };
       })();
 
-      Elemental_functions_classes_and_interfaces: {
+      Wave_1_Elemental_functions_classes_and_interfaces: {
         Std.assert =
           Std.all.assert =
           Std.functions.assert =
@@ -59,6 +61,77 @@ module.exports = $moduler.export(
                   message: "Some assertion failed",
                 });
             };
+        Std.all.NativePrototypes = Std.objects.NativePrototypes = [
+          null,
+          Object.prototype,
+          Array.prototype,
+          Function.prototype,
+          String.prototype,
+          Number.prototype,
+        ];
+        Std.all.Printer = Std.functions.Printer = class Printer {
+          static debug(...args) {
+            for (let index = 0; index < args.length; index++) {
+              const arg = args[index];
+              console.log(index + ": " + typeof arg, arg);
+            }
+          }
+          static json(...args) {
+            for (let index = 0; index < args.length; index++) {
+              const arg = args[index];
+              try {
+                console.log(
+                  index + ": " + typeof arg,
+                  JSON.stringify(arg, null, 2),
+                );
+              } catch (error) {
+                console.log(index + ": " + typeof arg, arg);
+              }
+            }
+          }
+
+          static exiting = false;
+          static currentQuestion = null;
+          static questionsCloser() {
+            this.exiting = true;
+            if (this.currentQuestion) {
+              this.currentQuestion.close();
+              this.currentQuestion = null;
+            }
+          }
+          static {
+            process.once("SIGINT", this.questionsCloser);
+            process.once("SIGTERM", this.questionsCloser);
+          }
+          static async ask(question, options = {}, ...others) {
+            if (this.exiting) {
+              throw new Error("Process exiting");
+            }
+            this.debug(...others);
+            const rl = require("readline").promises.createInterface({
+              input: process.stdin,
+              output: process.stdout,
+            });
+            this.currentQuestion = rl;
+            try {
+              if (this.exiting) {
+                throw new Error("Process exiting");
+              }
+              return await rl.question(question);
+            } catch (error) {
+              if (error.code === "ABORT_ERR") {
+                this.exiting = true;
+                return;
+              }
+              throw error;
+            } finally {
+              if (this.currentQuestion === rl) {
+                this.currentQuestion = null;
+              }
+              rl.close();
+            }
+          }
+        };
         Std.all.triggerMethodIfExists = Std.functions.triggerMethodIfExists =
           function triggerMethodIfExists(
             base,
@@ -68,7 +141,7 @@ module.exports = $moduler.export(
           ) {
             Std.all.Tracer?.globalInstance.in(
               "Std.functions.triggerMethodIfExists",
-              arguments,
+              arguments || [],
             );
             let output = undefined;
             if (base && typeof base[method] === "function") {
@@ -77,7 +150,7 @@ module.exports = $moduler.export(
             }
             Std.all.Tracer?.globalInstance.out(
               "Std.functions.triggerMethodIfExists",
-              arguments,
+              arguments || [],
             );
             return output;
           };
@@ -333,19 +406,27 @@ module.exports = $moduler.export(
         Std.all.CreableInterface = Std.interfaces.CreableInterface =
           // @interface:CreableInterface
           {
-            prototype: {},
+            prototype: {
+              get new() {
+                Std.all.Tracer?.globalInstance.log(
+                  "CreableInterface.prototype.new",
+                  arguments || [],
+                );
+                return this.constructor.create();
+              },
+            },
             static: {
               get new() {
                 Std.all.Tracer?.globalInstance.log(
                   "CreableInterface.static.new",
-                  arguments,
+                  arguments || [],
                 );
                 return this.create();
               },
               create: function (config = {}, constructorArgs = []) {
                 Std.all.Tracer?.globalInstance.in(
                   "CreableInterface.static.create",
-                  arguments,
+                  arguments || [],
                 );
                 const instanze = new this(...constructorArgs);
                 let output = instanze;
@@ -360,7 +441,7 @@ module.exports = $moduler.export(
                 }
                 Std.all.Tracer?.globalInstance.out(
                   "CreableInterface.static.create",
-                  arguments,
+                  arguments || [],
                 );
                 return output;
               },
@@ -370,10 +451,17 @@ module.exports = $moduler.export(
           // @interface:ClonableInterface
           {
             prototype: {
+              get newClone() {
+                Std.all.Tracer?.globalInstance.log(
+                  "ClonableInterface.prototype.newClone",
+                  arguments || [],
+                );
+                return this.clone();
+              },
               clone: function (config = {}) {
                 Std.all.Tracer?.globalInstance.in(
                   "ClonableInterface.prototype.clone",
-                  arguments,
+                  arguments || [],
                 );
                 Validate_unclonable_properties: {
                   if (this.unclonableProperties) {
@@ -387,7 +475,7 @@ module.exports = $moduler.export(
                       if (!(unclonableProperty in config)) {
                         Std.all.Tracer?.globalInstance.error(
                           "ClonableInterface.prototype.clone",
-                          arguments,
+                          arguments || [],
                         );
                         throw new Error(
                           `Cannot clone without specifying property «${unclonableProperty}» on «ClonableInterface.prototype.clone»`,
@@ -398,7 +486,7 @@ module.exports = $moduler.export(
                 }
                 Std.all.Tracer?.globalInstance.out(
                   "ClonableInterface.prototype.clone",
-                  arguments,
+                  arguments || [],
                 );
                 return this.new.config(config);
               },
@@ -412,7 +500,7 @@ module.exports = $moduler.export(
               config: function (props = {}) {
                 Std.all.Tracer?.globalInstance.log(
                   "ConfigurableInterface.prototype.config",
-                  arguments,
+                  arguments || [],
                 );
                 return Object.assign(this, props);
               },
@@ -425,8 +513,73 @@ module.exports = $moduler.export(
             Std.interfaces.ConfigurableInterface,
             Std.interfaces.ClonableInterface,
           ]);
+        Std.all.BooleanUtil = Std.classes.BooleanUtil = class BooleanUtil {
+          static areEqual(...args) {
+            let previous = args[0];
+            for (let index = 1; index < args.length; index++) {
+              const arg = args[index];
+              if (arg !== previous) return false;
+              previous = arg;
+            }
+            return true;
+          }
+        };
+        Std.all.ObjectReflector =
+          Std.classes.ObjectReflector = class ObjectReflector {
+            static {
+              $moduler.toolkit.makeClass(
+                [
+                  Std.interfaces.InstantiableInterface,
+                  {
+                    static: {
+                      getAllProperties: function getAllProperties(
+                        object,
+                        stopOnPrototypes = [],
+                        ignoreJsPrototypes = true,
+                      ) {
+                        const properties = new Set();
+                        Iterating_properties: while (object) {
+                          for (const property of Reflect.ownKeys(object)) {
+                            properties.add(property);
+                          }
+                          object = Object.getPrototypeOf(object);
+                          if (
+                            (ignoreJsPrototypes &&
+                              Std.objects.NativePrototypes.includes(object)) ||
+                            stopOnPrototypes.includes(object)
+                          )
+                            break Iterating_properties;
+                        }
+                        return [...properties];
+                      },
+                    },
+                    prototype: {},
+                  },
+                ],
+                this,
+              );
+            }
+          };
+        Std.all.FunctionReflector =
+          Std.classes.FunctionReflector = class FunctionReflector {
+            static {
+              $moduler.toolkit.makeClass(
+                [Std.interfaces.InstantiableInterface],
+                this,
+              );
+            }
+          };
+        Std.all.ClassReflector =
+          Std.classes.ClassReflector = class ClassReflector {
+            static {
+              $moduler.toolkit.makeClass(
+                [Std.interfaces.InstantiableInterface],
+                this,
+              );
+            }
+          };
       }
-      Utility_interfaces: {
+      Wave_2_Utility_interfaces: {
         Std.all.IntrospectorInterface = Std.interfaces.IntrospectorInterface =
           // @interface:IntrospectorInterface
           {
@@ -470,6 +623,53 @@ module.exports = $moduler.export(
               },
             },
           };
+        Std.all.IntrospectableInterfaceFactory =
+          Std.interfaces.IntrospectableInterfaceFactory =
+            function IntrospectableInterfaceFactory(
+              introspectableField,
+              getName = "get",
+              setName = "set",
+              hasName = "has",
+              initializeName = "initialize",
+              listName = "list",
+            ) {
+              // @factory:IntrospectableInterfaceFactory
+              return {
+                // @interface:IntrospectableInterface
+                prototype: {
+                  [getName]: function get(key) {
+                    return Std.all.Introspector.get(
+                      this[introspectableField],
+                      key.split("/"),
+                    );
+                  },
+                  [setName]: function set(key, value) {
+                    return Std.all.Introspector.set(
+                      this[introspectableField],
+                      key.split("/"),
+                      value,
+                    );
+                  },
+                  [hasName]: function has(key) {
+                    return Std.all.Introspector.has(
+                      this[introspectableField],
+                      key.split("/"),
+                    );
+                  },
+                  [initializeName]: function initialize(key, value) {
+                    return Std.all.Introspector.initialize(
+                      this[introspectableField],
+                      key.split("/"),
+                      value,
+                    );
+                  },
+                  [listName]: function list() {
+                    return this[introspectableField];
+                  },
+                },
+                static: {},
+              };
+            };
         Std.all.RunnableInterface = Std.interfaces.RunnableInterface =
           // @interface:RunnableInterface
           {
@@ -681,7 +881,7 @@ module.exports = $moduler.export(
                       } else {
                         part += ` []`;
                       }
-                    } else if (typeof arg === "object") {
+                    } else if (typeof arg === "object" && arg !== null) {
                       part += ``;
                       const keys = Object.keys(arg);
                       if (keys.length && keys.length < 10) {
@@ -749,7 +949,7 @@ module.exports = $moduler.export(
               check: function (condition, ...otherParameters) {
                 Std.all.Tracer?.globalInstance.in(
                   "CheckerInterface.prototype.check",
-                  arguments,
+                  arguments || [],
                 );
                 Std.functions.triggerMethodIfExists(
                   this,
@@ -776,7 +976,7 @@ module.exports = $moduler.export(
                 );
                 Std.all.Tracer?.globalInstance.out(
                   "CheckerInterface.prototype.check",
-                  arguments,
+                  arguments || [],
                 );
                 return condition;
               },
@@ -820,7 +1020,7 @@ module.exports = $moduler.export(
               ) {
                 Std.all.Tracer?.globalInstance.in(
                   "AsserterInterface.prototype.assert",
-                  arguments,
+                  arguments || [],
                 );
                 const eventParameters = [condition, message].concat(
                   otherParameters,
@@ -853,13 +1053,13 @@ module.exports = $moduler.export(
                   error.name = "AssertionError";
                   Std.all.Tracer?.globalInstance.error(
                     "AsserterInterface.prototype.assert",
-                    arguments,
+                    arguments || [],
                   );
                   throw error;
                 }
                 Std.all.Tracer?.globalInstance.out(
                   "AsserterInterface.prototype.assert",
-                  arguments,
+                  arguments || [],
                 );
                 return true;
               },
@@ -870,7 +1070,7 @@ module.exports = $moduler.export(
               ) {
                 Std.all.Tracer?.globalInstance.in(
                   "AsserterInterface.prototype.assertThrowsSync",
-                  arguments,
+                  arguments || [],
                 );
                 let thrownError = false;
                 const fakeError = new Error();
@@ -885,7 +1085,7 @@ module.exports = $moduler.export(
                 if (!thrownError) {
                   Std.all.Tracer?.globalInstance.error(
                     "AsserterInterface.prototype.assert",
-                    arguments,
+                    arguments || [],
                   );
                   throw new Error(
                     `Method «assertThrowsSync» expected callback to throw but it did not on: ${message}`,
@@ -894,7 +1094,7 @@ module.exports = $moduler.export(
                 if (!this.matchesError(expectedError, thrownError)) {
                   Std.all.Tracer?.globalInstance.error(
                     "AsserterInterface.prototype.assert",
-                    arguments,
+                    arguments || [],
                   );
                   throw new Error(
                     `Method «assertThrowsSync» expected one error but got another:\n  - expected: ${expectedError.name} | ${expectedError.message}\n  - current:  ${thrownError.name} | ${thrownError.message}`,
@@ -902,7 +1102,7 @@ module.exports = $moduler.export(
                 }
                 Std.all.Tracer?.globalInstance.out(
                   "AsserterInterface.prototype.assert",
-                  arguments,
+                  arguments || [],
                 );
                 return true;
               },
@@ -913,7 +1113,7 @@ module.exports = $moduler.export(
               ) {
                 Std.all.Tracer?.globalInstance.in(
                   "AsserterInterface.prototype.assertThrowsAsync",
-                  arguments,
+                  arguments || [],
                 );
                 let thrownError = false;
                 const fakeError = new Error();
@@ -928,7 +1128,7 @@ module.exports = $moduler.export(
                 if (!thrownError) {
                   Std.all.Tracer?.globalInstance.error(
                     "AsserterInterface.prototype.assertThrowsAsync",
-                    arguments,
+                    arguments || [],
                   );
                   throw new Error(
                     `Method «assertThrowsAsync» expected callback to throw but it did not on: ${message}`,
@@ -937,7 +1137,7 @@ module.exports = $moduler.export(
                 if (!this.matchesError(expectedError, thrownError)) {
                   Std.all.Tracer?.globalInstance.error(
                     "AsserterInterface.prototype.assertThrowsAsync",
-                    arguments,
+                    arguments || [],
                   );
                   throw new Error(
                     `Method «assertThrowsSync» expected one error but got another:\n  - expected: ${expectedError.name} | ${expectedError.message}\n  - current:  ${thrownError.name} | ${thrownError.message}`,
@@ -945,14 +1145,14 @@ module.exports = $moduler.export(
                 }
                 Std.all.Tracer?.globalInstance.out(
                   "AsserterInterface.prototype.assertThrowsAsync",
-                  arguments,
+                  arguments || [],
                 );
                 return true;
               },
               assertDoesNotThrowSync: function (callback, message = "") {
                 Std.all.Tracer?.globalInstance.in(
                   "AsserterInterface.prototype.assertThrowsAsync",
-                  arguments,
+                  arguments || [],
                 );
                 let thrownError = false;
                 const fakeError = new Error();
@@ -967,20 +1167,20 @@ module.exports = $moduler.export(
                 if (thrownError) {
                   Std.all.Tracer?.globalInstance.error(
                     "AsserterInterface.prototype.assertDoesNotThrowSync",
-                    arguments,
+                    arguments || [],
                   );
                   throw thrownError;
                 }
                 Std.all.Tracer?.globalInstance.out(
                   "AsserterInterface.prototype.assertDoesNotThrowSync",
-                  arguments,
+                  arguments || [],
                 );
                 return true;
               },
               assertDoesNotThrowAsync: function (callback, message = "") {
                 Std.all.Tracer?.globalInstance.in(
                   "AsserterInterface.prototype.assertDoesNotThrowAsync",
-                  arguments,
+                  arguments || [],
                 );
                 let thrownError = false;
                 const fakeError = new Error();
@@ -995,13 +1195,13 @@ module.exports = $moduler.export(
                 if (thrownError) {
                   Std.all.Tracer?.globalInstance.error(
                     "AsserterInterface.prototype.assertDoesNotThrowAsync",
-                    arguments,
+                    arguments || [],
                   );
                   throw thrownError;
                 }
                 Std.all.Tracer?.globalInstance.out(
                   "AsserterInterface.prototype.assertDoesNotThrowAsync",
-                  arguments,
+                  arguments || [],
                 );
                 return true;
               },
@@ -1015,7 +1215,7 @@ module.exports = $moduler.export(
             ) {
               Std.all.Tracer?.globalInstance.in(
                 "TesterInterface.static.evaluateDirectory",
-                arguments,
+                arguments || [],
               );
               let output;
               let options;
@@ -1083,7 +1283,7 @@ module.exports = $moduler.export(
                   if (Std.all.Environmenter.isBrowser) {
                     Std.all.Tracer?.globalInstance.error(
                       "TesterInterface.static.evaluateDirectory",
-                      arguments,
+                      arguments || [],
                     );
                     Std.all.Environmenter.throw(
                       "Environment of browser is not supported right now on «Std.classes.Tester.evaluateDirectory»",
@@ -1122,7 +1322,7 @@ module.exports = $moduler.export(
                       } catch (error) {
                         Std.all.Tracer?.globalInstance.error(
                           "TesterInterface.static.evaluateDirectory",
-                          arguments,
+                          arguments || [],
                         );
                         throw Error.normalize({
                           name: "MissingTestError",
@@ -1137,7 +1337,7 @@ module.exports = $moduler.export(
                       } catch (error) {
                         Std.all.Tracer?.globalInstance.error(
                           "TesterInterface.static.evaluateDirectory",
-                          arguments,
+                          arguments || [],
                         );
                         throw Error.normalize(error).adding({
                           name: "TestLoadError",
@@ -1242,9 +1442,9 @@ module.exports = $moduler.export(
                     };
                     const printError = function (error, pointer = []) {
                       console.log(
-                        `[suberror:] [${pointer.join(".")}] ${error.name}: ${error.message}`,
-                        error,
+                        `[Error=${pointer.join(".")}] ${error.name}: ${error.message}`,
                       );
+                      console.log(error.stack);
                       if (error.std?.history) {
                         printErrors(error.std.history, pointer.concat([]));
                       }
@@ -1287,12 +1487,12 @@ module.exports = $moduler.export(
                 }
                 Std.all.Tracer?.globalInstance.out(
                   "TesterInterface.static.evaluateDirectory",
-                  arguments,
+                  arguments || [],
                 );
               } catch (error) {
                 Std.all.Tracer?.globalInstance.error(
                   "TesterInterface.static.evaluateDirectory",
-                  arguments,
+                  arguments || [],
                 );
               }
             },
@@ -1381,15 +1581,43 @@ module.exports = $moduler.export(
             },
           },
         };
-        Std.all.ValidationResultInterface =
-          Std.interfaces.ValidationResultInterface =
-            // @interface:ValidationResultInterface
+        Std.all.ValidationStepInterface =
+          Std.interfaces.ValidationStepInterface =
+            // @interface:ValidationStepInterface
+            {
+              prototype: {
+                onCreate: function () {
+                  this.dataPointer = [];
+                  this.validatorPointer = [];
+                },
+              },
+              static: {},
+            };
+        Std.all.ValidationStateInterface =
+          Std.interfaces.ValidationStateInterface =
+            // @interface:ValidationStepInterface
             {
               static: {},
               prototype: {
                 newStep: function newStep(step) {
                   if (!this.steps) this.steps = [];
                   this.steps.push(step);
+                },
+                onCreate: function () {
+                  this.result = Std.all.ValidationResult.new;
+                },
+              },
+            };
+        Std.all.ValidationResultInterface =
+          Std.interfaces.ValidationResultInterface =
+            // @interface:ValidationResultInterface
+            {
+              static: {},
+              prototype: {
+                onCreate: function () {
+                  this.output = {};
+                  this.deambiguation = null;
+                  this.errors = [];
                 },
               },
             };
@@ -1402,169 +1630,384 @@ module.exports = $moduler.export(
                 validateData: async function validateData(
                   validator,
                   data,
-                  pointers = {},
-                  options = {},
-                  validationResult = false,
+                  stateBrute = false,
+                  stepBrute = false,
                 ) {
-                  Validate_input: {
-                    const state = $moduler.toolkit.normalizeObject(
-                      {},
-                      {
-                        pointers: {
-                          default: {},
-                          validate: (it) => {
-                            if (typeof it !== "object")
-                              throw new Error("Must be object");
-                          },
-                          format: (it) => {
-                            if (!it.inData) it.inData = [];
-                            if (!it.inValidator) it.inValidator = [];
-                            return it;
-                          },
-                        },
-                      },
-                    );
-                    console.log(state);
-                    Std.assert(
-                      typeof validator.grammar === "string",
-                      `Parameter «validator» must have property «grammar» as string on «AsserterInterface.static.validateData»`,
-                    );
-                  }
-                  Step_1_Initialize_pointers: {
-                    const hasInData = Std.classes.Introspector.has(pointers, [
-                      "inData",
-                    ]);
-                    const hasInValidator = Std.classes.Introspector.has(
-                      pointers,
-                      ["inValidator"],
-                    );
-                    if (!hasInData)
-                      Std.classes.Introspector.initialize(
-                        pointers,
-                        ["inData"],
-                        [],
+                  Std.all.Tracer?.globalInstance.in(
+                    "TypesValidator.validateData",
+                    arguments || [],
+                  );
+                  let state, step;
+                  All_validation: {
+                    Step_1_Initialize: {
+                      state =
+                        stateBrute ||
+                        Std.classes.ValidationState.new.config({
+                          data,
+                          validator,
+                        });
+                      step =
+                        stepBrute ||
+                        Std.classes.ValidationStep.new.config({
+                          dataSubset: data,
+                          validatorSubset: validator,
+                        });
+                      Std.assert(
+                        state instanceof Std.classes.ValidationState,
+                        `Parameter «state» must be instance of «Std.classes.ValidationState» on «TypesValidatorInterface.static.validateData»`,
                       );
-                    if (!hasInValidator)
-                      Std.classes.Introspector.initialize(
-                        pointers,
-                        ["inValidator"],
-                        [],
-                      );
-                  }
-                  let result;
-                  Step_2_Initialize_result: {
-                    result =
-                      validationResult ||
-                      Std.classes.ValidationResult.new.config({
-                        data,
-                        validator,
-                      });
-                    Std.assert(
-                      result instanceof Std.classes.ValidationResult,
-                      `Parameter «validationResult» must be instance of «Std.classes.ValidationResult» on «AsserterInterface.static.validateData»`,
-                    );
-                  }
-                  Step_3_Digest_validation: {
-                    if (validator.grammar === "evaluable type") {
-                      this.validateEvaluableType(validator, data, {
-                        pointers,
-                        options,
-                        result,
-                      });
-                    } else if (validator.grammar === "object type") {
-                      this.validateTypeObject(validator, data, {
-                        pointers,
-                        options,
-                        result,
-                      });
-                    } else if (validator.grammar === "array type") {
-                      this.validateTypeArray(validator, data, {
-                        pointers,
-                        options,
-                        result,
-                      });
-                    } else if (validator.grammar === "type id") {
-                      this.validateTypeId(validator, data, {
-                        pointers,
-                        options,
-                        result,
-                      });
-                    } else if (validator.grammar === "type appendix") {
-                      this.validateTypeAppendix(validator, data, {
-                        pointers,
-                        options,
-                        result,
-                      });
-                    } else
-                      throw Error.create({
-                        name: "ValidationError",
-                        message: `Validator contains grammar «${validator.grammar}» which is not known`,
-                      });
+                    }
+                    Step_2_Digest_validation: {
+                      Skip_on_optionality: {
+                        if (
+                          validator.optional === true &&
+                          typeof data === "undefined"
+                        ) {
+                          step.result = {
+                            "*type": "object",
+                            value: data,
+                            validated: true,
+                            because: "optional value",
+                            fails: [
+                              Error.normalize({
+                                name: "ValidationWarning",
+                                message: `Property «data.${step.dataPointer.join(".")}» is optional and undefined`,
+                              }),
+                            ],
+                          };
+                          break Step_2_Digest_validation;
+                        }
+                      }
+                      Validate_specific_type: {
+                        let localError = null;
+                        let localValidation = {
+                          hasError: function () {
+                            return localError !== null;
+                          },
+                          getError: function () {
+                            return localError;
+                          },
+                          setError: function (error) {
+                            localError = error;
+                          },
+                        };
+                        try {
+                          if (validator.grammar === "object type") {
+                            await this.validateTypeObject(
+                              validator,
+                              data,
+                              step,
+                              state,
+                            );
+                          } else if (validator.grammar === "array type") {
+                            await this.validateTypeArray(
+                              validator,
+                              data,
+                              step,
+                              state,
+                            );
+                          } else if (validator.grammar === "type id") {
+                            await this.validateTypeId(
+                              validator,
+                              data,
+                              step,
+                              state,
+                            );
+                          } else
+                            throw Error.normalize({
+                              name: "ValidationError",
+                              message: `Validator contains grammar «${validator.grammar}» which is not known`,
+                            });
+                        } catch (error) {
+                          localError = error;
+                        }
+                        if (validator.appendix) {
+                          await this.validateTypeAppendix(
+                            validator,
+                            data,
+                            step,
+                            state,
+                            localValidation,
+                          );
+                        }
+                        if (localError !== null) {
+                          Std.all.Tracer?.globalInstance.error(
+                            "TypesValidator.validateData",
+                            arguments || [],
+                          );
+                          throw localError;
+                        }
+                      }
+                    }
                   }
                   Final_step_Return: {
-                    return result;
+                    Std.all.Introspector.set(
+                      state.result,
+                      step.dataPointer,
+                      step.result,
+                    );
+                    Std.all.Tracer?.globalInstance.out(
+                      "TypesValidator.validateData",
+                      arguments || [],
+                    );
+                    return step.result;
                   }
-
                   /*
-
   --------------------------
-
   5 gens / 3 methods:
   {}          - validateTypeObject
   []          - validateTypeArray
   ()          - [-]
-  type(__,__) - validateEvaluableType
-  type        - validateEvaluableType
-
+  type(__,__) - validateTypeId
+  type        - validateTypeId
   1 prefix / 1 method:
   !           - applyNegation
-
   3 suffixes / 3 methods:
   ?           - applyOptionality
   & __        - applyLogicalAnd
   | __        - applyLogicalOr
-
   --------------------------
-
   //*/
                 },
-                validateEvaluableType: function validateEvaluableType(
+                validateTypeObject: async function validateTypeObject(
                   validator,
                   data,
-                  { pointers, options, result },
+                  step,
+                  state,
                 ) {
-                  Std.classes.Ansi.style("black,bgYellow").print(
-                    "Evaluable type validator:",
-                  );
-                  console.log(validator);
-                  Std.classes.Ansi.style("black,bgYellow").print(
-                    "Evaluable type data:",
-                  );
+                  const keys = Object.keys(validator.properties || {});
+                  const validation = {};
+                  Validating_properties: for (
+                    let index = 0;
+                    index < keys.length;
+                    index++
+                  ) {
+                    let subvalidation;
+                    const key = keys[index];
+                    const subvalidator = validator.properties[key];
+                    Skip_by_optionalProperty: {
+                      if (
+                        subvalidator.optionalProperty === true &&
+                        typeof data[key] === "undefined"
+                      ) {
+                        subvalidation = {
+                          "*type": "object",
+                          value: data[key],
+                          validated: true,
+                          because: "optional property",
+                          fails: [
+                            Error.normalize({
+                              name: "ValidationWarning",
+                              message: `Property «${keys.slice(0, index).join(".")}» is optional and missing`,
+                            }),
+                          ],
+                        };
+                        continue Validating_properties;
+                      }
+                    }
+                    try {
+                      subvalidation = await this.validateData(
+                        validator.properties[key],
+                        data[key],
+                        state,
+                        step.newClone.config({
+                          dataPointer: step.dataPointer.concat([key]),
+                          validatorPointer: step.dataPointer.concat([
+                            "properties",
+                            key,
+                          ]),
+                        }),
+                      );
+                    } catch (error) {
+                      throw error;
+                    }
+                    validation[key] = subvalidation;
+                  }
+                  return (step.result = validation);
                 },
-                validateTypeObject: function validateTypeObject(
+                validateTypeArray: async function validateTypeArray(
                   validator,
                   data,
-                  { pointers, options, result },
-                ) {},
-                validateTypeArray: function validateTypeArray(
-                  validator,
-                  data,
-                  { pointers, options, result },
-                ) {},
+                  step,
+                  state,
+                ) {
+                  Std.all.Printer.debug(validator, data, step, state);
+                  const validation = {};
+                  for (let index = 0; index < validator.length; index++) {
+                    const item = validator[index];
+                    const subvalidation = await this.validateData(
+                      item,
+                      data[index],
+                      state,
+                      step.newClone.config({
+                        dataPointer: step.dataPointer.concat([index]),
+                        validatorPointer: step.validatorPointer.concat([index]),
+                      }),
+                    );
+                    validation[index] = subvalidation;
+                  }
+                  return (step.result = validation);
+                },
                 validateTypeId: function validateTypeId(
                   validator,
                   data,
-                  { pointers, options, result },
-                ) {},
-                validateTypeAppendix: function validateTypeAppendix(
+                  step,
+                  state,
+                ) {
+                  const TypeClass = Std.types[validator.id];
+                  //console.log(validator, data, step, state);
+                  return (step.result = TypeClass.abstraction.onValidateData(
+                    data,
+                    validator,
+                    step,
+                    state,
+                  ));
+                },
+                validateTypeAppendix: async function validateTypeAppendix(
                   validator,
                   data,
-                  { pointers, options, result },
-                ) {},
+                  step,
+                  state,
+                  localValidation,
+                ) {
+                  Std.all.Tracer?.globalInstance.in(
+                    "TypesValidator.validateTypeAppendix",
+                    arguments || [],
+                  );
+                  let output = step.result ? [step.result] : [];
+                  // await Std.all.Printer.ask("Entramos en validateData", localValidation, output);
+                  Decide_logical_and_or_concatenation_final_result: {
+                    Si_ya_venia_acertando_limpiamos: {
+                      if (
+                        validator.appendix?.[0].operator === "|" &&
+                        localValidation.getError() === null
+                      ) {
+                        console.log("Ha pasado | porque venía limpia de antes");
+                        localValidation.setError(null);
+                        break Decide_logical_and_or_concatenation_final_result;
+                      }
+                    }
+                    Iterating_appendix: for (
+                      let indexAppendment = 0;
+                      indexAppendment < validator.appendix.length;
+                      indexAppendment++
+                    ) {
+                      const subvalidator = validator.appendix[indexAppendment];
+                      const { operator, complement } = subvalidator;
+                      let result = undefined;
+                      if (operator === "|") {
+                        try {
+                          result = await this.validateData(
+                            subvalidator.complement,
+                            data,
+                            state,
+                            step.newClone.config({
+                              dataPointer: step.dataPointer.concat([]),
+                              validatorPointer: step.validatorPointer.concat([
+                                "appendix",
+                                indexAppendment,
+                                "complement",
+                              ]),
+                            }),
+                          );
+                          Si_pasa_lo_limpiamos_y_devolvemos: {
+                            console.log("Ha pasado |");
+                            output.push(result);
+                            localValidation.setError(null);
+                            break Iterating_appendix;
+                          }
+                        } catch (error) {
+                          console.log("Ha fallado |");
+                          output.push(error);
+                          localValidation.setError(
+                            Error.normalize(error)
+                              .adding(localValidation.getError())
+                              .adding({
+                                name: "ValidationError",
+                                message: "Failed «|» operation",
+                              }),
+                          );
+                        }
+                      } else if (operator === "&") {
+                        Si_tenia_un_error_lo_lanzamos: {
+                          if (localValidation.getError() !== null) {
+                            Std.all.Tracer?.globalInstance.error(
+                              "TypesValidator.validateTypeAppendix",
+                              arguments || [],
+                            );
+                            throw Error.normalize(
+                              localValidation.getError(),
+                            ).adding({
+                              name: "ValidationError",
+                              message: `Logical «${operator}» appendix at index «${indexAppendment}» is not accomplished`,
+                            });
+                          }
+                        }
+                        try {
+                          result = await this.validateData(
+                            subvalidator.complement,
+                            data,
+                            state,
+                            step.newClone.config({
+                              dataPointer: step.dataPointer.concat([]),
+                              validatorPointer: step.validatorPointer.concat([
+                                "appendix",
+                                indexAppendment,
+                                "complement",
+                              ]),
+                            }),
+                          );
+                          output.push(result);
+                          console.log("Ha pasado &");
+                        } catch (error) {
+                          console.log("Ha fallado &");
+                          output.push(error);
+                          localValidation.setError(
+                            Error.normalize(error)
+                              .adding(localValidation.getError())
+                              .adding({
+                                name: "ValidationError",
+                                message: "Failed «&» operation",
+                              }),
+                          );
+                        }
+                      }
+                    }
+                  }
+                  // await Std.all.Printer.ask("Salimos de validateData", localValidation, output);
+                  if (localValidation.getError() !== null) {
+                    Std.all.Tracer?.globalInstance.error(
+                      "TypesValidator.validateTypeAppendix",
+                      arguments || [],
+                    );
+                    throw localValidation.getError();
+                  }
+                  Std.all.Tracer?.globalInstance.out(
+                    "TypesValidator.validateTypeAppendix",
+                    arguments || [],
+                  );
+                  return (step.result = output);
+                },
               },
             };
+        Std.all.TypesCatalogInterface = Std.interfaces.TypesCatalogInterface =
+          // @interface:TypesCatalogInterface
+          {
+            prototype: {
+              onCreate: function TypesCatalogInterface_onCreate() {
+                this.all = this.constructor.createBasicTypesCatalog({});
+              },
+            },
+            static: {
+              createBasicTypesCatalog: function createBasicTypesCatalog(
+                props = {},
+              ) {
+                return Object.create(Std.objects.BasicTypes, props);
+              },
+            },
+          };
       }
-      Utility_classes: {
+      Wave_3_Utility_classes: {
         Std.all.Introspector = Std.classes.Introspector = class Introspector {
           static {
             $moduler.toolkit.makeClass(
@@ -1653,6 +2096,230 @@ module.exports = $moduler.export(
             );
           }
         };
+      }
+      Wave_4_Types_system: {
+        Std.all.BasicTypes = Std.objects.BasicTypes = {
+          boolean: (Std.types.boolean = class Type_boolean {
+            static {
+              $moduler.toolkit.makeClass(
+                [
+                  Std.interfaces.InstantiableInterface,
+                  (Std.interfaces.TypeBooleanInterface =
+                    // @interface:TypeBooleanInterface
+                    {
+                      prototype: {},
+                      static: {
+                        abstraction: {
+                          onValidateData(input, validator, step, state) {
+                            if (typeof input !== "boolean") {
+                              throw Error.normalize({
+                                name: "ValidationError",
+                                message: `Required «input» to be boolean but «${typeof input}» was found instead at «data.${step.dataPointer.join(".")}»`,
+                              });
+                            }
+                            return {
+                              "*type": "boolean",
+                              value: input,
+                              validated: true,
+                            };
+                          },
+                        },
+                      },
+                    }),
+                ],
+                this,
+              );
+            }
+          }),
+          number: (Std.types.number = class Type_number {
+            static {
+              $moduler.toolkit.makeClass(
+                [
+                  Std.interfaces.InstantiableInterface,
+                  (Std.interfaces.TypeNumberInterface = {
+                    // @interface:TypeNumberInterface
+                    prototype: {},
+                    static: {
+                      abstraction: {
+                        onValidateData(input, validator, step, state) {
+                          if (typeof input !== "number") {
+                            throw Error.normalize({
+                              name: "ValidationError",
+                              message: `Required «input» to be number but «${typeof input}» was found instead at «data.${step.dataPointer.join(".")}»`,
+                            });
+                          }
+                          return {
+                            "*type": "number",
+                            value: input,
+                            validated: true,
+                          };
+                        },
+                      },
+                    },
+                  }),
+                ],
+                this,
+              );
+            }
+          }),
+          string: (Std.types.string = class Type_string {
+            static {
+              $moduler.toolkit.makeClass(
+                [
+                  Std.interfaces.InstantiableInterface,
+                  (Std.interfaces.TypeStringInterface = {
+                    // @interface:TypeStringInterface
+                    prototype: {},
+                    static: {
+                      abstraction: {
+                        onValidateData(input, validator, step, state) {
+                          if (typeof input !== "string") {
+                            throw Error.normalize({
+                              name: "ValidationError",
+                              message: `Required «input» to be string but «${typeof input}» was found instead at «data.${step.dataPointer.join(".")}»`,
+                            });
+                          }
+                          return {
+                            "*type": "string",
+                            value: input,
+                            validated: true,
+                          };
+                        },
+                      },
+                    },
+                  }),
+                ],
+                this,
+              );
+            }
+          }),
+          array: (Std.types.array = class Type_array {
+            static {
+              $moduler.toolkit.makeClass(
+                [
+                  Std.interfaces.InstantiableInterface,
+                  (Std.interfaces.TypeArrayInterface =
+                    // @interface:TypeArrayInterface
+                    {
+                      prototype: {},
+                      static: {
+                        abstraction: {
+                          onValidateData(input, validator, step, state) {
+                            if (!Array.isArray(input)) {
+                              throw Error.normalize({
+                                name: "ValidationError",
+                                message: `Required «input» to be array but «${typeof input}» was found instead at «data.${step.dataPointer.join(".")}»`,
+                              });
+                            }
+                            return {
+                              "*type": "array",
+                              value: input,
+                              validated: true,
+                            };
+                          },
+                        },
+                      },
+                    }),
+                ],
+                this,
+              );
+            }
+          }),
+          object: (Std.types.object = class Type_object {
+            static {
+              $moduler.toolkit.makeClass(
+                [
+                  Std.interfaces.InstantiableInterface,
+                  (Std.interfaces.TypeObjectInterface = {
+                    // @interface:TypeObjectInterface
+                    prototype: {},
+                    static: {
+                      abstraction: {
+                        onValidateData(input, validator, step, state) {
+                          if (typeof input !== "object") {
+                            throw Error.normalize({
+                              name: "ValidationError",
+                              message: `Required «input» to be object but «${typeof input}» was found instead at «data.${step.dataPointer.join(".")}»`,
+                            });
+                          }
+                          return {
+                            "*type": "object",
+                            value: input,
+                            validated: true,
+                          };
+                        },
+                      },
+                    },
+                  }),
+                ],
+                this,
+              );
+            }
+          }),
+          function: (Std.types.function = class Type_function {
+            static {
+              $moduler.toolkit.makeClass(
+                [
+                  Std.interfaces.InstantiableInterface,
+                  (Std.interfaces.TypeFunctionInterface = {
+                    // @interface:TypeFunctionInterface
+                    prototype: {},
+                    static: {
+                      abstraction: {
+                        onValidateData(input, validator, step, state) {
+                          if (typeof input !== "function") {
+                            throw Error.normalize({
+                              name: "ValidationError",
+                              message: `Required «input» to be function but «${typeof input}» was found instead at «data.${step.dataPointer.join(".")}»`,
+                            });
+                          }
+                          return {
+                            "*type": "function",
+                            value: input,
+                            validated: true,
+                          };
+                        },
+                      },
+                    },
+                  }),
+                ],
+                this,
+              );
+            }
+          }),
+          null: (Std.types.null = class Type_null {
+            static {
+              $moduler.toolkit.makeClass(
+                [
+                  Std.interfaces.InstantiableInterface,
+                  (Std.interfaces.TypeNullInterface =
+                    // @interface:TypeNullInterface
+                    {
+                      prototype: {},
+                      static: {
+                        abstraction: {
+                          onValidateData(input, validator, step, state) {
+                            if (input !== null) {
+                              throw Error.normalize({
+                                name: "ValidationError",
+                                message: `Required «input» to be null but «${typeof input}» was found instead at «data.${step.dataPointer.join(".")}»`,
+                              });
+                            }
+                            return {
+                              "*type": "null",
+                              value: input,
+                              validated: true,
+                            };
+                          },
+                        },
+                      },
+                    }),
+                ],
+                this,
+              );
+            }
+          }),
+        };
         Std.all.TypesParser = Std.classes.TypesParser =
           Std.parsers.peggy.generate(
             "Types_script = ast:Evaluable { return ast }" +
@@ -1665,7 +2332,7 @@ module.exports = $moduler.export(
               "\n" +
               "  appendix:Type_appendixes*" +
               "\n" +
-              '    { return { ...body, grammar:"evaluable type", appendix: appendix?.length && appendix || undefined } }' +
+              "    { return { ...body, appendix: appendix?.length && appendix || undefined } }" +
               "\n" +
               "" +
               "\n" +
@@ -1679,7 +2346,7 @@ module.exports = $moduler.export(
               "\n" +
               "  modifiers:Type_modifiers?" +
               "\n" +
-              '    { return { grammar:"evaluable type", negation: negation || undefined, core: core || undefined, parameters: parameters || undefined, modifiers: modifiers || undefined } }' +
+              "    { return { ...core, negation: negation || undefined, parameters: parameters || undefined, ...modifiers || undefined } }" +
               "\n" +
               "" +
               "\n" +
@@ -1721,11 +2388,11 @@ module.exports = $moduler.export(
               "\n" +
               "Type_object_property_first = _" +
               "\n" +
-              '  k:Property_name _ optional:"?"? _ ":" _' +
+              '  k:Property_name _ optionalProperty:Optional_sign? _ ":" _' +
               "\n" +
               "  property:Evaluable" +
               "\n" +
-              '    { return [k,{grammar: "object property",optional,property}] }' +
+              "    { return [k,{...property, optionalProperty}] }" +
               "\n" +
               'Type_object_property_other = _ "," _' +
               "\n" +
@@ -1781,7 +2448,9 @@ module.exports = $moduler.export(
               "\n" +
               "" +
               "\n" +
-              'Question_mark = _ "?" { return "?" }' +
+              'Optional_sign = it:(_ "?")? { return it ? true : undefined }' +
+              "\n" +
+              'Question_mark = _ "?" { return { optional: true } }' +
               "\n" +
               "" +
               "\n" +
@@ -1896,11 +2565,38 @@ module.exports = $moduler.export(
               output: "parser", // also: "source", "parser"
             },
           );
+        Std.all.ValidationStep =
+          Std.classes.ValidationStep = class ValidationStep {
+            static {
+              $moduler.toolkit.makeClass(
+                [
+                  Std.interfaces.InstantiableInterface,
+                  Std.interfaces.ValidationStepInterface,
+                ],
+                this,
+              );
+            }
+          };
+        Std.all.ValidationState =
+          Std.classes.ValidationState = class ValidationState {
+            static {
+              $moduler.toolkit.makeClass(
+                [
+                  Std.interfaces.InstantiableInterface,
+                  Std.interfaces.ValidationStateInterface,
+                ],
+                this,
+              );
+            }
+          };
         Std.all.ValidationResult =
           Std.classes.ValidationResult = class ValidationResult {
             static {
               $moduler.toolkit.makeClass(
-                [Std.interfaces.InstantiableInterface],
+                [
+                  Std.interfaces.InstantiableInterface,
+                  Std.interfaces.ValidationResultInterface,
+                ],
                 this,
               );
             }
@@ -1910,13 +2606,38 @@ module.exports = $moduler.export(
             static {
               $moduler.toolkit.makeClass(
                 [
-                  Std.interfaces.CreableInterface,
+                  Std.interfaces.InstantiableInterface,
                   Std.interfaces.TypesValidatorInterface,
                 ],
                 this,
               );
             }
           };
+        Std.all.TypesCatalog = Std.classes.TypesCatalog = class TypesCatalog {
+          static {
+            $moduler.toolkit.makeClass(
+              [
+                Std.interfaces.InstantiableInterface,
+                Std.interfaces.IntrospectableInterfaceFactory(
+                  "all",
+                  "getType",
+                  "setType",
+                  "hasType",
+                  "initializeType",
+                  "listTypes",
+                ),
+                Std.interfaces.TypesCatalogInterface,
+              ],
+              this,
+            );
+            Instancia_global: {
+              this.globalInstance = this.new;
+              globalThis.$types = this.globalInstance.all;
+            }
+          }
+        };
+      }
+      Wave_5_Filesystem: {
       }
 
       return Std;

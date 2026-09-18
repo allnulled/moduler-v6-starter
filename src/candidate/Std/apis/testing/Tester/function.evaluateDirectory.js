@@ -139,7 +139,8 @@ async function evaluateDirectory(optionsBrute = {}) {
           }
         };
         const printError = function (error, pointer = []) {
-          console.log(`[suberror:] [${pointer.join(".")}] ${error.name}: ${error.message}`, error);
+          console.log(`[Error=${pointer.join(".")}] ${error.name}: ${error.message}`);
+          console.log(error.stack);
           if (error.std?.history) {
             printErrors(error.std.history, pointer.concat([]));
           }

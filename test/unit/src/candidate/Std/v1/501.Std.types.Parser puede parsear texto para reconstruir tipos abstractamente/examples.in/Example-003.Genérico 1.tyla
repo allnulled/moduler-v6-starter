@@ -1,9 +1,0 @@
-{
-    name?: string,
-    password: string,
-    email?: string,
-    hobbies?: [{
-        name: string,
-        frequency: option(["low","medium","high"])
-    }]
-}

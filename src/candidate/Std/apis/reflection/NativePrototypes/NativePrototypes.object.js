@@ -1,0 +1,1 @@
+[null, Object.prototype,Array.prototype,Function.prototype,String.prototype,Number.prototype]

@@ -35,7 +35,7 @@
           } else {
             part += ` []`;
           }
-        } else if(typeof arg === "object") {
+        } else if((typeof arg === "object") && (arg !== null)) {
           part += ``;
           const keys = Object.keys(arg);
           if(keys.length && keys.length < 10) {

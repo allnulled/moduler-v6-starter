@@ -3844,17 +3844,20 @@ async assertThrows(...args) {
   const callback = isReversed ? args[1] : args[0];
   const message = isReversed ? args[0] : args[1];
   const errorChecker = args[2] || (() => true);
-  const localError = new Error("Should have thrown: " + message);
+  const localError = new Error(message);
+  let error;
   try {
     await callback();
     throw localError;
   } catch (err) {
+    error = err;
     if (err === localError) {
-      throw new this.constructor.AssertionError(`Should have thrown on «${message}» but it did not throw anything: ${err.name}: ${err.message} | ${err.stack}`);
+      throw new this.constructor.AssertionError(`Should have thrown on «${message}» but it did not throw anything`);
     }
     if (typeof errorChecker === "function") {
-      if (!errorChecker(err)) {
-        throw new this.constructor.AssertionError(`Should have thrown on «${message}» but not specific error: ${err.name}: ${err.message} | ${err.stack}`);
+      const checkResult = errorChecker(err);
+      if (typeof checkResult !== "undefined" && (checkResult !== true)) {
+        throw new this.constructor.AssertionError(`Should have thrown on «${message}» but not specific error:\n  - name: ${err.name}\n  - message: ${err.message}\n  - error: ${checkResult === false ? true : checkResult}`);
       }
     } else if (typeof errorChecker === "object") {
       if (errorChecker.name) {
@@ -3870,6 +3873,7 @@ async assertThrows(...args) {
     }
     this._notifyAssertion(message);
   }
+  return error;
 }
   /**
  * @name CompilerV6.prototype.assertDoesNotThrow
@@ -3881,10 +3885,12 @@ async assertDoesNotThrow(...args) {
   const callback = isReversed ? args[1] : args[0];
   const message = isReversed ? args[0] : args[1];
   try {
-    await callback();
+    const output = await callback();
     this._notifyAssertion(message);
+    return output;
   } catch (err) {
-    throw new this.constructor.AssertionError(`Should not have thrown: ${err.name}: ${err.message}`, err);
+    throw err;
+    throw new this.constructor.AssertionError(`Should not have thrown, but it threw: ${err.name}: ${err.message}`);
   }
 }
   /**
@@ -7776,6 +7782,7 @@ async "print directory"(args, devbin) {
   }
   const report = lines.join("");
   if (parameters.output) {
+    console.log(parameters.output);
     try {
       await devbin.files.writeFile(parameters.output, report);
       devbin.console.setProfile("blackBright").print("[*] DevBinaryV6 printed directory at: " + devbin.moduler.rootdirOf(parameters.output));

@@ -1,6 +1,11 @@
 // @interface:CreableInterface
 {
-  prototype: {},
+  prototype: {
+    get new() {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"CreableInterface.prototype.new"});
+      return this.constructor.create();
+    },
+  },
   static: {
     get new() {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"CreableInterface.static.new"});
