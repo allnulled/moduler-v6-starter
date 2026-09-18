@@ -4217,6 +4217,10 @@
             fileNormalization,
             ".md",
           );
+          const fileHtml = this.compiler.constructor._changeFileExtension(
+            fileNormalization,
+            ".html",
+          );
           const promises = [];
           if (this.js || true) {
             const outputJs =
@@ -4247,6 +4251,14 @@
             console.log(
               "[*] DevBinaryV6 is saving «compilation.md» at: " +
                 this.compiler.moduler.rootdirOf(fileMd),
+            );
+          } else if (this.html) {
+            promises.push(
+              require("fs").promises.writeFile(fileMd, this.html, "utf8"),
+            );
+            console.log(
+              "[*] DevBinaryV6 is saving «compilation.html» at: " +
+                this.compiler.moduler.rootdirOf(fileHtml),
             );
           }
           return Promise.all(promises);

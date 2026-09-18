@@ -1,5 +1,31 @@
 (function () {
 
+  /**@:
+   * 
+   * # Std global object
+   * 
+   * - Type: object
+   * - Global: yes
+   * - Properties:
+   *    - all:Object
+   *    - objects:Object
+   *    - functions:Object
+   *    - traits:Object
+   *    - interfaces:Object
+   *    - classes:Object
+   *    - parsers:Object
+   *    - types:Object
+   * - Loads:
+   *    - Wave 0: native extensions
+   *    - Wave 1: elemental funcions, clases and interfaces
+   *    - Wave 2: utility interfaces
+   *    - Wave 3: utility classes
+   *    - Wave 4: core of types
+   *    - Wave 5: filesystem
+   *    - Wave 6: ...
+   * - 
+   * 
+   */
   
   const Std = {};
   
@@ -16,14 +42,18 @@
     types: {},
   });
   
-  Std.all.ErrorExtension = $compiler.inject.source("./apis/errors/Error/Error.extension.js");
+  Wave_0_Native_extensions: {
+    Std.all.ErrorExtension = $compiler.inject.source("./apis/errors/Error/Error.extension.js");
+  }
 
   Wave_1_Elemental_functions_classes_and_interfaces: {
     Std.assert = Std.all.assert = Std.functions.assert = $compiler.inject.source("./assert.function.js");
     Std.all.NativePrototypes = Std.objects.NativePrototypes = $compiler.inject.source("./apis/reflection/NativePrototypes/NativePrototypes.object.js");
+    Std.all.EnvironmenterInterface = Std.interfaces.EnvironmenterInterface = $compiler.inject.source("./apis/environment/Environmenter/EnvironmenterInterface.interface.js");
+    Std.all.Environmenter = Std.classes.Environmenter = $compiler.inject.source("./apis/environment/Environmenter/Environmenter.class.js");
     Std.all.Printer = Std.functions.Printer = $compiler.inject.source("./apis/debug/Printer.class.js");
     Std.all.triggerMethodIfExists = Std.functions.triggerMethodIfExists = $compiler.inject.source("./apis/hooks/triggerMethodIfExists.function.js");
-    Std.all.Ansi = Std.classes.Ansi = $compiler.inject.source("./apis/console/Ansi/Ansi.object.js");
+    Std.all.Ansi = Std.objects.Ansi = $compiler.inject.source("./apis/console/Ansi/Ansi.object.js");
     Std.all.CreableInterface = Std.interfaces.CreableInterface = $compiler.inject.source("./apis/patterns/CreableInterface/CreableInterface.interface.js");
     Std.all.ClonableInterface = Std.interfaces.ClonableInterface = $compiler.inject.source("./apis/patterns/ClonableInterface/ClonableInterface.interface.js");
     Std.all.ConfigurableInterface = Std.interfaces.ConfigurableInterface = $compiler.inject.source("./apis/patterns/ConfigurableInterface/ConfigurableInterface.interface.js");
@@ -37,7 +67,6 @@
     Std.all.IntrospectorInterface = Std.interfaces.IntrospectorInterface = $compiler.inject.source("./apis/reflection/Introspector/IntrospectorInterface.interface.js");
     Std.all.IntrospectableInterfaceFactory = Std.interfaces.IntrospectableInterfaceFactory = $compiler.inject.source("./apis/reflection/Introspector/IntrospectableInterfaceFactory.interface.js");
     Std.all.RunnableInterface = Std.interfaces.RunnableInterface = $compiler.inject.source("./apis/patterns/RunnableInterface/RunnableInterface.interface.js");
-    Std.all.EnvironmenterInterface = Std.interfaces.EnvironmenterInterface = $compiler.inject.source("./apis/environment/Environmenter/EnvironmenterInterface.interface.js");
     Std.all.TracerInterface = Std.interfaces.TracerInterface = $compiler.inject.source("./apis/testing/Tracer/TracerInterface.interface.js");
     Std.all.CheckerInterface = Std.interfaces.CheckerInterface = $compiler.inject.source("./apis/testing/Checker/CheckerInterface.interface.js");
     Std.all.AsserterInterface = Std.interfaces.AsserterInterface = $compiler.inject.source("./apis/testing/Asserter/AsserterInterface.interface.js");
@@ -53,7 +82,6 @@
   Wave_3_Utility_classes: {
     Std.all.Introspector = Std.classes.Introspector = $compiler.inject.source("./apis/reflection/Introspector/Introspector.class.js");
     Std.all.Urler = Std.classes.Urler = $compiler.inject.source("./apis/urls/Urler/Urler.class.js");
-    Std.all.Environmenter = Std.classes.Environmenter = $compiler.inject.source("./apis/environment/Environmenter/Environmenter.class.js");
     Std.all.Tracer = Std.classes.Tracer = $compiler.inject.source("./apis/testing/Tracer/Tracer.class.js");
     Std.all.Checker = Std.classes.Checker = $compiler.inject.source("./apis/testing/Checker/Checker.class.js");
     Std.all.Asserter = Std.classes.Asserter = $compiler.inject.source("./apis/testing/Asserter/Asserter.class.js");

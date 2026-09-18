@@ -194,9 +194,9 @@ async function validateData(validator, data, pointers = {}, options = {}, valida
 }
 [#FILE=@/src/candidate/Std/apis/types/TypesValidator/function.validateEvaluableType.js]
 function validateEvaluableType(validator, data, { pointers, options, result }) {
-  Std.classes.Ansi.style("black,bgYellow").print("Evaluable type validator:");
+  Std.objects.Ansi.style("black,bgYellow").print("Evaluable type validator:");
   console.log(validator);
-  Std.classes.Ansi.style("black,bgYellow").print("Evaluable type data:");
+  Std.objects.Ansi.style("black,bgYellow").print("Evaluable type data:");
 }
 [#FILE=@/src/candidate/Std/apis/types/TypesValidator/function.validateTypeAppendix.js]
 function validateTypeAppendix(validator, data, { pointers, options, result }) {

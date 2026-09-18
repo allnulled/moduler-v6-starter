@@ -768,6 +768,10 @@
           if (normalization) {
             Apply_default: for (const property in normalization) {
               const configuration = normalization[property];
+              if (typeof configuration !== "object")
+                throw new Error(
+                  `Parameter «normalization["${property}"]» must be object but «${typeof configuratio}» was found instead on «ModulerV6.Toolkit.prototype.normalizeObject»`,
+                );
               if ("default" in configuration) {
                 output[property] =
                   property in output
@@ -777,37 +781,73 @@
                       : configuration.default;
               }
             }
-            Validate: for (const property in normalization) {
+            Inner_validations: for (const property in normalization) {
               const configuration = normalization[property];
               if ("validate" in configuration) {
-                const result = configuration.validate(
-                  output[property],
-                  this.moduler.constructor.assert,
-                  output,
-                  normalization,
-                );
-                if (typeof result === "undefined") {
-                  // @OK
-                } else if (result !== true) {
-                  throw new Error(
-                    result ||
-                      `Validation of property «${property}» should return «true» but «${typeof result}» was found instead on «ModulerV6.Toolkit.normalizeObject»`,
+                if (typeof configuration.validate === "function") {
+                  const result = configuration.validate(
+                    output[property],
+                    this.moduler.constructor.assert,
+                    output,
+                    normalization,
                   );
-                }
+                  if (typeof result === "undefined") {
+                    // @OK
+                  } else if (result !== true) {
+                    throw new Error(
+                      result ||
+                        `Validation of property «${property}» should return true or undefined but «${typeof result}» was found instead on «ModulerV6.Toolkit.normalizeObject»`,
+                    );
+                  }
+                } else if (typeof configuration.validate === "object") {
+                  output[property] = this.normalizeObject(
+                    output[property],
+                    configuration.validate,
+                  );
+                } else
+                  throw new Error(
+                    `Parameters «parameters["${property}"].validate» must be function or object on «ModulerV6.Toolkit.prototype.normalizeObject»`,
+                  );
               }
             }
             Format: for (const property in normalization) {
               const configuration = normalization[property];
               if ("format" in configuration) {
-                output[property] = configuration.format(
+                const result = configuration.format(
                   output[property],
                   output,
                   normalization,
                 );
+                if (typeof result !== "undefined") output[property] = result;
               }
             }
           }
           return output;
+        }
+        /**
+         * @name ModulerV6.Toolkit.prototype.makeTrait
+         * @type
+         * @description
+         */
+        makeTrait(...args) {
+          return ModulerV6.ClassSkiller.makeTrait(...args);
+        }
+
+        /**
+         * @name ModulerV6.Toolkit.prototype.makeInterface
+         * @type
+         * @description
+         */
+        makeInterface(...args) {
+          return ModulerV6.ClassSkiller.makeInterface(...args);
+        }
+        /**
+         * @name ModulerV6.Toolkit.prototype.makeClass
+         * @type
+         * @description
+         */
+        makeClass(...args) {
+          return ModulerV6.ClassSkiller.makeClass(...args);
         }
       };
       /**
@@ -855,20 +895,21 @@
                 );
                 this.assert(
                   typeof grammar[0] === "string",
-                  `Item «0» in grammar «${index}» must be string`,
+                  `Grammar «start», at position «0», on grammar «${index}» must be string`,
                 );
                 this.assert(
                   typeof grammar[1] === "string" ||
-                    typeof grammar[1] === "object",
-                  `Item «1» in grammar «${index}» must be string or object`,
+                    typeof grammar[1] === "object" ||
+                    typeof grammar[1] === "function",
+                  `Grammar «end», at position «1», on grammar «${index}» must be string, object or function`,
                 );
                 this.assert(
                   typeof grammar[2] === "function",
-                  `Item «2» in grammar «${index}» must be function`,
+                  `Grammar «formatter», at position «2», on grammar «${index}» must be function`,
                 );
                 this.assert(
                   typeof grammar[3] === "object",
-                  `Item «3» in grammar «${index}» must be object`,
+                  `Grammar «settings», at position «3», on grammar «${index}» must be object`,
                 );
                 if (
                   "allowInside" in grammar[3] &&
@@ -944,7 +985,7 @@
               return state.output.push({
                 type: starter,
                 location: [state.position, lastPosition],
-                text: text.substring(state.position, lastPosition),
+                // text: text.substring(state.position, lastPosition),
                 inner: text.substring(countingFrom, currentPosition),
                 outer: text.substring(state.position, lastPosition),
               });
@@ -1047,7 +1088,6 @@
                     let wasEnded = false;
                     while (countingFrom + offset < text.length) {
                       const currentPosition = countingFrom + offset;
-                      // @TODO: meterse dentro de los strings y escapar paréntesis internos
                       if (text[currentPosition] === "(") {
                         openedParenthesys++;
                       } else if (text[currentPosition] === ")") {
@@ -1077,6 +1117,16 @@
                       throw new Error(
                         `Unclosed starter of grammar «${starter}» reached end of text but the first parenthesys was not closed on grammar index «${index}»`,
                       );
+                  } else if (typeof ender === "function") {
+                    // @MUST: call to parser._pushToken with: { state:Object, starter:String, currentPosition:Number, countingFrom:Number, text:String, enderLength:Number=1, extraOffset:Number=0 }
+                    ender({
+                      parser: this,
+                      starter,
+                      countingFrom,
+                      state,
+                      text,
+                      grammar,
+                    });
                   } else {
                     throw new Error(
                       `Ender (2nd argument) of grammar «${starter}» at grammar index «${index}» has not valid type: «${typeof ender}»`,
@@ -1096,6 +1146,275 @@
           return TextParserV1;
         }.call(),
       );
+      /**
+       * @name ModulerV6.static.ParserUtils
+       * @type
+       * @description
+       */
+      static ParserUtils = class ParserUtils {
+        /**
+         * @name ModulerV6.ParserUtils.ParserUtils.class
+         * @type
+         * @description
+         */
+        static stringOrArrayOfStringsContinuation({
+          state,
+          grammar,
+          countingFrom,
+          text,
+          parser,
+        }) {
+          let pos;
+          Find_end_position: {
+            pos = ModulerV6.prototype._findStringOrArrayEnd(text, countingFrom);
+          }
+          Push_token: {
+            parser._pushToken({
+              starter: grammar[0],
+              state,
+              countingFrom,
+              text,
+              currentPosition: pos,
+              enderLength: 0,
+              extraOffset: 0,
+            });
+          }
+          Update_state: {
+            state.position = pos + ">".length;
+          }
+        }
+      };
+      /**
+       * @name ModulerV6.static.ClassSkiller
+       * @type
+       * @description
+       */
+      static ClassSkiller = class ClassSkiller {
+        /**
+         * @name ModulerV6.ClassSkiller
+         * @type
+         * @description
+         */
+        /**
+         * @name ModulerV6.ClassSkiller.static.assert
+         * @type
+         * @description
+         */
+        static assert(condition, message) {
+          if (!condition) throw new Error(message);
+        }
+        /**
+         * @name ModulerV6.ClassSkiller.static.isInterface
+         * @type
+         * @description
+         */
+        static isInterface(target, errorClue) {
+          this.assert(
+            typeof target === "object",
+            `Target must be object but «${typeof target}» was found instead${errorClue || ""}`,
+          );
+          const keys = Object.keys(target);
+          this.assert(
+            keys.length <= 4,
+            `Target cannot have more than 4 properties but «${keys.length}» keys were found instead${errorClue || ""}`,
+          );
+          const validKeys = ["static", "prototype", "signatures"];
+          const invalidKeys = keys.filter((key) => !validKeys.includes(key));
+          this.assert(
+            invalidKeys.length === 0,
+            `Target can only have keys «${validKeys.join(",")}» but «${invalidKeys.join(",")}» ${invalidKeys.length === 1 ? "is" : "are"} not among them${errorClue || ""}`,
+          );
+        }
+        /**
+         * @name ModulerV6.ClassSkiller.static.mixTraits
+         * @type
+         * @description
+         */
+        static mixTraits(origin, mixable, options = {}) {
+          this.assert(
+            typeof options === "object",
+            `Parameter «options» must be object but «${typeof options}» was found instead on «ClassSkiller.mixTraits»`,
+          );
+          const { overridables = [], errorClue } = options;
+          this.assert(
+            typeof origin === "object",
+            `Parameter «origin» must be object but «${typeof origin}» was found instead ${errorClue || ""} on «ClassSkiller.mixTraits»`,
+          );
+          this.assert(
+            origin !== null,
+            `Parameter «origin» cannot be null but «${typeof origin}» was found instead${errorClue || ""} on «ClassSkiller.mixTraits»`,
+          );
+          this.assert(
+            !Array.isArray(origin),
+            `Parameter «origin» cannot be array but «${typeof origin}» was found instead${errorClue || ""} on «ClassSkiller.mixTraits»`,
+          );
+          this.assert(
+            typeof mixable === "object",
+            `Parameter «mixable» must be object but «${typeof mixable}» was found instead${errorClue || ""} on «ClassSkiller.mixTraits»`,
+          );
+          this.assert(
+            mixable !== null,
+            `Parameter «mixable» cannot be null but «${typeof mixable}» was found instead${errorClue || ""} on «ClassSkiller.mixTraits»`,
+          );
+          this.assert(
+            !Array.isArray(mixable),
+            `Parameter «mixable» cannot be array but «${typeof mixable}» was found instead${errorClue || ""} on «ClassSkiller.mixTraits»`,
+          );
+          const originDescriptors = Object.getOwnPropertyDescriptors(origin);
+          const mixableDescriptors = Object.getOwnPropertyDescriptors(mixable);
+          const originKeys = Object.keys(originDescriptors);
+          const mixableKeys = Object.keys(mixableDescriptors);
+          const conflictiveNames = originKeys.filter(
+            (bkey) =>
+              mixableKeys.includes(bkey) && !overridables.includes(bkey),
+          );
+          if (conflictiveNames.length)
+            throw new Error(
+              `Cannot mix conflictive properties «${conflictiveNames.join(",")}»${errorClue || ""} on «ClassSkiller.mixTraits»`,
+            );
+          Object.defineProperties(origin, mixableDescriptors);
+        }
+        /**
+         * @name ModulerV6.ClassSkiller.static.mixInterface
+         * @type
+         * @description
+         */
+        static mixInterface(baseInterface, addedInterface, options = {}) {
+          this.assert(
+            typeof baseInterface === "object",
+            `Parameter «baseInterface» must be object but «${typeof baseInterface}» was found instead on «ClassSkiller.mixInterface»`,
+          );
+          this.assert(
+            typeof addedInterface === "object",
+            `Parameter «addedInterface» must be object but «${typeof addedInterface}» was found instead on «ClassSkiller.mixInterface»`,
+          );
+          this.assert(
+            typeof options === "object",
+            `Parameter «options» must be object but «${typeof options}» was found instead on «ClassSkiller.mixInterface»`,
+          );
+          this.isInterface(
+            baseInterface,
+            ` using «ClassSkiller.mixInterface» on parameter «baseInterface»`,
+          );
+          this.isInterface(
+            addedInterface,
+            ` using «ClassSkiller.mixInterface» on parameter «addedInterface»`,
+          );
+          const { overridables = [], errorClue = false } = options;
+          const interfaceables = ["static", "prototype"];
+          for (
+            let indexInterfaceable = 0;
+            indexInterfaceable < interfaceables.length;
+            indexInterfaceable++
+          ) {
+            const interfaceableProperty = interfaceables[indexInterfaceable];
+            const origin = baseInterface[interfaceableProperty] || {};
+            const mixable = addedInterface[interfaceableProperty] || {};
+            this.mixTraits(origin, mixable, { overridables });
+          }
+          return baseInterface;
+        }
+        /**
+         * @name ModulerV6.ClassSkiller.static.mixInterfaces
+         * @type
+         * @description
+         */
+        static mixInterfaces(subinterfazes = [], options = {}) {
+          const {
+            overridables = [],
+            errorClue = false,
+            base: _base = false,
+          } = options;
+          const base = _base || { static: {}, prototype: {} };
+          this.isInterface(
+            base,
+            `${errorClue || ""} using «ClassSkiller.mixInterfaces» on parameter «options.base»`,
+          );
+          // @CAUTION: Sutilmente, hacemos garrafaladas.
+          // Este bucle es más caro de lo que debería.
+          // Pero se mantiene para no complicar ni suprimir la «chained compatibility validation»
+          for (let index = 0; index < subinterfazes.length; index++) {
+            const subinterfaze = subinterfazes[index];
+            this.isInterface(
+              subinterfaze,
+              `${errorClue || ""} using «ClassSkiller.mixInterfaces» on parameter «subinterfazes» at index «${index}»`,
+            );
+            this.mixInterface(base, subinterfaze, {
+              overridables,
+              errorClue: `${errorClue || ""} using «ClassSkiller.mixInterfaces» at index «${index}»`,
+            });
+          }
+          return base;
+        }
+        /**
+         * @name ModulerV6.ClassSkiller.static.addInterfaces
+         * @type
+         * @description
+         */
+        static addInterfaces(clazz, list, options) {
+          this.assert(
+            typeof clazz === "function",
+            `Parameter «clazz» must be function but «${typeof clazz}» was found instead on «ClassSkiller.addInterfaces»`,
+          );
+          const interfaze = this.mixInterfaces(list, {
+            errorClue: "using «ClassSkiller.addInterfaces»",
+            ...options,
+          });
+          Object.defineProperties(
+            clazz,
+            Object.getOwnPropertyDescriptors(interfaze.static),
+          );
+          Object.defineProperties(
+            clazz.prototype,
+            Object.getOwnPropertyDescriptors(interfaze.prototype),
+          );
+          return clazz;
+        }
+        /**
+         * @name ModulerV6.ClassSkiller.static.makeClass
+         * @type
+         * @description
+         */
+        static makeClass(allInterfaces, base = class {}) {
+          return this.addInterfaces(base, allInterfaces, {
+            errorClue: " using «ClassSkiller.makeClass»",
+          });
+        }
+        /**
+         * @name ModulerV6.ClassSkiller.static.makeTrait
+         * @type
+         * @description
+         */
+        static makeTrait(subtraits = [], options = {}) {
+          const base = options?.base || {};
+          // @CAUTION: Sutilmente, hacemos garrafaladas.
+          // Este bucle es más caro de lo que debería.
+          // Pero se mantiene para no complicar ni suprimir la «chained compatibility validation»
+          for (let index = 0; index < subtraits.length; index++) {
+            const subtrait = subtraits[index];
+            this.mixTraits(base, subtrait, {
+              errorClue: " using «ClassSkiller.makeTrait»",
+            });
+          }
+          return base;
+        }
+        /**
+         * @name ModulerV6.ClassSkiller.static.makeInterface
+         * @type
+         * @description
+         */
+        static makeInterface(
+          subinterfaces,
+          options = {},
+          base = { static: {}, prototype: {} },
+        ) {
+          return this.mixInterfaces(subinterfaces, {
+            base,
+            errorClue: " using «ClassSkiller.makeInterface»",
+            ...options,
+          });
+        }
+      };
 
       /**
        * @name ModulerV6.nativeGrammars
@@ -1105,6 +1424,17 @@
        * @return ?
        */
       static nativeGrammars = {
+        InjectPlain: [
+          "$" + "compiler.inject.plain(",
+          this.Parser.symbols.PARENTHESYS_BALANCE,
+          function (token) {
+            return {
+              syntax: "Inject Plain",
+              inner: token.inner,
+              location: token.location,
+            };
+          },
+        ],
         InjectSource: [
           "$" + "compiler.inject.source(",
           this.Parser.symbols.PARENTHESYS_BALANCE,
@@ -1150,76 +1480,76 @@
         ],
         ImportJs: [
           "$" + "moduler.import(",
-          this.Parser.symbols.PARENTHESYS_BALANCE,
+          this.ParserUtils.stringOrArrayOfStringsContinuation,
           function (token) {
             return { syntax: "Moduler Import", ...token };
           },
-          { allowInside: true },
+          {},
         ],
         ExportJs: [
           "$" + "moduler.export(",
-          this.Parser.symbols.PARENTHESYS_BALANCE,
+          this.ParserUtils.stringOrArrayOfStringsContinuation,
           function (token) {
             return { syntax: "Moduler Export", ...token };
           },
-          { allowInside: true },
+          {},
         ],
         //*
         SectionGet: [
           "$" + "moduler.section.get(",
-          this.Parser.symbols.PARENTHESYS_BALANCE,
+          this.ParserUtils.stringOrArrayOfStringsContinuation,
           function (token) {
             return { syntax: "Moduler Section Get", ...token };
           },
-          { allowInside: true },
+          {},
         ],
         SectionSet: [
           "$" + "moduler.section.set(",
-          this.Parser.symbols.PARENTHESYS_BALANCE,
+          this.ParserUtils.stringOrArrayOfStringsContinuation,
           function (token) {
             return { syntax: "Moduler Section Set", ...token };
           },
-          { allowInside: true },
+          {},
         ],
         SectionOverwrite: [
           "$" + "moduler.section.overwrite(",
-          this.Parser.symbols.PARENTHESYS_BALANCE,
+          this.ParserUtils.stringOrArrayOfStringsContinuation,
           function (token) {
             return { syntax: "Moduler Section Overwrite", ...token };
           },
-          { allowInside: true },
+          {},
         ],
         SectionExpand: [
           "$" + "moduler.section.expand(",
-          this.Parser.symbols.PARENTHESYS_BALANCE,
+          this.ParserUtils.stringOrArrayOfStringsContinuation,
           function (token) {
             return { syntax: "Moduler Section Expand", ...token };
           },
-          { allowInside: true },
+          {},
         ],
         SectionFill: [
           "$" + "moduler.section.fill(",
-          this.Parser.symbols.PARENTHESYS_BALANCE,
+          this.ParserUtils.stringOrArrayOfStringsContinuation,
           function (token) {
             return { syntax: "Moduler Section Fill", ...token };
           },
-          { allowInside: true },
+          {},
         ],
         SectionHas: [
           "$" + "moduler.section.has(",
-          this.Parser.symbols.PARENTHESYS_BALANCE,
+          this.ParserUtils.stringOrArrayOfStringsContinuation,
           function (token) {
             return { syntax: "Moduler Section Has", ...token };
           },
-          { allowInside: true },
+          {},
         ],
         SectionInitialize: [
           "$" + "moduler.section.initialize(",
-          this.Parser.symbols.PARENTHESYS_BALANCE,
+          this.ParserUtils.stringOrArrayOfStringsContinuation,
           function (token) {
             return { syntax: "Moduler Section Initialize", ...token };
           },
-          { allowInside: true },
+          {},
         ],
         //*/
         EmbeddedFormFieldOpener: [
@@ -1355,6 +1685,7 @@
        */
       static defaultGrammars = {
         forJs: [
+          this.nativeGrammars.InjectPlain,
           this.nativeGrammars.InjectSource,
           this.nativeGrammars.InjectString,
           this.nativeGrammars.InjectTemplate,
@@ -1392,6 +1723,7 @@
           ////////////////////////////////////////
         ],
         forCss: [
+          this.nativeGrammars.InjectPlain,
           this.nativeGrammars.InjectSource,
           this.nativeGrammars.InjectString,
           this.nativeGrammars.InjectTemplate,
@@ -1406,6 +1738,7 @@
           /////////////////// this.nativeGrammars.JavadocComment,
         ],
         forMd: [
+          this.nativeGrammars.InjectPlain,
           this.nativeGrammars.InjectSource,
           this.nativeGrammars.InjectString,
           this.nativeGrammars.ImportJs,
@@ -1416,6 +1749,7 @@
           /////////////////// this.nativeGrammars.JavadocComment,
         ],
         forHtml: [
+          this.nativeGrammars.InjectPlain,
           this.nativeGrammars.InjectSource,
           this.nativeGrammars.AtInjects,
         ],
@@ -1555,7 +1889,7 @@
        * @description
        */
       static getEnvironmentDirectory() {
-        this.tracer.trace("ModulerV6.static.getEnvironmentDirectory");
+        // this.tracer.trace("ModulerV6.static.getEnvironmentDirectory");
         if (this.isBrowser) {
           Apply_github_io_configurations_if_so: {
             const projectName = this.isGithubIo();
@@ -1626,11 +1960,15 @@
           Array.isArray(signature),
           "Parameter «signature» must be array on «ModulerV6.prototype._formatImportParameters»",
         );
-        this.assert(
-          signature.length !== 0,
-          "ModulerV6.prototype.import cannot have 0 arguments",
-        );
-        if (signature.length === 1) {
+        // this.assert(signature.length !== 0, "ModulerV6.prototype.import cannot have 0 arguments");
+        if (signature.length === 0) {
+          return {
+            id: null,
+            file: null,
+            dependencies: [],
+            factory: null,
+          };
+        } else if (signature.length === 1) {
           if (typeof signature[0] === "string") {
             // By file or id
             const isId = signature[0].startsWith("#");
@@ -1701,10 +2039,7 @@
           signature.length !== 0,
           "ModulerV6.prototype.export cannot have 0 arguments",
         );
-        this.assert(
-          signature.length !== 1,
-          "ModulerV6.prototype.export cannot have 1 argument only",
-        );
+        // this.assert(signature.length !== 1, "ModulerV6.prototype.export cannot have 1 argument only");
         this.assert(
           typeof signature[0] === "string",
           "ModulerV6.prototype.export first argument must be a string",
@@ -1713,7 +2048,17 @@
           signature[0].startsWith("#"),
           "ModulerV6.prototype.export first argument must be a string starting with «#»",
         );
-        if (signature.length === 2) {
+        if (signature.length === 1) {
+          if (typeof signature[0] === "string") {
+            // Factory module to name
+            return {
+              id: signature[0],
+              file: null,
+              dependencies: [],
+              factory: null,
+            };
+          }
+        } else if (signature.length === 2) {
           if (
             typeof signature[0] === "string" &&
             typeof signature[1] === "function"
@@ -2032,6 +2377,19 @@
         Normalize_file: {
           filepath = filepathMask = this.normalizationOf(filepathBrute);
         }
+        Get_distribution_version_if_src_and_entry_js_are_met_as_it_is_a_common_easy_error: {
+          const distpath = this._getDistRootpathFromSrc(filepath, true);
+          if (distpath !== filepath) {
+            console.log(
+              "[*] ModulerV6 fixed path from «@/src/**/*.entry.js» to «@/dist/**/*.dist.js»: (*reasons on the guides)",
+            );
+            console.log(`    You wrote ${this.rootdirOf(filepath)}`);
+            console.log(
+              `    You meant ${this.rootdirOf(distpath)} (most probably)`,
+            );
+            filepath = filepathMask = distpath;
+          }
+        }
         Use_instrumentalized_if_conditions_are_met: {
           if (isJson) {
             // console.log("[*] Dismissed instrumentalization for reason 4: the file is a json not a js");
@@ -2192,6 +2550,96 @@
         }
         return output;
       }
+      /**
+       * @name CompilerV6.prototype._findStringEnd
+       * @type
+       * @description
+       */
+      _findStringEnd(source, position) {
+        let escaped = false;
+        for (let i = position + 1; i < source.length; i++) {
+          const char = source[i];
+          if (escaped) {
+            escaped = false;
+            continue;
+          }
+          if (char === "\\") {
+            escaped = true;
+            continue;
+          }
+          if (char === '"') return i + 1;
+        }
+        throw new SyntaxError("Unterminated string");
+      }
+      _findStringOrArrayEnd(source, position) {
+        // @CHATGPT-MADE:
+        let i = position;
+        while (i < source.length) {
+          // 1. Espacios
+          while (/\s/.test(source[i])) i++;
+          // 2. String
+          if (source[i] === '"') {
+            i = this._findStringEnd(source, i);
+          } else if (source[i] === "[") {
+            // 3. Array de strings
+            i++;
+            while (true) {
+              while (/\s/.test(source[i])) i++;
+              if (source[i] === "]") {
+                i++;
+                break;
+              }
+              if (source[i] !== '"') {
+                return i;
+              }
+              i = this._findStringEnd(source, i);
+              while (/\s/.test(source[i])) i++;
+              if (source[i] === ",") {
+                i++;
+                continue;
+              }
+              if (source[i] === "]") {
+                i++;
+                break;
+              }
+              return i;
+            }
+          } else {
+            // 4. Ya no es string ni array
+            return i;
+          }
+          // 5. Después del argumento
+          while (/\s/.test(source[i])) i++;
+          if (source[i] === ",") {
+            i++;
+            continue;
+          }
+          return i;
+        }
+        return i;
+      }
+      /**
+       * @name CompilerV6.prototype._getDistRootpathFromSrc
+       * @type
+       * @description
+       */
+      _getDistRootpathFromSrc(filepath, normalized = false) {
+        if (!filepath.endsWith(".entry.js")) return filepath;
+        let rootpath = this.rootdirOf(filepath);
+        Fix_prefix: {
+          if (rootpath.startsWith("@/src/www/")) {
+            rootpath = rootpath.replace("@/src/www/", "@/dist/www/");
+          } else if (rootpath.startsWith("@/src/")) {
+            rootpath = rootpath.replace("@/src/", "@/dist/src/");
+          } else {
+            // return filepath;
+          }
+        }
+        Fix_suffix: {
+          rootpath = rootpath.replace(/\.entry\.js$/g, ".dist.js");
+        }
+        return normalized ? this.normalizationOf(rootpath) : rootpath;
+      }
 
       /**
        * @name ModulerV6.prototype.assert
@@ -2199,7 +2647,7 @@
        * @description
        */
       assert(condition, message) {
-        return this.constructor.assert(condition, message);
+        return ModulerV6.assert(condition, message);
       }
       /**
        * @name ModulerV6.prototype.trify
@@ -2213,7 +2661,7 @@
        * @description
        */
       createAssertFunction() {
-        return (...args) => this.assert(...args);
+        return (...args) => ModulerV6.assert(...args);
       }
       /**
        * @name ModulerV6.prototype.setBasedir
@@ -2303,6 +2751,7 @@
         }
         const _module = { exports: {} };
         return {
+          $moduler: this.cloneForFile(filepath),
           module: _module,
           exports: _module.exports,
           file: filepath,
@@ -2342,7 +2791,9 @@
           until: function (promise) {
             return promise.then((output) => {
               // @AQUI hay que resolver los módulos con el crédito de lockFiles
-              console.log(`[*] Unlocked files: ${list.join(", ")}`, output);
+              console.log(`[*] Unlocked files: ${list.join(", ")}`);
+              // console.log(output);
+              return output;
             });
           },
         };
@@ -2702,4 +3153,28 @@
 
 window.addEventListener("load", async function () {
   console.log("[*] Page loaded");
+  const Std = await $moduler.import("@/src/www/external/std/std-v1.entry.js");
+  await $moduler.settings.load();
+  if (["dev", "test"].includes($moduler.settings.data.env)) {
+    await Std.all.Tester.evaluateDirectory({
+      title: "Integridad",
+      directory: "@/dist/www/dev/test/integrity",
+    });
+    await Std.all.Tester.evaluateDirectory({
+      title: "Unitarios",
+      directory: "@/dist/www/dev/test/unit",
+    });
+    await Std.all.Tester.evaluateDirectory({
+      title: "Prestaciones",
+      directory: "@/dist/www/dev/test/feature",
+    });
+    await Std.all.Tester.evaluateDirectory({
+      title: "Caso concreto",
+      directory: "@/dist/www/dev/test/case",
+    });
+    await Std.all.Tester.evaluateDirectory({
+      title: "Espontáneos",
+      directory: "@/dist/www/dev/test/spontaneous",
+    });
+  }
 });

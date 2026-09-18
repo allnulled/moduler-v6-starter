@@ -1,0 +1,17 @@
+{
+  "tree": {
+    "src/www/external/pegjs/peggyjs.entry.js": {
+      "55-100": {
+        "syntax": "Inject Source",
+        "inner": "\"./peggyjs.object.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "./peggyjs.object.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/external/pegjs/peggyjs.object.js",
+          "rootpath": "@/src/www/external/pegjs/peggyjs.object.js"
+        }
+      }
+    },
+    "@/src/www/external/pegjs/peggyjs.object.js": {}
+  }
+}

@@ -7,15 +7,14 @@
     <title>Aplicaciones</title>
 </head>
 <body>
+    <style>/*@injects:"@/dist/www/app.dist.css"*/</style>
     <h3>Aplicaciones disponibles III:</h3>
     <ol>
         <li><a data-mv6-href="@/dist/www/apps/CalendarScript/index.html">CalendarScript</a> es un editor de un lenguaje de scripting raro y sirve para organizarse tareas en el tiempo.</li>
         <li>No hay más, de momento.</li>
     </ol>
-    <script>$compiler.inject.source("@/dist/www/external/moduler-v6.dist.js")</script>
+    <script>$compiler.inject.source("@/src/www/app.entry.js")</script>
     <script>ModulerV6.updateAllHtmlLinks();</script>
-    <style>/*@injects:"@/dist/www/app.dist.css"*/</style>
-    <script>$compiler.inject.source("@/dist/www/app.dist.js")</script>
 </body>
 
 </html>

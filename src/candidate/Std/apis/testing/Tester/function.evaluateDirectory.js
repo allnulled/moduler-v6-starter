@@ -37,11 +37,11 @@ async function evaluateDirectory(optionsBrute = {}) {
         },
       });
       if (Std.all.Environmenter.isBrowser) {
-        $compiler.inject.template("@/src/candidate/Std/snippets/methodError.js", { name: "TesterInterface.static.evaluateDirectory" });
-        Std.all.Environmenter.throw("Environment of browser is not supported right now on «Std.classes.Tester.evaluateDirectory»");
+        $compiler.inject.template("@/src/candidate/Std/snippets/methodOut.js", { name: "TesterInterface.static.evaluateDirectory" });
+        return await this.evaluateBrowserDirectory(options);
       }
       const tests = await require("fs").promises.readdir(directory);
-      Std.classes.Ansi.style("bgCyan,black").print(`[*] Std.classes.Tester found ${tests.length} tests to run on collection «${title}»`);
+      Std.objects.Ansi.style("bgCyan,black").print(`[*] Std.classes.Tester found ${tests.length} tests to run on collection «${title}»`);
       const errors = [];
       const start = new Date();
       let preparation = [];
@@ -117,11 +117,11 @@ async function evaluateDirectory(optionsBrute = {}) {
         let result;
         try {
           result = await callback(injection);
-          Std.classes.Ansi.style("bgGreen,black").print(`[*] Passed «${id}» [nº${index + 1}/${tests.length}] [${time()}]`)
+          Std.objects.Ansi.style("bgGreen,black").print(`[*] Passed «${id}» [nº${index + 1}/${tests.length}] [${time()}]`)
         } catch (error) {
-          Std.classes.Ansi.style("bgRed,black").print(`[!] Failed «${id}» [nº${index + 1}/${tests.length}] [${time()}]`);
-          Std.classes.Ansi.style("red").print(`    Error: ${error.name}     `);
-          Std.classes.Ansi.style("red").print(`    Message: ${error.message}   `);
+          Std.objects.Ansi.style("bgRed,black").print(`[!] Failed «${id}» [nº${index + 1}/${tests.length}] [${time()}]`);
+          Std.objects.Ansi.style("red").print(`    Error: ${error.name}     `);
+          Std.objects.Ansi.style("red").print(`    Message: ${error.message}   `);
           errors.push({
             id,
             error: Error.normalize(error).adding({ name: "TestFailed", message: `Failed «${id}» [nº${index + 1}/${tests.length}] [${time()}]` }),
@@ -129,9 +129,9 @@ async function evaluateDirectory(optionsBrute = {}) {
         }
       }
       if (!errors.length) {
-        Std.classes.Ansi.style("bgGreen,black").print(`[*] Passed all tests for: ${title}`);
+        Std.objects.Ansi.style("bgGreen,black").print(`[*] Passed all tests for: ${title}`);
       } else {
-        Std.classes.Ansi.style("bgBlack,white,bold").print(`🔴 Failed ${errors.length} tests on collection «${title}», see details:`);
+        Std.objects.Ansi.style("bgBlack,white,bold").print(`🔴 Failed ${errors.length} tests on collection «${title}», see details:`);
         const printErrors = function (list, pointer = []) {
           for (let index = 0; index < list.length; index++) {
             const item = list[index];
@@ -141,7 +141,7 @@ async function evaluateDirectory(optionsBrute = {}) {
         const printError = function (error, pointer = []) {
           console.log(`[Error=${pointer.join(".")}] ${error.name}: ${error.message}`);
           console.log(error.stack);
-          if (error.std?.history) {
+          if (error?.std?.history) {
             printErrors(error.std.history, pointer.concat([]));
           }
           Print_syntax_error_details:
@@ -163,14 +163,16 @@ async function evaluateDirectory(optionsBrute = {}) {
         }
         for (let index = 0; index < errors.length; index++) {
           const details = errors[index];
-          Std.classes.Ansi.style("bgMagenta,black").print(`🐞 [ERR=${index + 1}/${errors.length}] ${details.id} [TEST=${index + 1}/${tests.length}]`);
+          Std.objects.Ansi.style("bgMagenta,black").print(`🐞 [ERR=${index + 1}/${errors.length}] ${details.id} [TEST=${index + 1}/${tests.length}]`);
           printError(details.error, [index]);
         };
-        Std.classes.Ansi.style("bgBlack,white,bold").print(`🔴 End of the ${errors.length} errors report on collection «${title}».`);
+        Std.objects.Ansi.style("bgBlack,white,bold").print(`🔴 End of the ${errors.length} errors report on collection «${title}».`);
       }
     }
     $compiler.inject.template("@/src/candidate/Std/snippets/methodOut.js", { name: "TesterInterface.static.evaluateDirectory" });
+    return true;
   } catch (error) {
     $compiler.inject.template("@/src/candidate/Std/snippets/methodError.js", { name: "TesterInterface.static.evaluateDirectory" });
+    throw error;
   }
 }

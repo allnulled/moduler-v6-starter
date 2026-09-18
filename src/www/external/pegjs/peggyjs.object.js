@@ -1,12 +1,11 @@
-// peggy 5.1.0
-//
-// https://peggyjs.org/
-//
-// Copyright (c) 2026- the Peggy authors
-// Licensed under the MIT License.
 (function(factory) {
-  const mod = factory();
-  console.log(mod);
+  // peggy 5.1.0
+  //
+  // https://peggyjs.org/
+  //
+  // Copyright (c) 2026- the Peggy authors
+  // Licensed under the MIT License.
+  return factory();
 })(function () {
   function _array_like_to_array(u, e) {
     if (e == null || e > u.length) e = u

@@ -1,4 +1,13 @@
 function mergeByPropertiesList(instructions, input = []) {
+  /**@:
+   * 
+   * # Std.classes.PropertiesMerger.mergeByPropertiesList
+   * 
+   * - Acepta:
+   *    - instructions:object(key=string,merger=function(input:[previousValue,currentValue],output:nextValue=array))
+   *    - input:array(object)
+   * 
+   */
   const output = {};
   // @PASO 1. Procesamos primero las propiedades más generales.
   const ordered = [...instructions].sort((a, b) => {

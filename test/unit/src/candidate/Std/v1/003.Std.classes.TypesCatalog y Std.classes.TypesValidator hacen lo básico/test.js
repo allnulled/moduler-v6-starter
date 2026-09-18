@@ -33,7 +33,7 @@ module.exports = async function ({ devbin, Std }) {
     ["{age:number|null}", {age:null}],
     ["{age:number|string|null}", {age:null}],
     ["{age:number|string|null}", {age:50}],
-    //["{age:number|string|null}", {age:"ok"}],
+    ["{age:number|string|null}", {age:"ok"}],
   ];
   const incorrectValidations = [
     ["{age?:number}", {age:null}],

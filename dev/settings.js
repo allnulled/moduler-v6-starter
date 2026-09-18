@@ -17,6 +17,18 @@ module.exports = async function() {
       port: 3007,
       controllers: [],
       extensions: ["tyla"],
-    }
-  }
+    },
+    browser: {
+      test: {
+        directories: {
+          "@/dist/www/dev/test/case": {},
+          "@/dist/www/dev/test/feature": {},
+          "@/dist/www/dev/test/integrity": {},
+          "@/dist/www/dev/test/unit": {},
+          "@/dist/www/dev/test/spontaneous": {},
+        }
+      }
+    },
+    publicableFields: [],
+  };
 };

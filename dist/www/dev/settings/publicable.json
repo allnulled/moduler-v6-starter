@@ -11,5 +11,29 @@
     ],
     "case": [],
     "speed": []
+  },
+  "browser": {
+    "test": {
+      "directories": {
+        "@/dist/www/dev/test/case": {
+          "files": []
+        },
+        "@/dist/www/dev/test/feature": {
+          "files": [
+            "@/dist/www/dev/test/feature/001.Std puede ejecutar todos los tests de un directorio/test.dist.js",
+            "@/dist/www/dev/test/feature/002.Std tal/test.dist.js"
+          ]
+        },
+        "@/dist/www/dev/test/integrity": {
+          "files": []
+        },
+        "@/dist/www/dev/test/unit": {
+          "files": []
+        },
+        "@/dist/www/dev/test/spontaneous": {
+          "files": []
+        }
+      }
+    }
   }
 }

@@ -3337,6 +3337,7 @@ toFile(file, options = {}) {
   const fileJs = this.compiler.constructor._changeFileExtension(fileNormalization, ".js");
   const fileCss = this.compiler.constructor._changeFileExtension(fileNormalization, ".css");
   const fileMd = this.compiler.constructor._changeFileExtension(fileNormalization, ".md");
+  const fileHtml = this.compiler.constructor._changeFileExtension(fileNormalization, ".html");
   const promises = [];
   if (this.js || true) {
     const outputJs = (options.mode === "beautified" && this.beautifiedJs) ? this.beautifiedJs.code : (options.mode === "minified" && this.minifiedJs) ? this.minifiedJs.code : this.js;
@@ -3348,6 +3349,9 @@ toFile(file, options = {}) {
   } else if (this.md) {
     promises.push(require("fs").promises.writeFile(fileMd, this.md, "utf8"));
     console.log("[*] DevBinaryV6 is saving «compilation.md» at: " + this.compiler.moduler.rootdirOf(fileMd));
+  } else if (this.html) {
+    promises.push(require("fs").promises.writeFile(fileMd, this.html, "utf8"));
+    console.log("[*] DevBinaryV6 is saving «compilation.html» at: " + this.compiler.moduler.rootdirOf(fileHtml));
   }
   return Promise.all(promises);
 }

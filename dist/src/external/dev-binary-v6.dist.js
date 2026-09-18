@@ -4870,10 +4870,12 @@
             const message = isReversed ? args[0] : args[1];
             const errorChecker = args[2] || (() => true);
             const localError = new Error(message);
+            let error;
             try {
               await callback();
               throw localError;
             } catch (err) {
+              error = err;
               if (err === localError) {
                 throw new this.constructor.AssertionError(
                   `Should have thrown on «${message}» but it did not throw anything`,
@@ -4881,9 +4883,12 @@
               }
               if (typeof errorChecker === "function") {
                 const checkResult = errorChecker(err);
-                if (typeof checkResult !== "undefined") {
+                if (
+                  typeof checkResult !== "undefined" &&
+                  checkResult !== true
+                ) {
                   throw new this.constructor.AssertionError(
-                    `Should have thrown on «${message}» but not specific error:\n  - name: ${err.name}\n  - message: ${err.message}\n  - error: ${checkResult}`,
+                    `Should have thrown on «${message}» but not specific error:\n  - name: ${err.name}\n  - message: ${err.message}\n  - error: ${checkResult === false ? true : checkResult}`,
                   );
                 }
               } else if (typeof errorChecker === "object") {
@@ -4909,6 +4914,7 @@
               }
               this._notifyAssertion(message);
             }
+            return error;
           }
           /**
            * @name CompilerV6.prototype.assertDoesNotThrow
@@ -4921,12 +4927,13 @@
             const callback = isReversed ? args[1] : args[0];
             const message = isReversed ? args[0] : args[1];
             try {
-              await callback();
+              const output = await callback();
               this._notifyAssertion(message);
+              return output;
             } catch (err) {
+              throw err;
               throw new this.constructor.AssertionError(
                 `Should not have thrown, but it threw: ${err.name}: ${err.message}`,
-                err,
               );
             }
           }
@@ -9118,36 +9125,64 @@
            */
           async exportDevSettings(filepath) {
             try {
+              let settingsData = undefined;
+              let publicableSettings = undefined;
+              let publicFields = undefined;
               const fs = require("fs");
-              const settingsAsyncFactory = require(filepath);
-              const settingsData =
-                typeof settingsAsyncFactory === "function"
-                  ? await settingsAsyncFactory({ devbin: this.devbin })
-                  : settingsAsyncFactory;
-              /*
-    // @ANTES:
-    const publicableSettings = this.constructor.removeNullPropertiesFromObject({
-      env: settingsData.env ?? null,
-      instrumentalize: settingsData.instrumentalize ?? null,
-      traceExternalSources: settingsData.traceExternalSources ?? null,
-      sectionsMap: settingsData.sectionsMap ?? null,
-    });
-    //*/
-              // @AHORA:
-              const publicableSettingsData = {};
-              for (
-                let indexProp = 0;
-                indexProp < this.publicableSettingsIds.length;
-                indexProp++
-              ) {
-                const publicableProp = this.publicableSettingsIds[indexProp];
-                publicableSettingsData[publicableProp] =
-                  settingsData[publicableProp] ?? null;
+              Collect_public_settings: {
+                const settingsAsyncFactory = require(filepath);
+                settingsData =
+                  typeof settingsAsyncFactory === "function"
+                    ? await settingsAsyncFactory({ devbin: this.devbin })
+                    : settingsAsyncFactory;
+                publicableSettings = {};
+                publicFields = [
+                  "env",
+                  "instrumentalize",
+                  "traceExternalSources",
+                  "sectionsMap",
+                  "test",
+                  "browser",
+                ].concat(settingsData.publicableFields || []);
               }
-              const publicableSettings =
-                this.constructor.removeNullPropertiesFromObject(
-                  publicableSettingsData,
-                );
+              Expand_known_public_settings: {
+                if (settingsData?.browser?.test?.directories) {
+                  const targetDirs = Object.keys(
+                    settingsData.browser.test.directories,
+                  );
+                  for (let index = 0; index < targetDirs.length; index++) {
+                    const dir = targetDirs[index];
+                    const dirOptions =
+                      settingsData.browser.test.directories[dir];
+                    const dirPath = this.devbin.moduler.normalizationOf(dir);
+                    const files = await fs.promises.readdir(dirPath);
+                    dirOptions.files = files.map((innerDir) =>
+                      this.devbin.moduler.rootdirOf(
+                        this.devbin.moduler._joinPaths([
+                          dirPath,
+                          innerDir,
+                          dirOptions.file || "test.js",
+                        ]),
+                      ),
+                    );
+                  }
+                }
+              }
+              Export_public_settings: {
+                for (
+                  let indexProp = 0;
+                  indexProp < publicFields.length;
+                  indexProp++
+                ) {
+                  const publicableProp = publicFields[indexProp];
+                  publicableSettings[publicableProp] =
+                    settingsData[publicableProp] ?? null;
+                }
+                publicableSettings =
+                  this.constructor.removeNullPropertiesFromObject(
+                    publicableSettings,
+                  );
+              }
               //////////////////////////////
               const publicableJson = this.devbin.compiler.fullpathOf(
                 "@/dist/www/dev/settings/publicable.json",

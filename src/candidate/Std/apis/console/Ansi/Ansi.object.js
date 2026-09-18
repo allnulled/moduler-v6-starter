@@ -1,4 +1,55 @@
 (Colors => {
+  /**
+   * 
+   * # Std.objects.Ansi
+   * 
+   * - Objeto para imprimir por consola colores ANSI o browser, principalmente.
+   *    - tiene utilidades secundarias también guais como cajas, tablas tabuladas o relleno de línea con espacios
+   *    - pero principalmente es para tener colores en browser y nodejs
+   * - Los métodos que destacaría son:
+   *    - Std.objects.Ansi.style("bgBlack, yelloBright").text("Aquí el texto");
+   * - Los colores y estilos disponibles son:
+   *    - bold
+   *    - italic
+   *    - underline
+   *    - blink
+   *    - inverse
+   *    - strike
+   *    - black
+   *    - red
+   *    - green
+   *    - yellow
+   *    - blue
+   *    - magenta
+   *    - cyan
+   *    - white
+   *    - bgBlack
+   *    - bgRed
+   *    - bgGreen
+   *    - bgYellow
+   *    - bgBlue
+   *    - bgMagenta
+   *    - bgCyan
+   *    - bgWhite
+   *    - blackBright
+   *    - redBright
+   *    - greenBright
+   *    - yellowBright
+   *    - blueBright
+   *    - magentaBright
+   *    - cyanBright
+   *    - whiteBright
+   *    - bgBlackBright
+   *    - bgRedBright
+   *    - bgGreenBright
+   *    - bgYellowBright
+   *    - bgBlueBright
+   *    - bgMagentaBright
+   *    - bgCyanBright
+   *    - bgWhiteBright
+   * 
+   * 
+   */
   if (typeof window !== "undefined") window.AnsiColorsMv6 = Colors;
   if (typeof global !== "undefined") global.AnsiColorsMv6 = Colors;
   return Colors;
