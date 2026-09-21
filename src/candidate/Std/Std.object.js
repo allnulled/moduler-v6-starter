@@ -27,7 +27,7 @@
    * 
    */
   
-  const Std = {};
+  globalThis.Std = {};
   
   Object.assign(Std, {
     all: {},
@@ -42,7 +42,12 @@
     types: {},
   });
   
-  Wave_0_Native_extensions: {
+  Wave_0_Native_extensions_and_dependencies: {
+    Std.all.ErrorStackFrame = Std.classes.ErrorStackFrame = globalThis.StackFrame = $compiler.inject.source("./apis/errors/ErrorDissector/ErrorStackFrame.class.js");
+    Std.all.ErrorStackParser = Std.classes.ErrorStackParser = globalThis.ErrorStackParser = $compiler.inject.source("./apis/errors/ErrorDissector/ErrorStackParser.class.js");
+    Std.all.ErrorDissector = Std.classes.ErrorDissector = $compiler.inject.source("./apis/errors/ErrorDissector/ErrorDissector.class.js");
+    Std.all.ErrorProsecutor = Std.classes.ErrorProsecutor = $compiler.inject.source("./apis/errors/ErrorProsecutor/ErrorProsecutor.class.js");
+    Std.all.ErrorUtils = Std.classes.ErrorUtils = $compiler.inject.source("./apis/errors/ErrorUtils/ErrorUtils.class.js");
     Std.all.ErrorExtension = $compiler.inject.source("./apis/errors/Error/Error.extension.js");
   }
 
@@ -78,6 +83,7 @@
     Std.all.ValidationResultInterface = Std.interfaces.ValidationResultInterface = $compiler.inject.source("./apis/validation/ValidationResult/ValidationResultInterface.interface.js");
     Std.all.TypesValidatorInterface = Std.interfaces.TypesValidatorInterface = $compiler.inject.source("./apis/types/TypesValidator/TypesValidatorInterface.interface.js");
     Std.all.TypesCatalogInterface = Std.interfaces.TypesCatalogInterface = $compiler.inject.source("./apis/types/TypesCatalog/TypesCatalogInterface.interface.js");
+    Std.all.ProgresserInterface = Std.interfaces.ProgresserInterface = $compiler.inject.source("./apis/debug/Progresser/ProgresserInterface.interface.js");
   }
   Wave_3_Utility_classes: {
     Std.all.Introspector = Std.classes.Introspector = $compiler.inject.source("./apis/reflection/Introspector/Introspector.class.js");
@@ -87,6 +93,7 @@
     Std.all.Asserter = Std.classes.Asserter = $compiler.inject.source("./apis/testing/Asserter/Asserter.class.js");
     Std.all.PropertiesMerger = Std.classes.PropertiesMerger = $compiler.inject.source("./apis/merge/PropertiesMerger/PropertiesMerger.class.js");
     Std.all.Tester = Std.classes.Tester = $compiler.inject.source("./apis/testing/Tester/Tester.class.js");
+    Std.all.Progresser = Std.classes.Progresser = $compiler.inject.source("./apis/debug/Progresser/Progresser.class.js");
   }
   Wave_4_Types_system: {
     Std.all.BasicTypes = Std.objects.BasicTypes = $compiler.inject.source("./apis/types/BasicTypes/BasicTypes.object.js");
@@ -96,6 +103,7 @@
     Std.all.ValidationResult = Std.classes.ValidationResult = $compiler.inject.source("./apis/validation/ValidationResult/ValidationResult.class.js");
     Std.all.TypesValidator = Std.classes.TypesValidator = $compiler.inject.source("./apis/types/TypesValidator/TypesValidator.class.js");
     Std.all.TypesCatalog = Std.classes.TypesCatalog = $compiler.inject.source("./apis/types/TypesCatalog/TypesCatalog.class.js");
+    Std.all.Domer = Std.classes.Domer = $compiler.inject.source("./apis/dom/Domer/Domer.class.js");
   }
   Wave_5_Filesystem: {
 

@@ -6,9 +6,7 @@
     "@/dist/www/test.dist.js"
   ],
   "test": {
-    "features": [
-      "^003."
-    ],
+    "features": [],
     "case": [],
     "speed": []
   },
@@ -21,7 +19,9 @@
         "@/dist/www/dev/test/feature": {
           "files": [
             "@/dist/www/dev/test/feature/001.Std puede ejecutar todos los tests de un directorio/test.dist.js",
-            "@/dist/www/dev/test/feature/002.Std tal/test.dist.js"
+            "@/dist/www/dev/test/feature/002.Std.classes.Progresser tiene conducta básica/test.dist.js",
+            "@/dist/www/dev/test/feature/003.Std.classes.Tester puede ejecutar tests en browser/test.dist.js",
+            "@/dist/www/dev/test/feature/004.Std.classes.IndexeddbDatabase puede hacer operaciones básicas/test.dist.js"
           ]
         },
         "@/dist/www/dev/test/integrity": {

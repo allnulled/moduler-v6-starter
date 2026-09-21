@@ -2411,6 +2411,9 @@
             }
             js += `  console.error("Injection failed:", error);\n`;
             js += `}`;
+            if (file !== null) {
+              //js += `\n//# sourceURL=${file}`;
+            }
             return js;
           }
           /**
@@ -2976,6 +2979,7 @@
                 }
               }
               Resolve_factory: {
+                // Aquí llega cuando: es un factory (POR DESCARTE)
                 if (_factory && dependencies) {
                   return dependencies.then((resolvedDependencies) =>
                     this._importFactory(_factory, resolvedDependencies),
@@ -2984,6 +2988,8 @@
                   return this._importFactory(_factory, []);
                 } else if (dependencies) {
                   return dependencies;
+                } else if (!_factory && !_dependencies.length) {
+                  return [];
                 } else {
                   throw new Error(
                     "This error should never happen by design (8210)",

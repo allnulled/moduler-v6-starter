@@ -2465,6 +2465,10 @@
                 }
                 js += `  console.error("Injection failed:", error);\n`;
                 js += `}`;
+                // @MILAGRO: el debugging ha pegado un salto dimensional con esto, eh? Realmente.
+                if (file !== null) {
+                  //js += `\n//# sourceURL=${file}`;
+                }
                 return js;
               }
               /**
@@ -3043,6 +3047,7 @@
                     }
                   }
                   Resolve_factory: {
+                    // Aquí llega cuando: es un factory (POR DESCARTE)
                     if (_factory && dependencies) {
                       return dependencies.then((resolvedDependencies) =>
                         this._importFactory(_factory, resolvedDependencies),
@@ -3051,6 +3056,8 @@
                       return this._importFactory(_factory, []);
                     } else if (dependencies) {
                       return dependencies;
+                    } else if (!_factory && !_dependencies.length) {
+                      return [];
                     } else {
                       throw new Error(
                         "This error should never happen by design (8210)",
@@ -4315,6 +4322,10 @@
                 fileNormalization,
                 ".md",
               );
+              const fileHtml = this.compiler.constructor._changeFileExtension(
+                fileNormalization,
+                ".html",
+              );
               const promises = [];
               if (this.js || true) {
                 const outputJs =
@@ -4345,6 +4356,14 @@
                 console.log(
                   "[*] DevBinaryV6 is saving «compilation.md» at: " +
                     this.compiler.moduler.rootdirOf(fileMd),
+                );
+              } else if (this.html) {
+                promises.push(
+                  require("fs").promises.writeFile(fileMd, this.html, "utf8"),
+                );
+                console.log(
+                  "[*] DevBinaryV6 is saving «compilation.html» at: " +
+                    this.compiler.moduler.rootdirOf(fileHtml),
                 );
               }
               return Promise.all(promises);
@@ -8340,7 +8359,7 @@
                 currentStep.push("1. initialize dependencies");
                 fs = require("fs");
                 path = require("path");
-                filepath = this.devbin.compiler.normalizationOf(file);
+                filepath = this.devbin.moduler.normalizationOf(file);
                 filedir = this.devbin.files.getDirectoryOf(filepath);
                 rootPath = this.devbin.moduler.rootdirOf(filepath);
               }
@@ -8428,7 +8447,7 @@
                   Caso_previo_4_dev_settings_exportar_a_www_dev_settings_las_partes_exportables: {
                     if (
                       filepath ===
-                      this.devbin.compiler.fullpathOf("@/dev/settings.js")
+                      this.devbin.compiler.normalizationOf("@/dev/settings.js")
                     ) {
                       currentStep.push("3.1. exporting dev/settings");
                       await this.exportDevSettings(filepath);
@@ -8675,11 +8694,11 @@
                   if (result === true) {
                     currentStep.push("6.1. distributing directory");
                     const origin = path.dirname(
-                      this.devbin.compiler.normalizationOf(rootPath),
+                      this.devbin.moduler.normalizationOf(rootPath),
                     );
                     // @ATENCIÓN: al basarse en outputFile ya se entiende si está en src o en src/www
                     const destination = path.dirname(
-                      this.devbin.compiler.normalizationOf(outputFile),
+                      this.devbin.moduler.normalizationOf(outputFile),
                     );
                     require("fs").promises.cp(origin, destination, {
                       recursive: true,
@@ -9145,7 +9164,7 @@
                   "browser",
                 ].concat(settingsData.publicableFields || []);
               }
-              Expand_known_public_settings: {
+              List_test_directories_and_attach_to_browser_settings: {
                 if (settingsData?.browser?.test?.directories) {
                   const targetDirs = Object.keys(
                     settingsData.browser.test.directories,
@@ -9161,7 +9180,7 @@
                         this.devbin.moduler._joinPaths([
                           dirPath,
                           innerDir,
-                          dirOptions.file || "test.js",
+                          dirOptions.file || "test.dist.js",
                         ]),
                       ),
                     );
@@ -9184,7 +9203,7 @@
                   );
               }
               //////////////////////////////
-              const publicableJson = this.devbin.compiler.fullpathOf(
+              const publicableJson = this.devbin.compiler.normalizationOf(
                 "@/dist/www/dev/settings/publicable.json",
               );
               await this.ensureDirectoryOf(publicableJson);
@@ -9193,6 +9212,11 @@
                 JSON.stringify(publicableSettings, null, 2),
                 "utf8",
               );
+              this.devbin.console
+                .setProfile("blackBright")
+                .print(
+                  `[*] DevBinaryV6 exported «publicableFields» of «@/dev/settings.js» to «@/dist/www/dev/settings/publicable.json»`,
+                );
             } catch (error) {
               console.log("[!] Error loading settings:", error);
             }
@@ -10390,9 +10414,7 @@
                 ...settingsExtensions,
               ],
               execute: ["dev/run.js touch --file @{refrescador.file}"],
-              executeCallback: [
-                // `${targetRoot}/dev/events/e.onFileChange.js`
-              ],
+              executeCallback: [`${targetRoot}/dev/events/e.onFileChange.js`],
               message: "El tiempo de refrescar ha llegado",
               messageFile: "TODO.md",
               payload: 'console.log("📟 Evento de refrescar activado");',

@@ -2,9 +2,7 @@ module.exports = async function() {
   return {
     env: "dev",
     test: {
-      features: [
-        "^003.",
-      ],
+      features: [],
       case: [],
       speed: [],
     },

@@ -5,7 +5,7 @@ async function validateTypeAppendix(validator, data, step, state, localValidatio
   Decide_logical_and_or_concatenation_final_result: {
     Si_ya_venia_acertando_limpiamos: {
       if ((validator.appendix?.[0].operator === "|") && (localValidation.getError() === null)) {
-        console.log("Ha pasado | porque venía limpia de antes");
+        // console.log("Ha pasado | porque venía limpia de antes");
         localValidation.setError(null);
         break Decide_logical_and_or_concatenation_final_result;
       }
@@ -22,13 +22,13 @@ async function validateTypeAppendix(validator, data, step, state, localValidatio
             validatorPointer: step.validatorPointer.concat(["appendix", indexAppendment, "complement"]),
           }));
           Si_pasa_lo_limpiamos_y_devolvemos: {
-            console.log("Ha pasado |");
+            // console.log("Ha pasado |");
             output.push(result);
             localValidation.setError(null);
             break Iterating_appendix;
           }
         } catch (error) {
-          console.log("Ha fallado |");
+          // console.log("Ha fallado |");
           output.push(error);
           localValidation.setError(Error.normalize(error).adding(localValidation.getError()).adding({ name: "ValidationError", message: "Failed «|» operation" }));
         }
@@ -45,9 +45,9 @@ async function validateTypeAppendix(validator, data, step, state, localValidatio
             validatorPointer: step.validatorPointer.concat(["appendix", indexAppendment, "complement"]),
           }));
           output.push(result);
-          console.log("Ha pasado &");
+          // console.log("Ha pasado &");
         } catch (error) {
-          console.log("Ha fallado &");
+          // console.log("Ha fallado &");
           output.push(error);
           localValidation.setError(Error.normalize(error).adding(localValidation.getError()).adding({ name: "ValidationError", message: "Failed «&» operation" }));
         }

@@ -1780,6 +1780,10 @@ _wrapInTry(source, parameters = {}, file = null) {
   }
   js += `  console.error("Injection failed:", error);\n`;
   js += `}`;
+  // @MILAGRO: el debugging ha pegado un salto dimensional con esto, eh? Realmente.
+  if(file !== null) {
+    js += `\n//# sourceURL=${file}`;
+  }
   return js;
 }
   /**
@@ -2283,12 +2287,15 @@ import(...signature) {
       }
     }
     Resolve_factory: {
+      // Aquí llega cuando: es un factory (POR DESCARTE)
       if (_factory && dependencies) {
         return dependencies.then(resolvedDependencies => this._importFactory(_factory, resolvedDependencies));
       } else if (_factory && !dependencies) {
         return this._importFactory(_factory, []);
       } else if (dependencies) {
         return dependencies;
+      } else if ((!_factory) && (!_dependencies.length)) {
+        return [];
       } else {
         throw new Error("This error should never happen by design (8210)");
       }

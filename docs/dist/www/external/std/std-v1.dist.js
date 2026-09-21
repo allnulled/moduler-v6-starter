@@ -9025,7 +9025,7 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
      *
      */
 
-    const Std = {};
+    globalThis.Std = {};
 
     Object.assign(Std, {
       all: {},
@@ -9040,7 +9040,99 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
       types: {},
     });
 
-    Wave_0_Native_extensions: {
+    Wave_0_Native_extensions_and_dependencies: {
+      Std.all.ErrorStackFrame =
+        Std.classes.ErrorStackFrame =
+        globalThis.StackFrame =
+          class ErrorStackFrame {
+            static {
+              $moduler.toolkit.makeClass(
+                [Std.interfaces.InstantiableInterface],
+                this,
+              );
+            }
+          };
+      Std.all.ErrorStackParser =
+        Std.classes.ErrorStackParser =
+        globalThis.ErrorStackParser =
+          class ErrorStackParser {
+            static {
+              $moduler.toolkit.makeClass(
+                [Std.interfaces.InstantiableInterface],
+                this,
+              );
+            }
+          };
+      Std.all.ErrorDissector =
+        Std.classes.ErrorDissector = class ErrorDissector {
+          static StackFrame = Std.classes.ErrorStackFrame;
+          static StackParser = Std.classes.ErrorStackParser;
+          static dissect(error) {
+            return this.StackParser.parse(Error.normalize(error));
+          }
+          static dissectToJsonString(error) {
+            return JSON.stringify(this.dissect(error), null, 2);
+          }
+        };
+      Std.all.ErrorProsecutor =
+        Std.classes.ErrorProsecutor = class ErrorProsecutor {
+          static async prosecute(error, memory = {}) {
+            const prosecution = [];
+            Std.classes.ErrorDissector.dissect(error);
+            Prosecuting: for (
+              let index = 0;
+              index < error.dissection.length;
+              index++
+            ) {
+              const errorFrame = error.dissection[index];
+              const id = errorFrame.fileName;
+              if (id in memory) continue Prosecuting;
+              try {
+                memory[id] = await $moduler.readPath(errorFrame.fileName);
+                prosecution.push({
+                  resource: id,
+                  source: memory[id],
+                });
+              } catch (error) {
+                memory[id] = error;
+              }
+            }
+            error.prosecution = prosecution;
+            return prosecution;
+          }
+          static prosecuteRecursively(error) {}
+        };
+      Std.all.ErrorUtils = Std.classes.ErrorUtils = class ErrorUtils {
+        static stringifyError(errorBrute, subindex = []) {
+          const error = Error.normalize(errorBrute);
+
+          //*
+          let text = "";
+          if (subindex.length) {
+            text += `{${subindex.join(".")}} `;
+          }
+          text += `${error.name}`;
+          text += ` => `;
+          text += `${error.message}`;
+          //text += `\n[[\n${error.stack.split("\n").map(line => "  " + line).join("\n").trimEnd()}\n]]`;
+          if (error.stack) {
+            text += `\n${Std.classes.ErrorDissector.dissectToJsonString(error)}`;
+          }
+          if (error.std?.history.length) {
+            const subtext = error.std.history
+              .map((suberror, index) => {
+                return ErrorUtils.stringifyError(
+                  suberror,
+                  subindex.concat([`${index + 1}/${error.std.history.length}`]),
+                );
+              })
+              .join("\n");
+            text += `\n${subtext}`;
+          }
+          //*/
+          return text;
+        }
+      };
       Std.all.ErrorExtension = (() => {
         /**@:
          *
@@ -9057,6 +9149,13 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
          *       - añade un error al error.std.history del que lo lanza
          */
 
+        Error.tool = {
+          StackParser: Std.classes.ErrorStackParser,
+          StackFrame: Std.classes.ErrorStackFrame,
+          Dissector: Std.classes.ErrorDissector,
+          Prosecutor: Std.classes.ErrorProsecutor,
+        };
+
         Error.normalize = function (input) {
           let error = undefined;
           if (typeof input === "string") {
@@ -9064,24 +9163,42 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
           } else if (input instanceof Error) {
             error = input;
           } else if (typeof input === "object") {
-            error = new Error(input.message || "no message specified");
+            error = new Error(
+              input.message || "as object with no message specified",
+            );
             error.name = input.name || "Error";
+          } else {
+            error = new Error(`as ${typeof input} with no message specified`);
+            error.name = "Error";
           }
           if (!error.std) {
             error.std = [];
             error.std.history = [];
+            error.std.dissection = null;
+            error.std.prosecution = null;
           }
           return error;
         };
 
-        Error.prototype.adding = function (input) {
+        Error.prototype.adding = function (...inputs) {
           Error.normalize(this);
-          this.std.history.push(Error.normalize(input));
+          for (let index = 0; index < inputs.length; index++) {
+            const input = inputs[index];
+            this.std.history.push(Error.normalize(input));
+          }
           return this;
         };
 
-        Error.throw = function (error) {
-          throw Error.normalize(error);
+        Error.prototype.unified = function (subindex = []) {
+          const error = new Error();
+          error.name = this.name;
+          error.message = Std.all.ErrorUtils.stringifyError(this, subindex);
+          error.stack = this.stack;
+          return error;
+        };
+
+        Error.prototype.prosecuted = function () {
+          return Std.classes.ErrorProsecutor.prosecute(this);
         };
       })();
     }
@@ -9583,7 +9700,8 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
               );
               return this.create();
             },
-            create: function (config = {}, constructorArgs = []) {
+
+            create: function (config = {}, ...constructorArgs) {
               Std.all.Tracer?.globalInstance.in(
                 "CreableInterface.static.create",
                 arguments || [],
@@ -9596,7 +9714,10 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
               Trigger_hook_on_create_if_any: {
                 if (instanze.onCreate) {
                   output =
-                    instanze.onCreate({ parent: this, config }) || output;
+                    instanze.onCreate(
+                      { parent: this, config },
+                      ...constructorArgs,
+                    ) || output;
                 }
               }
               Std.all.Tracer?.globalInstance.out(
@@ -10361,6 +10482,41 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
           evaluateDirectory: async function evaluateDirectory(
             optionsBrute = {},
           ) {
+            /**@:
+             *
+             * # Std.classes.Tester.evaluateDirectory
+             *
+             * - Método para evaluar un directorio de tests en node.js
+             * - El fichero tiene que exportar una función asíncrona o síncrona.
+             * - La firma es `evaluateDirectory(options:Object)`
+             * - Tiene varias opciones en options:
+             *    - `{directory:String}`: necesario, ruta del directorio
+             *    - `{filename?:String}`: nombre de fichero
+             *       - a) si sí se especifica, el primer nivel de ficheros se considera directorio, y que el test está en el mismo nombre de fichero que se indica aquí
+             *       - b) si no se especifica, el primer nivel de ficheros se consideran los tests, directamente
+             *       - El framework para sus tests usa la a).
+             *    - `{filter?:Function}`: función para filtrar por nombre los ficheros que sí quieres usar como test
+             *       - recibe un objeto con `{ id:String, path:String, callback:Function }
+             *    - `{ignored?:[String]}`: lista de substrings que, de aparecer en el fichero, no quieres usar como test
+             *       - si empieza con `^` se discrimina usando `startsWith` en lugar de `includes`
+             *       - se aplica después del filter
+             *       - parámetro un poco pachim pacham, seguramente se acabe cambiando por una función igual que filter o incluso desapareciendo
+             *       - desaconsejo su uso
+             *    - `{title?:String}`: nombre de la colección de tests, se usa como referencia en logs y errores.
+             *    - `{injection?}:Object`
+             *       - `progresser:Std.classes.Progresser`: se puede usar en los tests para monitorizar el progreso de cada test callback
+             *       - `...otros`: puedes inyectar lo que quieras a los tests
+             * - Lanzará los triggers, que puedes configurar con `.config({ ... })`:
+             *    - por parte propia:
+             *       - `onBeforeTestCollection`
+             *       - `onAfterTestCollection`
+             *    - por parte del `evaluateCallback`:
+             *       - `onBeforeTest`
+             *       - `onTestSuccess`
+             *       - `onTestFailure`
+             *       - `onAfterTest`
+             *
+             */
             Std.all.Tracer?.globalInstance.in(
               "TesterInterface.static.evaluateDirectory",
               arguments || [],
@@ -10476,6 +10632,9 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
                   let test;
                   Extract_test: {
                     try {
+                      // Descachea el test:
+                      delete require.cache[testPath];
+                      // Extrae el test:
                       test = require(testPath);
                     } catch (error) {
                       Std.all.Tracer?.globalInstance.error(
@@ -10516,7 +10675,6 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
                           indexIgnored++
                         ) {
                           const ignoreSelector = ignored[indexIgnored];
-                          let isMatch = false;
                           if (typeof ignoreSelector === "string") {
                             if (ignoreSelector.startsWith("^")) {
                               if (
@@ -10538,6 +10696,11 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
                     }
                   }
                 }
+                await Std.functions.triggerMethodIfExists(
+                  this,
+                  "onBeforeTestCollection",
+                  [{ collection: directory }],
+                );
                 Execution: for (
                   let index = 0;
                   index < preparation.length;
@@ -10546,11 +10709,21 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
                   const { id, path, callback } = preparation[index];
                   let result;
                   try {
-                    result = await callback(injection);
+                    result = await this.evaluateCallback(callback, injection);
                     Std.objects.Ansi.style("bgGreen,black").print(
                       `[*] Passed «${id}» [nº${index + 1}/${tests.length}] [${time()}]`,
                     );
+                    await Std.functions.triggerMethodIfExists(
+                      this,
+                      "onTestCollectionSuccess",
+                      [{ collection: directory }],
+                    );
                   } catch (error) {
+                    await Std.functions.triggerMethodIfExists(
+                      this,
+                      "onTestCollectionFailure",
+                      [{ collection: directory }],
+                    );
                     Std.objects.Ansi.style("bgRed,black").print(
                       `[!] Failed «${id}» [nº${index + 1}/${tests.length}] [${time()}]`,
                     );
@@ -10569,6 +10742,17 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
                     });
                   }
                 }
+                if (errors.length)
+                  await Std.functions.triggerMethodIfExists(
+                    this,
+                    "onTestCollectionFailure",
+                    [{ collection: directory, errors }],
+                  );
+                await Std.functions.triggerMethodIfExists(
+                  this,
+                  "onAfterTestCollection",
+                  [{ collection: directory }],
+                );
                 if (!errors.length) {
                   Std.objects.Ansi.style("bgGreen,black").print(
                     `[*] Passed all tests for: ${title}`,
@@ -10641,38 +10825,141 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
               throw error;
             }
           },
-          evaluateCallback: async function evaluateCallback(callback) {},
+          evaluateCallback: async function evaluateCallback(
+            callback,
+            options = {},
+          ) {
+            /**@:
+             *
+             * # Std.classes.Tester.evaluateCallback
+             *
+             * - Método para evaluar un callback de test en node.js o browser
+             * - Su firma es:
+             *    - `callback:Function` - el test.
+             *       - recibe en `arguments[0]:Object={Std,tester:Std.classes.Tester,...options}`, `
+             *    - `options?:Object` - opciones que se inyectan al `callback` asignadas en `arguments[0]:Object`.
+             *       - los triggers pueden acceder también en `arguments[0].options`
+             * - Lanzará los triggers de:
+             *    - `onBeforeTest`
+             *    - `onAfterTest`
+             *    - `onTestSuccess`
+             *    - `onTestFailure`
+             */
+            "progresser" in options ||
+              (options.progresser = Std.all.Progresser.new);
+            "collection" in options || (options.collection = "(callback)");
+            let testError = undefined;
+            let testOutput = undefined;
+            try {
+              await Std.functions.triggerMethodIfExists(this, "onBeforeTest", [
+                { options },
+              ]);
+              testOutput = await callback({
+                Std,
+                tester: this,
+                ...options,
+              });
+              await Std.functions.triggerMethodIfExists(this, "onTestSuccess", [
+                { options },
+              ]);
+            } catch (error) {
+              testError = Error.normalize(error);
+              await Std.functions.triggerMethodIfExists(this, "onTestFailure", [
+                { options, error },
+              ]);
+            } finally {
+              await Std.functions.triggerMethodIfExists(this, "onAfterTest", [
+                { options },
+              ]);
+            }
+            return typeof testError !== "undefined" ? testError : testOutput;
+          },
           evaluateBrowserDirectory: async function evaluateBrowserDirectory({
             directory,
           }) {
+            /**@:
+             *
+             * # Std.classes.Tester.evaluateDirectory
+             *
+             * - Método para evaluar un directorio de tests en node.js
+             * - El fichero tiene que exportar una función asíncrona o síncrona.
+             * - La firma es `evaluateBrowserDirectory(options:Object)`
+             * - Tiene solo una opción en options:
+             *    - `{directory:String}`: necesario.
+             *       - tiene que ser un rootpath al directorio real donde están los tests
+             *       - **y también** tiene que existir en `$moduler.settings.data.browser.test.directories` como clave
+             *       - el `@/dev/settings.js` tiene en `#browser/test/directories` un mapa con:
+             *          - como clave, un rootpath así: '@/dist/www/dev/test/xxx'
+             *          - como valor, da igual, porque se encarga el `DevBinaryV6.prototype.utils.exportDevSettings` de copiar las claves y completar los valores en `@/dist/www/dev/settings/publicable.json`
+             *          - y la llamada a `exportDevSettings` la puedes provocar desde el `devbin loop` simplemente guardando `@/dev/settings.js`
+             *          - por lo cual, si añades un nuevo test de navegador en la colección de test públicos, guarda de nuevo el `@/dev/settings.js` y los publicables se actualizarán automáticamente, de `@/dev/settings.js` a `@/dist/www/dev/settings/publicable.json`
+             * - Lanzará los mismos triggers que evaluateDirectory.
+             *
+             */
             await $moduler.settings.load();
             const hasDirectory =
               directory in
               ($moduler.settings.data?.browser?.test?.directories || {});
-            $moduler.assert(
+            Std.assert(
               hasDirectory,
               `Required parameter «options.directory» to exists as key in «$moduler.settings.data.browser.test.directories» but «${directory}» was found instead on «Tester.evaluateBrowserDirectory»`,
             );
-            const dirs = $moduler.settings.data.browser.test.directories;
-            const ids = Object.keys(dirs);
+            const { files = [] } =
+              $moduler.settings.data.browser.test.directories[directory];
+            const allErrors = [];
+            Std.objects.Ansi.style("blackBright,bold").print(
+              `[*] ModulerV6 is starting test collection with ${files.length} files of: ${directory}`,
+            );
+            await Std.functions.triggerMethodIfExists(
+              this,
+              "onBeforeTestCollection",
+              [{ collection: directory }],
+            );
             Iterating_collections: for (
-              let indexCollection = 0;
-              indexCollection < ids.length;
-              indexCollection++
+              let indexTest = 0;
+              indexTest < files.length;
+              indexTest++
             ) {
-              const id = ids[indexCollection];
-              const { files } = dirs[id];
-              if (files.length === 0) continue Iterating_collections;
-              Std.objects.Ansi.style("blackBright,bold").print(
-                `[*] ModulerV6 is starting test collection with ${files.length} files of: ${id}`,
+              const testPath = files[indexTest];
+              Std.objects.Ansi.style("cyan").print(
+                `[*] ModulerV6 is importing test of: ${testPath}`,
               );
-              for (let indexTest = 0; indexTest < files.length; indexTest++) {
-                const testPath = files[indexTest];
-                Std.objects.Ansi.style("blackBright,bold").print(
-                  `[*] ModulerV6 is importing test of: ${testPath}`,
-                );
-                await $moduler.import(testPath);
-              }
+              const testCallback = await $moduler.import(testPath);
+              Std.assert(
+                typeof testCallback === "function",
+                `Test at «${$moduler.rootdirOf(testPath)}» is not exporting a callback to evaluate on «Std.classes.Tester.evaluateBrowserDirectory»`,
+              );
+              const testResult = await this.evaluateCallback(testCallback, {
+                collection: directory,
+              });
+              if (testResult instanceof Error)
+                allErrors.push({ path: testPath, error: testResult });
+            }
+            if (allErrors.length) {
+              await Std.functions.triggerMethodIfExists(
+                this,
+                "onTestCollectionFailure",
+                [{ collection: directory, errors: allErrors }],
+              );
+            } else {
+              await Std.functions.triggerMethodIfExists(
+                this,
+                "onTestCollectionSuccess",
+                [{ collection: directory }],
+              );
+            }
+            await Std.functions.triggerMethodIfExists(
+              this,
+              "onAfterTestCollection",
+              [{ collection: directory }],
+            );
+            if (allErrors.length) {
+              throw Error.normalize({
+                name: "TestError",
+                message: `Test collection «${directory}» failed with ${allErrors.length} errors`,
+              })
+                .adding(...allErrors.map((it) => it.error))
+                .unified();
             }
           },
         },
@@ -11058,7 +11345,7 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
                     validator.appendix?.[0].operator === "|" &&
                     localValidation.getError() === null
                   ) {
-                    console.log("Ha pasado | porque venía limpia de antes");
+                    // console.log("Ha pasado | porque venía limpia de antes");
                     localValidation.setError(null);
                     break Decide_logical_and_or_concatenation_final_result;
                   }
@@ -11087,13 +11374,13 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
                         }),
                       );
                       Si_pasa_lo_limpiamos_y_devolvemos: {
-                        console.log("Ha pasado |");
+                        // console.log("Ha pasado |");
                         output.push(result);
                         localValidation.setError(null);
                         break Iterating_appendix;
                       }
                     } catch (error) {
-                      console.log("Ha fallado |");
+                      // console.log("Ha fallado |");
                       output.push(error);
                       localValidation.setError(
                         Error.normalize(error)
@@ -11134,9 +11421,9 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
                         }),
                       );
                       output.push(result);
-                      console.log("Ha pasado &");
+                      // console.log("Ha pasado &");
                     } catch (error) {
-                      console.log("Ha fallado &");
+                      // console.log("Ha fallado &");
                       output.push(error);
                       localValidation.setError(
                         Error.normalize(error)
@@ -11182,6 +11469,99 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
             },
           },
         };
+      Std.all.ProgresserInterface = Std.interfaces.ProgresserInterface =
+        // @interface:ProgresserInterface
+        {
+          prototype: {
+            onCreate: function (
+              relations,
+              { total = 1, current = 0 } = {},
+              parent = null,
+              weight = 1,
+            ) {
+              this.total = total;
+              this.current = current;
+              this.parent = parent;
+              this.weight = weight;
+              this.children = [];
+              this.ownCurrent = current;
+              this._updateProgress();
+            },
+
+            advanceProgress: function (n = 1) {
+              this.ownCurrent += n;
+              this._updateProgress();
+              return this;
+            },
+
+            setProgressTotal: function (total) {
+              this.total = total;
+              if (this.ownCurrent > total) {
+                this.ownCurrent = total;
+              }
+              this._updateProgress();
+              return this;
+            },
+
+            createSubprogress: function ({
+              total = 1,
+              current = 0,
+              weight = 1,
+            } = {}) {
+              const child = this.constructor.create(
+                {},
+                { total, current },
+                this,
+                weight,
+              );
+              this.children.push(child);
+              this._updateProgress();
+              return child;
+            },
+
+            _getOwnRelativeProgress: function () {
+              if (this.total === 0) return 0;
+              return this.ownCurrent / this.total;
+            },
+
+            _getChildrenRelativeProgress: function () {
+              if (this.children.length === 0) {
+                return 0;
+              }
+              const sumWeights = this.children.reduce(
+                (sum, child) => sum + child.weight,
+                0,
+              );
+              let progress = 0;
+              for (const child of this.children) {
+                progress +=
+                  (child._getRelativeProgress() * child.weight) / sumWeights;
+              }
+              return progress;
+            },
+
+            _getRelativeProgress: function () {
+              if (this.total === 0) return 0;
+              return this.current / this.total;
+            },
+
+            _updateProgress: function () {
+              if (this.children.length === 0) {
+                this.current = this.ownCurrent;
+              } else {
+                const childrenProgress = this._getChildrenRelativeProgress();
+                this.current = childrenProgress * this.total;
+              }
+              this.percent =
+                (this._getRelativeProgress() * 100).toFixed(2) + "%";
+              if (this.parent) {
+                this.parent._updateProgress();
+              }
+              return this;
+            },
+          },
+          static: {},
+        };
     }
     Wave_3_Utility_classes: {
       Std.all.Introspector = Std.classes.Introspector = class Introspector {
@@ -11215,7 +11595,7 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
         }
         static globalInstance = this.new.config({
           id: "main",
-          isTracing: true,
+          isTracing: false,
         });
       };
       Std.all.Checker = Std.classes.Checker = class Checker {
@@ -11258,6 +11638,17 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
               Std.interfaces.CheckerInterface,
               Std.interfaces.AsserterInterface,
               Std.interfaces.TesterInterface,
+            ],
+            this,
+          );
+        }
+      };
+      Std.all.Progresser = Std.classes.Progresser = class Progresser {
+        static {
+          $moduler.toolkit.makeClass(
+            [
+              Std.interfaces.InstantiableInterface,
+              Std.interfaces.ProgresserInterface,
             ],
             this,
           );
@@ -11801,6 +12192,25 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
             this.globalInstance = this.new;
             globalThis.$types = this.globalInstance.all;
           }
+        }
+      };
+      Std.all.Domer = Std.classes.Domer = class Domer {
+        static {
+          $moduler.toolkit.makeClass(
+            [Std.interfaces.InstantiableInterface],
+            this,
+          );
+        }
+        static insertElementById(id) {
+          return (
+            document.querySelector(`#${id}`) ||
+            (function () {
+              const elem = document.createElement("div");
+              elem.setAttribute("id", id);
+              document.body.appendChild(elem);
+              return elem;
+            })()
+          );
         }
       };
     }

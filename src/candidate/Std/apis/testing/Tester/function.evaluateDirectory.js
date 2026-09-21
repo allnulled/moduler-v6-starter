@@ -1,4 +1,39 @@
 async function evaluateDirectory(optionsBrute = {}) {
+  /**@:
+   * 
+   * # Std.classes.Tester.evaluateDirectory
+   * 
+   * - Método para evaluar un directorio de tests en node.js
+   * - El fichero tiene que exportar una función asíncrona o síncrona.
+   * - La firma es `evaluateDirectory(options:Object)`
+   * - Tiene varias opciones en options:
+   *    - `{directory:String}`: necesario, ruta del directorio
+   *    - `{filename?:String}`: nombre de fichero
+   *       - a) si sí se especifica, el primer nivel de ficheros se considera directorio, y que el test está en el mismo nombre de fichero que se indica aquí
+   *       - b) si no se especifica, el primer nivel de ficheros se consideran los tests, directamente
+   *       - El framework para sus tests usa la a).
+   *    - `{filter?:Function}`: función para filtrar por nombre los ficheros que sí quieres usar como test
+   *       - recibe un objeto con `{ id:String, path:String, callback:Function }
+   *    - `{ignored?:[String]}`: lista de substrings que, de aparecer en el fichero, no quieres usar como test
+   *       - si empieza con `^` se discrimina usando `startsWith` en lugar de `includes`
+   *       - se aplica después del filter
+   *       - parámetro un poco pachim pacham, seguramente se acabe cambiando por una función igual que filter o incluso desapareciendo
+   *       - desaconsejo su uso
+   *    - `{title?:String}`: nombre de la colección de tests, se usa como referencia en logs y errores.
+   *    - `{injection?}:Object`
+   *       - `progresser:Std.classes.Progresser`: se puede usar en los tests para monitorizar el progreso de cada test callback
+   *       - `...otros`: puedes inyectar lo que quieras a los tests
+   * - Lanzará los triggers, que puedes configurar con `.config({ ... })`:
+   *    - por parte propia:
+   *       - `onBeforeTestCollection`
+   *       - `onAfterTestCollection`
+   *    - por parte del `evaluateCallback`:
+   *       - `onBeforeTest`
+   *       - `onTestSuccess`
+   *       - `onTestFailure`
+   *       - `onAfterTest`
+   * 
+   */
   $compiler.inject.template("@/src/candidate/Std/snippets/methodIn.js", { name: "TesterInterface.static.evaluateDirectory" });
   let output;
   let options;
@@ -72,6 +107,9 @@ async function evaluateDirectory(optionsBrute = {}) {
         let test;
         Extract_test: {
           try {
+            // Descachea el test:
+            delete require.cache[testPath];
+            // Extrae el test:
             test = require(testPath);
           } catch (error) {
             $compiler.inject.template("@/src/candidate/Std/snippets/methodError.js", { name: "TesterInterface.static.evaluateDirectory" });
@@ -95,7 +133,6 @@ async function evaluateDirectory(optionsBrute = {}) {
               Iterating_ignored:
               for (let indexIgnored = 0; indexIgnored < ignored.length; indexIgnored++) {
                 const ignoreSelector = ignored[indexIgnored];
-                let isMatch = false;
                 if (typeof ignoreSelector === "string") {
                   if (ignoreSelector.startsWith("^")) {
                     if (test.id.startsWith(ignoreSelector.substr(1))) {
@@ -111,14 +148,17 @@ async function evaluateDirectory(optionsBrute = {}) {
           }
         }
       }
+      await Std.functions.triggerMethodIfExists(this, "onBeforeTestCollection", [{ collection: directory }]);
       Execution:
       for (let index = 0; index < preparation.length; index++) {
         const { id, path, callback } = preparation[index];
         let result;
         try {
-          result = await callback(injection);
-          Std.objects.Ansi.style("bgGreen,black").print(`[*] Passed «${id}» [nº${index + 1}/${tests.length}] [${time()}]`)
+          result = await this.evaluateCallback(callback, injection);
+          Std.objects.Ansi.style("bgGreen,black").print(`[*] Passed «${id}» [nº${index + 1}/${tests.length}] [${time()}]`);
+          await Std.functions.triggerMethodIfExists(this, "onTestCollectionSuccess", [{ collection: directory }]);
         } catch (error) {
+          await Std.functions.triggerMethodIfExists(this, "onTestCollectionFailure", [{ collection: directory }]);
           Std.objects.Ansi.style("bgRed,black").print(`[!] Failed «${id}» [nº${index + 1}/${tests.length}] [${time()}]`);
           Std.objects.Ansi.style("red").print(`    Error: ${error.name}     `);
           Std.objects.Ansi.style("red").print(`    Message: ${error.message}   `);
@@ -128,6 +168,8 @@ async function evaluateDirectory(optionsBrute = {}) {
           });
         }
       }
+      if(errors.length) await Std.functions.triggerMethodIfExists(this, "onTestCollectionFailure", [{ collection: directory, errors }]);
+      await Std.functions.triggerMethodIfExists(this, "onAfterTestCollection", [{ collection: directory }]);
       if (!errors.length) {
         Std.objects.Ansi.style("bgGreen,black").print(`[*] Passed all tests for: ${title}`);
       } else {
