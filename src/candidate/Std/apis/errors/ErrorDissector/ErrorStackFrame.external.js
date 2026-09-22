@@ -1,5 +1,5 @@
 (function (root, factory) {
-  return factory();
+  return globalThis.StackFrame = factory();
   /**
    * 
    * @ORIGINALS:

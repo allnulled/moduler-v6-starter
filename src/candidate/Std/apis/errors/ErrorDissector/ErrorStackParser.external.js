@@ -1,5 +1,5 @@
 (function (root, factory) {
-  return Std.all.ErrorStackParser = Std.objects.ErrorStackParser = globalThis.ErrorStackParser = factory(Std.classes.ErrorStackFrame);
+  return globalThis.ErrorStackParser = factory(Std.classes.ErrorStackFrame);
   /**
    * 
    * @ORIGINALS:

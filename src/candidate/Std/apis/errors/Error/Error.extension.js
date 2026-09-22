@@ -41,7 +41,6 @@
       error.std = [];
       error.std.history = [];
       error.std.dissection = null;
-      error.std.prosecution = null;
     }
     return error;
   };

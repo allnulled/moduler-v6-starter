@@ -43,8 +43,8 @@
   });
   
   Wave_0_Native_extensions_and_dependencies: {
-    Std.all.ErrorStackFrame = Std.classes.ErrorStackFrame = globalThis.StackFrame = $compiler.inject.source("./apis/errors/ErrorDissector/ErrorStackFrame.class.js");
-    Std.all.ErrorStackParser = Std.classes.ErrorStackParser = globalThis.ErrorStackParser = $compiler.inject.source("./apis/errors/ErrorDissector/ErrorStackParser.class.js");
+    Std.all.ErrorStackFrame = Std.classes.ErrorStackFrame = $compiler.inject.source("./apis/errors/ErrorDissector/ErrorStackFrame.external.js");
+    Std.all.ErrorStackParser = Std.classes.ErrorStackParser = $compiler.inject.source("./apis/errors/ErrorDissector/ErrorStackParser.external.js");
     Std.all.ErrorDissector = Std.classes.ErrorDissector = $compiler.inject.source("./apis/errors/ErrorDissector/ErrorDissector.class.js");
     Std.all.ErrorProsecutor = Std.classes.ErrorProsecutor = $compiler.inject.source("./apis/errors/ErrorProsecutor/ErrorProsecutor.class.js");
     Std.all.ErrorUtils = Std.classes.ErrorUtils = $compiler.inject.source("./apis/errors/ErrorUtils/ErrorUtils.class.js");

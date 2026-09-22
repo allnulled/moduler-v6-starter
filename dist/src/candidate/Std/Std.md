@@ -54,15 +54,17 @@
 
 ## Error native extensions
 
-- Hay 3 extensiones nativas al Error:
+- Hay algunas extensiones nativas al Error:
    - Error.normalize(input:String|Error|Object):
       - crea o devuelve un error
       - puede usarse con String, Error u Object especificando name y message.
       - antes de retornarlo, normaliza el error.std.history = []
-   - Error.throw(error:String|Error|Object):
-      - lanza un error global estáticamente
    - Error.prototype.adding(error:String|Error|Object)
       - añade un error al error.std.history del que lo lanza
+   - Error.prototype.unified(subindex:[String])
+      - devuelve un error unificando todos los suberrores
+   - Error.prototype.prosecuted()
+      - devuelve una Promise con la ErrorProsecution del error 
 
 
 ## Std.assert
