@@ -1811,6 +1811,18 @@
         return alphabet[Math.floor(Math.random() * alphabet.length)];
       }
       /**
+       * @name ModulerV6.static.asyncNoop
+       * @type
+       * @description
+       */
+      static asyncNoop = async function asyncNoop() {};
+      /**
+       * @name ModulerV6.static.AsyncFunction
+       * @type
+       * @description
+       */
+      static AsyncFunction = this.asyncNoop.constructor;
+      /**
        * @name ModulerV6.static.includeScript
        * @type
        * @description
@@ -2352,6 +2364,10 @@
         }
         js += `  console.error("Injection failed:", error);\n`;
         js += `}`;
+        // @MILAGRO: el debugging ha pegado un salto dimensional con esto, eh? Realmente.
+        if (file !== null) {
+          js += `\n//# sourceURL=${file}`;
+        }
         return js;
       }
       /**
@@ -2360,7 +2376,7 @@
        * @description
        */
       _createAsyncFunction(source, parameters = []) {
-        return new async function () {}.constructor(...parameters, source);
+        return new ModulerV6.AsyncFunction(...parameters, source);
       }
       /**
        * @name ModulerV6.prototype._importFile
@@ -3159,23 +3175,23 @@ window.addEventListener("load", async function () {
   const Std = await $moduler.import("@/src/www/external/std/std-v1.entry.js");
   await $moduler.settings.load();
   if (["dev", "test"].includes($moduler.settings.data.env)) {
-    await Std.all.Tester.evaluateDirectory({
+    await Std.all.Tester.evaluateBrowserDirectory({
       title: "Integridad",
       directory: "@/dist/www/dev/test/integrity",
     });
-    await Std.all.Tester.evaluateDirectory({
+    await Std.all.Tester.evaluateBrowserDirectory({
       title: "Unitarios",
       directory: "@/dist/www/dev/test/unit",
     });
-    await Std.all.Tester.evaluateDirectory({
+    await Std.all.Tester.evaluateBrowserDirectory({
       title: "Prestaciones",
       directory: "@/dist/www/dev/test/feature",
     });
-    await Std.all.Tester.evaluateDirectory({
+    await Std.all.Tester.evaluateBrowserDirectory({
       title: "Caso concreto",
       directory: "@/dist/www/dev/test/case",
     });
-    await Std.all.Tester.evaluateDirectory({
+    await Std.all.Tester.evaluateBrowserDirectory({
       title: "Espontáneos",
       directory: "@/dist/www/dev/test/spontaneous",
     });

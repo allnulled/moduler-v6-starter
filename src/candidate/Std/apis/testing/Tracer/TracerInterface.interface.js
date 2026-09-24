@@ -7,7 +7,7 @@
     onTraceMessageFormat(operation, method, args = []) {
       let id = this.id || "";
       if(id) id = `[${id}] `;
-      return `${id}[${" ".repeat(this.level + (operation === "out" ? -1 : 0))}${operation==="in"?">":operation==="out"?"<":operation==="log"?"=":"!"}] ${method}`;
+      return `${id}[${" ".repeat(Math.max(0, this.level + (operation === "out" ? -1 : 0)))}${operation==="in"?">":operation==="out"?"<":operation==="log"?"=":"!"}] ${method}`;
     },
     onTraceArgumentsFormat: function(args, message) {
       let output = "";

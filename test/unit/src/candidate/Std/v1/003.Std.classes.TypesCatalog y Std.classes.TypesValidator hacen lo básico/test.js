@@ -2,11 +2,11 @@ module.exports = async function ({ devbin, Std }) {
   
   const { TypesCatalog, TypesValidator, TypesParser } = Std.all;
 
-  devbin.assert(typeof $types === "object", "Can find global TypesCatalog instance (1)");
-  devbin.assert(typeof $types.boolean === "function", "Can find specific global type with $types.get(...) (3)");
+  $moduler.assert(typeof $types === "object", "Can find global TypesCatalog instance (1)");
+  $moduler.assert(typeof $types.boolean === "function", "Can find specific global type with $types.get(...) (3)");
 
   Global_equalities: {
-    devbin.assert(Std.all.BooleanUtil.areEqual(...[
+    $moduler.assert(Std.all.BooleanUtil.areEqual(...[
       TypesCatalog.globalInstance.getType("boolean"),
       TypesCatalog.globalInstance.all.boolean,
       Std.types.boolean,
@@ -62,8 +62,8 @@ module.exports = async function ({ devbin, Std }) {
     TypesValidator.validateData(TypesParser.parse("{age:number}"), {age:50}),
   ]);
   
-  devbin.assert(outputs1[0]["*type"] === "string", "Can validate data from parsed expressions correctly (1)");
-  devbin.assert(outputs1[1].name["*type"] === "string", "Can validate data from parsed expressions correctly (2)");
-  devbin.assert(outputs1[2].age["*type"] === "number", "Can validate data from parsed expressions correctly (3)");
+  $moduler.assert(outputs1[0]["*type"] === "string", "Can validate data from parsed expressions correctly (1)");
+  $moduler.assert(outputs1[1].name["*type"] === "string", "Can validate data from parsed expressions correctly (2)");
+  $moduler.assert(outputs1[2].age["*type"] === "number", "Can validate data from parsed expressions correctly (3)");
 
 }

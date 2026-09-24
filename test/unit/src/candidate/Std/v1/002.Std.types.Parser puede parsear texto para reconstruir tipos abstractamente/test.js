@@ -10,6 +10,8 @@ module.exports = async function ({ devbin, Std }) {
 
   const asserter = Asserter.new;
 
+  const currentDirectory = $moduler.normalizationOf("@/test/unit/src/candidate/Std/v1/002.Std.types.Parser puede parsear texto para reconstruir tipos abstractamente");
+
   const ensureFuncFile = async function(file, fileOut) {
     const exists = await require("fs").promises.access(file).then(() => true).catch(() => false);
     if(!exists) {
@@ -19,7 +21,7 @@ module.exports = async function ({ devbin, Std }) {
 `module.exports = async function({ Asserter, TypesParser, TypesValidator, Std, devbin }) {
   const fs = require("fs");
   const path = require("path");
-  const file = path.resolve(__dirname, ${JSON.stringify("./" + path.relative(path.dirname(file), fileOut))});
+  const file = path.resolve(${JSON.stringify(currentDirectory)}, ${JSON.stringify("./" + path.relative(path.dirname(file), fileOut))});
   const content = JSON.parse(await fs.promises.readFile(file, "utf8"));
   console.log(content);
     
@@ -29,32 +31,32 @@ module.exports = async function ({ devbin, Std }) {
   };
 
   Test_de_Types_parser: {
-    const allFiles = await require("fs").promises.readdir(`${__dirname}/examples.in`);
+    const allFiles = await require("fs").promises.readdir(`${currentDirectory}/examples.in`);
     let lastPromise = undefined;
     Iterating_examples_in:
     for(let index=0; index<allFiles.length; index++) {
       const file = allFiles[index];
       if(!file.endsWith(".tyla")) continue Iterating_examples_in;
-      const content = await require("fs").promises.readFile(`${__dirname}/examples.in/${file}`, "utf8");
+      const content = await require("fs").promises.readFile(`${currentDirectory}/examples.in/${file}`, "utf8");
       asserter.assertDoesNotThrowSync(() => {
         const ast = TypesParser.parse(content);
-        lastPromise = require("fs").promises.writeFile(`${__dirname}/examples.out/${file.replace(/\.tyla$/g, ".json")}`, JSON.stringify(ast, null, 2), "utf8");
+        lastPromise = require("fs").promises.writeFile(`${currentDirectory}/examples.out/${file.replace(/\.tyla$/g, ".json")}`, JSON.stringify(ast, null, 2), "utf8");
       }, `Can parse example: ${file} (${index+1}/${allFiles.length})`);
-      await ensureFuncFile(`${__dirname}/examples.func/${file.replace(/\.tyla$/g, ".js")}`, `${__dirname}/examples.out/${file.replace(/\.tyla$/g, ".json")}`);
+      await ensureFuncFile(`${currentDirectory}/examples.func/${file.replace(/\.tyla$/g, ".js")}`, `${currentDirectory}/examples.out/${file.replace(/\.tyla$/g, ".json")}`);
     }
     await lastPromise;
-    const allFuncs = await require("fs").promises.readdir(`${__dirname}/examples.func`);
+    const allFuncs = await require("fs").promises.readdir(`${currentDirectory}/examples.func`);
     Iterating_examples_funcs:
     for(let index=0; index<allFuncs.length; index++) {
       const file = allFuncs[index];
       if(!file.endsWith(".js")) continue Iterating_examples_funcs;
       if(file.startsWith("e.")) continue Iterating_examples_funcs;
-      const callback = await require(`${__dirname}/examples.func/${file}`);
+      const callback = await require(`${currentDirectory}/examples.func/${file}`);
       if(typeof callback !== "function") continue Iterating_examples_funcs;
       await callback({
         ...parameters,
         readOutput: function(id) {
-          return require("fs").promises.readFile(`${__dirname}/examples.out/${id}`);
+          return require("fs").promises.readFile(`${currentDirectory}/examples.out/${id}`);
         },
       });
     }

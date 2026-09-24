@@ -1,3 +1,27 @@
+- [ ] Habría que dejar algún test de la Error API generando prosecutions
+- [ ] Hay que hacer un ErrorPrinter, o algo para que
+   - [ ] una vez que sabes que ahí controlas errores
+   - [ ] y tienes asincronía, porque la necesitas para el readPath
+   - [ ] imprimir, directamente, los frames y su información disseccionada, filtrada y perseguida ya
+   - [ ] ErrorProsecutor.print es el elegido
+- [ ] Hay que ampliar typeslang
+   - [ ] tiene que soportar strings hardcodeados y números con punto flotante también
+      - [ ] servirá para pasar parámetros a los tipos
+   - [ ] tiene que soportar poner nombres, hasta al principio:
+      - [ ] `index=number`
+      - [ ] `name=string`
+      - [ ] `name=string({ min:"10",max:"20" })`
+      - [ ] `options={profile?:string,createdAt?:date}`
+   - [ ] esto son ejemplos más realistas:
+      - [ ] `Paquete para loguearse = {user:string, password:string, previousSession: Std.types.Session}`
+      - [ ] `Paquete para desloguearse = {user:string, sessionToken:Std.types.SessionToken}`
+      - [ ] `Paquete para registrarse = {user:string, password:string, email:string}`
+      - [ ] `Paquete para desregistrarse = {user:string, password:string, sessionToken:Std.types.SessionToken}`
+
+
+
+
+
 - [ ] Las APIs del Std Core (Nivel 1)
    - [x] Tracer
    - [x] Checker

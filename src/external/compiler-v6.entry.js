@@ -1309,7 +1309,7 @@ static defaultGrammars = {
     this.nativeGrammars.EmbeddedFormFieldCloser,
   ],
 };
-
+  
   /**
  * @name ModulerV6.assert
  * @type 
@@ -1356,6 +1356,18 @@ static _getRandomString(len = 10) {
 static _getRandomCharacter(alphabet = this._alphabet) {
   return alphabet[Math.floor(Math.random() * alphabet.length)];
 }
+  /**
+ * @name ModulerV6.static.asyncNoop
+ * @type 
+ * @description 
+ */
+static asyncNoop = async function asyncNoop() {};
+  /**
+ * @name ModulerV6.static.AsyncFunction
+ * @type 
+ * @description 
+ */
+static AsyncFunction = this.asyncNoop.constructor;
   /**
  * @name ModulerV6.static.includeScript
  * @type 
@@ -1783,7 +1795,7 @@ _wrapInTry(source, parameters = {}, file = null) {
  * @description 
  */
 _createAsyncFunction(source, parameters = []) {
-  return new (async function() {}).constructor(...parameters, source);
+  return new ModulerV6.AsyncFunction(...parameters, source);
 }
   /**
  * @name ModulerV6.prototype._importFile

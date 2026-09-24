@@ -1867,6 +1867,18 @@
             return alphabet[Math.floor(Math.random() * alphabet.length)];
           }
           /**
+           * @name ModulerV6.static.asyncNoop
+           * @type
+           * @description
+           */
+          static asyncNoop = async function asyncNoop() {};
+          /**
+           * @name ModulerV6.static.AsyncFunction
+           * @type
+           * @description
+           */
+          static AsyncFunction = this.asyncNoop.constructor;
+          /**
            * @name ModulerV6.static.includeScript
            * @type
            * @description
@@ -2411,8 +2423,9 @@
             }
             js += `  console.error("Injection failed:", error);\n`;
             js += `}`;
+            // @MILAGRO: el debugging ha pegado un salto dimensional con esto, eh? Realmente.
             if (file !== null) {
-              //js += `\n//# sourceURL=${file}`;
+              js += `\n//# sourceURL=${file}`;
             }
             return js;
           }
@@ -2422,7 +2435,12 @@
            * @description
            */
           _createAsyncFunction(source, parameters = []) {
-            return new async function () {}.constructor(...parameters, source);
+            const asyncFunction = new ModulerV6.AsyncFunction(
+              ...parameters,
+              source,
+            );
+            asyncFunction.name = "AsyncFunctionInstance";
+            return asyncFunction;
           }
           /**
            * @name ModulerV6.prototype._importFile

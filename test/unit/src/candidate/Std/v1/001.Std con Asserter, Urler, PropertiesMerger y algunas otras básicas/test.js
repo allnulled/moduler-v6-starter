@@ -22,8 +22,8 @@ module.exports = async function ({ devbin, Std }) {
     asserter.assert(true, "Asserter.prototype.assert can not throw when input is true (1)");
     asserter.assert(checker.check(false) === false, "Checker.prototype.check can return input (2)");
     asserter.assert(exampleTest === 600, "Tester.prototype.runAsync can return first returned value (3)");
-    asserter.assertThrowsSync(() => Error.throw({ name: "PromotedError", message: "Promoted error" }), "Mensaje de error", { name: "PromotedError" });
-    asserter.assertThrowsAsync(async () => Error.throw({ name: "PromotedError", message: "Promoted error" }), "Mensaje de error", { name: "PromotedError" });
+    asserter.assertThrowsSync(() => Error.normalize({ name: "PromotedError", message: "Promoted error" }).rethrow(), "Mensaje de error", { name: "PromotedError" });
+    asserter.assertThrowsAsync(async () => Error.normalize({ name: "PromotedError", message: "Promoted error" }).rethrow(), "Mensaje de error", { name: "PromotedError" });
     asserter.assertDoesNotThrowSync(() => { }, "Mensaje de error");
     asserter.assertDoesNotThrowAsync(async () => { }, "Mensaje de error");
   }

@@ -1,3 +1,0 @@
-- [ ] No hace falta montar websockets, con un «.mutedir» ya podemos cumplir con romper la recursividad
-   - [ ] Implementarlo en el touchFile
-   - [ ] Implementarlo en el DevBinary.prototype.{muteTouchListenerOf,unmuteTouchListenerOf}

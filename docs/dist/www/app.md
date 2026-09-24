@@ -6,8 +6,9 @@
   - [Tabla de contenidos](#tabla-de-contenidos)
 - [Std](#std)
 - [Std global object](#std-global-object)
-- [Error native extensions](#error-native-extensions)
+- [La API de Errores de Std](#la-api-de-errores-de-std)
 - [Std.assert](#stdassert)
+- [JsonStringifier.stringify(input:any, beautify:boolean=true)](#jsonstringifierstringifyinputany-beautifybooleantrue)
 - [Std.all.Printer.debug](#stdallprinterdebug)
 - [Std.all.Printer.json](#stdallprinterjson)
 - [Std.classes.Printer.ask(question=string,options={},...others=[])](#stdclassesprinteraskquestionstringoptionsothers)
@@ -48,21 +49,48 @@
    - Wave 4: core of types
    - Wave 5: filesystem
    - Wave 6: ...
--
+- ...
 
 
 
-### Error native extensions
+### La API de Errores de Std
 
-- Hay 3 extensiones nativas al Error:
-   - Error.normalize(input:String|Error|Object):
-      - crea o devuelve un error
-      - puede usarse con String, Error u Object especificando name y message.
-      - antes de retornarlo, normaliza el error.std.history = []
-   - Error.throw(error:String|Error|Object):
-      - lanza un error global estáticamente
-   - Error.prototype.adding(error:String|Error|Object)
-      - añade un error al error.std.history del que lo lanza
+- Consiste en una extensión de la clase nativa `Error`
+    - con propiedades estáticas
+    - con métodos estáticos
+    - con métodos prototipo
+    - el constructor no se sobreescribe
+- Utiliza ErrorStackFrame y ErrorStackParser
+   - de https://www.stacktracejs.com/ ambos
+- Cumple para 6 utilidades, no más:
+```js
+// 1. Normalizar errores de cualquier input a Error:
+Error.normalize("mensaje de error");
+Error.normalize({ name: "ErrorName", message: "error message" });
+Error.normalize(new Error("whatever"));
+
+// 2. Añadir un error a otro con normalización intermedia:
+const error = Error.normalize({name:"BaseError"})
+error.adding({name:"AttachedError"});
+
+// 3. Relanzar (o lanzar, funciona igual) un error:
+error.adding({name:"AttachedError2"}).rethrow();
+
+// 4. Pasar a objeto:
+const data = error.toObject();
+// Puedes extender localmente los Error.tools.ignoredErrorFrames así:
+const data2 = error.toObject([ "async SomeClass.someMethod","/path/to/some/file.js",]);
+
+// 5. Pasar a objeto con persecución de error:
+const data = await error.toProsecution(); // sin formateos, porque si no, nos liamos
+
+// 6. Formateo de error y de lista de errores:
+Error.tools.formatError(error, "%name => %message [%stack]\n%frames");
+Error.tools.formatErrorList(errors, "%name => %message [%stack]\n%frames", "%functionName:%lineNumber:%columnNumber");
+```
+
+
+
 
 
 ### Std.assert
@@ -70,6 +98,17 @@
 - Acepta:
    - condition:boolean
    - message:string|object|error|any
+
+
+
+### JsonStringifier.stringify(input:any, beautify:boolean=true)
+
+- `input:any`: valor a stringificar
+- `beautify:boolean=true`: si lo quieres embellecer
+- ventajas:
+   - imprime bien instancias de "Error"
+   - previene de circularidad
+   - transforma Function con .toString()
 
 
 
@@ -109,35 +148,7 @@
 
 ### Std.classes.Tester.evaluateDirectory
 
-- Método para evaluar un directorio de tests en node.js
-- El fichero tiene que exportar una función asíncrona o síncrona.
-- La firma es `evaluateDirectory(options:Object)`
-- Tiene varias opciones en options:
-   - `{directory:String}`: necesario, ruta del directorio
-   - `{filename?:String}`: nombre de fichero
-      - a) si sí se especifica, el primer nivel de ficheros se considera directorio, y que el test está en el mismo nombre de fichero que se indica aquí
-      - b) si no se especifica, el primer nivel de ficheros se consideran los tests, directamente
-      - El framework para sus tests usa la a).
-   - `{filter?:Function}`: función para filtrar por nombre los ficheros que sí quieres usar como test
-      - recibe un objeto con `{ id:String, path:String, callback:Function }
-   - `{ignored?:[String]}`: lista de substrings que, de aparecer en el fichero, no quieres usar como test
-      - si empieza con `^` se discrimina usando `startsWith` en lugar de `includes`
-      - se aplica después del filter
-      - parámetro un poco pachim pacham, seguramente se acabe cambiando por una función igual que filter o incluso desapareciendo
-      - desaconsejo su uso
-   - `{title?:String}`: nombre de la colección de tests, se usa como referencia en logs y errores.
-   - `{injection?}:Object`
-      - `progresser:Std.classes.Progresser`: se puede usar en los tests para monitorizar el progreso de cada test callback
-      - `...otros`: puedes inyectar lo que quieras a los tests
-- Lanzará los triggers, que puedes configurar con `.config({ ... })`:
-   - por parte propia:
-      - `onBeforeTestCollection`
-      - `onAfterTestCollection`
-   - por parte del `evaluateCallback`:
-      - `onBeforeTest`
-      - `onTestSuccess`
-      - `onTestFailure`
-      - `onAfterTest`
+- Mismas firmas que `Std.classes.Tester.evaluateBrowserDirectory`.
 
 
 
