@@ -18,6 +18,11 @@
 >        - mediante `Basedir.prototype.appendPathSeparator`
 >     - y otros.
 
+## Interfaces
+
+- `Std.interfaces.InstantiableInterface`
+- `Std.interfaces.BasedirInterface`
+
 ## Instanciación
 
 ```js

@@ -35,7 +35,7 @@ async function validateTypeAppendix(validator, data, step, state, localValidatio
       } else if (operator === "&") {
         Si_tenia_un_error_lo_lanzamos: {
           if (localValidation.getError() !== null) {
-            $compiler.inject.template("@/src/candidate/Std/snippets/methodError.js", { name: "TypesValidator.validateTypeAppendix" });
+            $compiler.inject.template("@/src/candidate/Std/snippets/methodOut.js", { name: "TypesValidator.validateTypeAppendix" });
             throw Error.normalize(localValidation.getError()).adding({ name: "ValidationError", message: `Logical «${operator}» appendix at index «${indexAppendment}» is not accomplished` });
           }
         }
@@ -56,7 +56,7 @@ async function validateTypeAppendix(validator, data, step, state, localValidatio
   }
   // await Std.all.Printer.ask("Salimos de validateData", localValidation, output);
   if (localValidation.getError() !== null) {
-    $compiler.inject.template("@/src/candidate/Std/snippets/methodError.js", { name: "TypesValidator.validateTypeAppendix" });
+    $compiler.inject.template("@/src/candidate/Std/snippets/methodOut.js", { name: "TypesValidator.validateTypeAppendix" });
     throw localValidation.getError();
   }
   $compiler.inject.template("@/src/candidate/Std/snippets/methodOut.js", { name: "TypesValidator.validateTypeAppendix" });

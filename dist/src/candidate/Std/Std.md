@@ -19,6 +19,7 @@
 - [Std.classes.PropertiesMerger.mergeByPropertiesList](#stdclassespropertiesmergermergebypropertieslist)
 - [Std.classes.Basedir](#stdclassesbasedir)
   - [Definición](#definicion)
+  - [Interfaces](#interfaces)
   - [Instanciación](#instanciacion)
   - [Propiedades](#propiedades)
   - [Métodos prototipo más útiles](#metodos-prototipo-mas-utiles)
@@ -219,6 +220,11 @@ Error.tools.formatErrorList(errors, "%name => %message [%stack]\n%frames", "%fun
 >     - como añadir el símbolo de unión de rutas al final:
 >        - mediante `Basedir.prototype.appendPathSeparator`
 >     - y otros.
+
+### Interfaces
+
+- `Std.interfaces.InstantiableInterface`
+- `Std.interfaces.BasedirInterface`
 
 ### Instanciación
 

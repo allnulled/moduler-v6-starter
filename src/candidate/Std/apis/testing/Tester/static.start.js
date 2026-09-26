@@ -19,9 +19,9 @@ async function (title, callback, options = {}, extensions = {}, baseTester = fal
 
   Print_start: {
     if(tester.parent === null) {
-      Std.objects.Ansi.style("cyan,underline").print(`[*] [Std.all.Tester] begins collection: ${title}`);
+      Std.objects.Ansi.style("bgCyan,black,underline").print(`[*] Tester begins collection: ${title}`);
     } else {
-      Std.objects.Ansi.style("blackBright").print(`[*] [Std.all.Tester] begins case «${title}»`);
+      Std.objects.Ansi.style("blackBright").print(`[*] Tester begins case «${title}»`);
     }
   }
   
@@ -39,22 +39,22 @@ async function (title, callback, options = {}, extensions = {}, baseTester = fal
   
   Report_case: {
     if (result instanceof Error) {
-      Std.objects.Ansi.style("red").print(`[!] [Std.all.Tester] failed case «${title}», more details:`);
+      Std.objects.Ansi.style("red").print(`[!] Tester failed case «${title}», more details:`);
       console.log(result);
       tester.getRoot().errors.push({ title: tester.getFullTitle(), error: result });
     } else if(tester.parent !== null) {
-      Std.objects.Ansi.style("green").print(`[*] [Std.all.Tester] passed case «${title}» successfully`);
+      Std.objects.Ansi.style("green").print(`[*] Tester passed case «${title}» successfully`);
     }
   }
 
   Report_on_root: {
     if(tester.parent === null) {
       if(tester.errors.length) {
-        Std.objects.Ansi.style("red,underline").print(`[!] [Std.all.Tester] reporting ${tester.errors.length} errors from collection «${title}»:`);
+        Std.objects.Ansi.style("red,underline").print(`[!] Tester reporting ${tester.errors.length} errors from collection «${title}»:`);
         console.log(Error.formatList(tester.errors));
-        Std.objects.Ansi.style("bgRed,black,underline").print(`[!] [Std.all.Tester] failed collection «${title}» with ${tester.errors.length} errors.`);
+        Std.objects.Ansi.style("bgRed,black,underline").print(`[!] Tester failed collection «${title}» with ${tester.errors.length} errors.`);
       } else {
-        Std.objects.Ansi.style("bgGreen,black,underline").print(`[*] [Std.all.Tester] passed collection «${title}» succesfully`);
+        Std.objects.Ansi.style("bgGreen,black,underline").print(`[*] Tester passed collection «${title}» succesfully`);
       }
     }
   }

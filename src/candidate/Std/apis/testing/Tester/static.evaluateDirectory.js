@@ -11,15 +11,18 @@ async function evaluateDirectory(options = {}) {
   $moduler.assert(typeof directory === "string", `Required parameter «directory» to be string but «${typeof directory}» was found instead on «Std.classes.Tester.evaluateDirectory»`);
   $moduler.assert(typeof injection === "object", `Required parameter «injection» to be object but «${typeof injection}» was found instead on «Std.classes.Tester.evaluateDirectory»`);
   await $moduler.settings.load();
+  if(files.length === 0) {
+    return 0;
+  }
   const allErrors = [];
-  Std.objects.Ansi.style("blackBright,bold").print(`[*] ModulerV6 is starting test collection with ${files.length} files of: ${directory}`);
+  Std.objects.Ansi.style("bgCyan,black,underline").print(`[*] Tester begins test directory with ${files.length} files of: ${$moduler.rootdirOf(directory)}`);
   await Std.functions.triggerMethodIfExists(this, "onBeforeTestCollection", [{ ...options, }]);
   Iterating_collections:
   for (let indexTest = 0; indexTest < files.length; indexTest++) {
     const file = files[indexTest];
     const testPath = $moduler.normalizationOf(file);
     try {
-      Std.objects.Ansi.style("cyan").print(`[*] ModulerV6 is importing test of: ${testPath}`);
+      Std.objects.Ansi.style("cyan").print(`[*] Tester runs test directory ${indexTest+1}/${files.length} of: ${$moduler.rootdirOf(testPath)}`);
       const testCallback = await $moduler.import(testPath);
       Std.assert(typeof testCallback === "function", `Test at «${$moduler.rootdirOf(testPath)}» is not exporting a callback to evaluate on «Std.classes.Tester.evaluateBrowserDirectory»`);
       const testResult = await this.evaluateCallback(testCallback, { ...options, ...options.injection });
@@ -36,10 +39,10 @@ async function evaluateDirectory(options = {}) {
   await Std.functions.triggerMethodIfExists(this, "onAfterTestCollection", [{ ...options, }]);
   Report_success_or_errors: {
     if (!allErrors.length) {
-      Std.objects.Ansi.style("bgGreen,black,underline").print(`[*] Passed tests collection on: ${$moduler.rootdirOf(directory)}`);
+      Std.objects.Ansi.style("bgGreen,black,underline").print(`[*] Tester passed test directory of: ${$moduler.rootdirOf(directory)}`);
       break Report_success_or_errors;
     }
-    Std.objects.Ansi.style("red,bold").print(`\n[!!] Tester.evaluateDirectory has reported ${allErrors.length} errors on test collection at:\n     ${$moduler.rootdirOf(directory)}`);
+    Std.objects.Ansi.style("bgRed,white").print(`\n[!!] Tester.evaluateDirectory has reported ${allErrors.length} errors on test directory at:\n     ${$moduler.rootdirOf(directory)}`);
     console.log(Error.formatList(allErrors));
   }
 }

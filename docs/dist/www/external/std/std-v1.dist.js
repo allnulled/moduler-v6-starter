@@ -13377,9 +13377,12 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
               `Required parameter «injection» to be object but «${typeof injection}» was found instead on «Std.classes.Tester.evaluateDirectory»`,
             );
             await $moduler.settings.load();
+            if (files.length === 0) {
+              return 0;
+            }
             const allErrors = [];
-            Std.objects.Ansi.style("blackBright,bold").print(
-              `[*] ModulerV6 is starting test collection with ${files.length} files of: ${directory}`,
+            Std.objects.Ansi.style("bgCyan,black,underline").print(
+              `[*] Tester begins test directory with ${files.length} files of: ${$moduler.rootdirOf(directory)}`,
             );
             await Std.functions.triggerMethodIfExists(
               this,
@@ -13395,7 +13398,7 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
               const testPath = $moduler.normalizationOf(file);
               try {
                 Std.objects.Ansi.style("cyan").print(
-                  `[*] ModulerV6 is importing test of: ${testPath}`,
+                  `[*] Tester runs test directory ${indexTest + 1}/${files.length} of: ${$moduler.rootdirOf(testPath)}`,
                 );
                 const testCallback = await $moduler.import(testPath);
                 Std.assert(
@@ -13436,12 +13439,12 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
             Report_success_or_errors: {
               if (!allErrors.length) {
                 Std.objects.Ansi.style("bgGreen,black,underline").print(
-                  `[*] Passed tests collection on: ${$moduler.rootdirOf(directory)}`,
+                  `[*] Tester passed test directory of: ${$moduler.rootdirOf(directory)}`,
                 );
                 break Report_success_or_errors;
               }
-              Std.objects.Ansi.style("red,bold").print(
-                `\n[!!] Tester.evaluateDirectory has reported ${allErrors.length} errors on test collection at:\n     ${$moduler.rootdirOf(directory)}`,
+              Std.objects.Ansi.style("bgRed,white").print(
+                `\n[!!] Tester.evaluateDirectory has reported ${allErrors.length} errors on test directory at:\n     ${$moduler.rootdirOf(directory)}`,
               );
               console.log(Error.formatList(allErrors));
             }
@@ -13582,12 +13585,12 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
 
             Print_start: {
               if (tester.parent === null) {
-                Std.objects.Ansi.style("cyan,underline").print(
-                  `[*] [Std.all.Tester] begins collection: ${title}`,
+                Std.objects.Ansi.style("bgCyan,black,underline").print(
+                  `[*] Tester begins collection: ${title}`,
                 );
               } else {
                 Std.objects.Ansi.style("blackBright").print(
-                  `[*] [Std.all.Tester] begins case «${title}»`,
+                  `[*] Tester begins case «${title}»`,
                 );
               }
             }
@@ -13607,7 +13610,7 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
             Report_case: {
               if (result instanceof Error) {
                 Std.objects.Ansi.style("red").print(
-                  `[!] [Std.all.Tester] failed case «${title}», more details:`,
+                  `[!] Tester failed case «${title}», more details:`,
                 );
                 console.log(result);
                 tester
@@ -13615,7 +13618,7 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
                   .errors.push({ title: tester.getFullTitle(), error: result });
               } else if (tester.parent !== null) {
                 Std.objects.Ansi.style("green").print(
-                  `[*] [Std.all.Tester] passed case «${title}» successfully`,
+                  `[*] Tester passed case «${title}» successfully`,
                 );
               }
             }
@@ -13624,15 +13627,15 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
               if (tester.parent === null) {
                 if (tester.errors.length) {
                   Std.objects.Ansi.style("red,underline").print(
-                    `[!] [Std.all.Tester] reporting ${tester.errors.length} errors from collection «${title}»:`,
+                    `[!] Tester reporting ${tester.errors.length} errors from collection «${title}»:`,
                   );
                   console.log(Error.formatList(tester.errors));
                   Std.objects.Ansi.style("bgRed,black,underline").print(
-                    `[!] [Std.all.Tester] failed collection «${title}» with ${tester.errors.length} errors.`,
+                    `[!] Tester failed collection «${title}» with ${tester.errors.length} errors.`,
                   );
                 } else {
                   Std.objects.Ansi.style("bgGreen,black,underline").print(
-                    `[*] [Std.all.Tester] passed collection «${title}» succesfully`,
+                    `[*] Tester passed collection «${title}» succesfully`,
                   );
                 }
               }
@@ -13813,7 +13816,7 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
           prototype: {},
           static: {
             validateData: async function validateData(
-              validator,
+              validatorBrute,
               data,
               stateBrute = false,
               stepBrute = false,
@@ -13822,8 +13825,18 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
                 "TypesValidator.validateData",
                 arguments || [],
               );
-              let state, step;
+              let validator, state, step;
               All_validation: {
+                Step_0_Parse_validator_expression_if_string: {
+                  validator =
+                    typeof validatorBrute === "string"
+                      ? Std.classes.TypesParser.parse(validatorBrute)
+                      : validatorBrute;
+                  Std.assert(typeof validator === "object", {
+                    name: "BadParamError",
+                    message: `Required «validator» to be string or object but «${typeof validator}» was found instead on «TypesValidator.validateData»`,
+                  });
+                }
                 Step_1_Initialize: {
                   state =
                     stateBrute ||
@@ -13853,26 +13866,26 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
                         fails: [
                           Error.normalize({
                             name: "ValidationWarning",
-                            message: `Property «data.${step.dataPointer.join(".")}» is optional and undefined`,
+                            message: `Property «${step.dataPointer.join(".") || "~"}» is optional and undefined`,
                           }),
                         ],
                       };
                       break Step_2_Digest_validation;
                     }
                   }
-                  Validate_specific_type: {
-                    let localError = null;
-                    let localValidation = {
-                      hasError: function () {
-                        return localError !== null;
-                      },
-                      getError: function () {
-                        return localError;
-                      },
-                      setError: function (error) {
-                        localError = error;
-                      },
-                    };
+                  let localError = null;
+                  let localValidation = {
+                    hasError: function () {
+                      return localError !== null;
+                    },
+                    getError: function () {
+                      return localError;
+                    },
+                    setError: function (error) {
+                      localError = error;
+                    },
+                  };
+                  Validate_core: {
                     try {
                       if (validator.grammar === "object type") {
                         await this.validateTypeObject(
@@ -13888,6 +13901,13 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
                           step,
                           state,
                         );
+                      } else if (validator.grammar === "factory type") {
+                        await this.validateTypeFactory(
+                          validator,
+                          data,
+                          step,
+                          state,
+                        );
                       } else if (validator.grammar === "type id") {
                         await this.validateTypeId(validator, data, step, state);
                       } else
@@ -13898,6 +13918,8 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
                     } catch (error) {
                       localError = error;
                     }
+                  }
+                  Validate_appendixes: {
                     if (validator.appendix) {
                       await this.validateTypeAppendix(
                         validator,
@@ -13907,15 +13929,31 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
                         localValidation,
                       );
                     }
+                  }
+                  Negate_validation_if_negation_exists: {
+                    if (validator.negation === "!") {
+                      if (localError === null) {
+                        localError = Error.normalize({
+                          name: "NegationError",
+                          message: `Validator is negating expression at «${step.validatorPointer.join(".") || "~"}» but data at «${step.dataPointer.join(".") || "~"}» is passing the validation instead`,
+                        });
+                      } else {
+                        localError = null;
+                      }
+                    }
+                  }
+                  Throw_if_errors: {
                     if (localError !== null) {
-                      Std.all.Tracer?.globalInstance.error(
+                      Std.all.Tracer?.globalInstance.out(
                         "TypesValidator.validateData",
                         arguments || [],
                       );
                       throw localError;
                     }
                   }
+                  break Step_2_Digest_validation; // porque termina aquí.
                 }
+                break All_validation; // porque termina aquí.
               }
               Final_step_Return: {
                 Std.all.Introspector.set(
@@ -13989,7 +14027,7 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
                     state,
                     step.newClone.config({
                       dataPointer: step.dataPointer.concat([key]),
-                      validatorPointer: step.dataPointer.concat([
+                      validatorPointer: step.validatorPointer.concat([
                         "properties",
                         key,
                       ]),
@@ -14025,12 +14063,31 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
               }
               return (step.result = validation);
             },
+            validateTypeFactory: async function validateTypeFactory(
+              validator,
+              data,
+              step,
+              state,
+            ) {
+              if (typeof data !== "function") {
+                // Std.all.Printer.debug(validator, data, step, state);
+                throw Error.normalize({
+                  name: "FunctionTypeValidationError",
+                  message: `Property at «${step.dataPointer.join(".") || "~"}» should be function to pass validator at «${step.validatorPointer.join(".") || "~"}» but «${typeof data}» was found instead`,
+                });
+              }
+            },
             validateTypeId: function validateTypeId(
               validator,
               data,
               step,
               state,
             ) {
+              if (!(validator.id in Std.types))
+                Error.normalize({
+                  name: "TypeNotFoundError",
+                  message: `Type ${validator.id} is not a known type`,
+                }).rethrow();
               const TypeClass = Std.types[validator.id];
               //console.log(validator, data, step, state);
               return (step.result = TypeClass.abstraction.onValidateData(
@@ -14108,7 +14165,7 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
                   } else if (operator === "&") {
                     Si_tenia_un_error_lo_lanzamos: {
                       if (localValidation.getError() !== null) {
-                        Std.all.Tracer?.globalInstance.error(
+                        Std.all.Tracer?.globalInstance.out(
                           "TypesValidator.validateTypeAppendix",
                           arguments || [],
                         );
@@ -14153,7 +14210,7 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
               }
               // await Std.all.Printer.ask("Salimos de validateData", localValidation, output);
               if (localValidation.getError() !== null) {
-                Std.all.Tracer?.globalInstance.error(
+                Std.all.Tracer?.globalInstance.out(
                   "TypesValidator.validateTypeAppendix",
                   arguments || [],
                 );
@@ -14617,7 +14674,7 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
                           if (typeof input !== "boolean") {
                             throw Error.normalize({
                               name: "ValidationError",
-                              message: `Required «input» to be boolean but «${typeof input}» was found instead at «data.${step.dataPointer.join(".")}»`,
+                              message: `Required «input» to be boolean but «${typeof input}» was found instead at «${step.dataPointer.join(".") || "~"}»`,
                             });
                           }
                           return {
@@ -14648,7 +14705,7 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
                         if (typeof input !== "number") {
                           throw Error.normalize({
                             name: "ValidationError",
-                            message: `Required «input» to be number but «${typeof input}» was found instead at «data.${step.dataPointer.join(".")}»`,
+                            message: `Required «input» to be number but «${typeof input}» was found instead at «${step.dataPointer.join(".") || "~"}»`,
                           });
                         }
                         return {
@@ -14679,7 +14736,7 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
                         if (typeof input !== "string") {
                           throw Error.normalize({
                             name: "ValidationError",
-                            message: `Required «input» to be string but «${typeof input}» was found instead at «data.${step.dataPointer.join(".")}»`,
+                            message: `Required «input» to be string but «${typeof input}» was found instead at «${step.dataPointer.join(".") || "~"}»`,
                           });
                         }
                         return {
@@ -14711,7 +14768,7 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
                           if (!Array.isArray(input)) {
                             throw Error.normalize({
                               name: "ValidationError",
-                              message: `Required «input» to be array but «${typeof input}» was found instead at «data.${step.dataPointer.join(".")}»`,
+                              message: `Required «input» to be array but «${typeof input}» was found instead at «${step.dataPointer.join(".") || "~"}»`,
                             });
                           }
                           return {
@@ -14742,7 +14799,7 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
                         if (typeof input !== "object") {
                           throw Error.normalize({
                             name: "ValidationError",
-                            message: `Required «input» to be object but «${typeof input}» was found instead at «data.${step.dataPointer.join(".")}»`,
+                            message: `Required «input» to be object but «${typeof input}» was found instead at «${step.dataPointer.join(".") || "~"}»`,
                           });
                         }
                         return {
@@ -14773,7 +14830,7 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
                         if (typeof input !== "function") {
                           throw Error.normalize({
                             name: "ValidationError",
-                            message: `Required «input» to be function but «${typeof input}» was found instead at «data.${step.dataPointer.join(".")}»`,
+                            message: `Required «input» to be function but «${typeof input}» was found instead at «${step.dataPointer.join(".") || "~"}»`,
                           });
                         }
                         return {
@@ -14805,7 +14862,7 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
                           if (input !== null) {
                             throw Error.normalize({
                               name: "ValidationError",
-                              message: `Required «input» to be null but «${typeof input}» was found instead at «data.${step.dataPointer.join(".")}»`,
+                              message: `Required «input» to be null but «${typeof input}» was found instead at «${step.dataPointer.join(".") || "~"}»`,
                             });
                           }
                           return {
@@ -14841,21 +14898,45 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
             "\n" +
             "Prevaluable_2 = " +
             "\n" +
+            "  label:Type_label?" +
+            "\n" +
             "  negation:Type_negation?" +
             "\n" +
-            "  core:Prevaluable" +
+            "  core:Prevaluable_1" +
             "\n" +
             "  parameters:Type_parameters?" +
             "\n" +
             "  modifiers:Type_modifiers?" +
             "\n" +
-            "    { return { ...core, negation: negation || undefined, parameters: parameters || undefined, ...modifiers || undefined } }" +
+            "  defaults:Type_defaults?" +
+            "\n" +
+            "    { return { ...core, label: label || undefined, negation: negation || undefined, parameters: parameters || undefined, ...modifiers || undefined, defaults: defaults !== null ? defaults : undefined } }" +
             "\n" +
             "" +
             "\n" +
-            "Prevaluable = Type_group / Type_atom / Type_object / Type_array" +
+            "Prevaluable_1 = Type_group / Type_factory / Type_atom / Type_object / Type_array" +
             "\n" +
             "" +
+            "\n" +
+            "Type_factory = " +
+            "\n" +
+            "  token1:(_)" +
+            "\n" +
+            '  isAsync:(("async"/"sync") _)?' +
+            "\n" +
+            '  token2:("function" _)' +
+            "\n" +
+            '  token3:("(" _)' +
+            "\n" +
+            "  input:Type_array_items?" +
+            "\n" +
+            '  token4:(_ ")" _ "=>" _)' +
+            "\n" +
+            "  output:Evaluable" +
+            "\n" +
+            '    { return { grammar: "factory type", input, output, synchrony: !isAsync ? undefined : isAsync[0] } }' +
+            "\n" +
+            "  " +
             "\n" +
             "Type_object =" +
             "\n" +
@@ -14991,11 +15072,29 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
             "\n" +
             "" +
             "\n" +
+            'Type_label = _ "@" Type_identifier' +
+            "\n" +
+            "    { return text().trim() }" +
+            "\n" +
+            "" +
+            "\n" +
+            'Type_defaults = _ "=" _ Default_value' +
+            "\n" +
+            "" +
+            "\n" +
+            "Default_value = Hardcoded_value / Type_identifier" +
+            "\n" +
+            "" +
+            "\n" +
             "Property_chars = [A-Za-z_$] [A-Za-z0-9_$]* { return text() }" +
             "\n" +
             "" +
             "\n" +
-            "Variable_name = Unforbidden_tokens { return text() }" +
+            "Variable_name = Property_chars" +
+            "\n" +
+            "" +
+            "\n" +
+            "// Variable_name = Unforbidden_tokens { return text() }" +
             "\n" +
             "" +
             "\n" +
@@ -15049,6 +15148,10 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
             "\n" +
             '  / "+"' +
             "\n" +
+            '  / "@"' +
+            "\n" +
+            '  / "="' +
+            "\n" +
             '  / "//"' +
             "\n" +
             '  / "\\n" {}' +
@@ -15063,7 +15166,53 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
             "\n" +
             "New_line = ___" +
             "\n" +
-            '___ = "\\r\\n" / "\\r" / "\\n"',
+            '___ = "\\r\\n" / "\\r" / "\\n"' +
+            "\n" +
+            "" +
+            "\n" +
+            "Hardcoded_value = json_value" +
+            "\n" +
+            "" +
+            "\n" +
+            "json_value = json_object / json_array / json_string / json_number / json_true / json_false / json_null " +
+            "\n" +
+            'json_object = "{" json_space m:json_members? json_space "}" { return m }' +
+            "\n" +
+            "json_members = m1:json_member mN:json_coma_member* { return {...m1, ...Object.assign({},...mN) } }" +
+            "\n" +
+            'json_coma_member = json_space "," json_space m:json_member { return m }' +
+            "\n" +
+            'json_member = key:(json_string/js_variable_name) json_space ":" json_space value:json_value { return {[key]: value}}' +
+            "\n" +
+            'json_array = "[" json_space e:json_elements? json_space "]" { return e || [] }' +
+            "\n" +
+            "json_elements = e1:json_value eN:json_coma_value* { return [e1, ...eN || []] }" +
+            "\n" +
+            'json_coma_value = json_space "," json_space v:json_value { return v }' +
+            "\n" +
+            "json_string = '\"' t:json_string_char* '\"'  { return t.join(\"\") }" +
+            "\n" +
+            'json_string_char = json_escape / [^"\\\\\\u0000-\\u001F]' +
+            "\n" +
+            'json_escape = "\\\\" ( \'"\' / "\\\\" / "/" / "b" / "f" / "n" / "r" / "t" / "u" [0-9a-fA-F]{4})' +
+            "\n" +
+            'json_number = "-"? json_integer json_fraction? json_exponent? { return parseFloat(text()) }' +
+            "\n" +
+            'json_integer = "0" / [1-9] [0-9]* { return parseInt(text()) }' +
+            "\n" +
+            'json_fraction = "." [0-9]+' +
+            "\n" +
+            "json_exponent = [eE] [+-]? [0-9]+" +
+            "\n" +
+            'json_true = "true" { return true }' +
+            "\n" +
+            'json_false = "false" { return false }' +
+            "\n" +
+            'json_null = "null" { return null }' +
+            "\n" +
+            "js_variable_name = [A-Za-záéíóúàèìòù$_] [A-Za-z0-9áéíóúàèìòù$_]* { return text() }" +
+            "\n" +
+            "json_space = [ \\t\\n\\r]*",
           {
             output: "parser", // also: "source", "parser"
           },

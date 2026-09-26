@@ -21,7 +21,7 @@ async function validateTypeObject(validator, data, step, state) {
     try {
       subvalidation = await this.validateData(validator.properties[key], data[key], state, step.newClone.config({
         dataPointer: step.dataPointer.concat([key]),
-        validatorPointer: step.dataPointer.concat(["properties", key]),
+        validatorPointer: step.validatorPointer.concat(["properties", key]),
       }));
     } catch (error) {
       throw error;

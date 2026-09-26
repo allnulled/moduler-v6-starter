@@ -1,10 +1,14 @@
 module.exports = async function ({ devbin, Std }) {
   
+  return "ESTE TEST ESTÁ SUSPENDIDO A FAVOR DEL 009.Std.classes.TypesValidator soporta...";
+
+
   const {
     Asserter,
     TypesParser,
     TypesValidator,
   } = Std.all;
+
 
   const parameters = { Asserter, TypesParser, TypesValidator, Std, devbin };
 
