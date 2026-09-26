@@ -1,4 +1,11 @@
 class IdbFilesystem {
+  
+  static {
+    $moduler.toolkit.makeClass([
+      Std.interfaces.InstantiableInterface,
+      Std.interfaces.TryableInterface,
+    ], this);
+  }
 
   static async mount() {
     const fs = new this();
@@ -9,6 +16,10 @@ class IdbFilesystem {
   constructor() {
     this.db = null;
     this.crud = null;
+  }
+
+  basenameOf(path) {
+    return path.split("/").filter(it => !!it).pop();
   }
 
   async mount() {
@@ -45,6 +56,9 @@ class IdbFilesystem {
   }
 
   async writeFile(file, content) {
+    Esto_es_para_imitar_a_nodejs: {
+      await this.crud.get("files", Std.classes.Basedir.superiorPathOf(file));
+    }
     await this.crud.put("files", {
       path: file,
       type: "file",
@@ -67,10 +81,23 @@ class IdbFilesystem {
 
   async readDirectory(dir) {
     const entries = await this.crud.getAll("files");
-    return entries.filter((entry) => {
-      return entry.type === "file" &&
+    const selection = entries.filter((entry) => {
+      La_condicion_buena_seria_esta: {
+        break La_condicion_buena_seria_esta;
+        return entry.type === "file" &&
         entry.path.startsWith(dir + "/");
-    });
+      }
+      Pero_esta_es_la_compatible_con_node: {
+        return entry.path.startsWith(dir + "/") && (entry.path.replace(dir + "/", "").match(/\//g) === null);
+      }
+    }).map(entry => this.basenameOf(entry.path));
+    Esto_es_para_imitar_a_nodejs_tambien: {
+      if(selection.length === 0) {
+        const out = await this.crud.get("files", dir);
+        if(!out) throw new Error(`IdbFilesystem.prototype.readDirectory complains that directory is not found: ${dir}`);
+      }
+    }
+    return selection;
   }
 
   async writeDirectory(dir) {
@@ -110,16 +137,6 @@ class IdbFilesystem {
 
   async moveDirectory(src, dst) {
     throw new Error("Not supported yet");
-  }
-
-  static {
-    this.trify = Std.functions.trifyAsync;
-    this.prototype.readFile.try = this.trify(this.prototype.readFile, this);
-    this.prototype.writeFile.try = this.trify(this.prototype.writeFile, this);
-    this.prototype.deleteFile.try = this.trify(this.prototype.deleteFile, this);
-    this.prototype.readDirectory.try = this.trify(this.prototype.readDirectory, this);
-    this.prototype.writeDirectory.try = this.trify(this.prototype.writeDirectory, this);
-    this.prototype.deleteDirectory.try = this.trify(this.prototype.deleteDirectory, this);
   }
 
 }

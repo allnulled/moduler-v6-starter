@@ -12115,16 +12115,63 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
           };
       Std.all.trifyAsync = Std.functions.trifyAsync = function trifyAsync(
         callback,
-        scope = undefined,
         inErrorReturn = undefined,
       ) {
         return async function (...args) {
           try {
-            return await callback.call(scope, ...args);
+            return await callback(...args);
           } catch (error) {
             return typeof inErrorReturn !== "undefined" ? inErrorReturn : error;
           }
         };
+      };
+      Std.all.TrySyncProxy = Std.classes.TrySyncProxy = class TrySyncProxy {
+        constructor(target) {
+          return new Proxy(target, {
+            get(target, property) {
+              const method = target[property];
+              if (typeof method !== "function") {
+                return method;
+              }
+              return (...args) => {
+                try {
+                  return method.apply(target, args);
+                } catch (error) {
+                  return error;
+                }
+              };
+            },
+          });
+        }
+      };
+      Std.all.TryAsyncProxy = Std.classes.TryAsyncProxy = class TryAsyncProxy {
+        constructor(target) {
+          return new Proxy(target, {
+            get(target, property) {
+              const method = target[property];
+              if (typeof method !== "function") {
+                return method;
+              }
+              return async (...args) => {
+                try {
+                  return await method.apply(target, args);
+                } catch (error) {
+                  return error;
+                }
+              };
+            },
+          });
+        }
+      };
+      Std.all.TryableInterface = Std.interfaces.TryableInterface = {
+        prototype: {
+          get try() {
+            return new Std.classes.TrySyncProxy(this);
+          },
+          get asyncTry() {
+            return new Std.classes.TryAsyncProxy(this);
+          },
+        },
       };
       Std.all.JsonStringifier =
         Std.classes.JsonStringifier = class JsonStringifier {
@@ -14229,8 +14276,239 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
           },
           static: {},
         };
+      Std.all.BasedirInterface = Std.interfaces.BasedirInterface =
+        // @interface:BasedirInterface
+        {
+          static: {
+            pathSymbols: {
+              REGEX_FOR_SLASH_AT_THE_END: /(\\|\/)$/g,
+              REGEX_FOR_PROTOCOL_BASED_PATH: /^([A-Za-z0-9\-\_\$]*)\:\/\//g,
+              REGEX_FOR_ABSOLUTE_WINDOWS_PATH:
+                /^(([A-Za-z]:(\\|\/))|((\\|\/){2}))/g,
+            },
+            superiorPathOf: function superiorPathOf(subpath) {
+              const parts = this.splitPath(subpath);
+              if (parts.pop() === "") parts.pop();
+              return parts.join("/");
+            },
+            splitPath: function splitPath(subpath) {
+              const out = [""];
+              let index = 0;
+              while (index < subpath.length) {
+                const ch = subpath[index];
+                if (ch === "/" || ch === "\\") {
+                  out.push("");
+                } else {
+                  out[out.length - 1] += ch;
+                }
+                index++;
+              }
+              return out;
+            },
+            removePathSymbols: function removePathSymbols(
+              filepathInput,
+              returnData = false,
+            ) {
+              let output = filepathInput;
+              const activeOptions = {};
+              Remove_justTry_prefix: {
+                if (output.startsWith("!")) {
+                  output = output.substr(1);
+                  activeOptions.justTry = true;
+                }
+              }
+              if (returnData) {
+                return [output, activeOptions];
+              }
+              return output;
+            },
+            appendPathSeparator: function appendPathSeparator(subpath) {
+              return (
+                subpath.replace(
+                  this.pathSymbols.REGEX_FOR_SLASH_AT_THE_END,
+                  "",
+                ) + "/"
+              );
+            },
+          },
+          prototype: {
+            resolvePath: function resolvePath(subpathsInput, origin = false) {
+              $moduler.assert(
+                Array.isArray(subpathsInput),
+                `Parameter «subpaths» must be array on «ModulerV6.prototype._joinPaths»`,
+              );
+              $moduler.assert(
+                subpathsInput.length !== 0,
+                `Parameter «subpaths.length» cannot be 0 on «ModulerV6.prototype._joinPaths»`,
+              );
+              let out = "",
+                activatedOptions = {};
+              const subpaths = [].concat(subpathsInput);
+              Correct_filesymbols: {
+                $moduler.assert(
+                  typeof subpaths[0] === "string",
+                  `Parameter «subpaths[0]» must be string but «${typeof subpaths[0]}» was found instead on «ModulerV6.prototype._joinPaths»`,
+                );
+                const [_subpath, _activatedOptions] =
+                  this.constructor.removePathSymbols(subpaths[0], true);
+                subpaths[0] = _subpath;
+                activatedOptions = _activatedOptions;
+              }
+              Join_paths_overwritting_when_required: for (
+                let index = 0;
+                index < subpaths.length;
+                index++
+              ) {
+                const subpath = subpaths[index];
+                $moduler.assert(
+                  typeof subpath === "string",
+                  `Parameter «subpaths[${index}]» must be string too on «ModulerV6.prototype._joinPaths»`,
+                );
+                $moduler.assert(
+                  subpath !== "",
+                  `Parameter «subpaths[${index}]» cannot be empty string on «ModulerV6.prototype._joinPaths»`,
+                );
+                if (subpath.includes("://")) {
+                  // @case Ruta por protocolo
+                  $moduler.assert(
+                    subpath.match(
+                      this.constructor.pathSymbols
+                        .REGEX_FOR_PROTOCOL_BASED_PATH,
+                    ),
+                    `Paths can only have «://» at the begining, and preceded only by a protocol id, if any in the case of «${subpath}» on «ModulerV6.prototype._joinPaths»`,
+                  );
+                  out = subpath;
+                } else if (
+                  subpath.includes(":\\") ||
+                  subpath.includes(":/") ||
+                  subpath.startsWith("\\\\") ||
+                  subpath.startsWith("//")
+                ) {
+                  // @case Ruta absoluta estilo Windows
+                  $moduler.assert(
+                    subpath.match(
+                      this.constructor.pathSymbols
+                        .REGEX_FOR_ABSOLUTE_WINDOWS_PATH,
+                    ),
+                    `Paths can only have «:\\|:/|\\\\|//» at the begining, and preceded only by a standard Windows disk unit identifier, if any in the case of «${subpath}» on «ModulerV6.prototype._joinPaths»`,
+                  );
+                  out = subpath;
+                } else if (subpath.startsWith("/")) {
+                  // @case Ruta absoluta estilo Linux
+                  out = subpath;
+                } else if (subpath.startsWith("./")) {
+                  // @case Ruta relativa al basedir
+                  $moduler.assert(
+                    typeof this.basedir === "string",
+                    `Cannot use «./» expression because «this.basedir» is «${typeof this.basedir}» right now in the case of «${subpath}» on «ModulerV6.prototype._joinPaths»`,
+                  );
+                  out =
+                    this.constructor.appendPathSeparator(this.basedir) +
+                    subpath.substr(2);
+                } else if (subpath.startsWith("../")) {
+                  // @case Ruta relativa al basedir pero directorio superior
+                  $moduler.assert(
+                    typeof this.basedir === "string",
+                    `Cannot use «../» expression because «this.basedir» is «${typeof this.basedir}» right now in the case of «${subpath}» on «ModulerV6.prototype._joinPaths»`,
+                  );
+                  out =
+                    this.constructor.appendPathSeparator(this.basedir, "..") +
+                    subpath.substr(3);
+                } else if (subpath.startsWith("@/")) {
+                  // @case Ruta relativa al rootdir
+                  $moduler.assert(
+                    typeof this.rootdir === "string",
+                    `Cannot use «@/» expression because «this.rootdir» is «${typeof this.rootdir}» right now in the case of «${subpath}» on «ModulerV6.prototype._joinPaths»`,
+                  );
+                  out =
+                    this.constructor.appendPathSeparator(this.rootdir) +
+                    subpath.substr(2);
+                } else {
+                  // @case Cualquier otra ruta
+                  if (out.length) {
+                    out = this.constructor.appendPathSeparator(out) + subpath;
+                  } else {
+                    out = subpath;
+                  }
+                }
+              }
+              Resolve_one_and_two_dots: {
+                //    C:/una/ruta/absoluta.js
+                //    C:\una\ruta\absoluta.js
+                //    \\una\ruta\absoluta.js
+                //    /una/ruta/absoluta.js
+                //    ://una/ruta/absoluta.js
+                //    http://una/ruta/absoluta.js
+                //    ./una/ruta/relativa.js
+                //    ../una/ruta/relativa.js
+                //    @/una/ruta/relativa.js
+                //    una/ruta/relativa.js
+                const parts = this.constructor.splitPath(out);
+                const newParts = [];
+                for (let index = 0; index < parts.length; index++) {
+                  const part = parts[index];
+                  if (part === "..") {
+                    newParts.pop();
+                  } else if (part === ".") {
+                    // @OK.
+                  } else {
+                    newParts.push(part);
+                  }
+                }
+                out = newParts.join("/");
+              }
+              if (activatedOptions.justTry) {
+                out = `!${out}`;
+              }
+              return out;
+            },
+            normalizationOf: function normalizationOf(subpath) {
+              $moduler.assert(
+                typeof subpath === "string",
+                `Parameter «subpath» must be string on «ModulerV6.prototype.normalizationOf»`,
+              );
+              return this.resolvePath(
+                subpath.startsWith("./") && this.basedir
+                  ? [this.basedir, subpath]
+                  : [subpath],
+                "normalizationOf",
+              );
+            },
+            rootpathOf: function rootpathOf(subpath) {
+              const normalized = this.resolvePath([subpath], "rootdirOf");
+              const rootdirSeparated = this.constructor.appendPathSeparator(
+                this.rootdir,
+              );
+              if (normalized.startsWith(rootdirSeparated)) {
+                return normalized.replace(rootdirSeparated, "@/");
+              }
+              return normalized;
+            },
+            basepathOf: function basepathOf(subpath) {
+              const normalized = this.resolvePath([subpath], "basedirOf");
+              const basedirSeparated = this.constructor.appendPathSeparator(
+                this.basedir,
+              );
+              if (normalized.startsWith(basedirSeparated)) {
+                return normalized.replace(basedirSeparated, "./");
+              }
+              return normalized;
+            },
+          },
+        };
     }
     Wave_5_Utility_classes: {
+      Std.all.Basedir = Std.classes.Basedir = class Basedir {
+        static {
+          $moduler.toolkit.makeClass(
+            [
+              Std.interfaces.InstantiableInterface,
+              Std.interfaces.BasedirInterface,
+            ],
+            this,
+          );
+        }
+      };
       Std.all.Introspector = Std.classes.Introspector = class Introspector {
         static {
           $moduler.toolkit.makeClass(
@@ -14884,6 +15162,16 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
     Wave_7_Filesystem: {
       Std.all.NodejsFilesystem =
         Std.classes.NodejsFilesystem = class NodejsFilesystem {
+          static {
+            $moduler.toolkit.makeClass(
+              [
+                Std.interfaces.InstantiableInterface,
+                Std.interfaces.TryableInterface,
+              ],
+              this,
+            );
+          }
+
           static async mount() {
             // @ASYNC: to polyfill
             return new this();
@@ -14901,44 +15189,48 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
             // @EMPTY: just to polyfill
           }
 
-          readFile(file) {
+          readFile(fileBrute) {
+            const file = $moduler.normalizationOf(fileBrute);
             return require("fs").promises.readFile(file, "utf8");
           }
 
-          writeFile(file, content) {
+          writeFile(fileBrute, content) {
+            const file = $moduler.normalizationOf(fileBrute);
             return require("fs").promises.writeFile(file, content, "utf8");
           }
 
-          deleteFile(file) {
+          deleteFile(fileBrute) {
+            const file = $moduler.normalizationOf(fileBrute);
             return require("fs").promises.unlink(file);
           }
 
-          hasFile(file) {
+          hasFile(fileBrute) {
+            const file = $moduler.normalizationOf(fileBrute);
             return require("fs")
               .promises.lstat(file)
               .then((stat) => stat.isFile())
               .catch((error) => false);
           }
 
-          readDirectory(dir) {
+          readDirectory(dirBrute) {
+            const dir = $moduler.normalizationOf(dirBrute);
             return require("fs").promises.readdir(dir);
           }
 
-          writeDirectory(dir) {
+          writeDirectory(dirBrute) {
+            const dir = $moduler.normalizationOf(dirBrute);
             return require("fs").promises.mkdir(dir);
           }
 
-          deleteDirectory(dir) {
-            throw new Error("Evitemos, tonterías de estas");
-            return require("fs").promises.rmdir(dir, {
-              recursive: true,
-              force: true,
-            });
+          deleteDirectory(dirBrute) {
+            const dir = $moduler.normalizationOf(dirBrute);
+            return require("fs").promises.rm(dir, { recursive: true });
           }
 
-          hasDirectory(dir) {
+          hasDirectory(dirBrute) {
+            const dir = $moduler.normalizationOf(dirBrute);
             return require("fs")
-              .promises.lstat(file)
+              .promises.lstat(dir)
               .then((stat) => stat.isDirectory())
               .catch((error) => false);
           }
@@ -14957,34 +15249,6 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
 
           async moveDirectory(src, dst) {
             throw new Error("Not supported yet");
-          }
-
-          static {
-            this.trify = Std.functions.trifyAsync;
-            this.prototype.readFile.try = this.trify(
-              this.prototype.readFile,
-              this,
-            );
-            this.prototype.writeFile.try = this.trify(
-              this.prototype.writeFile,
-              this,
-            );
-            this.prototype.deleteFile.try = this.trify(
-              this.prototype.deleteFile,
-              this,
-            );
-            this.prototype.readDirectory.try = this.trify(
-              this.prototype.readDirectory,
-              this,
-            );
-            this.prototype.writeDirectory.try = this.trify(
-              this.prototype.writeDirectory,
-              this,
-            );
-            this.prototype.deleteDirectory.try = this.trify(
-              this.prototype.deleteDirectory,
-              this,
-            );
           }
         };
       Std.all.IdbCrud = Std.classes.IdbCrud = class IdbCrud {
@@ -15034,6 +15298,16 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
         }
       };
       Std.all.IdbFilesystem = Std.classes.IdbFilesystem = class IdbFilesystem {
+        static {
+          $moduler.toolkit.makeClass(
+            [
+              Std.interfaces.InstantiableInterface,
+              Std.interfaces.TryableInterface,
+            ],
+            this,
+          );
+        }
+
         static async mount() {
           const fs = new this();
           await fs.mount();
@@ -15043,6 +15317,13 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
         constructor() {
           this.db = null;
           this.crud = null;
+        }
+
+        basenameOf(path) {
+          return path
+            .split("/")
+            .filter((it) => !!it)
+            .pop();
         }
 
         async mount() {
@@ -15079,6 +15360,12 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
         }
 
         async writeFile(file, content) {
+          Esto_es_para_imitar_a_nodejs: {
+            await this.crud.get(
+              "files",
+              Std.classes.Basedir.superiorPathOf(file),
+            );
+          }
           await this.crud.put("files", {
             path: file,
             type: "file",
@@ -15101,9 +15388,32 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
 
         async readDirectory(dir) {
           const entries = await this.crud.getAll("files");
-          return entries.filter((entry) => {
-            return entry.type === "file" && entry.path.startsWith(dir + "/");
-          });
+          const selection = entries
+            .filter((entry) => {
+              La_condicion_buena_seria_esta: {
+                break La_condicion_buena_seria_esta;
+                return (
+                  entry.type === "file" && entry.path.startsWith(dir + "/")
+                );
+              }
+              Pero_esta_es_la_compatible_con_node: {
+                return (
+                  entry.path.startsWith(dir + "/") &&
+                  entry.path.replace(dir + "/", "").match(/\//g) === null
+                );
+              }
+            })
+            .map((entry) => this.basenameOf(entry.path));
+          Esto_es_para_imitar_a_nodejs_tambien: {
+            if (selection.length === 0) {
+              const out = await this.crud.get("files", dir);
+              if (!out)
+                throw new Error(
+                  `IdbFilesystem.prototype.readDirectory complains that directory is not found: ${dir}`,
+                );
+            }
+          }
+          return selection;
         }
 
         async writeDirectory(dir) {
@@ -15143,121 +15453,12 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
         async moveDirectory(src, dst) {
           throw new Error("Not supported yet");
         }
-
-        static {
-          this.trify = Std.functions.trifyAsync;
-          this.prototype.readFile.try = this.trify(
-            this.prototype.readFile,
-            this,
-          );
-          this.prototype.writeFile.try = this.trify(
-            this.prototype.writeFile,
-            this,
-          );
-          this.prototype.deleteFile.try = this.trify(
-            this.prototype.deleteFile,
-            this,
-          );
-          this.prototype.readDirectory.try = this.trify(
-            this.prototype.readDirectory,
-            this,
-          );
-          this.prototype.writeDirectory.try = this.trify(
-            this.prototype.writeDirectory,
-            this,
-          );
-          this.prototype.deleteDirectory.try = this.trify(
-            this.prototype.deleteDirectory,
-            this,
-          );
-        }
       };
-      Std.all.SwitchableFilesystem =
-        Std.classes.SwitchableFilesystem = class SwitchableFilesystem {
-          constructor() {
-            this._node = false;
-            this._idb = false;
-            this.mode = Std.classes.Environmenter.isBrowser ? "idb" : "node";
-          }
-
-          get fs() {
-            return this[this.mode];
-          }
-
-          get node() {
-            return (this._node =
-              this._node || new Std.classes.NodejsFilesystem());
-          }
-
-          get idb() {
-            return (this._idb = this._idb || new Std.classes.IdbFilesystem());
-          }
-
-          get mount() {
-            return this[this.mode].mount;
-          }
-
-          get unmount() {
-            return this[this.mode].unmount;
-          }
-
-          switchTo(mode) {
-            $moduler.assert(
-              ["idb", "node"].includes(mode),
-              `Parameter «mode» must be 'idb' or 'node'`,
-            );
-            this.mode = mode;
-            return this.mount();
-          }
-
-          get readFile() {
-            return this[this.mode].readFile;
-          }
-
-          get writeFile() {
-            return this[this.mode].writeFile;
-          }
-
-          get deleteFile() {
-            return this[this.mode].deleteFile;
-          }
-
-          get hasFile() {
-            return this[this.mode].hasFile;
-          }
-
-          get readDirectory() {
-            return this[this.mode].readDirectory;
-          }
-
-          get writeDirectory() {
-            return this[this.mode].writeDirectory;
-          }
-
-          get deleteDirectory() {
-            return this[this.mode].deleteDirectory;
-          }
-
-          get hasDirectory() {
-            return this[this.mode].hasDirectory;
-          }
-
-          get copyFile() {
-            return this[this.mode].copyFile;
-          }
-
-          get copyDirectory() {
-            return this[this.mode].copyDirectory;
-          }
-
-          get moveFile() {
-            return this[this.mode].moveFile;
-          }
-
-          get moveDirectory() {
-            return this[this.mode].moveDirectory;
-          }
-        };
+      Std.all.makeFunctionByProperties =
+        Std.functions.makeFunctionByProperties =
+          function makeFunctionByProperties(callback, props = {}) {
+            return Object.assign(callback, props);
+          };
     }
 
     return Std;

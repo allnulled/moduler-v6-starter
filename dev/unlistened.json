@@ -1,5 +1,6 @@
 [
   "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/external/refrescador/**/*",
   "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/external/**/*",
-  "/home/carlos/Escritorio/Programas/moduler-v6-starter/test/unit/src/candidate/Std/v1/501.*/**/*.json"
+  "/home/carlos/Escritorio/Programas/moduler-v6-starter/test/unit/src/candidate/Std/v1/501.*/**/*.json",
+  "/home/carlos/Escritorio/Programas/moduler-v6-starter/test/unit/src/candidate/Std/v1/007.Std.classes.Filesystem puede usar el driver de nodejs/**/*.txt"
 ]

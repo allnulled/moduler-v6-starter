@@ -1,5 +1,12 @@
 class NodejsFilesystem {
 
+  static {
+    $moduler.toolkit.makeClass([
+      Std.interfaces.InstantiableInterface,
+      Std.interfaces.TryableInterface,
+    ], this);
+  }
+
   static async mount() {
     // @ASYNC: to polyfill
     return new this();
@@ -17,37 +24,44 @@ class NodejsFilesystem {
     // @EMPTY: just to polyfill
   }
 
-  readFile(file) {
+  readFile(fileBrute) {
+    const file = $moduler.normalizationOf(fileBrute);
     return require("fs").promises.readFile(file, "utf8");
   }
 
-  writeFile(file, content) {
+  writeFile(fileBrute, content) {
+    const file = $moduler.normalizationOf(fileBrute);
     return require("fs").promises.writeFile(file, content, "utf8");
   }
 
-  deleteFile(file) {
+  deleteFile(fileBrute) {
+    const file = $moduler.normalizationOf(fileBrute);
     return require("fs").promises.unlink(file);
   }
 
-  hasFile(file) {
+  hasFile(fileBrute) {
+    const file = $moduler.normalizationOf(fileBrute);
     return require("fs").promises.lstat(file).then(stat => stat.isFile()).catch(error => false);
   }
 
-  readDirectory(dir) {
+  readDirectory(dirBrute) {
+    const dir = $moduler.normalizationOf(dirBrute);
     return require("fs").promises.readdir(dir);
   }
 
-  writeDirectory(dir) {
+  writeDirectory(dirBrute) {
+    const dir = $moduler.normalizationOf(dirBrute);
     return require("fs").promises.mkdir(dir);
   }
 
-  deleteDirectory(dir) {
-    throw new Error("Evitemos, tonterías de estas");
-    return require("fs").promises.rmdir(dir, { recursive: true, force: true });
+  deleteDirectory(dirBrute) {
+    const dir = $moduler.normalizationOf(dirBrute);
+    return require("fs").promises.rm(dir, { recursive: true });
   }
 
-  hasDirectory(dir) {
-    return require("fs").promises.lstat(file).then(stat => stat.isDirectory()).catch(error => false);
+  hasDirectory(dirBrute) {
+    const dir = $moduler.normalizationOf(dirBrute);
+    return require("fs").promises.lstat(dir).then(stat => stat.isDirectory()).catch(error => false);
   }
 
   async copyFile(src, dst) {
@@ -64,16 +78,6 @@ class NodejsFilesystem {
 
   async moveDirectory(src, dst) {
     throw new Error("Not supported yet");
-  }
-
-  static {
-    this.trify = Std.functions.trifyAsync;
-    this.prototype.readFile.try = this.trify(this.prototype.readFile, this);
-    this.prototype.writeFile.try = this.trify(this.prototype.writeFile, this);
-    this.prototype.deleteFile.try = this.trify(this.prototype.deleteFile, this);
-    this.prototype.readDirectory.try = this.trify(this.prototype.readDirectory, this);
-    this.prototype.writeDirectory.try = this.trify(this.prototype.writeDirectory, this);
-    this.prototype.deleteDirectory.try = this.trify(this.prototype.deleteDirectory, this);
   }
 
 }

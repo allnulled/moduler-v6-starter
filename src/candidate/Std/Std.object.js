@@ -61,7 +61,10 @@
   
   Wave_3_Elemental_functions_classes_and_interfaces: {
     Std.assert = Std.all.assert = Std.functions.assert = $compiler.inject.source("./assert.function.js");
-    Std.all.trifyAsync = Std.functions.trifyAsync = $compiler.inject.source("./apis/reflection/trifyAsync/trifyAsync.function.js");
+    Std.all.trifyAsync = Std.functions.trifyAsync = $compiler.inject.source("./apis/errors/trifyAsync/trifyAsync.function.js");
+    Std.all.TrySyncProxy = Std.classes.TrySyncProxy = $compiler.inject.source("./apis/errors/TrySyncProxy/TrySyncProxy.class.js");
+    Std.all.TryAsyncProxy = Std.classes.TryAsyncProxy = $compiler.inject.source("./apis/errors/TryAsyncProxy/TryAsyncProxy.class.js");
+    Std.all.TryableInterface = Std.interfaces.TryableInterface = $compiler.inject.source("./apis/patterns/TryableInterface/TryableInterface.interface.js");
     Std.all.JsonStringifier = Std.classes.JsonStringifier = $compiler.inject.source("./apis/json/JsonStringifier/JsonStringifier.class.js");
     Std.all.NativePrototypes = Std.objects.NativePrototypes = $compiler.inject.source("./apis/reflection/NativePrototypes/NativePrototypes.object.js");
     Std.all.EnvironmenterInterface = Std.interfaces.EnvironmenterInterface = $compiler.inject.source("./apis/environment/Environmenter/EnvironmenterInterface.interface.js");
@@ -90,8 +93,10 @@
     Std.all.TypesValidatorInterface = Std.interfaces.TypesValidatorInterface = $compiler.inject.source("./apis/types/TypesValidator/TypesValidatorInterface.interface.js");
     Std.all.TypesCatalogInterface = Std.interfaces.TypesCatalogInterface = $compiler.inject.source("./apis/types/TypesCatalog/TypesCatalogInterface.interface.js");
     Std.all.ProgresserInterface = Std.interfaces.ProgresserInterface = $compiler.inject.source("./apis/debug/Progresser/ProgresserInterface.interface.js");
+    Std.all.BasedirInterface = Std.interfaces.BasedirInterface = $compiler.inject.source("./apis/files/Basedir/BasedirInterface.interface.js");
   }
   Wave_5_Utility_classes: {
+    Std.all.Basedir = Std.classes.Basedir = $compiler.inject.source("./apis/files/Basedir/Basedir.class.js");
     Std.all.Introspector = Std.classes.Introspector = $compiler.inject.source("./apis/reflection/Introspector/Introspector.class.js");
     Std.all.Urler = Std.classes.Urler = $compiler.inject.source("./apis/urls/Urler/Urler.class.js");
     Std.all.Tracer = Std.classes.Tracer = $compiler.inject.source("./apis/testing/Tracer/Tracer.class.js");
@@ -115,7 +120,7 @@
     Std.all.NodejsFilesystem = Std.classes.NodejsFilesystem = $compiler.inject.source("./apis/files/NodejsFilesystem/NodejsFilesystem.class.js");
     Std.all.IdbCrud = Std.classes.IdbCrud = $compiler.inject.source("./apis/indexeddb/IdbCrud/IdbCrud.class.js");
     Std.all.IdbFilesystem = Std.classes.IdbFilesystem = $compiler.inject.source("./apis/files/IdbFilesystem/IdbFilesystem.class.js");
-    Std.all.SwitchableFilesystem = Std.classes.SwitchableFilesystem = $compiler.inject.source("./apis/files/SwitchableFilesystem/SwitchableFilesystem.class.js");
+    Std.all.makeFunctionByProperties = Std.functions.makeFunctionByProperties = $compiler.inject.source("@/src/candidate/Std/apis/reflection/makeFunctionByProperties/makeFunctionByProperties.function.js");
   }
 
 

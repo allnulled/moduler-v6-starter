@@ -1,3 +1,4 @@
+throw new Error("Dont use this class");
 class SwitchableFilesystem {
   constructor() {
     this._node = false;
