@@ -54,6 +54,8 @@ Error_extension_v1_scope: {
       "node:internal/modules/helpers",
       // This api:
       "Error.normalize",
+      "Error.formatError",
+      "Error.formatList",
       // "Error.adding",
       // ModulerV6/CompilerV6/DevBinaryV6:
       "DevBinaryV6Utils.executeUnitTestFileOf",
@@ -132,7 +134,7 @@ Error_extension_v1_scope: {
     };
     Error.prototype.toObject = function (ignoreds = []) {
       Error.normalize(this);
-      const ast = {};
+      const ast = Object.assign({}, this);
       Headers_of_current: {
         ast.name = this.name;
         ast.message = this.message;
@@ -168,37 +170,61 @@ Error_extension_v1_scope: {
     Error.prototype.rethrow = function () {
       throw Error.normalize(this);
     };
+    Error.prototype.config = function(data) {
+      return Object.assign(this, data);
+    };
   }
   Static_formatters: {
     Error.tools.formatError = function (error, template) {
+      throw new Error("Error.tools.formatError no, use Error.formatError");
       return template
         .replace("%name", error.name || "no name")
         .replace("%message", error.message || "no message")
         .replace("%stack", error.stack || "no stack")
     };
     Error.tools.formatErrorList = function(list, options) {
+      throw new Error("Error.tools.formatErrorList no, use Error.formatList");
       return ErrorListFormatter.format(list, options);
     };
     Error.tools.formatFramesOf = function(...args) {
       return Error.tools.FramesFormatter.format(...args);
     };
+    Error.formatError = function(errorBrute) {
+      const error = Error.normalize(errorBrute);
+      let errorObject = error.toObject();
+      let plain = {
+        id: [errorObject.name, errorObject.message].join(" | "),
+      };
+      plain = Object.assign(plain, errorObject);
+      plain.traces = error.stack.split("\n");
+      if(error.metadata?.attachments?.length) {
+        plain.others = Error.formatList(error.metadata.attachments);
+      } else {
+        plain.others = null;
+      }
+      delete plain.stack;
+      delete plain.ignoredFrames;
+      delete plain.name;
+      delete plain.message;
+      delete plain.metadata;
+      plain.frames = plain.frames?.map(frame => {
+        return [frame.fileName,frame.lineNumber,frame.columnNumber,frame.functionName].join(" | ");
+      });
+      return plain;
+    }
     Error.formatList = function(errors) {
+      const output = [];
+      for(let index=0; index<errors.length; index++) {
+        const error = errors[index];
+        const item = Error.formatError(error);
+        output.push(item);
+      }
+      return output;
+    };
+    Error.stringify = function(errors) {
       return Std.all.JsonStringifier.stringify(errors, true, function(key, value) {
         if(value instanceof Error) {
-          let plain = value.toObject();
-          plain = Object.assign(
-            {},
-            {id: [plain.name, plain.message].join(" | ")},
-            // {metatype: "error"},
-            plain
-          );
-          value.traces = plain.stack.split("\n");
-          delete plain.stack;
-          delete plain.ignoredFrames;
-          delete plain.name;
-          delete plain.message;
-          plain.frames = plain.frames.map(frame => [frame.fileName,frame.lineNumber,frame.columnNumber,frame.functionName].join(" | "));
-          return plain;
+          return Error.formatError(value);
         }
       });
     }

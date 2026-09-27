@@ -1,6 +1,4 @@
 module.exports = async function ({ Tester }) {
-  return;
-
   const { IdbFilesystem } = Std.all;
 
   const idbfs = new IdbFilesystem();

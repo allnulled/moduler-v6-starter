@@ -2458,7 +2458,7 @@
             {
               module: moduleHolder,
               exports: moduleHolder.exports,
-              $moduler: this.cloneForFile(filepath),
+              $localModuler: this.cloneForFile(filepath),
             },
             {
               onMissingResource:
@@ -2500,7 +2500,7 @@
         const syncResult = factory(dependencies, {
           module: moduleHolder,
           exports: moduleHolder.exports,
-          $moduler: this,
+          $localModuler: this,
         });
         if (syncResult instanceof Promise) {
           return syncResult.then((result) => {
@@ -2767,7 +2767,7 @@
         }
         const _module = { exports: {} };
         return {
-          $moduler: this.cloneForFile(filepath),
+          $localModuler: this.cloneForFile(filepath),
           module: _module,
           exports: _module.exports,
           file: filepath,

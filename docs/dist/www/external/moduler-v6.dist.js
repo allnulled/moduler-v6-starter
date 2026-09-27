@@ -1853,7 +1853,7 @@ _importFile(filepathInput) {
     return this.evaluateFile(filepath, {
       module: moduleHolder,
       exports: moduleHolder.exports,
-      $moduler: this.cloneForFile(filepath),
+      $localModuler: this.cloneForFile(filepath),
     }, {
       onMissingResource: activeOptions.justTry === true ? () => undefined : false,
     }).then(result => {
@@ -1890,7 +1890,7 @@ _importFactory(factory, dependencies = []) {
   const syncResult = factory(dependencies, {
     module: moduleHolder,
     exports: moduleHolder.exports,
-    $moduler: this,
+    $localModuler: this,
   });
   if(syncResult instanceof Promise) {
     return syncResult.then(result => {
@@ -2143,7 +2143,7 @@ reserveFile(file) {
   }
   const _module = { exports: {} };
   return {
-    $moduler: this.cloneForFile(filepath),
+    $localModuler: this.cloneForFile(filepath),
     module: _module,
     exports: _module.exports,
     file: filepath,

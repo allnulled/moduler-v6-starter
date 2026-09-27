@@ -81,8 +81,7 @@ And_or_appendix = _
   complement:Prevaluable_2
     { return { grammar: "type appendix", operator, complement }}
 
-Type_identifier = _ Variable_name Variable_accessors*
-    { return text().trim() }
+Type_identifier = _ expr:Variable_expression { return expr }
 
 Type_parameters =
   token1:(_ "(" _)
@@ -102,9 +101,18 @@ Default_value = Hardcoded_value / Type_identifier
 
 Property_chars = [A-Za-z_$] [A-Za-z0-9_$]* { return text() }
 
-Variable_name = Property_chars
+Variable_expression = Variable_name Variable_accessors* { return text() }
+
+Variable_name = Property_chars / Singlequoted_expression
 
 // Variable_name = Unforbidden_tokens { return text() }
+
+Singlequoted_expression = "'" chars:Singlequoted_token* "'"
+  { return chars.join(""); }
+
+Singlequoted_token = Singlequoted_char / Singlequoted_escaped_char
+Singlequoted_escaped_char = "\\" char:. { return char }
+Singlequoted_char = [^'\\\n\r] 
 
 Variable_accessors = Variable_accessor_by_dot+
 
@@ -133,6 +141,8 @@ Forbidden_tokens = "("
   / "+"
   / "@"
   / "="
+  / "'"
+  / '"'
   / "//"
   / "\n" {}
 

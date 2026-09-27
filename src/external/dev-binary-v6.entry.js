@@ -1876,7 +1876,7 @@ _importFile(filepathInput) {
     return this.evaluateFile(filepath, {
       module: moduleHolder,
       exports: moduleHolder.exports,
-      $moduler: this.cloneForFile(filepath),
+      $localModuler: this.cloneForFile(filepath),
     }, {
       onMissingResource: activeOptions.justTry === true ? () => undefined : false,
     }).then(result => {
@@ -1913,7 +1913,7 @@ _importFactory(factory, dependencies = []) {
   const syncResult = factory(dependencies, {
     module: moduleHolder,
     exports: moduleHolder.exports,
-    $moduler: this,
+    $localModuler: this,
   });
   if(syncResult instanceof Promise) {
     return syncResult.then(result => {
@@ -2166,7 +2166,7 @@ reserveFile(file) {
   }
   const _module = { exports: {} };
   return {
-    $moduler: this.cloneForFile(filepath),
+    $localModuler: this.cloneForFile(filepath),
     module: _module,
     exports: _module.exports,
     file: filepath,
@@ -4284,14 +4284,14 @@ _prependToParentCompilationFile(compilationFile, content, extension = "md", bett
  * @type 
  * @description 
  */
-_wrapAsModuleInjection(source, rootpath) {
+_wrapAsModuleInjection(source, rootpath, modulerVarname = "$moduler") {
   const distRootpath = this.moduler._getDistRootpathFromSrc(rootpath);
   return [
-    `(function({ module, exports, $moduler }) {`,
-    `  return $moduler.releaseFile("${distRootpath}", arguments[0], (function() {`,
+    `(function({ module, exports, $localModuler }) {`,
+    `  return ${modulerVarname}.releaseFile("${distRootpath}", arguments[0], (function() {`,
     `    ${source}`,
     `  }).call(this));`,
-    `}).call(this, $moduler.reserveFile("${distRootpath}"))`,
+    `}).call(this, ${modulerVarname}.reserveFile("${distRootpath}"))`,
   ].join("\n");
 }
   /**
@@ -4681,6 +4681,8 @@ async _compileAsInjectModules(compilationFile, compilationProcess, { token, toke
   let subcode2 = "";
   const parameters = this._getDataForTokenCompilation({ token });
   const collection = parameters[0];
+  const options = parameters[1] || {};
+  const { modulerVarname = "$moduler" } = options;
   const isArray = Array.isArray(collection);
   const isObject = (!isArray) && (typeof collection === "object");
   this.moduler.assert(isArray || isObject, `Syntax «$compiler.inject.modules» only accepts array or object as first parameter but «${typeof collection}» was found instead`);
@@ -4721,12 +4723,12 @@ async _compileAsInjectModules(compilationFile, compilationProcess, { token, toke
       const targetCompilation = compilations[indexCompilations];
       const targetInfo = compilationPairs[indexCompilations];
       if(isArray) {
-        subcode1 += this._wrapAsModuleInjection(targetCompilation.js, rootpath);
+        subcode1 += this._wrapAsModuleInjection(targetCompilation.js, rootpath, modulerVarname);
         subcode1 += ",\n";
       } else if(isObject) {
         subcode1 += targetKeys[targetInfo.index];
         subcode1 += ": ";
-        subcode1 += this._wrapAsModuleInjection(targetCompilation.js, targetInfo.rootpath);
+        subcode1 += this._wrapAsModuleInjection(targetCompilation.js, targetInfo.rootpath, modulerVarname);
         subcode1 += ",\n";
       }
     }
@@ -4737,7 +4739,7 @@ async _compileAsInjectModules(compilationFile, compilationProcess, { token, toke
     }
   }
   Generate_output: {
-    out += `$moduler.lockFiles([\n`;
+    out += `${modulerVarname}.lockFiles([\n`;
     out += Object.values(collection).map(key => {
       const rootpath1 = subcompilerForAll.moduler.rootdirOf(key);
       const rootdist1 = subcompilerForAll.moduler._getDistRootpathFromSrc(rootpath1);

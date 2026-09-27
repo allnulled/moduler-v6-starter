@@ -14,7 +14,7 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
    *    - ./Std.object.js
    *
    */
-  const peggyjs = await function ({ module, exports, $moduler }) {
+  const peggyjs = await function ({ module, exports, $localModuler }) {
     return $moduler.releaseFile(
       "@/src/www/external/pegjs/peggyjs.object.js",
       arguments[0],
@@ -8997,7 +8997,7 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
     this,
     $moduler.reserveFile("@/src/www/external/pegjs/peggyjs.object.js"),
   );
-  const picomatch = await function ({ module, exports, $moduler }) {
+  const picomatch = await function ({ module, exports, $localModuler }) {
     return $moduler.releaseFile(
       "@/dist/src/external/picomatch/picomatch.dist.js",
       arguments[0],
@@ -11875,6 +11875,8 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
             "node:internal/modules/helpers",
             // This api:
             "Error.normalize",
+            "Error.formatError",
+            "Error.formatList",
             // "Error.adding",
             // ModulerV6/CompilerV6/DevBinaryV6:
             "DevBinaryV6Utils.executeUnitTestFileOf",
@@ -11983,7 +11985,7 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
           };
           Error.prototype.toObject = function (ignoreds = []) {
             Error.normalize(this);
-            const ast = {};
+            const ast = Object.assign({}, this);
             Headers_of_current: {
               ast.name = this.name;
               ast.message = this.message;
@@ -12041,47 +12043,73 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
           Error.prototype.rethrow = function () {
             throw Error.normalize(this);
           };
+          Error.prototype.config = function (data) {
+            return Object.assign(this, data);
+          };
         }
         Static_formatters: {
           Error.tools.formatError = function (error, template) {
+            throw new Error(
+              "Error.tools.formatError no, use Error.formatError",
+            );
             return template
               .replace("%name", error.name || "no name")
               .replace("%message", error.message || "no message")
               .replace("%stack", error.stack || "no stack");
           };
           Error.tools.formatErrorList = function (list, options) {
+            throw new Error(
+              "Error.tools.formatErrorList no, use Error.formatList",
+            );
             return ErrorListFormatter.format(list, options);
           };
           Error.tools.formatFramesOf = function (...args) {
             return Error.tools.FramesFormatter.format(...args);
           };
+          Error.formatError = function (errorBrute) {
+            const error = Error.normalize(errorBrute);
+            let errorObject = error.toObject();
+            let plain = {
+              id: [errorObject.name, errorObject.message].join(" | "),
+            };
+            plain = Object.assign(plain, errorObject);
+            plain.traces = error.stack.split("\n");
+            if (error.metadata?.attachments?.length) {
+              plain.others = Error.formatList(error.metadata.attachments);
+            } else {
+              plain.others = null;
+            }
+            delete plain.stack;
+            delete plain.ignoredFrames;
+            delete plain.name;
+            delete plain.message;
+            delete plain.metadata;
+            plain.frames = plain.frames?.map((frame) => {
+              return [
+                frame.fileName,
+                frame.lineNumber,
+                frame.columnNumber,
+                frame.functionName,
+              ].join(" | ");
+            });
+            return plain;
+          };
           Error.formatList = function (errors) {
+            const output = [];
+            for (let index = 0; index < errors.length; index++) {
+              const error = errors[index];
+              const item = Error.formatError(error);
+              output.push(item);
+            }
+            return output;
+          };
+          Error.stringify = function (errors) {
             return Std.all.JsonStringifier.stringify(
               errors,
               true,
               function (key, value) {
                 if (value instanceof Error) {
-                  let plain = value.toObject();
-                  plain = Object.assign(
-                    {},
-                    { id: [plain.name, plain.message].join(" | ") },
-                    // {metatype: "error"},
-                    plain,
-                  );
-                  value.traces = plain.stack.split("\n");
-                  delete plain.stack;
-                  delete plain.ignoredFrames;
-                  delete plain.name;
-                  delete plain.message;
-                  plain.frames = plain.frames.map((frame) =>
-                    [
-                      frame.fileName,
-                      frame.lineNumber,
-                      frame.columnNumber,
-                      frame.functionName,
-                    ].join(" | "),
-                  );
-                  return plain;
+                  return Error.formatError(value);
                 }
               },
             );
@@ -13411,11 +13439,12 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
                 });
                 if (testResult instanceof Error) throw testResult;
               } catch (error) {
-                allErrors.push({
-                  test: file.split("/").at(-2),
-                  path: testPath,
-                  error,
-                });
+                allErrors.push(
+                  Error.normalize(error).config({
+                    test: file.split("/").at(-2),
+                    path: testPath,
+                  }),
+                );
               }
             }
             if (allErrors.length) {
@@ -13443,7 +13472,7 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
                 );
                 break Report_success_or_errors;
               }
-              Std.objects.Ansi.style("bgRed,white").print(
+              Std.objects.Ansi.style("bgRed,black").print(
                 `\n[!!] Tester.evaluateDirectory has reported ${allErrors.length} errors on test directory at:\n     ${$moduler.rootdirOf(directory)}`,
               );
               console.log(Error.formatList(allErrors));
@@ -14083,11 +14112,13 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
               step,
               state,
             ) {
-              if (!(validator.id in Std.types))
+              if (!(validator.id in Std.types)) {
+                console.log(validator);
                 Error.normalize({
                   name: "TypeNotFoundError",
-                  message: `Type ${validator.id} is not a known type`,
+                  message: `Type «${validator.id}» is not a known type`,
                 }).rethrow();
+              }
               const TypeClass = Std.types[validator.id];
               //console.log(validator, data, step, state);
               return (step.result = TypeClass.abstraction.onValidateData(
@@ -15048,9 +15079,7 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
             "\n" +
             "" +
             "\n" +
-            "Type_identifier = _ Variable_name Variable_accessors*" +
-            "\n" +
-            "    { return text().trim() }" +
+            "Type_identifier = _ expr:Variable_expression { return expr }" +
             "\n" +
             "" +
             "\n" +
@@ -15090,11 +15119,29 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
             "\n" +
             "" +
             "\n" +
-            "Variable_name = Property_chars" +
+            "Variable_expression = Variable_name Variable_accessors* { return text() }" +
+            "\n" +
+            "" +
+            "\n" +
+            "Variable_name = Property_chars / Singlequoted_expression" +
             "\n" +
             "" +
             "\n" +
             "// Variable_name = Unforbidden_tokens { return text() }" +
+            "\n" +
+            "" +
+            "\n" +
+            'Singlequoted_expression = "\'" chars:Singlequoted_token* "\'"' +
+            "\n" +
+            '  { return chars.join(""); }' +
+            "\n" +
+            "" +
+            "\n" +
+            "Singlequoted_token = Singlequoted_char / Singlequoted_escaped_char" +
+            "\n" +
+            'Singlequoted_escaped_char = "\\\\" char:. { return char }' +
+            "\n" +
+            "Singlequoted_char = [^'\\\\\\n\\r] " +
             "\n" +
             "" +
             "\n" +
@@ -15151,6 +15198,10 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
             '  / "@"' +
             "\n" +
             '  / "="' +
+            "\n" +
+            '  / "\'"' +
+            "\n" +
+            "  / '\"'" +
             "\n" +
             '  / "//"' +
             "\n" +

@@ -28,7 +28,7 @@ async function evaluateDirectory(options = {}) {
       const testResult = await this.evaluateCallback(testCallback, { ...options, ...options.injection });
       if (testResult instanceof Error) throw testResult;
     } catch (error) {
-      allErrors.push({ test: file.split("/").at(-2), path: testPath, error });
+      allErrors.push(Error.normalize(error).config({ test: file.split("/").at(-2), path: testPath }));
     }
   }
   if (allErrors.length) {
@@ -42,7 +42,7 @@ async function evaluateDirectory(options = {}) {
       Std.objects.Ansi.style("bgGreen,black,underline").print(`[*] Tester passed test directory of: ${$moduler.rootdirOf(directory)}`);
       break Report_success_or_errors;
     }
-    Std.objects.Ansi.style("bgRed,white").print(`\n[!!] Tester.evaluateDirectory has reported ${allErrors.length} errors on test directory at:\n     ${$moduler.rootdirOf(directory)}`);
+    Std.objects.Ansi.style("bgRed,black").print(`\n[!!] Tester.evaluateDirectory has reported ${allErrors.length} errors on test directory at:\n     ${$moduler.rootdirOf(directory)}`);
     console.log(Error.formatList(allErrors));
   }
 }

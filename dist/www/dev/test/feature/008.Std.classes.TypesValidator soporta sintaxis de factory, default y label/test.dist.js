@@ -31,17 +31,16 @@ module.exports = async function ({ Tester }) {
 
   const corrects = [];
   const incorrects = [];
-  const runValidation = function (
-    [exprezzion, input],
-    expectSuccess = true,
-    index,
-  ) {
+  const runValidation = function (it, expectSuccess = true, index) {
+    const [exprezzion, input] = it;
     const callback = () => {
       try {
         const ast = TypesParser.parse(exprezzion);
         return TypesValidator.validateData(ast, input);
       } catch (error) {
-        console.log(`[!] Failed parsing expression:\n  ${exprezzion}`);
+        console.log(
+          `[!] Failed parsing or validating expression:\n  ${exprezzion}`,
+        );
         throw error;
       }
     };
@@ -95,7 +94,14 @@ module.exports = async function ({ Tester }) {
     [`@opcion string? = "por defecto"`, "text"],
     [`@age number = 0`, 200],
     [`{name: @username string = unnamed}`, { name: "any name" }],
-    [`@Std.classes.Randomizer.new function () => {}`, function () {}],
+    [`@Std.classes.Randomizer.getString function () => {}`, function () {}],
+    [
+      `@Std.classes.Duration.from function (string|date|object) => {year: number}`,
+      () => {
+        name: null;
+      },
+    ],
+    [`{name: @username string = "ok"}`, { name: "user" }],
   ];
   const incorrectValidations = [
     ["{age?:number}", { age: null }],
@@ -104,7 +110,7 @@ module.exports = async function ({ Tester }) {
     ["{age:null}", { age: 50 }],
     ["@imposible string&!string", "text"],
     ["@fallaria function() => undefined", undefined],
-    [`{name: @username string = unnamed}`, { name: null }],
+    [`{name: @username string = "ok"}`, { name: null }],
   ];
 
   Corrects: for (let index = 0; index < correctValidations.length; index++) {
