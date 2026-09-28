@@ -11298,34 +11298,19 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
          *     - el constructor no se sobreescribe
          * - Utiliza ErrorStackFrame y ErrorStackParser
          *    - de https://www.stacktracejs.com/ ambos
-         * - Cumple para 6 utilidades, no más:
-         * ```js
-         * // 1. Normalizar errores de cualquier input a Error:
-         * Error.normalize("mensaje de error");
-         * Error.normalize({ name: "ErrorName", message: "error message" });
-         * Error.normalize(new Error("whatever"));
-         *
-         * // 2. Añadir un error a otro con normalización intermedia:
-         * const error = Error.normalize({name:"BaseError"})
-         * error.adding({name:"AttachedError"});
-         *
-         * // 3. Relanzar (o lanzar, funciona igual) un error:
-         * error.adding({name:"AttachedError2"}).rethrow();
-         *
-         * // 4. Pasar a objeto:
-         * const data = error.toObject();
-         * // Puedes extender localmente los Error.tools.ignoredErrorFrames así:
-         * const data2 = error.toObject([ "async SomeClass.someMethod","/path/to/some/file.js",]);
-         *
-         * // 5. Pasar a objeto con persecución de error:
-         * const data = await error.toProsecution(); // sin formateos, porque si no, nos liamos
-         *
-         * // 6. Formateo de error y de lista de errores:
-         * Error.tools.formatError(error, "%name => %message [%stack]\n%frames");
-         * Error.tools.formatErrorList(errors, "%name => %message [%stack]\n%frames", "%functionName:%lineNumber:%columnNumber");
-         * ```
-         *
-         *
+         * - Los prototipo:
+         *    - `@Error.prototype.adding(any) => @self Error`
+         *    - `@Error.prototype.toObject() => @data Object`
+         *    - `@Error.prototype.toProsecution() => @data Object`
+         *    - `@Error.prototype.rethrow() !=> @self Error`
+         *    - `@Error.prototype.config(@props object) => @self Error`
+         * - Los static:
+         *    - `@Error.normalize function(any) => error`
+         *    - `@Error.formatError(@error error) => error`
+         *    - `@Error.formatList(@errors [...error]) => @errors [...{}]`
+         *    - `@Error.stringify(@data any) => @json string`
+         *    - `@Error.prosecuteList(@errors [...error]) => @data [...{}]`
+         *    - `@Error.stringifyProsecutedList(@errors [...error]) => @json string`
          *
          */
         Internal_api_tools: {
@@ -11774,100 +11759,6 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
             };
           });
           Error.tools.settings = { prelines: 10, postlines: 10 };
-          Error.tools.FramesFormatter = class FramesErrorFormatter {
-            static create(...args) {
-              return new this(...args);
-            }
-            static defaultPattern =
-              "" +
-              "[function]    %functionName\n" +
-              "[frame]       %frameIndex/%framesTotal\n" +
-              "[source]      %source\n" +
-              "[file]        %fileName:%lineNumber:%columnNumber\n";
-            static defaultJoiner = "\n";
-            constructor(
-              pattern = this.constructor.defaultPattern,
-              joiner = this.constructor.defaultJoiner,
-            ) {
-              this.pattern = pattern;
-              this.joiner = joiner;
-            }
-            format(errorObject) {
-              throw new Error(
-                "Dont use this, use Error.prototype.toObject + custom modifier instead",
-              );
-              return errorObject.frames
-                .map((frame, frameIndex) => {
-                  return this.pattern
-                    .replace("%frameIndex", frameIndex + 1)
-                    .replace("%framesTotal", errorObject.frames.length)
-                    .replace("%source", frame.source.trim())
-                    .replace("%functionName", frame.functionName)
-                    .replace("%fileName", frame.fileName)
-                    .replace("%lineNumber", frame.lineNumber)
-                    .replace("%columnNumber", frame.columnNumber)
-                    .replace("%prosecution", frame.prosecution);
-                })
-                .join(this.joiner);
-            }
-            static globalInstance = new this();
-            static format(errorObject) {
-              return this.globalInstance.format(errorObject);
-            }
-          };
-          Error.tools.ErrorListFormatter = class ErrorListFormatter {
-            static defaultJoiners = { errors: "\n", frames: "\n" };
-            static defaultErrorPattern = `
-[!] Error: %errorIndex/%totalErrors
-    Info:  %name => %message
-    %stack\n%frames
-`;
-            static defaultFramesPattern = `[function]    %functionName
-[frame]       %frameIndex/%framesTotal
-[source]      %source
-[file]        %fileName:%lineNumber:%columnNumber
-
-%prosecution`;
-            static async format(
-              errorList,
-              errorPattern = this.constructor.defaultErrorPattern,
-              framesPattern = this.constructor.defaultFramesPattern,
-              joiners = this.constructor.defaultJoiners,
-            ) {
-              throw new Error(
-                "Dont use ErrorListFormatter anymore, use Error.formatList instead",
-              );
-              let output = "";
-              for (let index = 0; index < errorList.length; index++) {
-                const errorItem = errorList[index];
-                const normalizedError = Error.normalize(errorItem);
-                const prosecutedError = await normalizedError.toProsecution({
-                  format: "raw",
-                });
-                let headerText = "";
-                headerText += `\n[!] Error: [${index + 1}/${errorList.length}]`;
-                headerText += `\n    Info:  ${Error.tools.formatError(normalizedError, "%name => %message")}`;
-                const headers =
-                  Std.objects.Ansi.style("yellow,bold").text(headerText);
-                const body = Std.objects.Ansi.style("magenta").text(
-                  normalizedError.stack,
-                );
-                const footer =
-                  "\n" +
-                  Error.tools.FramesFormatter.create(
-                    Std.objects.Ansi.style("redBright").text(
-                      "\n[function]    %functionName\n[frame]       %frameIndex/%framesTotal\n[source]      %source\n[file]        %fileName:%lineNumber:%columnNumber",
-                    ) +
-                      Std.objects.Ansi.style("white,bold").text(
-                        "\n\n%prosecution",
-                      ),
-                  ).format(prosecutedError);
-                const errorString = headers + body + footer;
-                output += `${errorString}\n`;
-              }
-              return output;
-            }
-          };
           Error.tools.ignoredErrorFrames = [
             // Node.js:
             "node:internal/modules/cjs/loader",
@@ -11905,7 +11796,6 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
               this.attachments = [];
             }
           };
-          Error.tools.noopSelf = (it) => it;
           Error.tools.pushOnce = function (list, frame) {
             const isRepeated = list.some(function (item) {
               return (
@@ -12048,24 +11938,6 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
           };
         }
         Static_formatters: {
-          Error.tools.formatError = function (error, template) {
-            throw new Error(
-              "Error.tools.formatError no, use Error.formatError",
-            );
-            return template
-              .replace("%name", error.name || "no name")
-              .replace("%message", error.message || "no message")
-              .replace("%stack", error.stack || "no stack");
-          };
-          Error.tools.formatErrorList = function (list, options) {
-            throw new Error(
-              "Error.tools.formatErrorList no, use Error.formatList",
-            );
-            return ErrorListFormatter.format(list, options);
-          };
-          Error.tools.formatFramesOf = function (...args) {
-            return Error.tools.FramesFormatter.format(...args);
-          };
           Error.formatError = function (errorBrute) {
             const error = Error.normalize(errorBrute);
             let errorObject = error.toObject();
@@ -12114,6 +11986,34 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
               },
             );
           };
+          Error.prosecuteList = async function (errors) {
+            const output = [];
+            for (let index = 0; index < errors.length; index++) {
+              const error = errors[index];
+              const prosecuted = await Error.normalize(error).toProsecution();
+              output.push(prosecuted);
+            }
+            return output;
+          };
+          Error.stringifyProsecutedList = function (errors) {
+            return Error.prosecuteList(errors).then((prosecution) => {
+              return JSON.stringify(
+                prosecution.map((item) => {
+                  if (item.frames) {
+                    item.frames = item.frames.map((frame) => {
+                      if (frame.prosecution) {
+                        frame.prosecution = frame.prosecution.split("\n");
+                      }
+                      return frame;
+                    });
+                  }
+                  return item;
+                }),
+                null,
+                2,
+              );
+            });
+          };
         }
       }
     }
@@ -12141,19 +12041,26 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
                 message: "Some assertion failed",
               });
           };
-      Std.all.trifyAsync = Std.functions.trifyAsync = function trifyAsync(
+      Std.all.trify = Std.functions.trify = function trify(
         callback,
         inErrorReturn = undefined,
+        scope = false,
       ) {
-        return async function (...args) {
+        return function (...args) {
           try {
-            return await callback(...args);
+            const output =
+              scope === false
+                ? callback(...args)
+                : callback.call(scope, ...args);
+            return output instanceof Promise
+              ? output.catch((error) => error)
+              : output;
           } catch (error) {
             return typeof inErrorReturn !== "undefined" ? inErrorReturn : error;
           }
         };
       };
-      Std.all.TrySyncProxy = Std.classes.TrySyncProxy = class TrySyncProxy {
+      Std.all.TryableProxy = Std.classes.TryableProxy = class TryableProxy {
         constructor(target) {
           return new Proxy(target, {
             get(target, property) {
@@ -12163,26 +12070,10 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
               }
               return (...args) => {
                 try {
-                  return method.apply(target, args);
-                } catch (error) {
-                  return error;
-                }
-              };
-            },
-          });
-        }
-      };
-      Std.all.TryAsyncProxy = Std.classes.TryAsyncProxy = class TryAsyncProxy {
-        constructor(target) {
-          return new Proxy(target, {
-            get(target, property) {
-              const method = target[property];
-              if (typeof method !== "function") {
-                return method;
-              }
-              return async (...args) => {
-                try {
-                  return await method.apply(target, args);
+                  const output = target[property](...args);
+                  return output instanceof Promise
+                    ? output.catch((error) => error)
+                    : output;
                 } catch (error) {
                   return error;
                 }
@@ -12194,10 +12085,7 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
       Std.all.TryableInterface = Std.interfaces.TryableInterface = {
         prototype: {
           get try() {
-            return new Std.classes.TrySyncProxy(this);
-          },
-          get asyncTry() {
-            return new Std.classes.TryAsyncProxy(this);
+            return new Std.classes.TryableProxy(this);
           },
         },
       };
@@ -13391,6 +13279,7 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
               files,
               directory = "(not specified)",
               injection = {},
+              debug = false,
             } = options;
             $moduler.assert(
               Array.isArray(files),
@@ -13475,7 +13364,8 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
               Std.objects.Ansi.style("bgRed,black").print(
                 `\n[!!] Tester.evaluateDirectory has reported ${allErrors.length} errors on test directory at:\n     ${$moduler.rootdirOf(directory)}`,
               );
-              console.log(Error.formatList(allErrors));
+              if (!debug) console.log(await Error.stringify(allErrors));
+              else console.log(await Error.stringifyProsecutedList(allErrors));
             }
           },
           evaluateCallback: async function evaluateCallback(
@@ -14662,6 +14552,17 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
             );
           }
         };
+      Std.all.AbstractionMerger =
+        Std.classes.AbstractionMerger = class AbstractionMerger {
+          static mergeAbstractions(abstractions) {
+            const output = {};
+
+            Step_1_merge: {
+            }
+
+            return output;
+          }
+        };
       Std.all.Tester = Std.classes.Tester = class Tester {
         static {
           $moduler.toolkit.makeClass(
@@ -15560,12 +15461,10 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
         }
 
         async writeFile(file, content) {
-          Esto_es_para_imitar_a_nodejs: {
-            await this.crud.get(
-              "files",
-              Std.classes.Basedir.superiorPathOf(file),
-            );
-          }
+          await this.assertParentDirectory(
+            file,
+            "on «IdbFilesystem.prototype.writeFile»",
+          );
           await this.crud.put("files", {
             path: file,
             type: "file",
@@ -15588,35 +15487,31 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
 
         async readDirectory(dir) {
           const entries = await this.crud.getAll("files");
-          const selection = entries
+          const nodes = entries
             .filter((entry) => {
-              La_condicion_buena_seria_esta: {
-                break La_condicion_buena_seria_esta;
-                return (
-                  entry.type === "file" && entry.path.startsWith(dir + "/")
-                );
-              }
-              Pero_esta_es_la_compatible_con_node: {
-                return (
-                  entry.path.startsWith(dir + "/") &&
-                  entry.path.replace(dir + "/", "").match(/\//g) === null
-                );
-              }
+              const isSubdir = entry.path.startsWith(dir + "/");
+              if (!isSubdir) return false;
+              const extraPath = entry.path.replace(dir + "/", "");
+              const isImmediate = extraPath.match(/\//g) === null;
+              if (!isImmediate) return false;
+              const isItself = extraPath.length === 0;
+              if (isItself) return false;
+              return isSubdir && isImmediate && !isItself;
             })
             .map((entry) => this.basenameOf(entry.path));
-          Esto_es_para_imitar_a_nodejs_tambien: {
-            if (selection.length === 0) {
-              const out = await this.crud.get("files", dir);
-              if (!out)
-                throw new Error(
-                  `IdbFilesystem.prototype.readDirectory complains that directory is not found: ${dir}`,
-                );
-            }
+          if (nodes.length === 0 && !(await this.hasDirectory(dir))) {
+            throw new Error(
+              `IdbFilesystem.prototype.readDirectory cannot read directory because does not exist: ${dir}`,
+            );
           }
-          return selection;
+          return nodes;
         }
 
         async writeDirectory(dir) {
+          await this.assertParentDirectory(
+            dir,
+            "on «IdbFilesystem.prototype.writeDirectory»",
+          );
           await this.crud.put("files", {
             path: dir,
             type: "directory",
@@ -15636,6 +15531,23 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
         async hasDirectory(dir) {
           const entry = await this.crud.get("files", dir);
           return !!entry && entry.type === "directory";
+        }
+
+        async hasParentDirectory(node, rootsOk = true) {
+          const parts = node.split("/");
+          if (parts.length === 1 && rootsOk) return true;
+          parts.pop();
+          const supernode = parts.join("/");
+          if (supernode === node) return rootsOk;
+          return await this.hasDirectory(supernode);
+        }
+
+        async assertParentDirectory(node, appendix = false) {
+          const has = await this.hasParentDirectory(node);
+          if (has) return true;
+          throw new Error(
+            `Required «${node}» to have an existing directory${appendix ? " " + appendix : ""}`,
+          );
         }
 
         async copyFile(src, dst) {
@@ -15659,6 +15571,15 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
           function makeFunctionByProperties(callback, props = {}) {
             return Object.assign(callback, props);
           };
+    }
+    Wave_8_Abstractions: {
+      Std.all.AbstractionUtils =
+        Std.classes.AbstractionUtils = class AbstractionUtils {
+          static mergeAbstractions =
+            Std.classes.AbstractionMerger.mergeAbstractions;
+        };
+    }
+    Wave_9_Database: {
     }
 
     return Std;

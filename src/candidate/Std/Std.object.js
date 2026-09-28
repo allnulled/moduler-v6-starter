@@ -61,9 +61,8 @@
   
   Wave_3_Elemental_functions_classes_and_interfaces: {
     Std.assert = Std.all.assert = Std.functions.assert = $compiler.inject.source("./assert.function.js");
-    Std.all.trifyAsync = Std.functions.trifyAsync = $compiler.inject.source("./apis/errors/trifyAsync/trifyAsync.function.js");
-    Std.all.TrySyncProxy = Std.classes.TrySyncProxy = $compiler.inject.source("./apis/errors/TrySyncProxy/TrySyncProxy.class.js");
-    Std.all.TryAsyncProxy = Std.classes.TryAsyncProxy = $compiler.inject.source("./apis/errors/TryAsyncProxy/TryAsyncProxy.class.js");
+    Std.all.trify = Std.functions.trify = $compiler.inject.source("./apis/errors/trify/trify.function.js");
+    Std.all.TryableProxy = Std.classes.TryableProxy = $compiler.inject.source("./apis/errors/TryableProxy/TryableProxy.class.js");
     Std.all.TryableInterface = Std.interfaces.TryableInterface = $compiler.inject.source("./apis/patterns/TryableInterface/TryableInterface.interface.js");
     Std.all.JsonStringifier = Std.classes.JsonStringifier = $compiler.inject.source("./apis/json/JsonStringifier/JsonStringifier.class.js");
     Std.all.NativePrototypes = Std.objects.NativePrototypes = $compiler.inject.source("./apis/reflection/NativePrototypes/NativePrototypes.object.js");
@@ -103,6 +102,7 @@
     Std.all.Checker = Std.classes.Checker = $compiler.inject.source("./apis/testing/Checker/Checker.class.js");
     Std.all.Asserter = Std.classes.Asserter = $compiler.inject.source("./apis/testing/Asserter/Asserter.class.js");
     Std.all.PropertiesMerger = Std.classes.PropertiesMerger = $compiler.inject.source("./apis/merge/PropertiesMerger/PropertiesMerger.class.js");
+    Std.all.AbstractionMerger = Std.classes.AbstractionMerger = $compiler.inject.source("./apis/merge/AbstractionMerger/AbstractionMerger.class.js");
     Std.all.Tester = Std.classes.Tester = $compiler.inject.source("./apis/testing/Tester/Tester.class.js");
     Std.all.Progresser = Std.classes.Progresser = $compiler.inject.source("./apis/debug/Progresser/Progresser.class.js");
   }
@@ -121,6 +121,12 @@
     Std.all.IdbCrud = Std.classes.IdbCrud = $compiler.inject.source("./apis/indexeddb/IdbCrud/IdbCrud.class.js");
     Std.all.IdbFilesystem = Std.classes.IdbFilesystem = $compiler.inject.source("./apis/files/IdbFilesystem/IdbFilesystem.class.js");
     Std.all.makeFunctionByProperties = Std.functions.makeFunctionByProperties = $compiler.inject.source("@/src/candidate/Std/apis/reflection/makeFunctionByProperties/makeFunctionByProperties.function.js");
+  }
+  Wave_8_Abstractions: {
+    Std.all.AbstractionUtils = Std.classes.AbstractionUtils = $compiler.inject.source("./apis/abstraction/AbstractionUtils/AbstractionUtils.class.js");
+  }
+  Wave_9_Database: {
+
   }
 
 

@@ -10,34 +10,19 @@ Error_extension_v1_scope: {
    *     - el constructor no se sobreescribe
    * - Utiliza ErrorStackFrame y ErrorStackParser
    *    - de https://www.stacktracejs.com/ ambos
-   * - Cumple para 6 utilidades, no más:
-   * ```js
-   * // 1. Normalizar errores de cualquier input a Error:
-   * Error.normalize("mensaje de error");
-   * Error.normalize({ name: "ErrorName", message: "error message" });
-   * Error.normalize(new Error("whatever"));
-   *
-   * // 2. Añadir un error a otro con normalización intermedia:
-   * const error = Error.normalize({name:"BaseError"})
-   * error.adding({name:"AttachedError"});
-   *
-   * // 3. Relanzar (o lanzar, funciona igual) un error:
-   * error.adding({name:"AttachedError2"}).rethrow();
-   *
-   * // 4. Pasar a objeto:
-   * const data = error.toObject();
-   * // Puedes extender localmente los Error.tools.ignoredErrorFrames así:
-   * const data2 = error.toObject([ "async SomeClass.someMethod","/path/to/some/file.js",]);
-   *
-   * // 5. Pasar a objeto con persecución de error:
-   * const data = await error.toProsecution(); // sin formateos, porque si no, nos liamos
-   *
-   * // 6. Formateo de error y de lista de errores:
-   * Error.tools.formatError(error, "%name => %message [%stack]\n%frames");
-   * Error.tools.formatErrorList(errors, "%name => %message [%stack]\n%frames", "%functionName:%lineNumber:%columnNumber");
-   * ```
-   *
-   *
+   * - Los prototipo:
+   *    - `@Error.prototype.adding(any) => @self Error`
+   *    - `@Error.prototype.toObject() => @data Object`
+   *    - `@Error.prototype.toProsecution() => @data Object`
+   *    - `@Error.prototype.rethrow() !=> @self Error`
+   *    - `@Error.prototype.config(@props object) => @self Error`
+   * - Los static:
+   *    - `@Error.normalize function(any) => error`
+   *    - `@Error.formatError(@error error) => error`
+   *    - `@Error.formatList(@errors [...error]) => @errors [...{}]`
+   *    - `@Error.stringify(@data any) => @json string`
+   *    - `@Error.prosecuteList(@errors [...error]) => @data [...{}]`
+   *    - `@Error.stringifyProsecutedList(@errors [...error]) => @json string`
    *
    */
   Internal_api_tools: {
@@ -468,97 +453,6 @@ Error_extension_v1_scope: {
       };
     });
     Error.tools.settings = { prelines: 10, postlines: 10 };
-    Error.tools.FramesFormatter = class FramesErrorFormatter {
-      static create(...args) {
-        return new this(...args);
-      }
-      static defaultPattern =
-        "" +
-        "[function]    %functionName\n" +
-        "[frame]       %frameIndex/%framesTotal\n" +
-        "[source]      %source\n" +
-        "[file]        %fileName:%lineNumber:%columnNumber\n";
-      static defaultJoiner = "\n";
-      constructor(
-        pattern = this.constructor.defaultPattern,
-        joiner = this.constructor.defaultJoiner,
-      ) {
-        this.pattern = pattern;
-        this.joiner = joiner;
-      }
-      format(errorObject) {
-        throw new Error(
-          "Dont use this, use Error.prototype.toObject + custom modifier instead",
-        );
-        return errorObject.frames
-          .map((frame, frameIndex) => {
-            return this.pattern
-              .replace("%frameIndex", frameIndex + 1)
-              .replace("%framesTotal", errorObject.frames.length)
-              .replace("%source", frame.source.trim())
-              .replace("%functionName", frame.functionName)
-              .replace("%fileName", frame.fileName)
-              .replace("%lineNumber", frame.lineNumber)
-              .replace("%columnNumber", frame.columnNumber)
-              .replace("%prosecution", frame.prosecution);
-          })
-          .join(this.joiner);
-      }
-      static globalInstance = new this();
-      static format(errorObject) {
-        return this.globalInstance.format(errorObject);
-      }
-    };
-    Error.tools.ErrorListFormatter = class ErrorListFormatter {
-      static defaultJoiners = { errors: "\n", frames: "\n" };
-      static defaultErrorPattern = `
-[!] Error: %errorIndex/%totalErrors
-    Info:  %name => %message
-    %stack\n%frames
-`;
-      static defaultFramesPattern = `[function]    %functionName
-[frame]       %frameIndex/%framesTotal
-[source]      %source
-[file]        %fileName:%lineNumber:%columnNumber
-
-%prosecution`;
-      static async format(
-        errorList,
-        errorPattern = this.constructor.defaultErrorPattern,
-        framesPattern = this.constructor.defaultFramesPattern,
-        joiners = this.constructor.defaultJoiners,
-      ) {
-        throw new Error(
-          "Dont use ErrorListFormatter anymore, use Error.formatList instead",
-        );
-        let output = "";
-        for (let index = 0; index < errorList.length; index++) {
-          const errorItem = errorList[index];
-          const normalizedError = Error.normalize(errorItem);
-          const prosecutedError = await normalizedError.toProsecution({
-            format: "raw",
-          });
-          let headerText = "";
-          headerText += `\n[!] Error: [${index + 1}/${errorList.length}]`;
-          headerText += `\n    Info:  ${Error.tools.formatError(normalizedError, "%name => %message")}`;
-          const headers =
-            Std.objects.Ansi.style("yellow,bold").text(headerText);
-          const body = Std.objects.Ansi.style("magenta").text(
-            normalizedError.stack,
-          );
-          const footer =
-            "\n" +
-            Error.tools.FramesFormatter.create(
-              Std.objects.Ansi.style("redBright").text(
-                "\n[function]    %functionName\n[frame]       %frameIndex/%framesTotal\n[source]      %source\n[file]        %fileName:%lineNumber:%columnNumber",
-              ) + Std.objects.Ansi.style("white,bold").text("\n\n%prosecution"),
-            ).format(prosecutedError);
-          const errorString = headers + body + footer;
-          output += `${errorString}\n`;
-        }
-        return output;
-      }
-    };
     Error.tools.ignoredErrorFrames = [
       // Node.js:
       "node:internal/modules/cjs/loader",
@@ -596,7 +490,6 @@ Error_extension_v1_scope: {
         this.attachments = [];
       }
     };
-    Error.tools.noopSelf = (it) => it;
     Error.tools.pushOnce = function (list, frame) {
       const isRepeated = list.some(function (item) {
         return (
@@ -733,20 +626,6 @@ Error_extension_v1_scope: {
     };
   }
   Static_formatters: {
-    Error.tools.formatError = function (error, template) {
-      throw new Error("Error.tools.formatError no, use Error.formatError");
-      return template
-        .replace("%name", error.name || "no name")
-        .replace("%message", error.message || "no message")
-        .replace("%stack", error.stack || "no stack");
-    };
-    Error.tools.formatErrorList = function (list, options) {
-      throw new Error("Error.tools.formatErrorList no, use Error.formatList");
-      return ErrorListFormatter.format(list, options);
-    };
-    Error.tools.formatFramesOf = function (...args) {
-      return Error.tools.FramesFormatter.format(...args);
-    };
     Error.formatError = function (errorBrute) {
       const error = Error.normalize(errorBrute);
       let errorObject = error.toObject();
@@ -794,6 +673,34 @@ Error_extension_v1_scope: {
           }
         },
       );
+    };
+    Error.prosecuteList = async function (errors) {
+      const output = [];
+      for (let index = 0; index < errors.length; index++) {
+        const error = errors[index];
+        const prosecuted = await Error.normalize(error).toProsecution();
+        output.push(prosecuted);
+      }
+      return output;
+    };
+    Error.stringifyProsecutedList = function (errors) {
+      return Error.prosecuteList(errors).then((prosecution) => {
+        return JSON.stringify(
+          prosecution.map((item) => {
+            if (item.frames) {
+              item.frames = item.frames.map((frame) => {
+                if (frame.prosecution) {
+                  frame.prosecution = frame.prosecution.split("\n");
+                }
+                return frame;
+              });
+            }
+            return item;
+          }),
+          null,
+          2,
+        );
+      });
     };
   }
 }

@@ -1,0 +1,26 @@
+{
+  "name": "route-opener",
+  "displayName": "Route opener",
+  "version": "1.0.0",
+  "main": "./extension.js",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "activationEvents": [
+    "onCommand:routeOpener.openRoute"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "routeOpener.openRoute",
+        "title": "Opens a selected route"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "routeOpener.openRoute",
+        "key": "ctrl+shift+j"
+      }
+    ]
+  }
+}

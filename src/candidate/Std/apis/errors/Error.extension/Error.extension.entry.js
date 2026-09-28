@@ -10,34 +10,19 @@ Error_extension_v1_scope: {
    *     - el constructor no se sobreescribe
    * - Utiliza ErrorStackFrame y ErrorStackParser
    *    - de https://www.stacktracejs.com/ ambos
-   * - Cumple para 6 utilidades, no más:
-   * ```js
-   * // 1. Normalizar errores de cualquier input a Error:
-   * Error.normalize("mensaje de error");
-   * Error.normalize({ name: "ErrorName", message: "error message" });
-   * Error.normalize(new Error("whatever"));
-   * 
-   * // 2. Añadir un error a otro con normalización intermedia:
-   * const error = Error.normalize({name:"BaseError"})
-   * error.adding({name:"AttachedError"});
-   * 
-   * // 3. Relanzar (o lanzar, funciona igual) un error:
-   * error.adding({name:"AttachedError2"}).rethrow();
-   * 
-   * // 4. Pasar a objeto:
-   * const data = error.toObject();
-   * // Puedes extender localmente los Error.tools.ignoredErrorFrames así:
-   * const data2 = error.toObject([ "async SomeClass.someMethod","/path/to/some/file.js",]);
-   * 
-   * // 5. Pasar a objeto con persecución de error:
-   * const data = await error.toProsecution(); // sin formateos, porque si no, nos liamos
-   * 
-   * // 6. Formateo de error y de lista de errores:
-   * Error.tools.formatError(error, "%name => %message [%stack]\n%frames");
-   * Error.tools.formatErrorList(errors, "%name => %message [%stack]\n%frames", "%functionName:%lineNumber:%columnNumber");
-   * ```
-   * 
-   * 
+   * - Los prototipo:
+   *    - `@Error.prototype.adding(any) => @self Error`
+   *    - `@Error.prototype.toObject() => @data Object`
+   *    - `@Error.prototype.toProsecution() => @data Object`
+   *    - `@Error.prototype.rethrow() !=> @self Error`
+   *    - `@Error.prototype.config(@props object) => @self Error`
+   * - Los static:
+   *    - `@Error.normalize function(any) => error`
+   *    - `@Error.formatError(@error error) => error`
+   *    - `@Error.formatList(@errors [...error]) => @errors [...{}]`
+   *    - `@Error.stringify(@data any) => @json string`
+   *    - `@Error.prosecuteList(@errors [...error]) => @data [...{}]`
+   *    - `@Error.stringifyProsecutedList(@errors [...error]) => @json string`
    * 
    */
   Internal_api_tools: {
@@ -45,8 +30,6 @@ Error_extension_v1_scope: {
     Error.tools.StackFrame = $compiler.inject.source("@/src/www/external/stacktrace.js/ErrorStackFrame.external.js");
     Error.tools.StackParser = $compiler.inject.source("@/src/www/external/stacktrace.js/ErrorStackParser.external.js");
     Error.tools.settings = { prelines: 10, postlines: 10, };
-    Error.tools.FramesFormatter = $compiler.inject.source("@/src/candidate/Std/apis/errors/ErrorFormatter/ErrorFormatter.class.js");
-    Error.tools.ErrorListFormatter = $compiler.inject.source("@/src/candidate/Std/apis/errors/ErrorListFormatter/ErrorListFormatter.class.js");
     Error.tools.ignoredErrorFrames = [
       // Node.js:
       "node:internal/modules/cjs/loader",
@@ -82,7 +65,6 @@ Error_extension_v1_scope: {
         this.attachments = [];
       }
     };
-    Error.tools.noopSelf = it => it;
     Error.tools.pushOnce = function (list, frame) {
       const isRepeated = list.some(function (item) {
         return frame.fileName === item.fileName
@@ -157,7 +139,7 @@ Error_extension_v1_scope: {
     };
     Error.prototype.toProsecution = async function (optionsBrute = {}) {
       let options = optionsBrute;
-      let {memory = {}} = options;
+      let { memory = {} } = options;
       const output = this.toObject();
       const { frames } = output;
       for (let index = 0; index < frames.length; index++) {
@@ -170,26 +152,12 @@ Error_extension_v1_scope: {
     Error.prototype.rethrow = function () {
       throw Error.normalize(this);
     };
-    Error.prototype.config = function(data) {
+    Error.prototype.config = function (data) {
       return Object.assign(this, data);
     };
   }
   Static_formatters: {
-    Error.tools.formatError = function (error, template) {
-      throw new Error("Error.tools.formatError no, use Error.formatError");
-      return template
-        .replace("%name", error.name || "no name")
-        .replace("%message", error.message || "no message")
-        .replace("%stack", error.stack || "no stack")
-    };
-    Error.tools.formatErrorList = function(list, options) {
-      throw new Error("Error.tools.formatErrorList no, use Error.formatList");
-      return ErrorListFormatter.format(list, options);
-    };
-    Error.tools.formatFramesOf = function(...args) {
-      return Error.tools.FramesFormatter.format(...args);
-    };
-    Error.formatError = function(errorBrute) {
+    Error.formatError = function (errorBrute) {
       const error = Error.normalize(errorBrute);
       let errorObject = error.toObject();
       let plain = {
@@ -197,7 +165,7 @@ Error_extension_v1_scope: {
       };
       plain = Object.assign(plain, errorObject);
       plain.traces = error.stack.split("\n");
-      if(error.metadata?.attachments?.length) {
+      if (error.metadata?.attachments?.length) {
         plain.others = Error.formatList(error.metadata.attachments);
       } else {
         plain.others = null;
@@ -208,25 +176,49 @@ Error_extension_v1_scope: {
       delete plain.message;
       delete plain.metadata;
       plain.frames = plain.frames?.map(frame => {
-        return [frame.fileName,frame.lineNumber,frame.columnNumber,frame.functionName].join(" | ");
+        return [frame.fileName, frame.lineNumber, frame.columnNumber, frame.functionName].join(" | ");
       });
       return plain;
     }
-    Error.formatList = function(errors) {
+    Error.formatList = function (errors) {
       const output = [];
-      for(let index=0; index<errors.length; index++) {
+      for (let index = 0; index < errors.length; index++) {
         const error = errors[index];
         const item = Error.formatError(error);
         output.push(item);
       }
       return output;
     };
-    Error.stringify = function(errors) {
-      return Std.all.JsonStringifier.stringify(errors, true, function(key, value) {
-        if(value instanceof Error) {
+    Error.stringify = function (errors) {
+      return Std.all.JsonStringifier.stringify(errors, true, function (key, value) {
+        if (value instanceof Error) {
           return Error.formatError(value);
         }
       });
-    }
+    };
+    Error.prosecuteList = async function (errors) {
+      const output = [];
+      for (let index = 0; index < errors.length; index++) {
+        const error = errors[index];
+        const prosecuted = await Error.normalize(error).toProsecution();
+        output.push(prosecuted);
+      }
+      return output;
+    };
+    Error.stringifyProsecutedList = function (errors) {
+      return Error.prosecuteList(errors).then(prosecution => {
+        return JSON.stringify(prosecution.map(item => {
+          if (item.frames) {
+            item.frames = item.frames.map(frame => {
+              if (frame.prosecution) {
+                frame.prosecution = frame.prosecution.split("\n");
+              }
+              return frame;
+            });
+          }
+          return item;
+        }), null, 2);
+      });
+    };
   }
 };

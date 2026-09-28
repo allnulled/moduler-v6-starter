@@ -2435,12 +2435,7 @@
            * @description
            */
           _createAsyncFunction(source, parameters = []) {
-            const asyncFunction = new ModulerV6.AsyncFunction(
-              ...parameters,
-              source,
-            );
-            asyncFunction.name = "AsyncFunctionInstance";
-            return asyncFunction;
+            return new ModulerV6.AsyncFunction(...parameters, source);
           }
           /**
            * @name ModulerV6.prototype._importFile
@@ -2522,7 +2517,7 @@
                 {
                   module: moduleHolder,
                   exports: moduleHolder.exports,
-                  $moduler: this.cloneForFile(filepath),
+                  $localModuler: this.cloneForFile(filepath),
                 },
                 {
                   onMissingResource:
@@ -2564,7 +2559,7 @@
             const syncResult = factory(dependencies, {
               module: moduleHolder,
               exports: moduleHolder.exports,
-              $moduler: this,
+              $localModuler: this,
             });
             if (syncResult instanceof Promise) {
               return syncResult.then((result) => {
@@ -2831,7 +2826,7 @@
             }
             const _module = { exports: {} };
             return {
-              $moduler: this.cloneForFile(filepath),
+              $localModuler: this.cloneForFile(filepath),
               module: _module,
               exports: _module.exports,
               file: filepath,
@@ -3053,6 +3048,20 @@
               this.section.set(_id, output);
             }
             return output;
+          }
+
+          /**
+           * @name ModulerV6.prototype.importCallback
+           * @type
+           * @description
+           */
+          async importCallback(file, argumentary = []) {
+            const callback = await this.import(file);
+            this.assert(
+              typeof callback === "function",
+              `ModulerV6.prototype.importCallback could not call module because it must export function but «${typeof callback}» was found instead`,
+            );
+            return await callback(...argumentary);
           }
 
           /**
@@ -5366,14 +5375,14 @@
        * @type
        * @description
        */
-      _wrapAsModuleInjection(source, rootpath) {
+      _wrapAsModuleInjection(source, rootpath, modulerVarname = "$moduler") {
         const distRootpath = this.moduler._getDistRootpathFromSrc(rootpath);
         return [
-          `(function({ module, exports, $moduler }) {`,
-          `  return $moduler.releaseFile("${distRootpath}", arguments[0], (function() {`,
+          `(function({ module, exports, $localModuler }) {`,
+          `  return ${modulerVarname}.releaseFile("${distRootpath}", arguments[0], (function() {`,
           `    ${source}`,
           `  }).call(this));`,
-          `}).call(this, $moduler.reserveFile("${distRootpath}"))`,
+          `}).call(this, ${modulerVarname}.reserveFile("${distRootpath}"))`,
         ].join("\n");
       }
       /**
@@ -5906,6 +5915,8 @@
         let subcode2 = "";
         const parameters = this._getDataForTokenCompilation({ token });
         const collection = parameters[0];
+        const options = parameters[1] || {};
+        const { modulerVarname = "$moduler" } = options;
         const isArray = Array.isArray(collection);
         const isObject = !isArray && typeof collection === "object";
         this.moduler.assert(
@@ -5966,6 +5977,7 @@
               subcode1 += this._wrapAsModuleInjection(
                 targetCompilation.js,
                 rootpath,
+                modulerVarname,
               );
               subcode1 += ",\n";
             } else if (isObject) {
@@ -5974,6 +5986,7 @@
               subcode1 += this._wrapAsModuleInjection(
                 targetCompilation.js,
                 targetInfo.rootpath,
+                modulerVarname,
               );
               subcode1 += ",\n";
             }
@@ -5985,7 +5998,7 @@
           }
         }
         Generate_output: {
-          out += `$moduler.lockFiles([\n`;
+          out += `${modulerVarname}.lockFiles([\n`;
           out += Object.values(collection)
             .map((key) => {
               const rootpath1 = subcompilerForAll.moduler.rootdirOf(key);

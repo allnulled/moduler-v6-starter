@@ -1,3 +1,71 @@
+4 cosas:
+
+- 1. [x] Dejar ya bien la API de Error:
+   - [x] con Error.formatError
+   - [x] con Error.formatList
+   - [x] con Error.stringify
+   - [x] con Error.normalize
+   - [x] con Error.rethrow
+   - [x] con Error.prototype.adding
+   - [x] con Error.prototype.rethrow
+   - [x] con Error.prototype.toObject
+   - [x] con Error.prototype.toProsecution
+   - [!] NO ESTÁ TERMINADA, es una API que se está resistiendo
+      - [!] Plagada de métodos que no sabes si se usan o no, si son de la API o no
+      - [!] Sobreescribe muchos métodos de la interfaz nativa
+         - [!] Y con palabras bastante clave
+      - [!] Pasa por muchos formatos el error
+         - [!] Que no guardan compatibilidad ni trazabilidad apenas
+         - [!] Solamente mejoran un poco la presentación
+         - [!] Pero por el camino toma formas diversas y es un poco confuso
+            - [!] Error.normalize
+            - [!] Error.prototype.toObject
+            - [!] Error.prototype.toProsecution
+            - [!] Error.formatError
+            - [!] Error.formatList
+            - [!] Habría que mejorar esto
+   - [+] Parece que el que encaja bien sería un:
+      - [+] Error.planify o Error.format | para formatError y formatList
+      - [+] Error.stringify
+- 2. [x] El $moduler a $modulerLocal cuando lleva `.{import,export}("./")`
+- 3. [x] Un $moduler.importCallback("@/src/una/funcion.js", [{ param: 5 }]) con funciones exportadas con module.exports = function.
+- 4. [ ] El filesystem de indexeddb y nodejs
+   - 4.1. [ ] Que los métodos se parezcan a los de node.js en comportamiento
+   - 4.2. [ ] Los métodos de copy y move de node.js y indexeddb
+   - 4.3. [ ] Tests
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 - [ ] Habría que dejar algún test de la Error API generando prosecutions
 - [ ] Hay que hacer un ErrorPrinter, o algo para que
    - [ ] una vez que sabes que ahí controlas errores

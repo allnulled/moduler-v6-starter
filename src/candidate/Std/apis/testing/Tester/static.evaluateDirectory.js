@@ -6,7 +6,7 @@ async function evaluateDirectory(options = {}) {
    * - Mismas firmas que `Std.classes.Tester.evaluateBrowserDirectory`.
    * 
    */
-  const { files, directory = "(not specified)", injection = {} } = options;
+  const { files, directory = "(not specified)", injection = {}, debug = false } = options;
   $moduler.assert(Array.isArray(files), `Required parameter «files» to be array but «${typeof files}» was found instead on «Std.classes.Tester.evaluateDirectory»`);
   $moduler.assert(typeof directory === "string", `Required parameter «directory» to be string but «${typeof directory}» was found instead on «Std.classes.Tester.evaluateDirectory»`);
   $moduler.assert(typeof injection === "object", `Required parameter «injection» to be object but «${typeof injection}» was found instead on «Std.classes.Tester.evaluateDirectory»`);
@@ -43,6 +43,7 @@ async function evaluateDirectory(options = {}) {
       break Report_success_or_errors;
     }
     Std.objects.Ansi.style("bgRed,black").print(`\n[!!] Tester.evaluateDirectory has reported ${allErrors.length} errors on test directory at:\n     ${$moduler.rootdirOf(directory)}`);
-    console.log(Error.formatList(allErrors));
+    if(!debug) console.log(await Error.stringify(allErrors));
+    else console.log(await Error.stringifyProsecutedList(allErrors));
   }
 }

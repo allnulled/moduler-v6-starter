@@ -1,0 +1,1 @@
+static mergeAbstractions = Std.classes.AbstractionMerger.mergeAbstractions;

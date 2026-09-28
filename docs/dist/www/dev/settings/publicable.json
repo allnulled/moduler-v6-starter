@@ -26,7 +26,8 @@
             "@/dist/www/dev/test/feature/005.Std.classes.IdbFilesystem puede hacer operaciones básicas/test.dist.js",
             "@/dist/www/dev/test/feature/006.Std.classes.Basedir puede resolver rutas de las 3 formas/test.dist.js",
             "@/dist/www/dev/test/feature/007.Std.classes.IdbFilesystem puede hacer operaciones básicas/test.dist.js",
-            "@/dist/www/dev/test/feature/008.Std.classes.TypesValidator soporta sintaxis de factory, default y label/test.dist.js"
+            "@/dist/www/dev/test/feature/008.Std.classes.TypesValidator soporta sintaxis de factory, default y label/test.dist.js",
+            "@/dist/www/dev/test/feature/009.Std.classes.AbstractionMerger puede mezclar interfaces/test.dist.js"
           ]
         },
         "@/dist/www/dev/test/integrity": {

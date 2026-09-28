@@ -56,9 +56,7 @@ class IdbFilesystem {
   }
 
   async writeFile(file, content) {
-    Esto_es_para_imitar_a_nodejs: {
-      await this.crud.get("files", Std.classes.Basedir.superiorPathOf(file));
-    }
+    await this.assertParentDirectory(file, "on «IdbFilesystem.prototype.writeFile»");
     await this.crud.put("files", {
       path: file,
       type: "file",
@@ -81,26 +79,24 @@ class IdbFilesystem {
 
   async readDirectory(dir) {
     const entries = await this.crud.getAll("files");
-    const selection = entries.filter((entry) => {
-      La_condicion_buena_seria_esta: {
-        break La_condicion_buena_seria_esta;
-        return entry.type === "file" &&
-        entry.path.startsWith(dir + "/");
-      }
-      Pero_esta_es_la_compatible_con_node: {
-        return entry.path.startsWith(dir + "/") && (entry.path.replace(dir + "/", "").match(/\//g) === null);
-      }
+    const nodes = entries.filter((entry) => {
+      const isSubdir = entry.path.startsWith(dir + "/");
+      if(!isSubdir) return false;
+      const extraPath = entry.path.replace(dir + "/", "");
+      const isImmediate = extraPath.match(/\//g) === null;
+      if(!isImmediate) return false;
+      const isItself = extraPath.length === 0;
+      if(isItself) return false;
+      return isSubdir && isImmediate && !isItself;
     }).map(entry => this.basenameOf(entry.path));
-    Esto_es_para_imitar_a_nodejs_tambien: {
-      if(selection.length === 0) {
-        const out = await this.crud.get("files", dir);
-        if(!out) throw new Error(`IdbFilesystem.prototype.readDirectory complains that directory is not found: ${dir}`);
-      }
+    if((nodes.length === 0) && (!await this.hasDirectory(dir))) {
+      throw new Error(`IdbFilesystem.prototype.readDirectory cannot read directory because does not exist: ${dir}`);
     }
-    return selection;
+    return nodes;
   }
 
   async writeDirectory(dir) {
+    await this.assertParentDirectory(dir, "on «IdbFilesystem.prototype.writeDirectory»");
     await this.crud.put("files", {
       path: dir,
       type: "directory",
@@ -110,8 +106,7 @@ class IdbFilesystem {
   async deleteDirectory(dir) {
     const entries = await this.crud.getAll("files");
     const children = entries.filter((entry) => {
-      return entry.path === dir ||
-        entry.path.startsWith(dir + "/");
+      return entry.path === dir || entry.path.startsWith(dir + "/");
     });
     for (const entry of children) {
       await this.crud.delete("files", entry.path);
@@ -121,6 +116,21 @@ class IdbFilesystem {
   async hasDirectory(dir) {
     const entry = await this.crud.get("files", dir);
     return !!entry && entry.type === "directory";
+  }
+
+  async hasParentDirectory(node, rootsOk = true) {
+    const parts = node.split("/");
+    if(parts.length === 1 && rootsOk) return true;
+    parts.pop();
+    const supernode = parts.join("/");
+    if(supernode === node) return rootsOk;
+    return await this.hasDirectory(supernode);
+  }
+  
+  async assertParentDirectory(node, appendix = false) {
+    const has = await this.hasParentDirectory(node);
+    if(has) return true;
+    throw new Error(`Required «${node}» to have an existing directory${appendix ? ' ' + appendix : ''}`);
   }
 
   async copyFile(src, dst) {

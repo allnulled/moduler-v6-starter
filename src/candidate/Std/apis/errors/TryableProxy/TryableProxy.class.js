@@ -1,4 +1,4 @@
-class TryAsyncProxy {
+class TryableProxy {
 
   constructor(target) {
     return new Proxy(target, {
@@ -7,9 +7,10 @@ class TryAsyncProxy {
         if (typeof method !== "function") {
           return method;
         }
-        return async (...args) => {
+        return (...args) => {
           try {
-            return await method.apply(target, args);
+            const output = target[property](...args);
+            return output instanceof Promise ? output.catch(error => error) : output;
           } catch (error) {
             return error;
           }
@@ -17,5 +18,5 @@ class TryAsyncProxy {
       },
     });
   }
-  
+
 }
