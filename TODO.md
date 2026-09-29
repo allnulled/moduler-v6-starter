@@ -1,0 +1,8 @@
+- [ ] En las 2 FS de node y de idb falta:
+   - [ ] {copy,move}{File,Directory}
+- [ ] En el types, falta la opción de:
+   - [ ] `@list [...item]` para poder definir listas no cerradas al menos
+   - [ ] `@props {...extra1, ...extra2}` para poder definir listas no cerradas al menos
+   - [ ] pero hay que pensarlo bien esto
+      - [ ] cuál es la forma más común de mezclarlos
+      - [ ] cuál interesa llevarse

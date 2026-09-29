@@ -15336,21 +15336,100 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
               .catch((error) => false);
           }
 
-          async copyFile(src, dst) {
-            throw new Error("Not supported yet");
+          async assertParentDirectory(nodeBrute, appendix = false) {
+            const node = $moduler.normalizationOf(nodeBrute);
+            const parts = node.split(require("path").sep);
+
+            if (parts.length === 1) return true;
+
+            parts.pop();
+
+            const parent = parts.join(require("path").sep);
+
+            if (await this.hasDirectory(parent)) return true;
+
+            throw new Error(
+              `Required «${node}» to have an existing directory${appendix ? " " + appendix : ""}`,
+            );
           }
 
-          async copyDirectory(src, dst) {
-            throw new Error("Not supported yet");
+          async copyFile(srcBrute, dstBrute) {
+            const src = $moduler.normalizationOf(srcBrute);
+            const dst = $moduler.normalizationOf(dstBrute);
+            await this.assertParentDirectory(
+              dst,
+              "on «NodejsFilesystem.prototype.copyFile»",
+            );
+            await require("fs").promises.copyFile(src, dst);
+            return true;
           }
 
-          async moveFile(src, dst) {
-            throw new Error("Not supported yet");
+          async copyDirectory(srcBrute, dstBrute) {
+            const src = $moduler.normalizationOf(srcBrute);
+            const dst = $moduler.normalizationOf(dstBrute);
+            await this.assertParentDirectory(
+              dst,
+              "on «NodejsFilesystem.prototype.copyDirectory»",
+            );
+            await require("fs").promises.cp(src, dst, {
+              recursive: true,
+            });
+            return true;
           }
 
-          async moveDirectory(src, dst) {
-            throw new Error("Not supported yet");
+          async moveFile(srcBrute, dstBrute) {
+            const src = $moduler.normalizationOf(srcBrute);
+            const dst = $moduler.normalizationOf(dstBrute);
+            await this.assertParentDirectory(
+              dst,
+              "on «NodejsFilesystem.prototype.moveFile»",
+            );
+            await require("fs").promises.rename(src, dst);
+            return true;
           }
+
+          async moveDirectory(srcBrute, dstBrute) {
+            const src = $moduler.normalizationOf(srcBrute);
+            const dst = $moduler.normalizationOf(dstBrute);
+            await this.assertParentDirectory(
+              dst,
+              "on «NodejsFilesystem.prototype.moveDirectory»",
+            );
+            await require("fs").promises.rename(src, dst);
+            return true;
+          }
+
+          /*
+  async copyFile(srcBrute, dstBrute) {
+    const src = $moduler.normalizationOf(srcBrute);
+    const dst = $moduler.normalizationOf(dstBrute);
+    await require("fs").promises.copyFile(src, dst);
+    return true;
+  }
+
+  async copyDirectory(srcBrute, dstBrute) {
+    const src = $moduler.normalizationOf(srcBrute);
+    const dst = $moduler.normalizationOf(dstBrute);
+    await require("fs").promises.cp(src, dst, {
+      recursive: true,
+    });
+    return true;
+  }
+
+  async moveFile(srcBrute, dstBrute) {
+    const src = $moduler.normalizationOf(srcBrute);
+    const dst = $moduler.normalizationOf(dstBrute);
+    await require("fs").promises.rename(src, dst);
+    return true;
+  }
+
+  async moveDirectory(srcBrute, dstBrute) {
+    const src = $moduler.normalizationOf(srcBrute);
+    const dst = $moduler.normalizationOf(dstBrute);
+    await require("fs").promises.rename(src, dst);
+    return true;
+  }
+  //*/
         };
       Std.all.IdbCrud = Std.classes.IdbCrud = class IdbCrud {
         constructor(db) {
@@ -15551,19 +15630,56 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
         }
 
         async copyFile(src, dst) {
-          throw new Error("Not supported yet");
-        }
-
-        async copyDirectory(src, dst) {
-          throw new Error("Not supported yet");
+          await this.assertParentDirectory(
+            dst,
+            "on «IdbFilesystem.prototype.copyFile»",
+          );
+          const contents = await this.readFile(src);
+          await this.writeFile(dst, contents);
+          return true;
         }
 
         async moveFile(src, dst) {
-          throw new Error("Not supported yet");
+          await this.assertParentDirectory(
+            dst,
+            "on «IdbFilesystem.prototype.copyFile»",
+          );
+          const contents = await this.readFile(src);
+          await this.writeFile(dst, contents);
+          await this.deleteFile(src);
+          return true;
+        }
+
+        async copyDirectory(src, dst) {
+          await this.assertParentDirectory(
+            dst,
+            "on «IdbFilesystem.prototype.copyDirectory»",
+          );
+          if (!(await this.hasDirectory(src))) {
+            throw new Error(`Directory not found: ${src}`);
+          }
+          const entries = await this.crud.getAll("files");
+          const children = entries.filter((entry) => {
+            return entry.path === src || entry.path.startsWith(src + "/");
+          });
+          for (const entry of children) {
+            const path = dst + entry.path.slice(src.length);
+            await this.crud.put("files", {
+              ...entry,
+              path,
+            });
+          }
+          return true;
         }
 
         async moveDirectory(src, dst) {
-          throw new Error("Not supported yet");
+          await this.assertParentDirectory(
+            dst,
+            "on «IdbFilesystem.prototype.moveDirectory»",
+          );
+          await this.copyDirectory(src, dst);
+          await this.deleteDirectory(src);
+          return true;
         }
       };
       Std.all.makeFunctionByProperties =

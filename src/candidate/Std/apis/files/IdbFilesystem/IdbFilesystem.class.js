@@ -1,5 +1,5 @@
 class IdbFilesystem {
-  
+
   static {
     $moduler.toolkit.makeClass([
       Std.interfaces.InstantiableInterface,
@@ -81,15 +81,15 @@ class IdbFilesystem {
     const entries = await this.crud.getAll("files");
     const nodes = entries.filter((entry) => {
       const isSubdir = entry.path.startsWith(dir + "/");
-      if(!isSubdir) return false;
+      if (!isSubdir) return false;
       const extraPath = entry.path.replace(dir + "/", "");
       const isImmediate = extraPath.match(/\//g) === null;
-      if(!isImmediate) return false;
+      if (!isImmediate) return false;
       const isItself = extraPath.length === 0;
-      if(isItself) return false;
+      if (isItself) return false;
       return isSubdir && isImmediate && !isItself;
     }).map(entry => this.basenameOf(entry.path));
-    if((nodes.length === 0) && (!await this.hasDirectory(dir))) {
+    if ((nodes.length === 0) && (!await this.hasDirectory(dir))) {
       throw new Error(`IdbFilesystem.prototype.readDirectory cannot read directory because does not exist: ${dir}`);
     }
     return nodes;
@@ -120,33 +120,58 @@ class IdbFilesystem {
 
   async hasParentDirectory(node, rootsOk = true) {
     const parts = node.split("/");
-    if(parts.length === 1 && rootsOk) return true;
+    if (parts.length === 1 && rootsOk) return true;
     parts.pop();
     const supernode = parts.join("/");
-    if(supernode === node) return rootsOk;
+    if (supernode === node) return rootsOk;
     return await this.hasDirectory(supernode);
   }
-  
+
   async assertParentDirectory(node, appendix = false) {
     const has = await this.hasParentDirectory(node);
-    if(has) return true;
+    if (has) return true;
     throw new Error(`Required «${node}» to have an existing directory${appendix ? ' ' + appendix : ''}`);
   }
 
   async copyFile(src, dst) {
-    throw new Error("Not supported yet");
-  }
-
-  async copyDirectory(src, dst) {
-    throw new Error("Not supported yet");
+    await this.assertParentDirectory(dst, "on «IdbFilesystem.prototype.copyFile»");
+    const contents = await this.readFile(src);
+    await this.writeFile(dst, contents);
+    return true;
   }
 
   async moveFile(src, dst) {
-    throw new Error("Not supported yet");
+    await this.assertParentDirectory(dst, "on «IdbFilesystem.prototype.copyFile»");
+    const contents = await this.readFile(src);
+    await this.writeFile(dst, contents);
+    await this.deleteFile(src);
+    return true;
+  }
+
+  async copyDirectory(src, dst) {
+    await this.assertParentDirectory(dst, "on «IdbFilesystem.prototype.copyDirectory»");
+    if (!await this.hasDirectory(src)) {
+      throw new Error(`Directory not found: ${src}`);
+    }
+    const entries = await this.crud.getAll("files");
+    const children = entries.filter((entry) => {
+      return entry.path === src || entry.path.startsWith(src + "/");
+    });
+    for (const entry of children) {
+      const path = dst + entry.path.slice(src.length);
+      await this.crud.put("files", {
+        ...entry,
+        path,
+      });
+    }
+    return true;
   }
 
   async moveDirectory(src, dst) {
-    throw new Error("Not supported yet");
+    await this.assertParentDirectory(dst, "on «IdbFilesystem.prototype.moveDirectory»");
+    await this.copyDirectory(src, dst);
+    await this.deleteDirectory(src);
+    return true;
   }
 
 }

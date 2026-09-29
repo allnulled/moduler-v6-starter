@@ -55,4 +55,68 @@ module.exports = async function ({ Tester }) {
     }
   }
 
+  Copy_and_move_file: {
+    const file1 = "@/src/copysrc.txt";
+    const file2 = "@/src/copydst.txt";
+    const file3 = "@/impossible/copydst.txt";
+    const file4 = "@/src/copydst2.txt";
+    Reset: {
+      await idbfs.try.deleteFile(file1);
+      await idbfs.try.deleteFile(file2);
+      await idbfs.try.deleteFile(file3);
+      await idbfs.try.deleteFile(file4);
+    }
+    Copy: {
+      await idbfs.try.writeFile(file1, "one");
+      await idbfs.copyFile(file1, file2);
+      const err1 = await idbfs.try.copyFile(file1, file3);
+      $moduler.assert(await idbfs.hasFile(file2), "Can copy file");
+      $moduler.assert(err1 instanceof Error, "Can try to copy file but fail if destination has no directory");
+    }
+    Move: {
+      $moduler.assert(!await idbfs.hasFile(file4));
+      await idbfs.moveFile(file2, file4);
+      $moduler.assert(await idbfs.hasFile(file4), "Can move files (1)");
+      $moduler.assert(!await idbfs.hasFile(file2), "Can move files (2)");
+      await idbfs.try.moveFile(file4, file3);
+      $moduler.assert(await idbfs.hasFile(file4), "Can try to move files (5)");
+      $moduler.assert(!await idbfs.hasFile(file3), "Can try to move files (6)");
+    }
+  }
+
+  Copy_and_move_directory: {
+    const dir1 = "@/src/dir1";
+    const dir2 = "@/src/dir2";
+    const dir3 = "@/src/dir3";
+    const dir4 = "@/src/impossible/dir4";
+    Reset: {
+      await idbfs.try.deleteDirectory(dir1);
+      await idbfs.try.deleteDirectory(dir2);
+      await idbfs.try.deleteDirectory(dir3);
+    }
+    Copy: {
+      await idbfs.writeDirectory(dir1);
+      await idbfs.writeDirectory(`${dir1}/abc`);
+      await idbfs.writeFile(`${dir1}/abc/file.txt`, "ok");
+      await idbfs.writeDirectory(`${dir1}/def`);
+      await idbfs.writeFile(`${dir1}/def/file.txt`, "reok");
+      $moduler.assert(false === await idbfs.hasFile(`${dir2}/abc/file.txt`), "Can prepare copyDirectory test (1)");
+      await idbfs.copyDirectory(dir1, dir2);
+      $moduler.assert(true === await idbfs.hasFile(`${dir2}/abc/file.txt`), "Can copyDirectory (2)");
+      $moduler.assert(false === await idbfs.hasFile(`${dir4}/abc/file.txt`), "Can prepare try.copyDirectory test (3)");
+      await idbfs.try.copyDirectory(dir1, dir4);
+      $moduler.assert(false === await idbfs.hasFile(`${dir4}/abc/file.txt`), "Can prepare try.copyDirectory test (4)");
+    }
+    Move: {
+      $moduler.assert(false === await idbfs.hasFile(`${dir3}/abc/file.txt`), "Can prepare moveDirectory test (8)");
+      $moduler.assert(true === await idbfs.hasFile(`${dir2}/abc/file.txt`), "Can prepare moveDirectory test (9)");
+      await idbfs.moveDirectory(dir2, dir3);
+      $moduler.assert(false === await idbfs.hasFile(`${dir2}/abc/file.txt`), "Can moveDirectory (11)");
+      $moduler.assert(true === await idbfs.hasFile(`${dir3}/abc/file.txt`), "Can moveDirectory (12)");
+      await idbfs.try.moveDirectory(dir3, dir4);
+      $moduler.assert(false === await idbfs.hasFile(`${dir4}/abc/file.txt`), "Can try.moveDirectory (14)");
+      $moduler.assert(true === await idbfs.hasFile(`${dir3}/abc/file.txt`), "Can try.moveDirectory (15)");
+    }
+  }
+
 };

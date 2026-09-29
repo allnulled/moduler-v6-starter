@@ -64,20 +64,90 @@ class NodejsFilesystem {
     return require("fs").promises.lstat(dir).then(stat => stat.isDirectory()).catch(error => false);
   }
 
-  async copyFile(src, dst) {
-    throw new Error("Not supported yet");
+  async assertParentDirectory(nodeBrute, appendix = false) {
+
+    const node = $moduler.normalizationOf(nodeBrute);
+    const parts = node.split(require("path").sep);
+
+    if (parts.length === 1) return true;
+
+    parts.pop();
+
+    const parent = parts.join(require("path").sep);
+
+    if (await this.hasDirectory(parent)) return true;
+
+    throw new Error(
+      `Required «${node}» to have an existing directory${appendix ? " " + appendix : ""}`
+    );
+
   }
 
-  async copyDirectory(src, dst) {
-    throw new Error("Not supported yet");
+  async copyFile(srcBrute, dstBrute) {
+    const src = $moduler.normalizationOf(srcBrute);
+    const dst = $moduler.normalizationOf(dstBrute);
+    await this.assertParentDirectory(dst, "on «NodejsFilesystem.prototype.copyFile»");
+    await require("fs").promises.copyFile(src, dst);
+    return true;
   }
 
-  async moveFile(src, dst) {
-    throw new Error("Not supported yet");
+  async copyDirectory(srcBrute, dstBrute) {
+    const src = $moduler.normalizationOf(srcBrute);
+    const dst = $moduler.normalizationOf(dstBrute);
+    await this.assertParentDirectory(dst, "on «NodejsFilesystem.prototype.copyDirectory»");
+    await require("fs").promises.cp(src, dst, {
+      recursive: true,
+    });
+    return true;
   }
 
-  async moveDirectory(src, dst) {
-    throw new Error("Not supported yet");
+  async moveFile(srcBrute, dstBrute) {
+    const src = $moduler.normalizationOf(srcBrute);
+    const dst = $moduler.normalizationOf(dstBrute);
+    await this.assertParentDirectory(dst, "on «NodejsFilesystem.prototype.moveFile»");
+    await require("fs").promises.rename(src, dst);
+    return true;
   }
+
+  async moveDirectory(srcBrute, dstBrute) {
+    const src = $moduler.normalizationOf(srcBrute);
+    const dst = $moduler.normalizationOf(dstBrute);
+    await this.assertParentDirectory(dst, "on «NodejsFilesystem.prototype.moveDirectory»");
+    await require("fs").promises.rename(src, dst);
+    return true;
+
+  }
+
+  /*
+  async copyFile(srcBrute, dstBrute) {
+    const src = $moduler.normalizationOf(srcBrute);
+    const dst = $moduler.normalizationOf(dstBrute);
+    await require("fs").promises.copyFile(src, dst);
+    return true;
+  }
+
+  async copyDirectory(srcBrute, dstBrute) {
+    const src = $moduler.normalizationOf(srcBrute);
+    const dst = $moduler.normalizationOf(dstBrute);
+    await require("fs").promises.cp(src, dst, {
+      recursive: true,
+    });
+    return true;
+  }
+
+  async moveFile(srcBrute, dstBrute) {
+    const src = $moduler.normalizationOf(srcBrute);
+    const dst = $moduler.normalizationOf(dstBrute);
+    await require("fs").promises.rename(src, dst);
+    return true;
+  }
+
+  async moveDirectory(srcBrute, dstBrute) {
+    const src = $moduler.normalizationOf(srcBrute);
+    const dst = $moduler.normalizationOf(dstBrute);
+    await require("fs").promises.rename(src, dst);
+    return true;
+  }
+  //*/
 
 }
