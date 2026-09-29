@@ -102,6 +102,13 @@ module.exports = async function ({ Tester }) {
       },
     ],
     [`{name: @username string = "ok"}`, { name: "user" }],
+    // 9. Array:
+    [`[]`, []],
+    [`[string]`, ["ok"]],
+    [`[string,boolean,number]`, ["ok", true, 100]],
+    // 10. Open list:
+    [`[...string|number|boolean]`, ["text", 100, true]],
+    [`[...number]`, [5, 6, 7]],
   ];
   const incorrectValidations = [
     ["{age?:number}", { age: null }],
@@ -111,6 +118,8 @@ module.exports = async function ({ Tester }) {
     ["@imposible string&!string", "text"],
     ["@fallaria function() => undefined", undefined],
     [`{name: @username string = "ok"}`, { name: null }],
+    [`[string,boolean,number]`, ["ok", true, null]],
+    [`[...number]`, [5, 6, 7, "ocho"]],
   ];
 
   Corrects: for (let index = 0; index < correctValidations.length; index++) {

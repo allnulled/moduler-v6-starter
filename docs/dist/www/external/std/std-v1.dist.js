@@ -12974,7 +12974,7 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
               const message = this.onTraceMessageFormat("in", method, args);
               this.level = this.level || 0;
               this.level++;
-              Std.all.Ansi.style("cyan").print(
+              Std.all.Ansi.style("cyanBright").print(
                 this.onTraceArgumentsFormat(args, message),
               );
             },
@@ -13820,6 +13820,13 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
                           step,
                           state,
                         );
+                      } else if (validator.grammar === "list type") {
+                        await this.validateTypeList(
+                          validator,
+                          data,
+                          step,
+                          state,
+                        );
                       } else if (validator.grammar === "factory type") {
                         await this.validateTypeFactory(
                           validator,
@@ -13909,6 +13916,10 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
               step,
               state,
             ) {
+              Std.all.Tracer?.globalInstance.in(
+                "TypesValidator.validateTypeObject",
+                arguments || [],
+              );
               const keys = Object.keys(validator.properties || {});
               const validation = {};
               Validating_properties: for (
@@ -13953,10 +13964,18 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
                     }),
                   );
                 } catch (error) {
+                  Std.all.Tracer?.globalInstance.error(
+                    "TypesValidator.validateTypeObject",
+                    arguments || [],
+                  );
                   throw error;
                 }
                 validation[key] = subvalidation;
               }
+              Std.all.Tracer?.globalInstance.out(
+                "TypesValidator.validateTypeObject",
+                arguments || [],
+              );
               return (step.result = validation);
             },
             validateTypeArray: async function validateTypeArray(
@@ -13965,21 +13984,61 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
               step,
               state,
             ) {
-              Std.all.Printer.debug(validator, data, step, state);
+              Std.all.Tracer?.globalInstance.in(
+                "TypesValidator.validateTypeArray",
+                arguments || [],
+              );
+              // Std.all.Printer.debug(validator, data, step, state);
               const validation = {};
-              for (let index = 0; index < validator.length; index++) {
-                const item = validator[index];
+              for (let index = 0; index < validator.items.length; index++) {
+                const item = validator.items[index];
                 const subvalidation = await this.validateData(
                   item,
                   data[index],
                   state,
                   step.newClone.config({
                     dataPointer: step.dataPointer.concat([index]),
-                    validatorPointer: step.validatorPointer.concat([index]),
+                    validatorPointer: step.validatorPointer.concat([
+                      "items",
+                      index,
+                    ]),
                   }),
                 );
                 validation[index] = subvalidation;
               }
+              Std.all.Tracer?.globalInstance.out(
+                "TypesValidator.validateTypeArray",
+                arguments || [],
+              );
+              return (step.result = validation);
+            },
+            validateTypeList: async function validateTypeList(
+              validator,
+              data,
+              step,
+              state,
+            ) {
+              Std.all.Tracer?.globalInstance.in(
+                "TypesValidator.validateTypeList",
+                arguments || [],
+              );
+              // Std.all.Printer.debug(validator, data, step, state);
+              const validation = {};
+              for (let index = 0; index < data.length; index++) {
+                validation[index] = await this.validateData(
+                  validator.item,
+                  data[index],
+                  state,
+                  step.newClone.config({
+                    dataPointer: step.dataPointer.concat([index]),
+                    validatorPointer: step.validatorPointer.concat(["item"]),
+                  }),
+                );
+              }
+              Std.all.Tracer?.globalInstance.out(
+                "TypesValidator.validateTypeList",
+                arguments || [],
+              );
               return (step.result = validation);
             },
             validateTypeFactory: async function validateTypeFactory(
@@ -13988,13 +14047,25 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
               step,
               state,
             ) {
+              Std.all.Tracer?.globalInstance.in(
+                "TypesValidator.validateTypeFactory",
+                arguments || [],
+              );
               if (typeof data !== "function") {
                 // Std.all.Printer.debug(validator, data, step, state);
+                Std.all.Tracer?.globalInstance.error(
+                  "TypesValidator.validateTypeFactory",
+                  arguments || [],
+                );
                 throw Error.normalize({
                   name: "FunctionTypeValidationError",
                   message: `Property at «${step.dataPointer.join(".") || "~"}» should be function to pass validator at «${step.validatorPointer.join(".") || "~"}» but «${typeof data}» was found instead`,
                 });
               }
+              Std.all.Tracer?.globalInstance.out(
+                "TypesValidator.validateTypeFactory",
+                arguments || [],
+              );
             },
             validateTypeId: function validateTypeId(
               validator,
@@ -14002,8 +14073,16 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
               step,
               state,
             ) {
+              Std.all.Tracer?.globalInstance.in(
+                "TypesValidator.validateTypeId",
+                arguments || [],
+              );
               if (!(validator.id in Std.types)) {
                 console.log(validator);
+                Std.all.Tracer?.globalInstance.error(
+                  "TypesValidator.validateTypeId",
+                  arguments || [],
+                );
                 Error.normalize({
                   name: "TypeNotFoundError",
                   message: `Type «${validator.id}» is not a known type`,
@@ -14011,6 +14090,10 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
               }
               const TypeClass = Std.types[validator.id];
               //console.log(validator, data, step, state);
+              Std.all.Tracer?.globalInstance.out(
+                "TypesValidator.validateTypeId",
+                arguments || [],
+              );
               return (step.result = TypeClass.abstraction.onValidateData(
                 data,
                 validator,
@@ -14518,7 +14601,7 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
         }
         static globalInstance = this.new.config({
           id: "main",
-          isTracing: false,
+          isTracing: true,
         });
       };
       Std.all.Checker = Std.classes.Checker = class Checker {
@@ -14846,7 +14929,7 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
             "\n" +
             "" +
             "\n" +
-            "Prevaluable_1 = Type_group / Type_factory / Type_atom / Type_object / Type_array" +
+            "Prevaluable_1 = Type_group / Type_factory / Type_atom / Type_object / Type_open_list / Type_array" +
             "\n" +
             "" +
             "\n" +
@@ -14878,7 +14961,19 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
             "\n" +
             '  token2:(_ "}")' +
             "\n" +
-            '    { return { grammar: "object type", properties: props || undefined } }' +
+            '    { return { grammar: "object type", properties: props || [] } }' +
+            "\n" +
+            "" +
+            "\n" +
+            "Type_open_list = " +
+            "\n" +
+            '  token1:(_ "[..." _)' +
+            "\n" +
+            "  item:Evaluable?" +
+            "\n" +
+            '  token2:(_ "]")' +
+            "\n" +
+            '    { return { grammar: "list type", item: item || [] } }' +
             "\n" +
             "" +
             "\n" +
@@ -14890,7 +14985,7 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
             "\n" +
             '  token2:(_ "]")' +
             "\n" +
-            '    { return { grammar: "array type", items: items || undefined } }' +
+            '    { return { grammar: "array type", items: items || [] } }' +
             "\n" +
             "" +
             "\n" +
@@ -15696,6 +15791,16 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
         };
     }
     Wave_9_Database: {
+    }
+    Wave_10_Operative_system: {
+      Std.all.ProcessUtils = Std.classes.ProcessUtils = class ProcessUtils {
+        static exit(...args) {
+          console.log(...args);
+          if (typeof process !== "undefined") {
+            process.exit(0);
+          }
+        }
+      };
     }
 
     return Std;

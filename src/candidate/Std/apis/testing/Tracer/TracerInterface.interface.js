@@ -64,7 +64,7 @@
       const message = this.onTraceMessageFormat("in", method, args);
       this.level = this.level || 0;
       this.level++;
-      Std.all.Ansi.style("cyan").print(this.onTraceArgumentsFormat(args, message));
+      Std.all.Ansi.style("cyanBright").print(this.onTraceArgumentsFormat(args, message));
     },
     out: function(method, args = []) {
       if(!this.isTracing) return false;

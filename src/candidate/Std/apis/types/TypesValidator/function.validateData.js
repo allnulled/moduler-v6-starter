@@ -45,6 +45,8 @@ async function validateData(validatorBrute, data, stateBrute = false, stepBrute 
             await this.validateTypeObject(validator, data, step, state);
           } else if (validator.grammar === "array type") {
             await this.validateTypeArray(validator, data, step, state);
+          } else if (validator.grammar === "list type") {
+            await this.validateTypeList(validator, data, step, state);
           } else if (validator.grammar === "factory type") {
             await this.validateTypeFactory(validator, data, step, state);
           } else if (validator.grammar === "type id") {

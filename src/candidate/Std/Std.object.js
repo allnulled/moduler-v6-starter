@@ -128,6 +128,9 @@
   Wave_9_Database: {
 
   }
+  Wave_10_Operative_system: {
+    Std.all.ProcessUtils = Std.classes.ProcessUtils = $compiler.inject.source("./apis/os/ProcessUtils/ProcessUtils.class.js");
+  }
 
 
 

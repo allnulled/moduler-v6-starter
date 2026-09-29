@@ -14,7 +14,7 @@ Prevaluable_2 =
   defaults:Type_defaults?
     { return { ...core, label: label || undefined, negation: negation || undefined, parameters: parameters || undefined, ...modifiers || undefined, defaults: defaults !== null ? defaults : undefined } }
 
-Prevaluable_1 = Type_group / Type_factory / Type_atom / Type_object / Type_array
+Prevaluable_1 = Type_group / Type_factory / Type_atom / Type_object / Type_open_list / Type_array
 
 Type_factory = 
   token1:(_)
@@ -30,13 +30,19 @@ Type_object =
   token1:(_ "{" _)
   props:Type_object_properties?
   token2:(_ "}")
-    { return { grammar: "object type", properties: props || undefined } }
+    { return { grammar: "object type", properties: props || [] } }
+
+Type_open_list = 
+  token1:(_ "[..." _)
+  item:Evaluable?
+  token2:(_ "]")
+    { return { grammar: "list type", item: item || [] } }
 
 Type_array =
   token1:(_ "[" _)
   items:Type_array_items?
   token2:(_ "]")
-    { return { grammar: "array type", items: items || undefined } }
+    { return { grammar: "array type", items: items || [] } }
 
 Type_object_properties =
   p_1:Type_object_property_first

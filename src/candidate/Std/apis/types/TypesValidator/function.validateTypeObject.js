@@ -1,4 +1,5 @@
 async function validateTypeObject(validator, data, step, state) {
+  $compiler.inject.template("@/src/candidate/Std/snippets/methodIn.js", { name: "TypesValidator.validateTypeObject" });
   const keys = Object.keys(validator.properties || {});
   const validation = {};
   Validating_properties:
@@ -24,9 +25,11 @@ async function validateTypeObject(validator, data, step, state) {
         validatorPointer: step.validatorPointer.concat(["properties", key]),
       }));
     } catch (error) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodError.js", { name: "TypesValidator.validateTypeObject" });
       throw error;
     }
     validation[key] = subvalidation;
   }
+  $compiler.inject.template("@/src/candidate/Std/snippets/methodOut.js", { name: "TypesValidator.validateTypeObject" });
   return step.result = validation;
 }

@@ -1,5 +1,7 @@
 - [ ] En las 2 FS de node y de idb falta:
    - [ ] {copy,move}{File,Directory}
+- [ ] En el types, falta poder decir que una función puede lanzar cierto error:
+   - [ ] `@fn function(@param any) !=> @error Error`
 - [ ] En el types, falta la opción de:
    - [ ] `@list [...item]` para poder definir listas no cerradas al menos
    - [ ] `@props {...extra1, ...extra2}` para poder definir listas no cerradas al menos
