@@ -43,10 +43,10 @@ async function validateData(validatorBrute, data, stateBrute = false, stepBrute 
         try {
           if (validator.grammar === "object type") {
             await this.validateTypeObject(validator, data, step, state);
+          } else if (validator.grammar === "closed array type") {
+            await this.validateTypeClosedArray(validator, data, step, state);
           } else if (validator.grammar === "array type") {
             await this.validateTypeArray(validator, data, step, state);
-          } else if (validator.grammar === "list type") {
-            await this.validateTypeList(validator, data, step, state);
           } else if (validator.grammar === "factory type") {
             await this.validateTypeFactory(validator, data, step, state);
           } else if (validator.grammar === "type id") {
@@ -92,7 +92,7 @@ async function validateData(validatorBrute, data, stateBrute = false, stepBrute 
   --------------------------
   5 gens / 3 methods:
   {}          - validateTypeObject
-  []          - validateTypeArray
+  []          - validateTypeClosedArray
   ()          - [-]
   type(__,__) - validateTypeId
   type        - validateTypeId

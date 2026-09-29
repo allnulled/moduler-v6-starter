@@ -13813,15 +13813,15 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
                           step,
                           state,
                         );
-                      } else if (validator.grammar === "array type") {
-                        await this.validateTypeArray(
+                      } else if (validator.grammar === "closed array type") {
+                        await this.validateTypeClosedArray(
                           validator,
                           data,
                           step,
                           state,
                         );
-                      } else if (validator.grammar === "list type") {
-                        await this.validateTypeList(
+                      } else if (validator.grammar === "array type") {
+                        await this.validateTypeArray(
                           validator,
                           data,
                           step,
@@ -13897,7 +13897,7 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
   --------------------------
   5 gens / 3 methods:
   {}          - validateTypeObject
-  []          - validateTypeArray
+  []          - validateTypeClosedArray
   ()          - [-]
   type(__,__) - validateTypeId
   type        - validateTypeId
@@ -13990,40 +13990,6 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
               );
               // Std.all.Printer.debug(validator, data, step, state);
               const validation = {};
-              for (let index = 0; index < validator.items.length; index++) {
-                const item = validator.items[index];
-                const subvalidation = await this.validateData(
-                  item,
-                  data[index],
-                  state,
-                  step.newClone.config({
-                    dataPointer: step.dataPointer.concat([index]),
-                    validatorPointer: step.validatorPointer.concat([
-                      "items",
-                      index,
-                    ]),
-                  }),
-                );
-                validation[index] = subvalidation;
-              }
-              Std.all.Tracer?.globalInstance.out(
-                "TypesValidator.validateTypeArray",
-                arguments || [],
-              );
-              return (step.result = validation);
-            },
-            validateTypeList: async function validateTypeList(
-              validator,
-              data,
-              step,
-              state,
-            ) {
-              Std.all.Tracer?.globalInstance.in(
-                "TypesValidator.validateTypeList",
-                arguments || [],
-              );
-              // Std.all.Printer.debug(validator, data, step, state);
-              const validation = {};
               for (let index = 0; index < data.length; index++) {
                 validation[index] = await this.validateData(
                   validator.item,
@@ -14036,7 +14002,49 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
                 );
               }
               Std.all.Tracer?.globalInstance.out(
-                "TypesValidator.validateTypeList",
+                "TypesValidator.validateTypeArray",
+                arguments || [],
+              );
+              return (step.result = validation);
+            },
+            validateTypeClosedArray: async function validateTypeClosedArray(
+              validator,
+              data,
+              step,
+              state,
+            ) {
+              Std.all.Tracer?.globalInstance.in(
+                "TypesValidator.validateTypeClosedArray",
+                arguments || [],
+              );
+              // Std.all.Printer.debug(validator, data, step, state);
+              const validation = {};
+              if (validator.items.length !== data.length) {
+                Std.all.Tracer?.globalInstance.out(
+                  "TypesValidator.validateTypeClosedArray",
+                  arguments || [],
+                );
+                throw new Error(
+                  `Asimetric length on closed array between data at «${step.dataPointer.join(".") || "~"}» with «${data.length}» and validator at «${step.validatorPointer.join(".") || "~"}» with «0»`,
+                );
+              }
+              for (let index = 0; index < validator.items.length; index++) {
+                const item = validator.items[index];
+                validation[index] = await this.validateData(
+                  item,
+                  data[index],
+                  state,
+                  step.newClone.config({
+                    dataPointer: step.dataPointer.concat([index]),
+                    validatorPointer: step.validatorPointer.concat([
+                      "items",
+                      index,
+                    ]),
+                  }),
+                );
+              }
+              Std.all.Tracer?.globalInstance.out(
+                "TypesValidator.validateTypeClosedArray",
                 arguments || [],
               );
               return (step.result = validation);
@@ -14929,7 +14937,7 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
             "\n" +
             "" +
             "\n" +
-            "Prevaluable_1 = Type_group / Type_factory / Type_atom / Type_object / Type_open_list / Type_array" +
+            "Prevaluable_1 = Type_group / Type_factory / Type_atom / Type_object / Type_closed_array / Type_array" +
             "\n" +
             "" +
             "\n" +
@@ -14965,15 +14973,15 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
             "\n" +
             "" +
             "\n" +
-            "Type_open_list = " +
+            "Type_closed_array = " +
             "\n" +
-            '  token1:(_ "[..." _)' +
+            '  token1:(_ "[^" _)' +
             "\n" +
-            "  item:Evaluable?" +
+            "  items:Type_array_items?" +
             "\n" +
             '  token2:(_ "]")' +
             "\n" +
-            '    { return { grammar: "list type", item: item || [] } }' +
+            '    { return { grammar: "closed array type", items: items || [] } }' +
             "\n" +
             "" +
             "\n" +
@@ -14981,11 +14989,11 @@ module.exports = $moduler.export("#Std", [], async function ([]) {
             "\n" +
             '  token1:(_ "[" _)' +
             "\n" +
-            "  items:Type_array_items?" +
+            "  item:Evaluable?" +
             "\n" +
             '  token2:(_ "]")' +
             "\n" +
-            '    { return { grammar: "array type", items: items || [] } }' +
+            '    { return { grammar: "array type", item: item || undefined } }' +
             "\n" +
             "" +
             "\n" +
