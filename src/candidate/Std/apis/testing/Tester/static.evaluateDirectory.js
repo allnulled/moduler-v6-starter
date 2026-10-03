@@ -45,5 +45,8 @@ async function evaluateDirectory(options = {}) {
     Std.objects.Ansi.style("bgRed,black").print(`\n[!!] Tester.evaluateDirectory has reported ${allErrors.length} errors on test directory at:\n     ${$moduler.rootdirOf(directory)}`);
     if(!debug) console.log(await Error.stringify(allErrors));
     else console.log(await Error.stringifyProsecutedList(allErrors));
+    console.log("");
+    Std.objects.Ansi.style("redBright,bold").print(allErrors.map((e,index) => ` · Error ${index+1}: ${e.name} => ${e.message}`).join("\n"));
+    console.log("");
   }
 }

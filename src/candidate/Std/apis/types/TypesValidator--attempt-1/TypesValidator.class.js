@@ -1,4 +1,4 @@
-class TypesValidator {
+class TypesValidator{
   static {
     $moduler.toolkit.makeClass([
       Std.interfaces.InstantiableInterface,

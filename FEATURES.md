@@ -1,0 +1,22 @@
+# 02/10/2026
+
+- [ ] Test www/008:
+   - [ ] Actualizar las sintaxis de typelang parser para soportar:
+   - [ ] inline labels:
+      - @name type
+   - [ ] spread array & parameter + multipliers (?+*):
+      - [..[a,b]]
+      - [..[a,b]?]
+      - [..[a,b]*]
+      - [..[a,b]+]
+   - [ ] labels as types
+      - @value
+      - [@value]
+      - {name:@value}
+   - [ ] label as object's property name
+      - {@name,@age,@city}
+   - [ ] label as array item + multipliers:
+      - [..@some]
+      - [..@some?]
+      - [..@some*]
+      - [..@some+]

@@ -1,20 +1,47 @@
-Types_script = ast:Evaluable { return ast }
+{
+  /**
+   * 
+   * - [x] labels pueden ser evaluables
+   * - [x] labels pueden ser propiedad y valor de objeto
+   * - [ ] 
+   * 
+   **/
+}
+
+Types_script = _ ast:Evaluables? _ { return (ast && ast.length === 1) ? ast[0] : ast }
+
+Evaluables = f:Evaluable_first n:Evaluable_others? (_ ";")? { return [f, ...(n || [])] }
+
+Evaluable_first = e:Evaluable { return e }
+
+Evaluable_others = Evaluable_other+
+
+Evaluable_other = 
+  token1:(_ ";" _)
+  e:Evaluable_first
+    { return e; }
 
 Evaluable = 
   body:Prevaluable_2
   appendix:Type_appendixes*
     { return { ...body, appendix: appendix?.length && appendix || undefined } }
 
-Prevaluable_2 = 
+Prevaluable_2 = Prevaluable_2_as_label / Prevaluable_2_as_type
+
+Prevaluable_2_as_label = 
   label:Type_label?
   negation:Type_negation?
   core:Prevaluable_1
   parameters:Type_parameters?
-  modifiers:Type_modifiers?
   defaults:Type_defaults?
-    { return { ...core, label: label || undefined, negation: negation || undefined, parameters: parameters || undefined, ...modifiers || undefined, defaults: defaults !== null ? defaults : undefined } }
+    { return { ...core, label: label || undefined, negation: negation || undefined, parameters: parameters || undefined, defaults: defaults !== null ? defaults : undefined } }
 
-Prevaluable_1 = Type_group / Type_factory / Type_atom / Type_object / Type_closed_array / Type_array
+Prevaluable_2_as_type = 
+  negation:Type_negation?
+  label:Type_label
+    { return { label: label || undefined, negation: negation || undefined } }
+
+Prevaluable_1 = Type_group / Type_factory / Type_atom / Type_object / Type_array
 
 Type_factory = 
   token1:(_)
@@ -22,36 +49,47 @@ Type_factory =
   token2:("function" _)
   token3:("(" _)
   input:Type_array_items?
-  token4:(_ ")" _ "=>" _)
+  token4:(_ ")" _)
+  throwables:Throwables?
+  token5:(_ "=>" _)
   output:Evaluable
-    { return { grammar: "factory type", input, output, synchrony: !isAsync ? undefined : isAsync[0] } }
-  
+    { return { grammar: "factory type", input, output, throwables: throwables || undefined, synchrony: !isAsync ? undefined : isAsync[0] } }
+
+Throwables = Throwable+
+
+Throwable = 
+  token1:(_ "~>" _)
+  v:Evaluable
+    { return v }
+
 Type_object =
   token1:(_ "{" _)
   props:Type_object_properties?
   token2:(_ "}")
     { return { grammar: "object type", properties: props || [] } }
 
-Type_closed_array = 
-  token1:(_ "[^" _)
-  items:Type_array_items?
-  token2:(_ "]")
-    { return { grammar: "closed array type", items: items || [] } }
-
 Type_array =
   token1:(_ "[" _)
-  item:Evaluable?
+  items:Type_array_items?
   token2:(_ "]")
-    { return { grammar: "array type", item: item || undefined } }
+    { return { grammar: "array type", items: items || [] } }
 
 Type_object_properties =
   p_1:Type_object_property_first
   p_n:Type_object_property_other*
     { return Object.fromEntries([p_1].concat(p_n || [])) }
-Type_object_property_first = _
-  k:Property_name _ optionalProperty:Optional_sign? _ ":" _
+
+Type_object_property_first = Type_object_property_as_label / Type_object_property_as_key_value
+
+Type_object_property_as_label = 
+  label:Type_label
+  optional:Optional_sign?
+    { return [label,{label, optional}] }
+Type_object_property_as_key_value = _
+  k:Property_name _
+  optional:Optional_sign? _ ":" _
   property:Evaluable
-    { return [k,{...property, optionalProperty}] }
+    { return [k,{...property, optional}] }
 Type_object_property_other = _ "," _
   prop:Type_object_property_first
     { return prop }
@@ -60,8 +98,21 @@ Type_array_items =
   p_1:Type_array_item_first
   p_n:Type_array_item_other*
     { return [p_1].concat(p_n || []) }
-Type_array_item_first = _ v:Evaluable { return v }
-Type_array_item_other = _ "," _ v:Evaluable { return v }
+
+Type_array_item_first = Type_array_item_as_spread_operation / Type_array_item_as_evaluable
+
+Type_array_item_as_evaluable = _
+  e:Evaluable
+    { return e }
+Type_array_item_as_spread_operation =
+  token1:(_ "..")
+  spread:( Evaluable )
+  multiplier:Multiplier_symbol?
+    { return { type: "spread on array", spread, multiplier } }
+
+Type_array_item_other = _ "," _ v:Type_array_item_first { return v }
+
+Multiplier_symbol = "?" / "*" / "+"
 
 Property_name = Property_chars
 
@@ -124,9 +175,11 @@ Variable_accessors = Variable_accessor_by_dot+
 
 Variable_accessor_by_dot = "." name:Variable_name { return name }
 
-Comments = Comment_oneline / Comment_multiline
-Comment_oneline = __* "//" (!(___).)* {}
-Comment_multiline = __* "/*" (!("*/").)* "*/" {}
+Comment = Comment_oneline / Comment_multiline
+Comment_oneline = "//" (!(___/EOF).)* {}
+Comment_multiline = "/*" (!("*/").)* "*/" {}
+
+EOF = !.
 
 Unforbidden_tokens = ((!Forbidden_tokens).)+ { return text() }
 Forbidden_tokens = "("
@@ -149,11 +202,13 @@ Forbidden_tokens = "("
   / "="
   / "'"
   / '"'
+  / '*'
   / "//"
+  / "~>"
   / "\n" {}
 
 _ = one_space*
-one_space = __ / ___ / Comments
+one_space = __ / ___ / Comment
 __ = "\t" / " "
 New_line = ___
 ___ = "\r\n" / "\r" / "\n"

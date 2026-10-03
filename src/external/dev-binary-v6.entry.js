@@ -6229,9 +6229,11 @@ async compileDistribuiblesOf(filepath, event) {
       currentStep.push("5. ensure output directory");
       await this.ensureDirectoryOf(distJs);
       if (compilation.js) {
-        currentStep.push("6. minify");
+        currentStep.push("6. beautify");
         let output = undefined;
         Minify_js_output: {
+          output = {code: compilation.js};
+          break Minify_js_output;
           output = await this.devbin.compiler.constructor.softMinifyJs(compilation.js, {
             compress: false,
             mangle: false,

@@ -140,7 +140,7 @@
 ### Std.classes.Tester.evaluateCallback
 
 - Método para evaluar un callback de test en node.js o browser
-- Su firma es:
+- Su firma es: 
    - `callback:Function` - el test.
       - recibe en `arguments[0]:Object={Std,tester:Std.classes.Tester,...options}`, `
    - `options?:Object` - opciones que se inyectan al `callback` asignadas en `arguments[0]:Object`.

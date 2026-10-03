@@ -62,6 +62,7 @@
   Wave_3_Elemental_functions_classes_and_interfaces: {
     Std.assert = Std.all.assert = Std.functions.assert = $compiler.inject.source("./assert.function.js");
     Std.all.trify = Std.functions.trify = $compiler.inject.source("./apis/errors/trify/trify.function.js");
+    Std.all.extractSubstrings = Std.functions.extractSubstrings = $compiler.inject.source("./apis/string/extractSubstrings/extractSubstrings.function.js");
     Std.all.TryableProxy = Std.classes.TryableProxy = $compiler.inject.source("./apis/errors/TryableProxy/TryableProxy.class.js");
     Std.all.TryableInterface = Std.interfaces.TryableInterface = $compiler.inject.source("./apis/patterns/TryableInterface/TryableInterface.interface.js");
     Std.all.JsonStringifier = Std.classes.JsonStringifier = $compiler.inject.source("./apis/json/JsonStringifier/JsonStringifier.class.js");
