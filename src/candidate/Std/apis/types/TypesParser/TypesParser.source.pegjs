@@ -1,220 +1,206 @@
 {
-  /**
-   * 
-   * - [x] labels pueden ser evaluables
-   * - [x] labels pueden ser propiedad y valor de objeto
-   * - [ ] 
-   * 
-   **/
+
 }
 
-Types_script = _ ast:Evaluables? _ { return (ast && ast.length === 1) ? ast[0] : ast }
+Types_script= _ ast:Evaluables? _ {return { grammar: "script", ast: ast }; }
 
-Evaluables = f:Evaluable_first n:Evaluable_others? (_ ";")? { return [f, ...(n || [])] }
+Evaluables= first:Evaluable rest:Evaluable_other* ";"? {return [first, ...rest].filter(it => it !== null);}
 
-Evaluable_first = e:Evaluable { return e }
+Evaluable_other= _ ";" _ value:Evaluable {return value;}
 
-Evaluable_others = Evaluable_other+
 
-Evaluable_other = 
-  token1:(_ ";" _)
-  e:Evaluable_first
-    { return e; }
+// ------------------------------------------------------------
+// 1. EXPRESIONES
+// ------------------------------------------------------------
 
-Evaluable = 
-  body:Prevaluable_2
-  appendix:Type_appendixes*
-    { return { ...body, appendix: appendix?.length && appendix || undefined } }
+Evaluable=Labeled_evaluable/Or
 
-Prevaluable_2 = Prevaluable_2_as_label / Prevaluable_2_as_type
+Labeled_evaluable= 
+  token1:_
+  label:Type_label
+  token2:_
+  core:Or
+    { return Object.assign(core, {label}); }
+Or= left:And right:Or_right* {return right.length? { grammar: "or operation", left, right }: left;}
+Or_right= _ "|" _ right:And {return right;}
+And= left:Unary right:And_right* {return right.length? { grammar: "and operation", left, right }: left;}
+And_right= _ "&" _ right:Unary {return right;}
+Unary= negation:Type_negation? value:Type_expression {return negation? { ...value, negation }: value;}
 
-Prevaluable_2_as_label = 
-  label:Type_label?
-  negation:Type_negation?
-  core:Prevaluable_1
+// ------------------------------------------------------------
+// 2. TYPE EXPRESSION
+// ------------------------------------------------------------
+
+Type_expression= Type_expression_as_labeled_name / Type_expression_as_label / Type_expression_as_name
+
+Type_expression_as_labeled_name = 
+  label:Type_label _
+  type:Primary _
+  parameters:Type_parameters?
+  defaults:Type_defaults? 
+    {
+      return Object.assign(type, {
+        label,
+        parameters: parameters || undefined,
+        defaults: defaults !== null ? defaults : undefined
+      });
+    }
+
+Type_expression_as_label = 
+  label:Type_label _
   parameters:Type_parameters?
   defaults:Type_defaults?
-    { return { ...core, label: label || undefined, negation: negation || undefined, parameters: parameters || undefined, defaults: defaults !== null ? defaults : undefined } }
+    {
+      return Object.assign({ grammar: "type label" }, {
+        label,
+        parameters: parameters || undefined,
+        defaults: defaults !== null ? defaults : undefined
+      });
+    }
 
-Prevaluable_2_as_type = 
-  negation:Type_negation?
-  label:Type_label
-    { return { label: label || undefined, negation: negation || undefined } }
+Type_expression_as_name =
+  type:Primary
+  parameters:Type_parameters?
+  defaults:Type_defaults?
+    {
+      return Object.assign(type, {
+        parameters: parameters || undefined,
+        defaults: defaults !== null ? defaults : undefined
+      });
+    }
 
-Prevaluable_1 = Type_group / Type_factory / Type_atom / Type_object / Type_array
+// ------------------------------------------------------------
+// 3. PRIMARY
+// ------------------------------------------------------------
 
-Type_factory = 
-  token1:(_)
-  isAsync:(("async"/"sync") _)?
-  token2:("function" _)
-  token3:("(" _)
-  input:Type_array_items?
-  token4:(_ ")" _)
-  throwables:Throwables?
-  token5:(_ "=>" _)
-  output:Evaluable
-    { return { grammar: "factory type", input, output, throwables: throwables || undefined, synchrony: !isAsync ? undefined : isAsync[0] } }
+Primary = Type_group / Type_factory / Type_object / Type_class / Type_array / Type_import / Type_identifier
 
-Throwables = Throwable+
+// ------------------------------------------------------------
+// 4. GROUP
+// ------------------------------------------------------------
 
-Throwable = 
-  token1:(_ "~>" _)
-  v:Evaluable
-    { return v }
+Type_group = _ "(" _ value:Evaluable _ ")" _ { return value; }
 
-Type_object =
-  token1:(_ "{" _)
-  props:Type_object_properties?
-  token2:(_ "}")
-    { return { grammar: "object type", properties: props || [] } }
+// ------------------------------------------------------------
+// 5. FACTORY
+// ------------------------------------------------------------
 
-Type_array =
-  token1:(_ "[" _)
-  items:Type_array_items?
-  token2:(_ "]")
-    { return { grammar: "array type", items: items || [] } }
+Type_factory = _
+  synchrony:(("async" / "sync") _)?
+  token1:("function" _ "(" _)
+  input:Type_array_items? ")" _
+  throwables:Throwables? "=>" _
+  output:Evaluable { return { grammar: "factory type", input, output, throwables, synchrony: synchrony && synchrony.length ? synchrony[0] : true }; }
 
-Type_object_properties =
-  p_1:Type_object_property_first
-  p_n:Type_object_property_other*
-    { return Object.fromEntries([p_1].concat(p_n || [])) }
+Throwables = first:Throwable rest:Throwable* { return [first, ...rest]; }
 
-Type_object_property_first = Type_object_property_as_label / Type_object_property_as_key_value
+Throwable = _ "~>" _ value:Evaluable { return value; }
 
-Type_object_property_as_label = 
-  label:Type_label
-  optional:Optional_sign?
-    { return [label,{label, optional}] }
-Type_object_property_as_key_value = _
-  k:Property_name _
+
+// ------------------------------------------------------------
+// 6. OBJECT
+// ------------------------------------------------------------
+
+Type_class = _ "class" _ content:Type_object { return Object.assign(content, {grammar:"class type"}) }
+
+Type_object = _ "{" _ properties:Type_object_properties? _ "}" { return { grammar: "object type", properties: properties || {} }; }
+
+Type_object_properties = first:Type_object_property rest:Type_object_property_other* { return Object.fromEntries([first, ...rest]); }
+
+Type_object_property_other = _ "," _ property:Type_object_property { return property; }
+
+Type_object_property = Object_property_as_name / Object_property_as_label
+  
+Object_property_as_name =
+  name:Property_name
   optional:Optional_sign? _ ":" _
-  property:Evaluable
-    { return [k,{...property, optional}] }
-Type_object_property_other = _ "," _
-  prop:Type_object_property_first
-    { return prop }
+  value:Evaluable { return [ name, { ...value, optional: optional || undefined } ]; }
 
-Type_array_items =
-  p_1:Type_array_item_first
-  p_n:Type_array_item_other*
-    { return [p_1].concat(p_n || []) }
+Object_property_as_label =
+  label:Type_label
+  optional:Optional_sign? { return [ label, { grammar: "type label", label, optional: optional || undefined } ]; }
 
-Type_array_item_first = Type_array_item_as_spread_operation / Type_array_item_as_evaluable
 
-Type_array_item_as_evaluable = _
-  e:Evaluable
-    { return e }
-Type_array_item_as_spread_operation =
-  token1:(_ "..")
-  spread:( Evaluable )
+// ------------------------------------------------------------
+// 7. ARRAY
+// ------------------------------------------------------------
+
+Type_array = _ "[" _ items:Type_array_items? _ "]" { return { grammar: "array type", items: items || [] }; }
+
+Type_array_items = first:Type_array_item rest:Type_array_item_other* { return [first, ...rest]; }
+
+Type_array_item_other = _ "," _ item:Type_array_item { return item; }
+
+Type_array_item = Spreaded_evaluable / Evaluable
+
+Spreaded_evaluable = _ "..." _
+  spread:Evaluable
   multiplier:Multiplier_symbol?
-    { return { type: "spread on array", spread, multiplier } }
-
-Type_array_item_other = _ "," _ v:Type_array_item_first { return v }
+    { return { type: "spread on array", spread, multiplier }; }
 
 Multiplier_symbol = "?" / "*" / "+"
 
-Property_name = Property_chars
+// ------------------------------------------------------------
+// 8. IDENTIFIERS
+// ------------------------------------------------------------
 
-Type_group = 
-  token1:(_ "(" _)
-  atom:Evaluable
-  token3:(_ ")" _)
-    { return atom }
+Type_identifier = _ id:Variable_expression { return { grammar: "type id", id }; }
+Type_negation = _ "!" _ { return "!"; }
+Type_label = _ "@" id:Variable_expression { return id;}
 
-Type_atom = 
-  id:Type_identifier
-    { return { grammar: "type id", id } }
+// ------------------------------------------------------------
+// 9. PARAMETERS / DEFAULTS
+// ------------------------------------------------------------
 
-Type_negation = _ "!" _ { return "!" }
-
-Type_appendixes = And_or_appendix
-
-Optional_sign = it:(_ "?")? { return it ? true : undefined }
-Question_mark = _ "?" { return { optional: true } }
-
-And_or_appendix = _
-  operator:("&" / "|") _
-  complement:Prevaluable_2
-    { return { grammar: "type appendix", operator, complement }}
-
-Type_identifier = _ expr:Variable_expression { return expr }
-
-Type_parameters =
-  token1:(_ "(" _)
-  list:Type_array_items?
-  token3:(_ ")" _)
-    { return list }
-
-Type_modifiers = modifier:(Question_mark)
-    { return modifier }
-
-Type_label = _ "@" Type_identifier
-    { return text().trim() }
-
-Type_defaults = _ "=" _ Default_value
-
+Type_parameters = _ "(" _ parameters:Type_array_items? _ ")" { return parameters; }
+Type_defaults = _ "=" _ value:Default_value { return value; }
 Default_value = Hardcoded_value / Type_identifier
 
-Property_chars = [A-Za-z_$] [A-Za-z0-9_$]* { return text() }
+// ------------------------------------------------------------
+// 10. VARIABLES
+// ------------------------------------------------------------
 
-Variable_expression = Variable_name Variable_accessors* { return text() }
-
+Property_name = Property_chars / json_string
+Property_chars = [A-Za-z_$] [A-Za-z0-9_$]* { return text(); }
+Variable_expression = Variable_name Variable_accessor_by_dot* { return text(); }
 Variable_name = Property_chars / Singlequoted_expression
+Variable_accessor_by_dot = "." Variable_name
 
-// Variable_name = Unforbidden_tokens { return text() }
+// ------------------------------------------------------------
+// 11. OPTIONAL / STRINGS
+// ------------------------------------------------------------
 
-Singlequoted_expression = "'" chars:Singlequoted_token* "'"
-  { return chars.join(""); }
-
+Optional_sign = _ "?" { return true; }
+Singlequoted_expression = "'" chars:Singlequoted_token* "'" { return chars.join(""); }
 Singlequoted_token = Singlequoted_char / Singlequoted_escaped_char
-Singlequoted_escaped_char = "\\" char:. { return char }
-Singlequoted_char = [^'\\\n\r] 
+Singlequoted_escaped_char = "\\" char:. { return char; }
+Singlequoted_char = [^'\\\n\r]
 
-Variable_accessors = Variable_accessor_by_dot+
+// ------------------------------------------------------------
+// 12. WHITESPACE / COMMENTS
+// ------------------------------------------------------------
 
-Variable_accessor_by_dot = "." name:Variable_name { return name }
-
-Comment = Comment_oneline / Comment_multiline
-Comment_oneline = "//" (!(___/EOF).)* {}
-Comment_multiline = "/*" (!("*/").)* "*/" {}
-
-EOF = !.
-
-Unforbidden_tokens = ((!Forbidden_tokens).)+ { return text() }
-Forbidden_tokens = "("
-  / ")"
-  / "|"
-  / "&"
-  / "{"
-  / "}"
-  / ","
-  / "."
-  / "!"
-  / ":"
-  / "/*"
-  / "["
-  / "]"
-  / "?"
-  / "*"
-  / "+"
-  / "@"
-  / "="
-  / "'"
-  / '"'
-  / '*'
-  / "//"
-  / "~>"
-  / "\n" {}
-
-_ = one_space*
+_ = (one_space)*
 one_space = __ / ___ / Comment
 __ = "\t" / " "
-New_line = ___
 ___ = "\r\n" / "\r" / "\n"
+Comment = Comment_oneline / Comment_multiline
+Comment_oneline = "//" (!(___ / EOF) .)*
+Comment_multiline = "/*" (!"*/" .)* "*/"
+EOF = !.
+
+// ------------------------------------------------------------
+// 13. IMPORT
+// ------------------------------------------------------------
+
+Type_import = "^" resource:("file:"/"url:"/"path:")? target:json_string
+  { return { grammar: "import", resource, target } }
+
+// ------------------------------------------------------------
+// 14. JSON
+// ------------------------------------------------------------
 
 Hardcoded_value = json_value
-
 json_value = json_object / json_array / json_string / json_number / json_true / json_false / json_null 
 json_object = "{" json_space m:json_members? json_space "}" { return m }
 json_members = m1:json_member mN:json_coma_member* { return {...m1, ...Object.assign({},...mN) } }

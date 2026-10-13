@@ -18,8 +18,17 @@
           }
         }
       }
+      Transfer_cloned_properties: {
+        if (this.clonedProperties) {
+          for (let index = 0; index < this.clonedProperties.length; index++) {
+            const clonedProperty = this.clonedProperties[index];
+            const clonedValue = clonedProperty in config ? config[clonedProperty] : this[clonedProperty];
+            config[clonedProperty] = clonedValue;
+          }
+        }
+      }
       $compiler.inject.template("@/src/candidate/Std/snippets/methodOut.js", {name:"ClonableInterface.prototype.clone"});
-      return this.new.config(config);
+      return this.new.config(this).config(config);
     }
   },
   static: {

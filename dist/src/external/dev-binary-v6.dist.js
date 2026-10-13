@@ -4026,6 +4026,8 @@ _tokenizeText(compilationFile, compilationProcess) {
   let out = undefined;
   if(compilationFile.extension === "js") {
     out = this._parser.forJs.parse(compilationFile.source);
+  } else if(compilationFile.extension === "pegjs") {
+    out = this._parser.forJs.parse(compilationFile.source);
   } else if(compilationFile.extension === "css") {
     out = this._parser.forCss.parse(compilationFile.source);
   } else if(compilationFile.extension === "md") {
@@ -4224,9 +4226,10 @@ _fetchCompilable(compilationFile, compilationProcess) {
       return compilationFile.compilation.json = "";
     });
   }
-  this.assert((/\.(js|css|md|html)$/g).test(compilationFile.resource), `Parameter «compilationFile.resource» now «${compilationFile.resource}» must match with valid extension on «CompilerV6.prototype._fetchCompilable»`);
+  const validFilesRegex = /\.(js|css|md|html|pegjs)$/g;
+  this.assert(validFilesRegex.test(compilationFile.resource), `Parameter «compilationFile.resource» now «${compilationFile.resource}» must match with valid extension on «CompilerV6.prototype._fetchCompilable»`);
   Sacar_la_extension_del_fichero: {
-    compilationFile.extension = compilationFile.resource.match(/\.(js|css|md|html)$/g)[0].substr(1);
+    compilationFile.extension = compilationFile.resource.match(validFilesRegex)[0].substr(1);
   }
   Propagar_la_extension_al_proceso_si_es_la_primera: {
     if(typeof compilationProcess.extension === "undefined") {
@@ -4234,13 +4237,16 @@ _fetchCompilable(compilationFile, compilationProcess) {
     }
   }
   Bloquear_imports_segun_extension_de_compilable_original: {
-    if(compilationProcess.extension === "js") {
+    const privilegedExtensions = ["js", "pegjs"];
+    const fromExtension = compilationProcess.extension;
+    const toExtension = compilationFile.extension;
+    if(privilegedExtensions.includes(fromExtension)) {
       // @OK, con js todo.
-    } else if(compilationProcess.extension === "css") {
-      this.assert(compilationFile.extension !== "js", `From a «css» file «${compilationProcess.resource}» cannot inject «js» file «${compilationFile.resource}»`);
-    } else if(compilationProcess.extension === "md") {
-      this.assert(compilationFile.extension !== "js", `From an «md» file «${compilationProcess.resource}» cannot inject «js» file «${compilationFile.resource}»`);
-      this.assert(compilationFile.extension !== "css", `From an «md» file «${compilationProcess.resource}» cannot inject «css» file «${compilationFile.resource}»`);
+    } else if(fromExtension === "css") {
+      this.assert(!privilegedExtensions.includes(toExtension), `From a «css» file «${compilationProcess.resource}» cannot inject «js» file «${compilationFile.resource}»`);
+    } else if(fromExtension === "md") {
+      this.assert(!privilegedExtensions.includes(toExtension), `From an «md» file «${compilationProcess.resource}» cannot inject «js» file «${compilationFile.resource}»`);
+      this.assert(toExtension !== "css", `From an «md» file «${compilationProcess.resource}» cannot inject «css» file «${compilationFile.resource}»`);
     }
   }
   return this._readPath(compilationFile.resource).then(source => {
@@ -4527,9 +4533,10 @@ async _compileAsInjectSource(compilationFile, compilationProcess, { token, token
         }
         compilationFile.compilation.html = this._replaceTextRange(compilationFile.compilation.html, token.location[0], token.location[1], newContent, token);
       } else {
-        currentStep.push("5.a. from js");
-        this.assert(compilationFile.extension === "js", `Syntax of «$compiler.inject.source» can only inject files from «js,html» files and not on «${compilationFile.extension}» when importing «${targetPath}» from «${compilationFile.resource}»`);
-        this.assert(targetPath.endsWith(".js"), `Syntax of «$compiler.inject.source» is trying to import foraneous extension format file «${targetPath}» from «${compilationFile.resource}» on «CompilerV6.prototype._compileAsInjectSource»`);
+        currentStep.push("5.a. from js or pegjs");
+        const validExtensions = ["js", "pegjs"];
+        this.assert(validExtensions.includes(compilationFile.extension), `Syntax of «$compiler.inject.source» can only inject files from «js,html» files and not on «${compilationFile.extension}» when importing «${targetPath}» from «${compilationFile.resource}»`);
+        this.assert(targetPath.endsWith(".js") || targetPath.endsWith(".pegjs"), `Syntax of «$compiler.inject.source» is trying to import foraneous extension format file «${targetPath}» from «${compilationFile.resource}» on «CompilerV6.prototype._compileAsInjectSource»`);
         // if (!targetCaches.js) targetCaches.js = targetCompilation?.js || "";
         if (typeof targetCaches.js !== "string") targetCaches.js = targetCompilation.js;
         targetCaches.css = targetCaches.css || targetCompilation?.css;
@@ -6535,7 +6542,8 @@ async touchFile(fileBrute, optionsInput = {}) {
       event.isInTestDir = rootPath.startsWith("@/test/");
       event.isRunnableTest = event.isInTestDir && rootPath.endsWith(".run.js");
       event.isTestItself = event.isInTestDir && event.isJsTest;
-      event.isEntry = event.isJsEntry || event.isCssEntry || event.isMdEntry;
+      event.isPegjsEntry = filepath.endsWith(".pegjs");
+      event.isEntry = event.isJsEntry || event.isCssEntry || event.isMdEntry || event.isPegjsEntry;
       isProcessable = event.isEntry;
     }
     // console.log(this.devbin.compiler.constructor.ansi.colors.style("blackBright").text(event.uncacheInjections));

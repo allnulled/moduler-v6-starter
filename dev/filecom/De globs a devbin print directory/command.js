@@ -5,6 +5,8 @@ module.exports = async function ({ devbin, parameters }) {
     in: devbin.moduler.normalizationOf(parameters.in),
     out: devbin.moduler.normalizationOf(parameters.out),
   };
+
+  console.log(normalized);
   
   Validacion: {
     Resuelve_fichero_del_in: {
@@ -17,8 +19,6 @@ module.exports = async function ({ devbin, parameters }) {
     }
     Resuelve_fichero_del_out: {
       if (!await devbin.files.hasFile(normalized.out)) {
-        // Esto estaba pero no parece que debería porque empalma las rutas
-        break Resuelve_fichero_del_out;
         normalized.out = devbin.moduler.normalizationOf(`@/dev/filecom/${normalized.command}/out/${parameters.out}`);
       }
     }

@@ -32,7 +32,9 @@
   Object.assign(Std, {
     all: {},
     objects: {},
-    functions: {},
+    functions: {
+      noop: function() {},
+    },
     traits: {},
     interfaces: {},
     classes: {},
@@ -63,6 +65,7 @@
     Std.assert = Std.all.assert = Std.functions.assert = $compiler.inject.source("./assert.function.js");
     Std.all.trify = Std.functions.trify = $compiler.inject.source("./apis/errors/trify/trify.function.js");
     Std.all.extractSubstrings = Std.functions.extractSubstrings = $compiler.inject.source("./apis/string/extractSubstrings/extractSubstrings.function.js");
+    Std.all.capitalizeString = Std.functions.capitalizeString = $compiler.inject.source("./apis/string/capitalizeString.function.js");
     Std.all.TryableProxy = Std.classes.TryableProxy = $compiler.inject.source("./apis/errors/TryableProxy/TryableProxy.class.js");
     Std.all.TryableInterface = Std.interfaces.TryableInterface = $compiler.inject.source("./apis/patterns/TryableInterface/TryableInterface.interface.js");
     Std.all.JsonStringifier = Std.classes.JsonStringifier = $compiler.inject.source("./apis/json/JsonStringifier/JsonStringifier.class.js");
@@ -79,7 +82,7 @@
   }
   Wave_4_Utility_interfaces: {
     Std.all.IntrospectorInterface = Std.interfaces.IntrospectorInterface = $compiler.inject.source("./apis/reflection/Introspector/IntrospectorInterface.interface.js");
-    Std.all.IntrospectableInterfaceFactory = Std.interfaces.IntrospectableInterfaceFactory = $compiler.inject.source("./apis/reflection/Introspector/IntrospectableInterfaceFactory.interface.js");
+    Std.all.IntrospectableInterfaceFactory = Std.functions.IntrospectableInterfaceFactory = $compiler.inject.source("./apis/reflection/Introspector/IntrospectableInterfaceFactory.interface.js");
     Std.all.RunnableInterface = Std.interfaces.RunnableInterface = $compiler.inject.source("./apis/patterns/RunnableInterface/RunnableInterface.interface.js");
     Std.all.TracerInterface = Std.interfaces.TracerInterface = $compiler.inject.source("./apis/testing/Tracer/TracerInterface.interface.js");
     Std.all.CheckerInterface = Std.interfaces.CheckerInterface = $compiler.inject.source("./apis/testing/Checker/CheckerInterface.interface.js");
@@ -87,11 +90,6 @@
     Std.all.TesterInterface = Std.interfaces.TesterInterface = $compiler.inject.source("./apis/testing/Tester/TesterInterface.interface.js");
     Std.all.PropertiesMergerInterface = Std.interfaces.PropertiesMergerInterface = $compiler.inject.source("./apis/merge/PropertiesMerger/PropertiesMergerInterface.interface.js");
     Std.all.UrlerInterface = Std.interfaces.UrlerInterface = $compiler.inject.source("./apis/urls/Urler/UrlerInterface.interface.js");
-    Std.all.ValidationStepInterface = Std.interfaces.ValidationStepInterface = $compiler.inject.source("./apis/validation/ValidationStep/ValidationStepInterface.interface.js");
-    Std.all.ValidationStateInterface = Std.interfaces.ValidationStateInterface = $compiler.inject.source("./apis/validation/ValidationState/ValidationStateInterface.interface.js");
-    Std.all.ValidationResultInterface = Std.interfaces.ValidationResultInterface = $compiler.inject.source("./apis/validation/ValidationResult/ValidationResultInterface.interface.js");
-    Std.all.TypesValidatorInterface = Std.interfaces.TypesValidatorInterface = $compiler.inject.source("./apis/types/TypesValidator/TypesValidatorInterface.interface.js");
-    Std.all.TypesCatalogInterface = Std.interfaces.TypesCatalogInterface = $compiler.inject.source("./apis/types/TypesCatalog/TypesCatalogInterface.interface.js");
     Std.all.ProgresserInterface = Std.interfaces.ProgresserInterface = $compiler.inject.source("./apis/debug/Progresser/ProgresserInterface.interface.js");
     Std.all.BasedirInterface = Std.interfaces.BasedirInterface = $compiler.inject.source("./apis/files/Basedir/BasedirInterface.interface.js");
   }
@@ -108,13 +106,11 @@
     Std.all.Progresser = Std.classes.Progresser = $compiler.inject.source("./apis/debug/Progresser/Progresser.class.js");
   }
   Wave_6_Types_system: {
-    Std.all.BasicTypes = Std.objects.BasicTypes = $compiler.inject.source("./apis/types/BasicTypes/BasicTypes.object.js");
     Std.all.TypesParser = Std.classes.TypesParser = $compiler.inject.source("./apis/types/TypesParser/TypesParser.object.js");
-    Std.all.ValidationStep = Std.classes.ValidationStep = $compiler.inject.source("./apis/validation/ValidationStep/ValidationStep.class.js");
-    Std.all.ValidationState = Std.classes.ValidationState = $compiler.inject.source("./apis/validation/ValidationState/ValidationState.class.js");
-    Std.all.ValidationResult = Std.classes.ValidationResult = $compiler.inject.source("./apis/validation/ValidationResult/ValidationResult.class.js");
+    Std.all.ValidationMemoryInterface = Std.interfaces.ValidationMemoryInterface = $compiler.inject.source("./apis/types/TypesValidator/ValidationMemory/ValidationMemoryInterface.interface.js");
+    Std.all.ValidationMemory = Std.interfaces.ValidationMemory = $compiler.inject.source("./apis/types/TypesValidator/ValidationMemory/ValidationMemory.class.js");
+    Std.all.TypesValidatorInterface = Std.interfaces.TypesValidatorInterface = $compiler.inject.source("./apis/types/TypesValidator/TypesValidatorInterface.interface.js");
     Std.all.TypesValidator = Std.classes.TypesValidator = $compiler.inject.source("./apis/types/TypesValidator/TypesValidator.class.js");
-    Std.all.TypesCatalog = Std.classes.TypesCatalog = $compiler.inject.source("./apis/types/TypesCatalog/TypesCatalog.class.js");
     Std.all.Domer = Std.classes.Domer = $compiler.inject.source("./apis/dom/Domer/Domer.class.js");
   }
   Wave_7_Filesystem: {

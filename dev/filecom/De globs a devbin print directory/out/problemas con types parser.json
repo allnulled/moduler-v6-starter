@@ -1,0 +1,818 @@
+[#FILE=@/src/candidate/Std/apis/types/TypesParser/TypesParser.source.pegjs]
+{
+
+}
+
+Types_script= _ ast:Evaluables? _ {return { grammar: "script", ast: ast }; }
+
+Evaluables= first:Evaluable rest:Evaluable_other* ";"? {return [first, ...rest].filter(it => it !== null);}
+
+Evaluable_other= _ ";" _ value:Evaluable {return value;}
+
+
+// ------------------------------------------------------------
+// 1. EXPRESIONES
+// ------------------------------------------------------------
+
+Evaluable=Labeled_evaluable/Or
+
+Labeled_evaluable= 
+  token1:_
+  label:Type_label
+  token2:_
+  core:Or
+    { return Object.assign(core, {label}); }
+Or= left:And right:Or_right* {return right.length? { grammar: "or operation", left, right }: left;}
+Or_right= _ "|" _ right:And {return right;}
+And= left:Unary right:And_right* {return right.length? { grammar: "and operation", left, right }: left;}
+And_right= _ "&" _ right:Unary {return right;}
+Unary= negation:Type_negation? value:Type_expression {return negation? { ...value, negation }: value;}
+
+// ------------------------------------------------------------
+// 2. TYPE EXPRESSION
+// ------------------------------------------------------------
+
+Type_expression= Type_expression_as_labeled_name / Type_expression_as_label / Type_expression_as_name
+
+Type_expression_as_labeled_name = 
+  label:Type_label _
+  type:Primary _
+  parameters:Type_parameters?
+  defaults:Type_defaults? 
+    {
+      return Object.assign(type, {
+        label,
+        parameters: parameters || undefined,
+        defaults: defaults !== null ? defaults : undefined
+      });
+    }
+
+Type_expression_as_label = 
+  label:Type_label _
+  parameters:Type_parameters?
+  defaults:Type_defaults?
+    {
+      return Object.assign({ grammar: "type label" }, {
+        label,
+        parameters: parameters || undefined,
+        defaults: defaults !== null ? defaults : undefined
+      });
+    }
+
+Type_expression_as_name =
+  type:Primary
+  parameters:Type_parameters?
+  defaults:Type_defaults?
+    {
+      return Object.assign(type, {
+        parameters: parameters || undefined,
+        defaults: defaults !== null ? defaults : undefined
+      });
+    }
+
+// ------------------------------------------------------------
+// 3. PRIMARY
+// ------------------------------------------------------------
+
+Primary = Type_group / Type_factory / Type_object / Type_class / Type_array / Type_import / Type_identifier
+
+// ------------------------------------------------------------
+// 4. GROUP
+// ------------------------------------------------------------
+
+Type_group = _ "(" _ value:Evaluable _ ")" _ { return value; }
+
+// ------------------------------------------------------------
+// 5. FACTORY
+// ------------------------------------------------------------
+
+Type_factory = _
+  synchrony:(("async" / "sync") _)?
+  token1:("function" _ "(" _)
+  input:Type_array_items? ")" _
+  throwables:Throwables? "=>" _
+  output:Evaluable { return { grammar: "factory type", input, output, throwables, synchrony: synchrony && synchrony.length ? synchrony[0] : true }; }
+
+Throwables = first:Throwable rest:Throwable* { return [first, ...rest]; }
+
+Throwable = _ "~>" _ value:Evaluable { return value; }
+
+
+// ------------------------------------------------------------
+// 6. OBJECT
+// ------------------------------------------------------------
+
+Type_class = _ "class" _ content:Type_object { return Object.assign(content, {grammar:"class type"}) }
+
+Type_object = _ "{" _ properties:Type_object_properties? _ "}" { return { grammar: "object type", properties: properties || {} }; }
+
+Type_object_properties = first:Type_object_property rest:Type_object_property_other* { return Object.fromEntries([first, ...rest]); }
+
+Type_object_property_other = _ "," _ property:Type_object_property { return property; }
+
+Type_object_property = Object_property_as_name / Object_property_as_label
+  
+Object_property_as_name =
+  name:Property_name
+  optional:Optional_sign? _ ":" _
+  value:Evaluable { return [ name, { ...value, optional: optional || undefined } ]; }
+
+Object_property_as_label =
+  label:Type_label
+  optional:Optional_sign? { return [ label, { grammar: "type label", label, optional: optional || undefined } ]; }
+
+
+// ------------------------------------------------------------
+// 7. ARRAY
+// ------------------------------------------------------------
+
+Type_array = _ "[" _ items:Type_array_items? _ "]" { return { grammar: "array type", items: items || [] }; }
+
+Type_array_items = first:Type_array_item rest:Type_array_item_other* { return [first, ...rest]; }
+
+Type_array_item_other = _ "," _ item:Type_array_item { return item; }
+
+Type_array_item = Spreaded_evaluable / Evaluable
+
+Spreaded_evaluable = _ "..." _
+  spread:Evaluable
+  multiplier:Multiplier_symbol?
+    { return { type: "spread on array", spread, multiplier }; }
+
+Multiplier_symbol = "?" / "*" / "+"
+
+// ------------------------------------------------------------
+// 8. IDENTIFIERS
+// ------------------------------------------------------------
+
+Type_identifier = _ id:Variable_expression { return { grammar: "type id", id }; }
+Type_negation = _ "!" _ { return "!"; }
+Type_label = _ "@" id:Variable_expression { return id;}
+
+// ------------------------------------------------------------
+// 9. PARAMETERS / DEFAULTS
+// ------------------------------------------------------------
+
+Type_parameters = _ "(" _ parameters:Type_array_items? _ ")" { return parameters; }
+Type_defaults = _ "=" _ value:Default_value { return value; }
+Default_value = Hardcoded_value / Type_identifier
+
+// ------------------------------------------------------------
+// 10. VARIABLES
+// ------------------------------------------------------------
+
+Property_name = Property_chars / json_string
+Property_chars = [A-Za-z_$] [A-Za-z0-9_$]* { return text(); }
+Variable_expression = Variable_name Variable_accessor_by_dot* { return text(); }
+Variable_name = Property_chars / Singlequoted_expression
+Variable_accessor_by_dot = "." Variable_name
+
+// ------------------------------------------------------------
+// 11. OPTIONAL / STRINGS
+// ------------------------------------------------------------
+
+Optional_sign = _ "?" { return true; }
+Singlequoted_expression = "'" chars:Singlequoted_token* "'" { return chars.join(""); }
+Singlequoted_token = Singlequoted_char / Singlequoted_escaped_char
+Singlequoted_escaped_char = "\\" char:. { return char; }
+Singlequoted_char = [^'\\\n\r]
+
+// ------------------------------------------------------------
+// 12. WHITESPACE / COMMENTS
+// ------------------------------------------------------------
+
+_ = (one_space)*
+one_space = __ / ___ / Comment
+__ = "\t" / " "
+___ = "\r\n" / "\r" / "\n"
+Comment = Comment_oneline / Comment_multiline
+Comment_oneline = "//" (!(___ / EOF) .)*
+Comment_multiline = "/*" (!"*/" .)* "*/"
+EOF = !.
+
+// ------------------------------------------------------------
+// 13. IMPORT
+// ------------------------------------------------------------
+
+Type_import = "^" resource:("file:"/"url:"/"path:")? target:json_string
+  { return { grammar: "import", resource, target } }
+
+// ------------------------------------------------------------
+// 14. JSON
+// ------------------------------------------------------------
+
+Hardcoded_value = json_value
+json_value = json_object / json_array / json_string / json_number / json_true / json_false / json_null 
+json_object = "{" json_space m:json_members? json_space "}" { return m }
+json_members = m1:json_member mN:json_coma_member* { return {...m1, ...Object.assign({},...mN) } }
+json_coma_member = json_space "," json_space m:json_member { return m }
+json_member = key:(json_string/js_variable_name) json_space ":" json_space value:json_value { return {[key]: value}}
+json_array = "[" json_space e:json_elements? json_space "]" { return e || [] }
+json_elements = e1:json_value eN:json_coma_value* { return [e1, ...eN || []] }
+json_coma_value = json_space "," json_space v:json_value { return v }
+json_string = '"' t:json_string_char* '"'  { return t.join("") }
+json_string_char = json_escape / [^"\\\u0000-\u001F]
+json_escape = "\\" ( '"' / "\\" / "/" / "b" / "f" / "n" / "r" / "t" / "u" [0-9a-fA-F]{4})
+json_number = "-"? json_integer json_fraction? json_exponent? { return parseFloat(text()) }
+json_integer = "0" / [1-9] [0-9]* { return parseInt(text()) }
+json_fraction = "." [0-9]+
+json_exponent = [eE] [+-]? [0-9]+
+json_true = "true" { return true }
+json_false = "false" { return false }
+json_null = "null" { return null }
+js_variable_name = [A-Za-záéíóúàèìòù$_] [A-Za-z0-9áéíóúàèìòù$_]* { return text() }
+json_space = [ \t\n\r]*
+[#FILE=@/src/candidate/Std/apis/types/TypesValidator/traits.js]
+trace: function trace(...args) {
+  //console.log(...args);
+  return;
+},
+validateData: async function (expression, data) {
+  const astRaw = typeof expression === "string" ? Std.classes.TypesParser.parse(expression) : expression;
+  const astWithoutImports = await this._replaceImportsRecursively(astRaw);
+  return this._validateDataRecursively({
+    ast: astWithoutImports,
+    data: data,
+  }, {
+    isRoot: true,
+  });
+},
+composeErrorMessage: function (submessages = []) {
+  let message = "";
+  for (let index = 0; index < submessages.length; index++) {
+    const part = submessages[index];
+    const submessage = Array.isArray(part) ? part.length === 2 ? `${part[0]} «${part[1]}»` : part.join(" ") : part;
+    message += `${index === 0 ? '' : ' '}${submessage}`;
+  }
+  return message;
+},
+composeValidationMessage: function (memory, header = false, footer = false) {
+  const message = [
+    header || "Validation error arised",
+    ...(memory.localAst?.id ? [["because validator type", memory.localAst.id]] : []),
+    ["found data type", typeof memory.localData],
+    ["at data index", memory.dataPointer.join("/") || "~"],
+    // ["and validator index", memory.astPointer.join("/") || "~"],
+    // ["on grammar", memory.localAst.grammar],
+    footer ? footer : ["on method", "validateData"],
+  ];
+  return this.composeErrorMessage(message);
+},
+createValidationError: function ({ name, memory, header, footer }) {
+  return Error.normalize({
+    name: name,
+    message: this.composeValidationMessage(memory, header, footer),
+  });
+},
+PrimitiveTypes: Std.all.PrimitiveTypes = Std.objects.PrimitiveTypes = {
+  "undefined": {
+    abstraction: {
+      onValidate(memory) {
+        return typeof memory.localData === "undefined";
+      },
+    },
+  },
+  "null": {
+    abstraction: {
+      onValidate(memory) {
+        return memory.localData === null;
+      },
+    },
+  },
+  "string": {
+    abstraction: {
+      onValidate(memory) {
+        return typeof memory.localData === "string";
+      },
+    },
+  },
+  "boolean": {
+    abstraction: {
+      onValidate(memory) {
+        return typeof memory.localData === "boolean";
+      },
+    },
+  },
+  "object": {
+    abstraction: {
+      onValidate(memory) {
+        return memory.localData !== null && typeof memory.localData === "object" && !Array.isArray(memory.localData);
+      },
+    },
+  },
+  "number": {
+    abstraction: {
+      onValidate(memory) {
+        return typeof memory.localData === "number";
+      },
+    },
+  },
+  "function": {
+    abstraction: {
+      onValidate(memory) {
+        return typeof memory.localData === "function";
+      },
+    },
+  },
+  "array": {
+    abstraction: {
+      onValidate(memory) {
+        return Array.isArray(memory.localData);
+      },
+    },
+  },
+},
+Registry: Std.all.TypesRegistry = Std.functions.TypesRegistry = (it = {}) => {
+  return Object.create(Std.objects.PrimitiveTypes, it);
+},
+Memory: Std.all.ValidationMemory = Std.classes.ValidationMemory = class ValidationMemory {
+  static {
+    $moduler.toolkit.makeClass([
+      Std.interfaces.InstantiableInterface,
+      // @interface:ValidationMemoryInterface
+      Std.functions.IntrospectableInterfaceFactory("data", "getDataProperty", "setDataProperty", "hasDataProperty", "initializeDataProperty", "listDataProperties"),
+      Std.functions.IntrospectableInterfaceFactory("ast", "getAstProperty", "setAstProperty", "hasAstProperty", "initializeAstProperty", "listAstProperties"),
+      {
+        prototype: {
+          onCreate: function() {
+            this.labels = {};
+            this.registry = Std.functions.TypesRegistry();
+            this.result = Std.classes.ValidationResult.new;
+          },
+          clonedProperties: ["labels", "registry", "result"],
+          unclonableProperties: ["data", "ast", "dataPointer", "astPointer"],
+          get localData() {
+            return this.dataPointer?.length ? this.getDataProperty(this.dataPointer.join("/")) : this.data;
+          },
+          get localAst() {
+            return this.astPointer?.length ? this.getAstProperty(this.astPointer.join("/")) : this.ast;
+          },
+        },
+        static: {},
+      },
+    ], this);
+  }
+},
+Result: Std.all.ValidationResult = Std.classes.ValidationResult = class ValidationResult extends Array {
+  add(memory) {
+    $moduler.assert(memory instanceof Std.classes.ValidationMemory, `Parameter «memory» must be instance of «ValidationMemory» on «ValidatorResult.prototype.add»`);
+    this.push([
+      memory.astPointer,
+      memory.dataPointer,
+    ]);
+  }
+},
+_validateAndOperation: function _validateAndOperation(memory) {
+  this.trace("TypesValidator._validateAndOperation", memory);
+  if (!memory.isExported) {
+    return true;
+  }
+  const { localAst } = memory;
+  Validate_first: {
+    const submemory = memory.clone({
+      data: memory.data,
+      dataPointer: memory.dataPointer.concat([]),
+      ast: memory.ast,
+      astPointer: memory.astPointer.concat(["left"]),
+    });
+    const output = this._validateDataRecursively(submemory);
+    if (output instanceof Error) {
+      return output;
+    } else {
+      memory.result.add(submemory);
+    }
+  }
+  Validate_others: {
+    for (let index = 0; index < localAst.right.length; index++) {
+      const submemory = memory.clone({
+        data: memory.data,
+        dataPointer: memory.dataPointer.concat([]),
+        ast: memory.ast,
+        astPointer: memory.astPointer.concat(["right", index]),
+      });
+      const output = this._validateDataRecursively(submemory);
+      if (output instanceof Error) {
+        return output;
+      } else {
+        memory.result.add(submemory);
+      }
+    }
+  }
+  memory.result.add(memory);
+  return true;
+},
+_validateOrOperation: function _validateOrOperation(memory) {
+  this.trace("TypesValidator._validateOrOperation", memory);
+  if (!memory.isExported) {
+    return true;
+  }
+  const { localAst } = memory;
+  let lastError;
+  Validate_first: {
+    const submemory = memory.clone({
+      data: memory.data,
+      dataPointer: memory.dataPointer.concat([]),
+      ast: memory.ast,
+      astPointer: memory.astPointer.concat(["left"]),
+    });
+    const output = this._validateDataRecursively(submemory);
+    if (!(output instanceof Error)) {
+      memory.result.add(submemory);
+      return true;
+    }
+    lastError = output;
+  }
+  Validate_others: {
+    for (let index = 0; index < localAst.right.length; index++) {
+      const submemory = memory.clone({
+        data: memory.data,
+        dataPointer: memory.dataPointer.concat([]),
+        ast: memory.ast,
+        astPointer: memory.astPointer.concat(["right", index]),
+      });
+      const output = this._validateDataRecursively(submemory);
+      if (!(output instanceof Error)) {
+        memory.result.add(submemory);
+        return true;
+      }
+      lastError = output;
+    }
+  }
+  return lastError;
+},
+_validateTypeLabel: function _validateTypeLabel(memory) {
+  this.trace("TypesValidator._validateTypeLabel", memory);
+  if (!memory.isExported) {
+    return true;
+  }
+  const { localAst } = memory;
+  let subAst = undefined;
+  if (localAst.label in memory.labels) {
+    subAst = memory.labels[localAst.label];
+  } else {
+    return this.createValidationError({
+      name: "TypeLabelNotIdentified",
+      memory: memory,
+      header: `Label «${localAst.label}» was not previously set`,
+      footer: "on method «TypesValidator._validateTypeLabel»",
+    });
+  }
+  const submemory = memory.clone({
+    data: memory.localData,
+    dataPointer: [],
+    ast: subAst,
+    astPointer: [],
+  });
+  return this._validateDataRecursively(submemory);
+},
+_validateFactoryType: function _validateFactoryType(memory) {
+  this.trace("TypesValidator._validateFactoryType", memory);
+  if (!memory.isExported) {
+    return true;
+  }
+  if (typeof memory.localData === "function") {
+    memory.result.add(memory);
+    return true;
+  }
+  return this.createValidationError({
+    name: "FactoryTypeValidationNotAccomplished",
+    memory: memory,
+    header: "Factory type validation was not accomplished",
+    footer: "on method «TypesValidator._validateFactoryType»",
+  });
+},
+_validateClassType: function _validateClassType(memory) {
+  this.trace("TypesValidator._validateClassType", memory);
+  if (!memory.isExported) {
+    return true;
+  }
+  if (typeof memory.localData !== "function") {
+    return this.createValidationError({
+      name: "ClassTypeNotAccomplished",
+      memory: memory,
+      header: "Class type validation was not accomplished",
+      footer: "on method «TypesValidator._validateClassType» while validating class type",
+    });
+  }
+  return this._validateDataRecursively(memory, { mode: "class" });
+},
+_validateObjectType: function _validateObjectType(memory) {
+  this.trace("TypesValidator._validateObjectType", memory);
+  if (!memory.isExported) {
+    return true;
+  }
+  if (typeof memory.localData !== "object") {
+    return this.createValidationError({
+      name: "ObjectTypeNotAccomplished",
+      memory: memory,
+      header: "Object type validation was not accomplished",
+      footer: "on method «TypesValidator._validateObjectType» while validating object type",
+    });
+  }
+  return this._validateDataRecursively(memory, { mode: "object" });
+},
+_validateArrayType: function _validateArrayType(memory) {
+  this.trace("TypesValidator._validateArrayType", memory);
+  if (!memory.isExported) {
+    return true;
+  }
+  if(!Array.isArray(memory.localData)) {
+    return this.createValidationError({
+      name: "ArrayTypeNotAccomplished",
+      memory: memory,
+      header: `Array type validation was not accomplished`,
+      footer: "on method «TypesValidator._validateArrayType» while validating array type",
+    });
+  }
+  return this._validateDataRecursively(memory);
+},
+_validateIdType: function _validateIdType(memory) {
+  this.trace("TypesValidator._validateIdType", memory);
+  if (!memory.isExported) {
+    return true;
+  }
+  const { localAst, dataPointer, ast, astPointer } = memory;
+  const TypeClass = memory.registry[localAst.id];
+  Caso_de_ser_tipo: {
+    if (TypeClass?.abstraction?.onValidate) {
+      let validation;
+      try {
+        validation = TypeClass.abstraction.onValidate(memory);
+      } catch (error) {
+        validation = error;
+      }
+      if ((typeof validation === "undefined") || (validation === false)) {
+        validation = this.createValidationError({
+          name: "IdentifiedTypeNotAccomplished",
+          memory: memory,
+          header: `Type «${localAst.id}» validation was not accomplished`,
+          footer: `on method «TypesValidator._validateIdType»`,
+        });
+      }
+      return validation;
+    }
+  }
+  Caso_de_ser_label: {
+    if (memory.labels[localAst.id]) {
+      const submemory = memory.clone({
+        data: memory.data,
+        dataPointer: memory.dataPointer.concat([]),
+        ast: memory.labels[localAst.id],
+        astPointer: memory.astPointer.concat(["labels", localAst.id]),
+      });
+      const validation = this._validateDataRecursively(submemory);
+      if (!(validation instanceof Error) && localAst.label) {
+        memory.labels[localAst.label] = {
+          ...ast,
+          label: undefined,
+        };
+      }
+      memory.result.add(submemory);
+      return validation;
+    }
+  }
+  return this.createValidationError({
+    name: "NonIdentifiedType",
+    memory: memory,
+    header: `Non-identified type by id «${localAst.id}» was found`,
+    footer: `on method «TypesValidator._validateIdType»`,
+  });
+},
+_validateScript: function _validateScript(memory) {
+  this.trace("TypesValidator._validateScript", memory);
+  let validation = undefined;
+  for (let indexLine = 0; indexLine < memory.ast.ast.length; indexLine++) {
+    const isExported = indexLine === memory.ast.ast.length - 1;
+    const submemory = memory.clone({
+      ast: memory.ast,
+      data: memory.data,
+      astPointer: memory.astPointer.concat(["ast", indexLine]),
+      dataPointer: memory.dataPointer.concat([]),
+      isExported,
+    });
+    validation = this._validateDataRecursively(submemory);
+    if (validation instanceof Error) {
+      return validation;
+    }
+    if (isExported) {
+      memory.exportedAst = this._materializeAst(submemory);
+    }
+  }
+  memory.result.add(memory);
+  return memory;
+},
+_defaultOptionsForValidateDataRecursively: {
+  mode: "object",
+  isRoot: false,
+},
+_validateDataRecursively: function _validateDataRecursively(memory = null, options = this._defaultOptionsForValidateDataRecursively) {
+  // this.trace("_validateDataRecursively", memory);
+  const { mode } = options;
+  Initialize_memory: {
+    memory = memory instanceof Std.classes.ValidationMemory ? memory : Std.classes.ValidationMemory.new.config({
+      ...memory,
+      astPointer: [],
+      dataPointer: [],
+      registry: Std.functions.TypesRegistry(),
+      result: new Std.classes.ValidationResult(),
+    });
+  }
+  let output = undefined;
+  const { localAst } = memory;
+  Export_label_if_any: {
+    if (localAst.label && localAst.grammar !== "type label") {
+      memory.labels[localAst.label] = { ...localAst };
+    }
+  }
+  Validate_grammar: {
+    const { grammar } = localAst;
+    if (grammar === "and operation") {
+      output = this._validateAndOperation(memory);
+    } else if (grammar === "or operation") {
+      output = this._validateOrOperation(memory);
+    } else if (grammar === "type label") {
+      output = this._validateTypeLabel(memory);
+    } else if (grammar === "factory type") {
+      output = this._validateFactoryType(memory);
+    } else if (grammar === "object type") {
+      output = this._validateObjectType(memory);
+    } else if (grammar === "class type") {
+      output = this._validateClassType(memory);
+    } else if (grammar === "array type") {
+      output = this._validateArrayType(memory);
+    } else if (grammar === "type id") {
+      output = this._validateIdType(memory);
+    } else if (grammar === "script") {
+      output = this._validateScript(memory);
+    } else {
+      throw Error.normalize({
+        name: "ValidationGrammarNotIdentified",
+        message: `Grammar «${grammar}» is not recognized on «TypesValidator._validateDataRecursively»`,
+      });
+    }
+  }
+  Validate_negation: {
+    if (localAst.negation) {
+      if (output instanceof Error) {
+        output = true;
+      } else {
+        output = this.createValidationError({
+          name: "NegationNotAccomplished",
+          memory: memory,
+          header: "Negated expression was not accomplished",
+          footer: "on method «TypesValidator._validateDataRecursively»",
+        });
+      }
+    }
+  }
+  return output;
+},
+_replaceImportsRecursively: function _replaceImportsRecursively(ast) {
+  const outputAst = {};
+  // @CHATGPT: este sería el método que hace el:
+  //   - iterar recursivamente en busca de imports
+  //   - leer los imports internos
+  //   - parsear los imports internos
+  //   - reducir el ast de cada import interno
+  return ast;
+  return outputAst;
+},
+_materializeAst: function _materializeAst(memory, localAst, resolvingLabels = new Set()) {
+  this.trace("TypesValidator._materializeAst", memory);
+  if (localAst === null || typeof localAst !== "object") {
+    return localAst;
+  } else if (Array.isArray(localAst)) {
+    return localAst.map(value => this._materializeAst(memory, value, resolvingLabels));
+  }
+  if (localAst.grammar === "type label") {
+    const label = localAst.label;
+    if (!(label in memory.labels)) {
+      return { ...localAst };
+    }
+    if (resolvingLabels.has(label)) {
+      throw Error.normalize({
+        name: "RecursiveTypeLabel",
+        message: `Recursive type label «${label}» was found`,
+      });
+    }
+    const nextResolvingLabels = new Set(resolvingLabels);
+    nextResolvingLabels.add(label);
+    return this._materializeAst(
+      memory,
+      memory.labels[label],
+      nextResolvingLabels
+    );
+  }
+  const output = {};
+  for (const key of Object.keys(localAst)) {
+    output[key] = this._materializeAst(memory, localAst[key], resolvingLabels);
+  }
+  return output;
+},
+_readPath: ModulerV6.globalInstance._readPath,
+_readFile: ModulerV6.globalInstance._readFile,
+_readUrl: ModulerV6.globalInstance._readUrl
+[#FILE=@/src/www/dev/test/feature/008.Std.classes.TypesValidator soporta sintaxis de factory, default y label/test.entry.js]
+module.exports = async function ({ Tester }) {
+
+  const {
+    TypesCatalog,
+    TypesValidator,
+    TypesParser,
+    Asserter: { new: asserter },
+    Printer,
+  } = Std.all;
+
+  const list = [
+    // Las que sí deberían funcionar:
+    ["number", 1, "Simple"],
+    ["!number", 1, "Negado"],
+    ["number&integer", 1, "Conjuntivo de 2"],
+    ["number&integer & !string", 1, "Conjuntivo de 3"],
+    ["number|string", 1, "Disjuntivo de 2"],
+    ["number|string | null", 1, "Disjuntivo de 3"],
+    ["(number|string) & !empty", 1, "Paréntesis de 1"],
+    ["((number&!empty)|(string&!empty))&!object", 1, "Paréntesis de 2"],
+    ["@name string", 1, "Etiqueta (1)"],
+    ["function(string,{})=>undefined", 1, "Función síncrona (1)"],
+    ["async function(@id string,@data {})=>undefined", 1, "Función asíncrona (1)"],
+    ["[number,string]", 1, "Array (1)"],
+    ["[@id number,@operation string,@parameters object]", 1, "Array (2)"],
+    ["{name:string,password:string}", 1, "Object (1)"],
+    ["{name?:string}", 1, "Propiedad opcional de object (1)"],
+    ["@name string;@age number;[@name,@age]", 1, "Etiqueta reusada como tipo (1)"],
+    ["@name string;@age number;{name:@name,age:@age}", 1, "Etiqueta reusada como propiedad (2)"],
+    ["@name string;@age number;{@name,@age}", 1, "Etiqueta reusada como propiedad y nombre (3)"],
+    ["[...[a,b],...[c,d],...[e,f]]", 1, "Spread array operator en arrays con array (1)"],
+    [`@grupo1 [a,b]; @grupo2 [c,d];@grupo3 [e,f];[...@grupo1,...@grupo2,...@grupo3]`, 1, "Spread array operator en arrays con variables (2)"],
+    ["function(...[a,b],...[c,d])=>undefined", 1, "Spread array operator en parámetros de función con array (3)"],
+    [`@grupo1 [a,b];@grupo2 [c,d];function(...@grupo1,...@grupo2)=>undefined`, 1, "Spread array operator en parámetros de función con variable (4)"],
+    ["[...[a,b]?,c]", 1, "Spread array operator con multiplicador de 0 o 1 (?) con array (1)"],
+    ["[...[a,b]+,c]", 1, "Spread array operator con multiplicador de 0 o más (*) con array (2)"],
+    ["[...[a,b]*,c]", 1, "Spread array operator con multiplicador de 1 o más (+) con array (3)"],
+    ["@grupo1 [a,b];[...@grupo1?,c]", 1, "Spread array operator con multiplicador de 0 o 1 (?) con array (1)"],
+    ["@grupo1 [a,b];[...@grupo1+,c]", 1, "Spread array operator con multiplicador de 0 o más (*) con array (2)"],
+    ["@grupo1 [a,b];[...@grupo1*,c]", 1, "Spread array operator con multiplicador de 1 o más (+) con array (3)"],
+    ["{name:string}&{password:string}", 1, "Spread object operator o por qué no existe"],
+    ["@password string;{name:string}&@password;", 1, "Spread object operator o por qué no existe"],
+    [`{city:@city="Elei"};`, 1, "Valor por defecto (1)"],
+    [`{run:class{hello:function()=>undefined,prototype:{id:number}}};`, 1, "Class y firmas de static y prototype (1)", Std.functions.noop, {
+      run: class {
+        static hello() {};
+        static {
+          this.prototype.id = 300;
+        }
+      }
+    }, 1],
+    [`number;`, 1, "Valor simple (1)", Std.functions.noop, 0, 1],
+    [`!number;`, 1, "Valor negado (1)", Std.functions.noop, '', 1],
+    [`!number&!string&(!object|!array)`, 1, "Testeo", Std.functions.noop],
+    [`!number&!string|(array|object)`, 1, "Testeo", Std.functions.noop, {},],
+    [`@name string;@total number;{@name,@total};`, 1, "Reutiliza variables declaradas (1)", Std.functions.noop, {name:"1",total:2}, 1],
+    [`@core string|null|object;{a:{b:{c:@core {}}}};`, 1, "Reutiliza variables declaradas (2)", Std.functions.noop, {a:{b:{c:{}}}}, 1, val => {
+      console.log(val);
+    }],
+    [`{"a b c":number};`, 1, "Permite nombres de propiedades de objetos como string (1)", Std.functions.noop, {"a b c":100}],
+    /*
+    [`@file1 ^file:"./some.tyla";`, 1, "Valor de import file (1)", Printer.json, {title:"some"}],
+    [`@url1 ^url:"./some.tyla";`, 1, "Valor de import url (2)", Printer.json, {title:"some"}],
+    [`@path1 ^path:"./some.tyla";`, 1, "Valor de import path (3)", Printer.json, {title:"some"}],
+    [`@resource1 ^"./some.tyla";`, 1, "Valor de import path implítico (4)", Printer.json, {title:"some"}],
+    //*/
+  ];
+
+  const errors = [];
+  for(let index=0; index<list.length; index++) {
+    const row = list[index];
+    const [exprezzion, expectParseSuccess, concept, callback = false, input = null, expectValidateSuccess = true, validationCallback = false] = row;
+    let ast = undefined;
+    let validation = undefined;
+    Expression: {
+      const parseAsserter = expectParseSuccess ? "assertDoesNotThrowAsync" : "assertThrowsAsync";
+      const errorMessage = `Can${expectParseSuccess ? "" : "not"} on concept «${concept}» parse '${expectParseSuccess ? '' : 'in'}correct validation' at index ${index}: ${exprezzion}`;
+      console.log(`[*] Expression: ${exprezzion}`);
+      await asserter[parseAsserter](() => ast = TypesParser.parse(exprezzion), errorMessage);
+    }
+    Callback: {
+      if(callback) {
+        await callback(ast);
+      }
+    }
+    Input: {
+      if(input === null) break Input;
+      const validateAsserter = expectValidateSuccess ? "assertDoesNotThrowAsync" : "assertThrowsAsync";
+      await asserter[validateAsserter](async () => {
+        validation = await TypesValidator.validateData(ast, input);
+        if(validation instanceof Error) throw validation;
+      });
+    }
+    Validation_callback: {
+      if(validationCallback) {
+        await validationCallback(validation);
+      }
+    }
+  }
+
+  return;
+
+};

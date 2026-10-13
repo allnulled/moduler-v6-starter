@@ -24,7 +24,10 @@
       }
       Trigger_hook_on_create_if_any: {
         if(instanze.onCreate) {
-          output = instanze.onCreate({ parent: this, config }, ...constructorArgs) || output;
+          output = instanze.onCreate({
+            // parent: this,
+            config
+          }, ...constructorArgs) || output;
         }
       }
       $compiler.inject.template("@/src/candidate/Std/snippets/methodOut.js", {name:"CreableInterface.static.create"});
