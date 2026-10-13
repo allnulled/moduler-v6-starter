@@ -194,7 +194,7 @@ EOF = !.
 // ------------------------------------------------------------
 
 Type_import = "^" resource:("file:"/"url:"/"path:")? target:json_string
-  { return { grammar: "import", resource, target } }
+  { return { grammar: "import", resource: resource ? resource.slice(0,-1) : resource, target } }
 
 // ------------------------------------------------------------
 // 14. JSON

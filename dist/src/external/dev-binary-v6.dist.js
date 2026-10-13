@@ -2149,6 +2149,15 @@ cloneForFile(filepath) {
   return new ModulerV6(dirpath, this);
 }
   /**
+ * @name ModulerV6.prototype.cloneForDirectory
+ * @type 
+ * @description 
+ */
+cloneForDirectory(dirpathBrute) {
+  const dirpath = this._joinPaths([dirpathBrute]);
+  return new ModulerV6(dirpath, this);
+}
+  /**
  * @name ModulerV6.prototype.reserveFile
  * @type 
  * @description 
@@ -4026,8 +4035,6 @@ _tokenizeText(compilationFile, compilationProcess) {
   let out = undefined;
   if(compilationFile.extension === "js") {
     out = this._parser.forJs.parse(compilationFile.source);
-  } else if(compilationFile.extension === "pegjs") {
-    out = this._parser.forJs.parse(compilationFile.source);
   } else if(compilationFile.extension === "css") {
     out = this._parser.forCss.parse(compilationFile.source);
   } else if(compilationFile.extension === "md") {
@@ -4226,7 +4233,7 @@ _fetchCompilable(compilationFile, compilationProcess) {
       return compilationFile.compilation.json = "";
     });
   }
-  const validFilesRegex = /\.(js|css|md|html|pegjs)$/g;
+  const validFilesRegex = /\.(js|css|md|html)$/g;
   this.assert(validFilesRegex.test(compilationFile.resource), `Parameter «compilationFile.resource» now «${compilationFile.resource}» must match with valid extension on «CompilerV6.prototype._fetchCompilable»`);
   Sacar_la_extension_del_fichero: {
     compilationFile.extension = compilationFile.resource.match(validFilesRegex)[0].substr(1);
@@ -4237,7 +4244,7 @@ _fetchCompilable(compilationFile, compilationProcess) {
     }
   }
   Bloquear_imports_segun_extension_de_compilable_original: {
-    const privilegedExtensions = ["js", "pegjs"];
+    const privilegedExtensions = ["js"];
     const fromExtension = compilationProcess.extension;
     const toExtension = compilationFile.extension;
     if(privilegedExtensions.includes(fromExtension)) {
@@ -4533,10 +4540,10 @@ async _compileAsInjectSource(compilationFile, compilationProcess, { token, token
         }
         compilationFile.compilation.html = this._replaceTextRange(compilationFile.compilation.html, token.location[0], token.location[1], newContent, token);
       } else {
-        currentStep.push("5.a. from js or pegjs");
-        const validExtensions = ["js", "pegjs"];
+        currentStep.push("5.a. from js");
+        const validExtensions = ["js"];
         this.assert(validExtensions.includes(compilationFile.extension), `Syntax of «$compiler.inject.source» can only inject files from «js,html» files and not on «${compilationFile.extension}» when importing «${targetPath}» from «${compilationFile.resource}»`);
-        this.assert(targetPath.endsWith(".js") || targetPath.endsWith(".pegjs"), `Syntax of «$compiler.inject.source» is trying to import foraneous extension format file «${targetPath}» from «${compilationFile.resource}» on «CompilerV6.prototype._compileAsInjectSource»`);
+        this.assert(targetPath.endsWith(".js"), `Syntax of «$compiler.inject.source» is trying to import foraneous extension format file «${targetPath}» from «${compilationFile.resource}» on «CompilerV6.prototype._compileAsInjectSource»`);
         // if (!targetCaches.js) targetCaches.js = targetCompilation?.js || "";
         if (typeof targetCaches.js !== "string") targetCaches.js = targetCompilation.js;
         targetCaches.css = targetCaches.css || targetCompilation?.css;
@@ -6542,8 +6549,7 @@ async touchFile(fileBrute, optionsInput = {}) {
       event.isInTestDir = rootPath.startsWith("@/test/");
       event.isRunnableTest = event.isInTestDir && rootPath.endsWith(".run.js");
       event.isTestItself = event.isInTestDir && event.isJsTest;
-      event.isPegjsEntry = filepath.endsWith(".pegjs");
-      event.isEntry = event.isJsEntry || event.isCssEntry || event.isMdEntry || event.isPegjsEntry;
+      event.isEntry = event.isJsEntry || event.isCssEntry || event.isMdEntry;
       isProcessable = event.isEntry;
     }
     // console.log(this.devbin.compiler.constructor.ansi.colors.style("blackBright").text(event.uncacheInjections));
@@ -6771,6 +6777,9 @@ async touchFile(fileBrute, optionsInput = {}) {
           currentStep.push(`7.4. run «devbin test --origin ${filepath}»`);
           const output = await this.devbin.command(["test", "--origin", filepath]);
           // if (output) console.log(output);
+        }
+        Run_local_event_dev_events_e_onFileChange: {
+          await this.triggerCallbackFromFile("@/dev/events/e.onFileChange.js", { file: filepath, event, });
         }
       }
     }

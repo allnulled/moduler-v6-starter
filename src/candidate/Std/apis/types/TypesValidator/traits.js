@@ -288,6 +288,10 @@
     const output = {};
     Validating_properties:
     for (let prop in memory.localAst.properties) {
+      const hasProperty = (typeof memory.localData[prop] !== "undefined") || (prop in memory.localData);
+      if((!hasProperty) && memory.localAst.optional) {
+        continue Validating_properties;
+      }
       const submemory = memory.clone({
         data: memory.data,
         dataPointer: memory.dataPointer.concat([prop]),
@@ -390,6 +394,7 @@ _validateObjectType: function _validateObjectType(memory) {
   _validateScript: function _validateScript(memory) {
     this.trace("TypesValidator._validateScript", memory);
     let validation = undefined;
+    Validating_instructions:
     for (let indexLine = 0; indexLine < memory.ast.ast.length; indexLine++) {
       const isCheckingData = indexLine === memory.ast.ast.length - 1;
       const submemory = memory.clone({
@@ -478,15 +483,38 @@ _validateObjectType: function _validateObjectType(memory) {
     }
     return output;
   },
-  _replaceImportsRecursively: function _replaceImportsRecursively(ast) {
-    const outputAst = {};
+  _replaceImportsRecursively: async function _replaceImportsRecursively(ast) {
     // @CHATGPT: este sería el método que hace el:
     //   - iterar recursivamente en busca de imports
     //   - leer los imports internos
     //   - parsear los imports internos
     //   - reducir el ast de cada import interno
-    return ast;
+    if(typeof ast !== "object") return ast;
+    if(ast === null) return ast;
+    const outputAst = {};
+    for(let prop in ast) {
+      if(ast.grammar === "import") {
+        outputAst[prop] = await this._replaceSpecificImport(ast);
+      } else {
+        outputAst[prop] = await this._replaceImportsRecursively(ast[prop]);
+      }
+    }
     return outputAst;
+  },
+  typesModuler: ModulerV6.globalInstance.cloneForFile("@/dist/www/types/any.tyla"),
+  _replaceSpecificImport: async function (ast) {
+    const readMethod = (function(it) {
+      if(it === "file") return "_readFile";
+      if(it === "url") return "_readUrl";
+      if(it === "path") return "_readPath";
+      if(it === null) return "_readPath";
+      throw new Error(`Resource type «${it}» is not identified`);
+    })(ast.resource);
+    const text = await this.typesModuler[readMethod](ast.target);
+    // @CHATGPT: aquí estoy. Tengo que hacer un validateData sin data.
+    Aqui_el_conflicto_ChatGPT: {
+      return this.validateData(text);
+    }
   },
   _materializeAst: function _materializeAst(memory, localAst, resolvingLabels = new Set()) {
     this.trace("TypesValidator._materializeAst", memory);

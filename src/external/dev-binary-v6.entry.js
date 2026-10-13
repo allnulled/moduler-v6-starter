@@ -2149,6 +2149,15 @@ cloneForFile(filepath) {
   return new ModulerV6(dirpath, this);
 }
   /**
+ * @name ModulerV6.prototype.cloneForDirectory
+ * @type 
+ * @description 
+ */
+cloneForDirectory(dirpathBrute) {
+  const dirpath = this._joinPaths([dirpathBrute]);
+  return new ModulerV6(dirpath, this);
+}
+  /**
  * @name ModulerV6.prototype.reserveFile
  * @type 
  * @description 
@@ -6768,6 +6777,9 @@ async touchFile(fileBrute, optionsInput = {}) {
           currentStep.push(`7.4. run «devbin test --origin ${filepath}»`);
           const output = await this.devbin.command(["test", "--origin", filepath]);
           // if (output) console.log(output);
+        }
+        Run_local_event_dev_events_e_onFileChange: {
+          await this.triggerCallbackFromFile("@/dev/events/e.onFileChange.js", { file: filepath, event, });
         }
       }
     }

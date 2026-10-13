@@ -55,23 +55,33 @@ module.exports = async function ({ Tester }) {
     [`!number&!string|(array|object)`, 1, "Testeo", Std.functions.noop, {},],
     [`@name string;@total number;{@name,@total};`, 1, "Reutiliza variables declaradas (1)", Std.functions.noop, {name:"1",total:2}, 1],
     [`@core string|null|object;{a:{b:{c:@core {}}}};`, 1, "Reutiliza variables declaradas (2)", Std.functions.noop, {a:{b:{c:{}}}}, 1, val => {
-      console.log(val);
+      // console.log(val);
     }],
     [`{"a b c":number};`, 1, "Permite nombres de propiedades de objetos como string (1)", Std.functions.noop, {"a b c":100}],
-    [`@file1 ^file:"./some.tyla";`, 1, "Valor de import file (1)", Printer.json],
+    [`@file1 ^file:"./std/example/person.tyla";`, 1, "Import como sintaxis del parser", Std.functions.noop],
     // @RETAKE from here:
+    [`@file1 ^file:"./std/example/person.tyla";`, 1, "Import de file desde el validador no solo el parser (1)", Printer.json, {title:"some"}, 1, (...args) => {
+      console.log(...args);
+    }],
     /*
-    [`@file1 ^file:"./some.tyla";`, 1, "Valor de import file (1)", Printer.json, {title:"some"}],
-    [`@url1 ^url:"./some.tyla";`, 1, "Valor de import url (2)", Printer.json, {title:"some"}],
-    [`@path1 ^path:"./some.tyla";`, 1, "Valor de import path (3)", Printer.json, {title:"some"}],
-    [`@resource1 ^"./some.tyla";`, 1, "Valor de import path implítico (4)", Printer.json, {title:"some"}],
+    [`@url1 ^url:"./std/example/person.tyla";`, 1, "Import de url desde el validador no solo el parser (2)", Printer.json, {title:"some"}],
+    [`@path1 ^path:"./std/example/person.tyla";`, 1, "Import de path desde el validador no solo el parser (3)", Printer.json, {title:"some"}],
+    [`@resource1 ^"./std/example/person.tyla";`, 1, "Import de path implítico desde el validador no solo el parser (4)", Printer.json, {title:"some"}],
     //*/
   ];
 
   const errors = [];
   for(let index=0; index<list.length; index++) {
     const row = list[index];
-    const [exprezzion, expectParseSuccess, concept, callback = false, input = null, expectValidateSuccess = true, validationCallback = false] = row;
+    const [
+      exprezzion,
+      expectParseSuccess,
+      concept,
+      callback = false,
+      input = null,
+      expectValidateSuccess = true,
+      validationCallback = false,
+    ] = row;
     let ast = undefined;
     let validation = undefined;
     Expression: {

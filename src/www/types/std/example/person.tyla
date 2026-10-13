@@ -1,0 +1,6 @@
+{
+    name: string,
+    born: date,
+    email: string,
+    city: string
+}
