@@ -3898,7 +3898,7 @@ async assertThrows(...args) {
       throw new this.constructor.AssertionError(`Should have thrown on «${message}» but it did not throw anything`);
     }
     if (typeof errorChecker === "function") {
-      const checkResult = errorChecker(err);
+      const checkResult = await errorChecker(err);
       if (typeof checkResult !== "undefined" && (checkResult !== true)) {
         throw new this.constructor.AssertionError(`Should have thrown on «${message}» but not specific error:\n  - name: ${err.name}\n  - message: ${err.message}\n  - error: ${checkResult === false ? true : checkResult}`);
       }
@@ -6779,7 +6779,11 @@ async touchFile(fileBrute, optionsInput = {}) {
           // if (output) console.log(output);
         }
         Run_local_event_dev_events_e_onFileChange: {
-          await this.triggerCallbackFromFile("@/dev/events/e.onFileChange.js", { file: filepath, event, });
+          await this.triggerCallbackFromFile("@/dev/events/e.onFileChange.js", {
+            file: filepath,
+            event: event,
+            devbin: this.devbin,
+          });
         }
       }
     }

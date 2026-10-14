@@ -60,9 +60,35 @@ module.exports = async function ({ Tester }) {
     [`{"a b c":number};`, 1, "Permite nombres de propiedades de objetos como string (1)", Std.functions.noop, {"a b c":100}],
     [`@file1 ^file:"./std/example/person.tyla";`, 1, "Import como sintaxis del parser", Std.functions.noop],
     // @RETAKE from here:
-    [`@file1 ^file:"./std/example/person.tyla";`, 1, "Import de file desde el validador no solo el parser (1)", Printer.json, {title:"some"}, 1, (...args) => {
-      console.log(...args);
+    [`@file1 ^file:"./std/example/person.tyla";`, 1, "Import de file desde el validador no solo el parser (1)", Std.functions.noop, {
+      name: "Carlos",
+      born: "1991/01/05",
+      email: "whatever@andever.you",
+      city: "Sion",
+    }, 1],
+    [`@file1 ^file:"./std/example/person.tyla";`, 1, "Import de file desde el validador no solo el parser (1)", Std.functions.noop, {
+      name: "Carlos",
+      born: "1991/01/05",
+      email: "whatever@andever.you",
+      city: {},
+    }, 1, function(validation, ast) {
+      Test_que_demuestra_que_los_imports_han_sido_reemplazados: {
+        // Std.all.Printer.json(validation.ast);
+        asserter.assert(typeof validation === "object", "Method validateData returns validation object (1)");
+        asserter.assert(typeof validation.ast === "object", "Method validateData returns validation object (2)");
+        asserter.assert(typeof validation.ast.ast === "object", "Method validateData returns validation object (3)");
+        asserter.assert(typeof validation.ast.ast[0] === "object", "Method validateData returns validation object (4)");
+        // A partir de aquí es de object y no de import:
+        asserter.assert(typeof validation.ast.ast[0].properties === "object", "Method validateData returns validation object (5)");
+        asserter.assert(typeof validation.ast.ast[0].properties.name === "object", "Method validateData returns validation object (6)");
+        asserter.assert(typeof validation.ast.ast[0].properties.name.grammar === "string", "Method validateData returns validation object (7)");
+        asserter.assert(typeof validation.ast.ast[0].properties.name.id === "string", "Method validateData returns validation object (8)");
+        // Std.all.Printer.json(validation);
+      }
     }],
+    [`string`, 1, "Puede validar un string cualquiera (1)", Std.functions.noop, {name:60}, 0],
+    // @AHORA => ESTÁN FALLANDO LAS PROPIEDADES DE OBJETO
+    // [`{name:string}`, 1, "Puede validar propiedades de un objeto cualquiera (1)", Std.functions.noop, {name:60}, 0],
     /*
     [`@url1 ^url:"./std/example/person.tyla";`, 1, "Import de url desde el validador no solo el parser (2)", Printer.json, {title:"some"}],
     [`@path1 ^path:"./std/example/person.tyla";`, 1, "Import de path desde el validador no solo el parser (3)", Printer.json, {title:"some"}],
@@ -83,7 +109,7 @@ module.exports = async function ({ Tester }) {
       validationCallback = false,
     ] = row;
     let ast = undefined;
-    let validation = undefined;
+    let validationOutput = undefined;
     Expression: {
       const parseAsserter = expectParseSuccess ? "assertDoesNotThrowAsync" : "assertThrowsAsync";
       const errorMessage = `Can${expectParseSuccess ? "" : "not"} on concept «${concept}» parse '${expectParseSuccess ? '' : 'in'}correct validation' at index ${index}: ${exprezzion}`;
@@ -99,13 +125,14 @@ module.exports = async function ({ Tester }) {
       if(input === null) break Input;
       const validateAsserter = expectValidateSuccess ? "assertDoesNotThrowAsync" : "assertThrowsAsync";
       await asserter[validateAsserter](async () => {
-        validation = await TypesValidator.validateData(ast, input);
-        if(validation instanceof Error) throw validation;
-      });
+        validationOutput = await TypesValidator.validateData(ast, input);
+        if(validationOutput instanceof Error) throw validationOutput;
+        return validationOutput;
+      }, exprezzion);
     }
     Validation_callback: {
       if(validationCallback) {
-        await validationCallback(validation);
+        await validationCallback(validationOutput, ast);
       }
     }
   }

@@ -5,11 +5,11 @@ module.exports = async function ({ file, devbin }) {
   }
   Copiar_los_punto_tyla_de_src_a_dist: {
     if (file.endsWith(".tyla")) {
-      const rootpath = devbin.moduler.rootdirOf(file);
+      const rootpath = DevBinaryV6.globalInstance.moduler.rootdirOf(file);
       if (rootpath.startsWith("@/src/www/")) {
-        await devbin.files.copyFile(rootpath, rootpath.replace("@/src/www/", "@/dist/www/"));
+        await DevBinaryV6.globalInstance.files.copyFile(rootpath, rootpath.replace("@/src/www/", "@/dist/www/"));
       } else if (rootpath.startsWith("@/src/")) {
-        await devbin.files.copyFile(rootpath, rootpath.replace("@/src/", "@/dist/"));
+        await DevBinaryV6.globalInstance.files.copyFile(rootpath, rootpath.replace("@/src/", "@/dist/"));
       }
     }
   }

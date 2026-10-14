@@ -98,22 +98,9 @@
       $compiler.inject.template("@/src/candidate/Std/snippets/methodOut.js", { name: "AsserterInterface.prototype.assertDoesNotThrowSync" });
       return true;
     },
-    assertDoesNotThrowAsync: function(callback, message = "") {
+    assertDoesNotThrowAsync: async function(callback, message = "") {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodIn.js", { name: "AsserterInterface.prototype.assertDoesNotThrowAsync" });
-      let thrownError = false;
-      const fakeError = new Error();
-      try {
-        callback();
-        throw fakeError;
-      } catch (error) {
-        if (error !== fakeError) {
-          thrownError = error;
-        }
-      }
-      if (thrownError) {
-        $compiler.inject.template("@/src/candidate/Std/snippets/methodError.js", { name: "AsserterInterface.prototype.assertDoesNotThrowAsync" });
-        throw thrownError;
-      }
+      await callback();
       $compiler.inject.template("@/src/candidate/Std/snippets/methodOut.js", { name: "AsserterInterface.prototype.assertDoesNotThrowAsync" });
       return true;
     },

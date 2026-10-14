@@ -3886,7 +3886,7 @@ async assertThrows(...args) {
       throw new this.constructor.AssertionError(`Should have thrown on «${message}» but it did not throw anything`);
     }
     if (typeof errorChecker === "function") {
-      const checkResult = errorChecker(err);
+      const checkResult = await errorChecker(err);
       if (typeof checkResult !== "undefined" && (checkResult !== true)) {
         throw new this.constructor.AssertionError(`Should have thrown on «${message}» but not specific error:\n  - name: ${err.name}\n  - message: ${err.message}\n  - error: ${checkResult === false ? true : checkResult}`);
       }

@@ -14791,22 +14791,9 @@ $moduler.toolkit.makeInterface([
       Std.all.Tracer?.globalInstance.out("AsserterInterface.prototype.assertDoesNotThrowSync", arguments || []);;
       return true;
     },
-    assertDoesNotThrowAsync: function(callback, message = "") {
+    assertDoesNotThrowAsync: async function(callback, message = "") {
       Std.all.Tracer?.globalInstance.in("AsserterInterface.prototype.assertDoesNotThrowAsync", arguments || []);;
-      let thrownError = false;
-      const fakeError = new Error();
-      try {
-        callback();
-        throw fakeError;
-      } catch (error) {
-        if (error !== fakeError) {
-          thrownError = error;
-        }
-      }
-      if (thrownError) {
-        Std.all.Tracer?.globalInstance.error("AsserterInterface.prototype.assertDoesNotThrowAsync", arguments || []);;
-        throw thrownError;
-      }
+      await callback();
       Std.all.Tracer?.globalInstance.out("AsserterInterface.prototype.assertDoesNotThrowAsync", arguments || []);;
       return true;
     },
@@ -15684,18 +15671,21 @@ $moduler.toolkit.makeInterface([
   prototype: {},
   static: {
       trace: function trace(...args) {
-    //console.log(...args);
+    // Std.all.Printer.json(args);
     return;
   },
-  validateData: async function (expression, data) {
+  validateData: async function (expression, data, skipValidations = false) {
     const astRaw = typeof expression === "string" ? Std.classes.TypesParser.parse(expression) : expression;
     const astWithoutImports = await this._replaceImportsRecursively(astRaw);
-    return this._validateDataRecursively({
+    const validation = await this._validateDataRecursively({
       ast: astWithoutImports,
       data: data,
     }, {
       isRoot: true,
+      skipValidations: skipValidations,
     });
+    // console.log("validateData:", validation);
+    return validation;
   },
   composeErrorMessage: function (submessages = []) {
     let message = "";
@@ -15825,7 +15815,7 @@ $moduler.toolkit.makeInterface([
   _validateAndOperation: function _validateAndOperation(memory) {
     this.trace("TypesValidator._validateAndOperation", memory);
     Return_unless_checking: {
-      if (!memory.isCheckingData) {
+      if (memory.skipValidations || !memory.isLastInstruction) {
         return true;
       }
     }
@@ -15866,7 +15856,7 @@ $moduler.toolkit.makeInterface([
   _validateOrOperation: function _validateOrOperation(memory) {
     this.trace("TypesValidator._validateOrOperation", memory);
     Return_unless_checking: {
-      if (!memory.isCheckingData) {
+      if (memory.skipValidations || !memory.isLastInstruction) {
         return true;
       }
     }
@@ -15907,7 +15897,7 @@ $moduler.toolkit.makeInterface([
   _validateTypeLabel: function _validateTypeLabel(memory) {
     this.trace("TypesValidator._validateTypeLabel", memory);
     Return_unless_checking: {
-      if (!memory.isCheckingData) {
+      if (memory.skipValidations || !memory.isLastInstruction) {
         return true;
       }
     }
@@ -15933,7 +15923,7 @@ $moduler.toolkit.makeInterface([
   _validateFactoryType: function _validateFactoryType(memory) {
     this.trace("TypesValidator._validateFactoryType", memory);
     Return_unless_checking: {
-      if (!memory.isCheckingData) {
+      if (memory.skipValidations || !memory.isLastInstruction) {
         return true;
       }
     }
@@ -15953,7 +15943,7 @@ $moduler.toolkit.makeInterface([
   _validateClassType: function _validateClassType(memory) {
     this.trace("TypesValidator._validateClassType", memory);
     Return_unless_checking: {
-      if (!memory.isCheckingData) {
+      if (memory.skipValidations || !memory.isLastInstruction) {
         return true;
       }
     }
@@ -15974,7 +15964,8 @@ $moduler.toolkit.makeInterface([
     Validating_properties:
     for (let prop in memory.localAst.properties) {
       const hasProperty = (typeof memory.localData[prop] !== "undefined") || (prop in memory.localData);
-      if((!hasProperty) && memory.localAst.optional) {
+      const propAst = memory.localAst.properties[prop];
+      if((!hasProperty) && propAst.optional) {
         continue Validating_properties;
       }
       const submemory = memory.clone({
@@ -15983,15 +15974,15 @@ $moduler.toolkit.makeInterface([
         ast: memory.ast,
         astPointer: memory.astPointer.concat(["properties", prop]),
       });
-      const item = this._validateDataRecursively(submemory, { mode });
+      const item = this._validateDataRecursively(submemory);
       output[prop] = item;
     }
     return output;
   },
-_validateObjectType: function _validateObjectType(memory) {
+  _validateObjectType: function _validateObjectType(memory) {
     this.trace("TypesValidator._validateObjectType", memory);
     Return_unless_checking: {
-      if (!memory.isCheckingData) {
+      if (memory.skipValidations || !memory.isLastInstruction) {
         return true;
       }
     }
@@ -16008,7 +15999,7 @@ _validateObjectType: function _validateObjectType(memory) {
   _validateArrayType: function _validateArrayType(memory) {
     this.trace("TypesValidator._validateArrayType", memory);
     Return_unless_checking: {
-      if (!memory.isCheckingData) {
+      if (memory.skipValidations || !memory.isLastInstruction) {
         return true;
       }
     }
@@ -16025,7 +16016,7 @@ _validateObjectType: function _validateObjectType(memory) {
   _validateIdType: function _validateIdType(memory) {
     this.trace("TypesValidator._validateIdType", memory);
     Return_unless_checking: {
-      if (!memory.isCheckingData) {
+      if (memory.skipValidations || !memory.isLastInstruction) {
         return true;
       }
     }
@@ -16070,9 +16061,9 @@ _validateObjectType: function _validateObjectType(memory) {
       }
     }
     return this.createValidationError({
-      name: "NonIdentifiedType",
+      name: "UnidentifiedType",
       memory: memory,
-      header: `Non-identified type by id «${localAst.id}» was found`,
+      header: `Unidentified type by id «${localAst.id}» was found`,
       footer: `on method «TypesValidator._validateIdType»`,
     });
   },
@@ -16081,40 +16072,47 @@ _validateObjectType: function _validateObjectType(memory) {
     let validation = undefined;
     Validating_instructions:
     for (let indexLine = 0; indexLine < memory.ast.ast.length; indexLine++) {
-      const isCheckingData = indexLine === memory.ast.ast.length - 1;
+      const isLastInstruction = indexLine === memory.ast.ast.length - 1;
       const submemory = memory.clone({
         ast: memory.ast,
         data: memory.data,
         astPointer: memory.astPointer.concat(["ast", indexLine]),
         dataPointer: memory.dataPointer.concat([]),
-        isCheckingData,
+        isLastInstruction: isLastInstruction,
       });
       validation = this._validateDataRecursively(submemory);
       if (validation instanceof Error) {
         return validation;
       }
-      if (isCheckingData) {
-        memory.exportedAst = this._materializeAst(submemory);
+      if (isLastInstruction) {
+        memory.exportedAst = this._materializeAst(submemory, submemory.localAst);
       }
     }
     memory.result.add(memory);
+    // console.log(memory);
     return memory;
   },
   _defaultOptionsForValidateDataRecursively: {
     mode: "object",
     isRoot: false,
+    skipValidations: false,
   },
   _validateDataRecursively: function _validateDataRecursively(memory = null, optionsBrute = {}) {
     // this.trace("_validateDataRecursively", memory);
     const options = Object.assign({}, this._defaultOptionsForValidateDataRecursively, optionsBrute || {});
-    const { mode } = options;
+    const { mode, skipValidations } = options;
     Initialize_memory: {
       memory = memory instanceof Std.classes.ValidationMemory ? memory : Std.classes.ValidationMemory.new.config({
+        // Las propiedades de memory:
         ...memory,
+        // 
         astPointer: [],
         dataPointer: [],
         registry: Std.functions.TypesRegistry(),
         result: new Std.classes.ValidationResult(),
+        // 
+        mode: mode,
+        skipValidations: skipValidations,
       });
     }
     let output = undefined;
@@ -16169,6 +16167,7 @@ _validateObjectType: function _validateObjectType(memory) {
     return output;
   },
   _replaceImportsRecursively: async function _replaceImportsRecursively(ast) {
+    this.trace("TypesValidator._replaceImportsRecursively", ast);
     // @CHATGPT: este sería el método que hace el:
     //   - iterar recursivamente en busca de imports
     //   - leer los imports internos
@@ -16176,18 +16175,26 @@ _validateObjectType: function _validateObjectType(memory) {
     //   - reducir el ast de cada import interno
     if(typeof ast !== "object") return ast;
     if(ast === null) return ast;
-    const outputAst = {};
-    for(let prop in ast) {
-      if(ast.grammar === "import") {
-        outputAst[prop] = await this._replaceSpecificImport(ast);
-      } else {
+    if(Array.isArray(ast)) {
+      const outputAst = [];
+      for(let index=0; index<ast.length; index++) {
+        const row = ast[index];
+        outputAst[index] = await this._replaceImportsRecursively(row);
+      }
+      return outputAst;
+    } else if(ast.grammar === "import") {
+      return await this._replaceSpecificImport(ast);
+    } else {
+      const outputAst = {};
+      for(let prop in ast) {
         outputAst[prop] = await this._replaceImportsRecursively(ast[prop]);
       }
+      return outputAst;
     }
-    return outputAst;
   },
   typesModuler: ModulerV6.globalInstance.cloneForFile("@/dist/www/types/any.tyla"),
   _replaceSpecificImport: async function (ast) {
+    this.trace("TypesValidator._replaceSpecificImport", ast);
     const readMethod = (function(it) {
       if(it === "file") return "_readFile";
       if(it === "url") return "_readUrl";
@@ -16198,11 +16205,12 @@ _validateObjectType: function _validateObjectType(memory) {
     const text = await this.typesModuler[readMethod](ast.target);
     // @CHATGPT: aquí estoy. Tengo que hacer un validateData sin data.
     Aqui_el_conflicto_ChatGPT: {
-      return this.validateData(text);
+      const validation = await this.validateData(text, null, true);
+      return validation.exportedAst;
     }
   },
   _materializeAst: function _materializeAst(memory, localAst, resolvingLabels = new Set()) {
-    this.trace("TypesValidator._materializeAst", memory);
+    this.trace("TypesValidator._materializeAst");
     Handle_null_non_objects_and_arrays: {
       if (localAst === null || typeof localAst !== "object") {
         return localAst;
@@ -16243,8 +16251,8 @@ _validateObjectType: function _validateObjectType(memory) {
       for (const key of Object.keys(localAst)) {
         output[key] = this._materializeAst(memory, localAst[key], resolvingLabels);
       }
+      return output;
     }
-    return output;
   },
   _readPath: ModulerV6.globalInstance._readPath,
   _readFile: ModulerV6.globalInstance._readFile,
