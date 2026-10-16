@@ -129,7 +129,7 @@ Error_extension_v1_scope: {
           .forEach(Error.tools.createFrameFilter(frames, ignoredFrames, Error.tools.ignoredErrorFrames.concat(ignoreds)));
       }
       Frames_of_attachments: {
-        if (this.metadata.attachments.length) this.metadata.attachments
+        if (this.metadata?.attachments?.length) this.metadata.attachments
           .forEach(attachment => Error.tools.StackParser.parse(Error.normalize(attachment))
             .forEach(Error.tools.createFrameFilter(frames, ignoredFrames, Error.tools.ignoredErrorFrames.concat(ignoreds))));
       }

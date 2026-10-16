@@ -224,7 +224,7 @@ js_variable_name = [A-Za-záéíóúàèìòù$_] [A-Za-z0-9áéíóúàèìòù
 json_space = [ \t\n\r]*
 [#FILE=@/src/candidate/Std/apis/types/TypesValidator/traits.js]
   trace: function trace(...args) {
-    //console.log(...args);
+    // Std.all.Printer.json(args);
     return;
   },
   validateData: async function (expression, data, skipValidations = false) {
@@ -237,7 +237,6 @@ json_space = [ \t\n\r]*
       isRoot: true,
       skipValidations: skipValidations,
     });
-    console.log("validateData:", validation);
     return validation;
   },
   composeErrorMessage: function (submessages = []) {
@@ -249,7 +248,7 @@ json_space = [ \t\n\r]*
     }
     return message;
   },
-  composeValidationMessage: function (memory, header = false, footer = false) {
+  composeValidationErrorMessage: function (memory, header = false, footer = false) {
     const message = [
       header || "Validation error arised",
       ...(memory.localAst?.id ? [["because validator type", memory.localAst.id]] : []),
@@ -261,11 +260,25 @@ json_space = [ \t\n\r]*
     ];
     return this.composeErrorMessage(message);
   },
+  composeValidationErrorMetadata: function(memory, header, footer) {
+    return {
+      grammar:(memory.localAst.grammar === "type id" ? `${memory.localAst.grammar} (${memory.localAst.id})` : memory.localAst.grammar),
+      astPointer: memory.astPointer,
+      dataPointer: memory.dataPointer,
+      foundType: typeof memory.localData,
+    };
+  },
   createValidationError: function ({ name, memory, header, footer }) {
     return Error.normalize({
       name: name,
-      message: this.composeValidationMessage(memory, header, footer),
+      message: this.composeValidationErrorMessage(memory, header, footer),
+      metadata: this.composeValidationErrorMetadata(memory, header, footer),
     });
+  },
+  addValidationError: function(errorObject) {
+    const validationError = this.createValidationError(errorObject);
+    errorObject.memory.errors.addError(validationError);
+    return validationError;
   },
   PrimitiveTypes: Std.all.PrimitiveTypes = Std.objects.PrimitiveTypes = {
     "undefined": {
@@ -340,9 +353,10 @@ json_space = [ \t\n\r]*
             onCreate: function () {
               this.labels = {};
               this.registry = Std.functions.TypesRegistry();
-              this.result = Std.classes.ValidationResult.new;
+              this.result = new Std.classes.ValidationResult(this);
+              this.errors = new Std.classes.ValidationErrors(this);
             },
-            clonedProperties: ["labels", "registry", "result"],
+            clonedProperties: ["labels", "registry", "result", "errors"],
             unclonableProperties: ["data", "ast", "dataPointer", "astPointer"],
             get localData() {
               return this.dataPointer?.length ? this.getDataProperty(this.dataPointer.join("/")) : this.data;
@@ -357,12 +371,27 @@ json_space = [ \t\n\r]*
     }
   },
   Result: Std.all.ValidationResult = Std.classes.ValidationResult = class ValidationResult extends Array {
-    add(memory) {
+    constructor(memory) {
+      super();
+      this.memory = memory;
+    }
+    add(memory, method) {
       $moduler.assert(memory instanceof Std.classes.ValidationMemory, `Parameter «memory» must be instance of «ValidationMemory» on «ValidatorResult.prototype.add»`);
-      this.push([
-        memory.astPointer,
-        memory.dataPointer,
-      ]);
+      this.push({
+        grammar: method,
+        order: this.length,
+        astPointer: memory.astPointer,
+        dataPointer: memory.dataPointer,
+      });
+    }
+  },
+  Errors: Std.all.ValidationErrors = Std.classes.ValidationErrors = class ValidationErrors extends Array {
+    constructor(memory) {
+      super();
+      this.memory = memory;
+    }
+    addError(error) {
+      this.push(error);
     }
   },
   _validateAndOperation: function _validateAndOperation(memory) {
@@ -384,7 +413,7 @@ json_space = [ \t\n\r]*
       if (output instanceof Error) {
         return output;
       } else {
-        memory.result.add(submemory);
+        memory.result.add(submemory, `and operation (1)`);
       }
     }
     Validate_others: {
@@ -399,11 +428,11 @@ json_space = [ \t\n\r]*
         if (output instanceof Error) {
           return output;
         } else {
-          memory.result.add(submemory);
+          memory.result.add(submemory, `and operation (${index+2})`);
         }
       }
     }
-    memory.result.add(memory);
+    memory.result.add(memory, "and operation");
     return true;
   },
   _validateOrOperation: function _validateOrOperation(memory) {
@@ -424,7 +453,7 @@ json_space = [ \t\n\r]*
       });
       const output = this._validateDataRecursively(submemory);
       if (!(output instanceof Error)) {
-        memory.result.add(submemory);
+        memory.result.add(submemory, `or operation (1)`);
         return true;
       }
       lastError = output;
@@ -439,13 +468,18 @@ json_space = [ \t\n\r]*
         });
         const output = this._validateDataRecursively(submemory);
         if (!(output instanceof Error)) {
-          memory.result.add(submemory);
+          memory.result.add(submemory, `or operation (${index+2})`);
           return true;
         }
         lastError = output;
       }
     }
-    return lastError;
+    return this.addValidationError({
+      name: "LogicalOrNotSatisfied",
+      memory: memory,
+      header: `Logical «OR» was not satisfied`,
+      footer: "on method «TypesValidator._validateTypeLabel»",
+    });
   },
   _validateTypeLabel: function _validateTypeLabel(memory) {
     this.trace("TypesValidator._validateTypeLabel", memory);
@@ -457,7 +491,7 @@ json_space = [ \t\n\r]*
     const { localAst } = memory;
     Validating_by_label: {
       if (!(localAst.label in memory.labels)) {
-        return this.createValidationError({
+        return this.addValidationError({
           name: "TypeLabelNotIdentified",
           memory: memory,
           header: `Label «${localAst.label}» was not previously set`,
@@ -482,7 +516,7 @@ json_space = [ \t\n\r]*
     }
     Validating_by_type: {
       if (typeof memory.localData !== "function") {
-        return this.createValidationError({
+        return this.addValidationError({
           name: "FactoryTypeValidationNotAccomplished",
           memory: memory,
           header: "Factory type validation was not accomplished",
@@ -502,7 +536,7 @@ json_space = [ \t\n\r]*
     }
     Validating_by_type: {
       if (typeof memory.localData !== "function") {
-        return this.createValidationError({
+        return this.addValidationError({
           name: "ClassTypeNotAccomplished",
           memory: memory,
           header: "Class type validation was not accomplished",
@@ -517,7 +551,8 @@ json_space = [ \t\n\r]*
     Validating_properties:
     for (let prop in memory.localAst.properties) {
       const hasProperty = (typeof memory.localData[prop] !== "undefined") || (prop in memory.localData);
-      if((!hasProperty) && memory.localAst.optional) {
+      const propAst = memory.localAst.properties[prop];
+      if((!hasProperty) && propAst.optional) {
         continue Validating_properties;
       }
       const submemory = memory.clone({
@@ -526,7 +561,7 @@ json_space = [ \t\n\r]*
         ast: memory.ast,
         astPointer: memory.astPointer.concat(["properties", prop]),
       });
-      const item = this._validateDataRecursively(submemory, { mode });
+      const item = this._validateDataRecursively(submemory);
       output[prop] = item;
     }
     return output;
@@ -539,7 +574,7 @@ json_space = [ \t\n\r]*
       }
     }
     if ((typeof memory.localData !== "object") || (memory.localData === null)) {
-      return this.createValidationError({
+      return this.addValidationError({
         name: "ObjectTypeNotAccomplished",
         memory: memory,
         header: "Object type validation was not accomplished",
@@ -556,7 +591,7 @@ json_space = [ \t\n\r]*
       }
     }
     if (!Array.isArray(memory.localData)) {
-      return this.createValidationError({
+      return this.addValidationError({
         name: "ArrayTypeNotAccomplished",
         memory: memory,
         header: `Array type validation was not accomplished`,
@@ -583,12 +618,15 @@ json_space = [ \t\n\r]*
           validation = error;
         }
         if ((typeof validation === "undefined") || (validation === false)) {
-          validation = this.createValidationError({
+          validation = this.addValidationError({
             name: "IdentifiedTypeNotAccomplished",
             memory: memory,
             header: `Type «${localAst.id}» validation was not accomplished`,
             footer: `on method «TypesValidator._validateIdType»`,
           });
+        }
+        if (!(validation instanceof Error)) {
+          memory.result.add(memory, `type id (${localAst.id})`);
         }
         return validation;
       }
@@ -608,11 +646,11 @@ json_space = [ \t\n\r]*
             label: undefined,
           };
         }
-        memory.result.add(submemory);
+        memory.result.add(submemory, `type id (${localAst.id}) + label`);
         return validation;
       }
     }
-    return this.createValidationError({
+    return this.addValidationError({
       name: "UnidentifiedType",
       memory: memory,
       header: `Unidentified type by id «${localAst.id}» was found`,
@@ -640,8 +678,8 @@ json_space = [ \t\n\r]*
         memory.exportedAst = this._materializeAst(submemory, submemory.localAst);
       }
     }
-    memory.result.add(memory);
-    console.log(memory);
+    memory.result.add(memory, "script");
+    // console.log(memory);
     return memory;
   },
   _defaultOptionsForValidateDataRecursively: {
@@ -661,7 +699,6 @@ json_space = [ \t\n\r]*
         astPointer: [],
         dataPointer: [],
         registry: Std.functions.TypesRegistry(),
-        result: new Std.classes.ValidationResult(),
         // 
         mode: mode,
         skipValidations: skipValidations,
@@ -707,7 +744,7 @@ json_space = [ \t\n\r]*
         if (output instanceof Error) {
           output = true;
         } else {
-          output = this.createValidationError({
+          output = this.addValidationError({
             name: "NegationNotAccomplished",
             memory: memory,
             header: "Negated expression was not accomplished",
@@ -719,6 +756,7 @@ json_space = [ \t\n\r]*
     return output;
   },
   _replaceImportsRecursively: async function _replaceImportsRecursively(ast) {
+    this.trace("TypesValidator._replaceImportsRecursively", ast);
     // @CHATGPT: este sería el método que hace el:
     //   - iterar recursivamente en busca de imports
     //   - leer los imports internos
@@ -745,6 +783,7 @@ json_space = [ \t\n\r]*
   },
   typesModuler: ModulerV6.globalInstance.cloneForFile("@/dist/www/types/any.tyla"),
   _replaceSpecificImport: async function (ast) {
+    this.trace("TypesValidator._replaceSpecificImport", ast);
     const readMethod = (function(it) {
       if(it === "file") return "_readFile";
       if(it === "url") return "_readUrl";
@@ -760,7 +799,7 @@ json_space = [ \t\n\r]*
     }
   },
   _materializeAst: function _materializeAst(memory, localAst, resolvingLabels = new Set()) {
-    this.trace("TypesValidator._materializeAst", memory);
+    this.trace("TypesValidator._materializeAst");
     Handle_null_non_objects_and_arrays: {
       if (localAst === null || typeof localAst !== "object") {
         return localAst;
@@ -806,7 +845,28 @@ json_space = [ \t\n\r]*
   },
   _readPath: ModulerV6.globalInstance._readPath,
   _readFile: ModulerV6.globalInstance._readFile,
-  _readUrl: ModulerV6.globalInstance._readUrl
+  _readUrl: ModulerV6.globalInstance._readUrl,
+  extractErrors: function(validated, currentIndex = ["~"], allErrors = {}) {
+    /*
+    if(validated instanceof Error) {
+      allErrors[currentIndex.join("/")] = validated;
+      return allErrors;
+    }
+    if((typeof validated !== "object") || (validated === null)) {
+      return validated;
+    }
+    const allKeys = Object.keys(validated);
+    for(let index=0; index<allKeys.length; index++) {
+      const key = allKeys[index];
+      if(validated[key] instanceof Error) {
+        allErrors[currentIndex.join("/")] = validated[key];
+      } else {
+        this.extractErrors(validated[key], currentIndex.concat([key]), allErrors);
+      }
+    }
+    return allErrors;
+    //*/
+  }
 [#FILE=@/src/www/dev/test/feature/008.Std.classes.TypesValidator soporta sintaxis de factory, default y label/test.entry.js]
 module.exports = async function ({ Tester }) {
 
@@ -817,6 +877,7 @@ module.exports = async function ({ Tester }) {
     Asserter: { new: asserter },
     Printer,
   } = Std.all;
+  const { assert } = asserter;
 
   const list = [
     // Las que sí deberían funcionar:
@@ -876,14 +937,29 @@ module.exports = async function ({ Tester }) {
       email: "whatever@andever.you",
       city: "Sion",
     }, 1],
-    [`@file1 ^file:"./std/example/person.tyla";`, 1, "Import de file desde el validador no solo el parser (1)", Std.all.Printer.json, {
+    [`@file1 ^file:"./std/example/person.tyla";`, 1, "Import de file desde el validador no solo el parser (1)", Std.functions.noop, {
       name: "Carlos",
       born: "1991/01/05",
       email: "whatever@andever.you",
-      city: 5104,
-    }, 1, (validation, ast) => {
-      Std.all.Printer.json("AST:", ast, "Validation:", validation);
+      city: {},
+    }, 1, function(validation, ast) {
+      Test_que_demuestra_que_los_imports_han_sido_reemplazados: {
+        // Std.all.Printer.json(validation.ast);
+        assert(typeof validation === "object", "Method validateData returns validation object (1)");
+        assert(typeof validation.ast === "object", "Method validateData returns validation object (2)");
+        assert(typeof validation.ast.ast === "object", "Method validateData returns validation object (3)");
+        assert(typeof validation.ast.ast[0] === "object", "Method validateData returns validation object (4)");
+        // A partir de aquí es de object y no de import:
+        assert(typeof validation.ast.ast[0].properties === "object", "Method validateData returns validation object (5)");
+        assert(typeof validation.ast.ast[0].properties.name === "object", "Method validateData returns validation object (6)");
+        assert(typeof validation.ast.ast[0].properties.name.grammar === "string", "Method validateData returns validation object (7)");
+        assert(typeof validation.ast.ast[0].properties.name.id === "string", "Method validateData returns validation object (8)");
+        // Std.all.Printer.json(validation);
+      }
     }],
+    [`string`, 1, "Puede validar un string cualquiera (1)", Printer.noop, {name:60}, 0],
+    // @AHORA => ESTÁN FALLANDO LAS PROPIEDADES DE OBJETO
+    // [`{name:string}`, 1, "Puede validar propiedades de un objeto cualquiera (1)", Std.functions.noop, {name:60}, 0],
     /*
     [`@url1 ^url:"./std/example/person.tyla";`, 1, "Import de url desde el validador no solo el parser (2)", Printer.json, {title:"some"}],
     [`@path1 ^path:"./std/example/person.tyla";`, 1, "Import de path desde el validador no solo el parser (3)", Printer.json, {title:"some"}],
@@ -922,11 +998,86 @@ module.exports = async function ({ Tester }) {
       await asserter[validateAsserter](async () => {
         validationOutput = await TypesValidator.validateData(ast, input);
         if(validationOutput instanceof Error) throw validationOutput;
+        return validationOutput;
       }, exprezzion);
     }
     Validation_callback: {
       if(validationCallback) {
         await validationCallback(validationOutput, ast);
+      }
+    }
+  }
+
+  Test_con_mas_detalles_nivel_1: {
+    const allTests = [
+      {
+        title: "Simplest mismatch (1) | Expects string but receives object",
+        expression: "string",
+        data: {},
+        success: true,
+        onParsed: function() {},
+        onValidated: Printer.noop
+      },
+      {
+        title: "Mismatch in object properties (1) | Expects string but receives object",
+        expression: "{name:string}",
+        data: {name:{}},
+        success: true,
+        onParsed: function() {},
+        onValidated: Printer.noop,
+      },
+      {
+        title: "Mismatch in object nested properties (1) | Expects string but receives object",
+        expression: "{person:{name:string}}",
+        data: {person:{name:{}}},
+        success: true,
+        onParsed: function() {},
+        onValidated: Printer.noop,
+      },
+      {
+        title: "Promatch in object nested properties (1) | Expects string and receives string",
+        expression: "{person:{name:string}}",
+        data: {person:{name:"Good"}},
+        success: true,
+        onParsed: function() {},
+        onValidated: function(it) {
+          assert(typeof it === "object", "Validation returns an object");
+        }
+      },
+      {
+        title: "Promatch in multiple object properties (1) | Expects and receives multiple properties",
+        expression: "{name:string,password:string,email:string,level:number}",
+        data: {
+          name: "user",
+          password: "wait.ok",
+          email: "user@domain.com",
+          level: 5,
+        },
+        success: true,
+        onParsed: function() {},
+        onValidated: function(it) {
+          assert(typeof it === "object", "Validation returns an object");
+          assert(it.validation.result.length === 5, "Validation returns result with items on success (1)");
+        }
+      },
+      ["Mismatch in multiple or options (1)","number|string|array",[],1,Printer.noop,Printer.noop,],
+      ["Mismatch in multiple or options (1)","number|!string|array",{},1,Printer.noop,Printer.log,],
+    ];
+    const NoDataObject = {};
+    for(let index=0; index<allTests.length; index++) {
+      let title, expression, data, success, onParsed, onValidated;
+      const currentTest = allTests[index];
+      if(Array.isArray(currentTest)) {
+        [ title, expression, data = NoDataObject, success = true, onParsed = Std.functions.noop, onValidated = Std.functions.noop ] = currentTest;
+      } else {
+        ({ title = "unnamed", expression, data = NoDataObject, success = true, onParsed = Std.functions.noop, onValidated = Std.functions.noop } = currentTest);
+      }
+      if(data === NoDataObject) {
+        const parsification = await TypesParser.parse(expression);
+        onParsed({ event: "onParsed", title, expression, data, success, parsification });
+      } else {
+        const validation = await TypesValidator.validateData(expression, data);
+        onValidated({ event: "onValidated", title, expression, data, success, validation });
       }
     }
   }

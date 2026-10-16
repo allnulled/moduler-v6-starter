@@ -12,7 +12,6 @@
       isRoot: true,
       skipValidations: skipValidations,
     });
-    // console.log("validateData:", validation);
     return validation;
   },
   composeErrorMessage: function (submessages = []) {
@@ -24,7 +23,7 @@
     }
     return message;
   },
-  composeValidationMessage: function (memory, header = false, footer = false) {
+  composeValidationErrorMessage: function (memory, header = false, footer = false) {
     const message = [
       header || "Validation error arised",
       ...(memory.localAst?.id ? [["because validator type", memory.localAst.id]] : []),
@@ -36,11 +35,25 @@
     ];
     return this.composeErrorMessage(message);
   },
+  composeValidationErrorMetadata: function(memory, header, footer) {
+    return {
+      grammar:(memory.localAst.grammar === "type id" ? `${memory.localAst.grammar} (${memory.localAst.id})` : memory.localAst.grammar),
+      astPointer: memory.astPointer,
+      dataPointer: memory.dataPointer,
+      foundType: typeof memory.localData,
+    };
+  },
   createValidationError: function ({ name, memory, header, footer }) {
     return Error.normalize({
       name: name,
-      message: this.composeValidationMessage(memory, header, footer),
+      message: this.composeValidationErrorMessage(memory, header, footer),
+      metadata: this.composeValidationErrorMetadata(memory, header, footer),
     });
+  },
+  addValidationError: function(errorObject) {
+    const validationError = this.createValidationError(errorObject);
+    errorObject.memory.errors.addError(validationError);
+    return validationError;
   },
   PrimitiveTypes: Std.all.PrimitiveTypes = Std.objects.PrimitiveTypes = {
     "undefined": {
@@ -85,6 +98,13 @@
         },
       },
     },
+    "integer": {
+      abstraction: {
+        onValidate(memory) {
+          return Number.isInteger(memory.localData);
+        },
+      },
+    },
     "function": {
       abstraction: {
         onValidate(memory) {
@@ -99,6 +119,13 @@
         },
       },
     },
+    "date": {
+      abstraction: {
+        onValidate(memory) {
+          return memory.localData instanceof Date;
+        }
+      }
+    }
   },
   Registry: Std.all.TypesRegistry = Std.functions.TypesRegistry = (it = {}) => {
     return Object.create(Std.objects.PrimitiveTypes, it);
@@ -115,9 +142,10 @@
             onCreate: function () {
               this.labels = {};
               this.registry = Std.functions.TypesRegistry();
-              this.result = Std.classes.ValidationResult.new;
+              this.result = new Std.classes.ValidationResult(this);
+              this.errors = new Std.classes.ValidationErrors(this);
             },
-            clonedProperties: ["labels", "registry", "result"],
+            clonedProperties: ["labels", "registry", "result", "errors"],
             unclonableProperties: ["data", "ast", "dataPointer", "astPointer"],
             get localData() {
               return this.dataPointer?.length ? this.getDataProperty(this.dataPointer.join("/")) : this.data;
@@ -132,12 +160,27 @@
     }
   },
   Result: Std.all.ValidationResult = Std.classes.ValidationResult = class ValidationResult extends Array {
-    add(memory) {
+    constructor(memory) {
+      super();
+      this.memory = memory;
+    }
+    add(memory, method) {
       $moduler.assert(memory instanceof Std.classes.ValidationMemory, `Parameter «memory» must be instance of «ValidationMemory» on «ValidatorResult.prototype.add»`);
-      this.push([
-        memory.astPointer,
-        memory.dataPointer,
-      ]);
+      this.push({
+        grammar: method,
+        order: this.length,
+        astPointer: memory.astPointer,
+        dataPointer: memory.dataPointer,
+      });
+    }
+  },
+  Errors: Std.all.ValidationErrors = Std.classes.ValidationErrors = class ValidationErrors extends Array {
+    constructor(memory) {
+      super();
+      this.memory = memory;
+    }
+    addError(error) {
+      this.push(error);
     }
   },
   _validateAndOperation: function _validateAndOperation(memory) {
@@ -159,7 +202,7 @@
       if (output instanceof Error) {
         return output;
       } else {
-        memory.result.add(submemory);
+        memory.result.add(submemory, `and operation (1)`);
       }
     }
     Validate_others: {
@@ -174,11 +217,11 @@
         if (output instanceof Error) {
           return output;
         } else {
-          memory.result.add(submemory);
+          memory.result.add(submemory, `and operation (${index+2})`);
         }
       }
     }
-    memory.result.add(memory);
+    memory.result.add(memory, "and operation");
     return true;
   },
   _validateOrOperation: function _validateOrOperation(memory) {
@@ -199,7 +242,7 @@
       });
       const output = this._validateDataRecursively(submemory);
       if (!(output instanceof Error)) {
-        memory.result.add(submemory);
+        memory.result.add(submemory, `or operation (1)`);
         return true;
       }
       lastError = output;
@@ -214,13 +257,18 @@
         });
         const output = this._validateDataRecursively(submemory);
         if (!(output instanceof Error)) {
-          memory.result.add(submemory);
+          memory.result.add(submemory, `or operation (${index+2})`);
           return true;
         }
         lastError = output;
       }
     }
-    return lastError;
+    return this.addValidationError({
+      name: "LogicalOrNotSatisfied",
+      memory: memory,
+      header: `Logical «OR» was not satisfied`,
+      footer: "on method «TypesValidator._validateTypeLabel»",
+    });
   },
   _validateTypeLabel: function _validateTypeLabel(memory) {
     this.trace("TypesValidator._validateTypeLabel", memory);
@@ -232,7 +280,7 @@
     const { localAst } = memory;
     Validating_by_label: {
       if (!(localAst.label in memory.labels)) {
-        return this.createValidationError({
+        return this.addValidationError({
           name: "TypeLabelNotIdentified",
           memory: memory,
           header: `Label «${localAst.label}» was not previously set`,
@@ -257,7 +305,7 @@
     }
     Validating_by_type: {
       if (typeof memory.localData !== "function") {
-        return this.createValidationError({
+        return this.addValidationError({
           name: "FactoryTypeValidationNotAccomplished",
           memory: memory,
           header: "Factory type validation was not accomplished",
@@ -277,7 +325,7 @@
     }
     Validating_by_type: {
       if (typeof memory.localData !== "function") {
-        return this.createValidationError({
+        return this.addValidationError({
           name: "ClassTypeNotAccomplished",
           memory: memory,
           header: "Class type validation was not accomplished",
@@ -302,8 +350,16 @@
         ast: memory.ast,
         astPointer: memory.astPointer.concat(["properties", prop]),
       });
-      const item = this._validateDataRecursively(submemory);
-      output[prop] = item;
+      const result = this._validateDataRecursively(submemory);
+      if(result instanceof Error) {
+        return this.addValidationError({
+          name: "PropertyTypeNotAccomplished",
+          memory: submemory,
+          header: `Property type validation of ${mode} at «${prop}» was not accomplished`,
+          footer: `on method «TypesValidator._validateProperties» while validating class type`,
+        });
+      }
+      output[prop] = result;
     }
     return output;
   },
@@ -315,7 +371,7 @@
       }
     }
     if ((typeof memory.localData !== "object") || (memory.localData === null)) {
-      return this.createValidationError({
+      return this.addValidationError({
         name: "ObjectTypeNotAccomplished",
         memory: memory,
         header: "Object type validation was not accomplished",
@@ -332,7 +388,7 @@
       }
     }
     if (!Array.isArray(memory.localData)) {
-      return this.createValidationError({
+      return this.addValidationError({
         name: "ArrayTypeNotAccomplished",
         memory: memory,
         header: `Array type validation was not accomplished`,
@@ -359,12 +415,15 @@
           validation = error;
         }
         if ((typeof validation === "undefined") || (validation === false)) {
-          validation = this.createValidationError({
+          validation = this.addValidationError({
             name: "IdentifiedTypeNotAccomplished",
             memory: memory,
             header: `Type «${localAst.id}» validation was not accomplished`,
             footer: `on method «TypesValidator._validateIdType»`,
           });
+        }
+        if (!(validation instanceof Error)) {
+          memory.result.add(memory, `type id (${localAst.id})`);
         }
         return validation;
       }
@@ -384,11 +443,11 @@
             label: undefined,
           };
         }
-        memory.result.add(submemory);
+        memory.result.add(submemory, `type id (${localAst.id}) + label`);
         return validation;
       }
     }
-    return this.createValidationError({
+    return this.addValidationError({
       name: "UnidentifiedType",
       memory: memory,
       header: `Unidentified type by id «${localAst.id}» was found`,
@@ -414,9 +473,10 @@
       }
       if (isLastInstruction) {
         memory.exportedAst = this._materializeAst(submemory, submemory.localAst);
+        memory.hasPassed = true;
       }
     }
-    memory.result.add(memory);
+    memory.result.add(memory, "script");
     // console.log(memory);
     return memory;
   },
@@ -437,7 +497,6 @@
         astPointer: [],
         dataPointer: [],
         registry: Std.functions.TypesRegistry(),
-        result: new Std.classes.ValidationResult(),
         // 
         mode: mode,
         skipValidations: skipValidations,
@@ -483,7 +542,7 @@
         if (output instanceof Error) {
           output = true;
         } else {
-          output = this.createValidationError({
+          output = this.addValidationError({
             name: "NegationNotAccomplished",
             memory: memory,
             header: "Negated expression was not accomplished",
@@ -584,4 +643,25 @@
   },
   _readPath: ModulerV6.globalInstance._readPath,
   _readFile: ModulerV6.globalInstance._readFile,
-  _readUrl: ModulerV6.globalInstance._readUrl
+  _readUrl: ModulerV6.globalInstance._readUrl,
+  extractErrors: function(validated, currentIndex = ["~"], allErrors = {}) {
+    /*
+    if(validated instanceof Error) {
+      allErrors[currentIndex.join("/")] = validated;
+      return allErrors;
+    }
+    if((typeof validated !== "object") || (validated === null)) {
+      return validated;
+    }
+    const allKeys = Object.keys(validated);
+    for(let index=0; index<allKeys.length; index++) {
+      const key = allKeys[index];
+      if(validated[key] instanceof Error) {
+        allErrors[currentIndex.join("/")] = validated[key];
+      } else {
+        this.extractErrors(validated[key], currentIndex.concat([key]), allErrors);
+      }
+    }
+    return allErrors;
+    //*/
+  }

@@ -90,4 +90,9 @@ class Printer {
     }
   }
 
+  static log(out, ...args) {
+    Printer.json(out, ...args);
+    return args.length ? args[args.length - 1] : out;
+  }
+
 }

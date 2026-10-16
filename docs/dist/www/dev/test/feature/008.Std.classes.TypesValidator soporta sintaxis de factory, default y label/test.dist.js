@@ -7,6 +7,7 @@ module.exports = async function ({ Tester }) {
     Asserter: { new: asserter },
     Printer,
   } = Std.all;
+  const { assert } = asserter;
 
   const list = [
     // Las que sí deberían funcionar:
@@ -62,31 +63,33 @@ module.exports = async function ({ Tester }) {
     // @RETAKE from here:
     [`@file1 ^file:"./std/example/person.tyla";`, 1, "Import de file desde el validador no solo el parser (1)", Std.functions.noop, {
       name: "Carlos",
-      born: "1991/01/05",
+      born: new Date("1991/01/05"),
       email: "whatever@andever.you",
-      city: "Sion",
+      city: "LA",
+      polo: 2,
     }, 1],
     [`@file1 ^file:"./std/example/person.tyla";`, 1, "Import de file desde el validador no solo el parser (1)", Std.functions.noop, {
       name: "Carlos",
-      born: "1991/01/05",
+      born: new Date("1991/01/05"),
       email: "whatever@andever.you",
-      city: {},
+      city: "NY",
+      polo: 1,
     }, 1, function(validation, ast) {
       Test_que_demuestra_que_los_imports_han_sido_reemplazados: {
         // Std.all.Printer.json(validation.ast);
-        asserter.assert(typeof validation === "object", "Method validateData returns validation object (1)");
-        asserter.assert(typeof validation.ast === "object", "Method validateData returns validation object (2)");
-        asserter.assert(typeof validation.ast.ast === "object", "Method validateData returns validation object (3)");
-        asserter.assert(typeof validation.ast.ast[0] === "object", "Method validateData returns validation object (4)");
+        assert(typeof validation === "object", "Method validateData returns validation object (1)");
+        assert(typeof validation.ast === "object", "Method validateData returns validation object (2)");
+        assert(typeof validation.ast.ast === "object", "Method validateData returns validation object (3)");
+        assert(typeof validation.ast.ast[0] === "object", "Method validateData returns validation object (4)");
         // A partir de aquí es de object y no de import:
-        asserter.assert(typeof validation.ast.ast[0].properties === "object", "Method validateData returns validation object (5)");
-        asserter.assert(typeof validation.ast.ast[0].properties.name === "object", "Method validateData returns validation object (6)");
-        asserter.assert(typeof validation.ast.ast[0].properties.name.grammar === "string", "Method validateData returns validation object (7)");
-        asserter.assert(typeof validation.ast.ast[0].properties.name.id === "string", "Method validateData returns validation object (8)");
+        assert(typeof validation.ast.ast[0].properties === "object", "Method validateData returns validation object (5)");
+        assert(typeof validation.ast.ast[0].properties.name === "object", "Method validateData returns validation object (6)");
+        assert(typeof validation.ast.ast[0].properties.name.grammar === "string", "Method validateData returns validation object (7)");
+        assert(typeof validation.ast.ast[0].properties.name.id === "string", "Method validateData returns validation object (8)");
         // Std.all.Printer.json(validation);
       }
     }],
-    [`string`, 1, "Puede validar un string cualquiera (1)", Std.functions.noop, {name:60}, 0],
+    [`string`, 1, "Puede validar un string cualquiera (1)", Printer.noop, {name:60}, 0],
     // @AHORA => ESTÁN FALLANDO LAS PROPIEDADES DE OBJETO
     // [`{name:string}`, 1, "Puede validar propiedades de un objeto cualquiera (1)", Std.functions.noop, {name:60}, 0],
     /*
@@ -133,6 +136,52 @@ module.exports = async function ({ Tester }) {
     Validation_callback: {
       if(validationCallback) {
         await validationCallback(validationOutput, ast);
+      }
+    }
+  }
+
+  Test_con_mas_detalles_nivel_1: {
+    const allTests = [
+      ["string","Simplest mismatch (1) | Expects string but receives object",{},false,function() {},Printer.noop],
+      ["{name:string}","Mismatch in object properties (1) | Expects string but receives object",{name:{}},false,function() {},Printer.noop],
+      ["{person:{name:string}}","Mismatch in object nested properties (1) | Expects string but receives object",{person:{name:{}}},false,function() {},Printer.noop],
+      ["{person:{name:string}}","Promatch in object nested properties (1) | Expects string and receives string",{person:{name:"Good"}},true,function() {},function(it) {
+        assert(typeof it === "object", "Validation returns an object");
+      }],
+      ["{name:string,password:string,email:string,level:number}","Promatch in multiple object properties (1) | Expects and receives multiple properties",{
+        name: "user",
+        password: "wait.ok",
+        email: "user@domain.com",
+        level: 5,
+      },true,function() {},function(it) {
+        assert(typeof it === "object", "Validation returns an object");
+        assert(it.validation.result.length === 5, "Validation returns result with items on success (1)");
+      }],
+      ["number|string|array","Mismatch in multiple or options (1)",[],1,Printer.noop,Printer.noop,],
+      ["number|!string|array","Mismatch in multiple or options (1)",{},1,Printer.noop,Printer.noop,],
+      ["{message:string|[]}","Mismatch property in object (1)",{message:10},0,Printer.noop,Printer.noop,],
+      ["!(string|array)","Mismatch grouped negation (1)",[],0,Printer.noop,Printer.noop,],
+      ["!(string|array)","Promatch grouped negation (1)",222,1,Printer.noop,Printer.noop,],
+      ["integer","Mismatch integer (1)",0.1,0,Printer.noop,Printer.noop,],
+    ];
+    const NoDataObject = {};
+    for(let index=0; index<allTests.length; index++) {
+      let title, expression, data, success, onParsed, onValidated;
+      const currentTest = allTests[index];
+      if(Array.isArray(currentTest)) {
+        [ expression, title, data = NoDataObject, success = true, onParsed = Std.functions.noop, onValidated = Std.functions.noop ] = currentTest;
+      } else {
+        ({ title = "unnamed", expression, data = NoDataObject, success = true, onParsed = Std.functions.noop, onValidated = Std.functions.noop } = currentTest);
+      }
+      console.log(`[*] Expression: ${expression}`);
+      if(data === NoDataObject) {
+        const parsification = await TypesParser.parse(expression);
+        onParsed({ event: "onParsed", title, expression, data, success, parsification });
+      } else {
+        const validation = await TypesValidator.validateData(expression, data);
+        if(!success) assert(validation instanceof Error, `Expression at index ${index} succeded but should have failed saying «${expression}»`);
+        else if(validation instanceof Error) throw validation; // `Expression at index ${index} failed but should have succeeded saying «${expression}»`);
+        onValidated({ event: "onValidated", title, expression, data, success, validation });
       }
     }
   }
