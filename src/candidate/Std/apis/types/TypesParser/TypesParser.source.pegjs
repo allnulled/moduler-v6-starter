@@ -131,14 +131,21 @@ Type_array_items = first:Type_array_item rest:Type_array_item_other* { return [f
 
 Type_array_item_other = _ "," _ item:Type_array_item { return item; }
 
-Type_array_item = Spreaded_evaluable / Evaluable
+Type_array_item = Spreaded_evaluable / Multiplicable
 
 Spreaded_evaluable = _ "..." _
-  spread:Evaluable
+  list:Spreadable
   multiplier:Multiplier_symbol?
-    { return { type: "spread on array", spread, multiplier }; }
+    { return { grammar: "spreaded list", list, multiplier }; }
 
 Multiplier_symbol = "?" / "*" / "+"
+
+Spreadable = Type_array / Type_label
+
+Multiplicable =
+  e:Evaluable _
+  multiplier:Multiplier_symbol?
+    { return { ...e, multiplier: multiplier || undefined } }
 
 // ------------------------------------------------------------
 // 8. IDENTIFIERS

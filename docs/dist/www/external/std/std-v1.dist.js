@@ -15546,14 +15546,21 @@ $moduler.toolkit.makeInterface([
  + "" + '\n'
  + "Type_array_item_other = _ \",\" _ item:Type_array_item { return item; }" + '\n'
  + "" + '\n'
- + "Type_array_item = Spreaded_evaluable / Evaluable" + '\n'
+ + "Type_array_item = Spreaded_evaluable / Multiplicable" + '\n'
  + "" + '\n'
  + "Spreaded_evaluable = _ \"...\" _" + '\n'
- + "  spread:Evaluable" + '\n'
+ + "  list:Spreadable" + '\n'
  + "  multiplier:Multiplier_symbol?" + '\n'
- + "    { return { type: \"spread on array\", spread, multiplier }; }" + '\n'
+ + "    { return { grammar: \"spreaded list\", list, multiplier }; }" + '\n'
  + "" + '\n'
  + "Multiplier_symbol = \"?\" / \"*\" / \"+\"" + '\n'
+ + "" + '\n'
+ + "Spreadable = Type_array / Type_label" + '\n'
+ + "" + '\n'
+ + "Multiplicable =" + '\n'
+ + "  e:Evaluable _" + '\n'
+ + "  multiplier:Multiplier_symbol?" + '\n'
+ + "    { return { ...e, multiplier: multiplier || undefined } }" + '\n'
  + "" + '\n'
  + "// ------------------------------------------------------------" + '\n'
  + "// 8. IDENTIFIERS" + '\n'
@@ -15841,7 +15848,7 @@ $moduler.toolkit.makeInterface([
       super();
       this.memory = memory;
     }
-    add(memory, method) {
+    addCheckpoint(memory, method) {
       $moduler.assert(memory instanceof Std.classes.ValidationMemory, `Parameter «memory» must be instance of «ValidationMemory» on «ValidatorResult.prototype.add»`);
       this.push({
         grammar: method,
@@ -15879,7 +15886,7 @@ $moduler.toolkit.makeInterface([
       if (output instanceof Error) {
         return output;
       } else {
-        memory.result.add(submemory, `and operation (1)`);
+        memory.result.addCheckpoint(submemory, `and operation (1)`);
       }
     }
     Validate_others: {
@@ -15894,11 +15901,11 @@ $moduler.toolkit.makeInterface([
         if (output instanceof Error) {
           return output;
         } else {
-          memory.result.add(submemory, `and operation (${index+2})`);
+          memory.result.addCheckpoint(submemory, `and operation (${index+2})`);
         }
       }
     }
-    memory.result.add(memory, "and operation");
+    memory.result.addCheckpoint(memory, "and operation");
     return true;
   },
   _validateOrOperation: function _validateOrOperation(memory) {
@@ -15918,8 +15925,10 @@ $moduler.toolkit.makeInterface([
         astPointer: memory.astPointer.concat(["left"]),
       });
       const output = this._validateDataRecursively(submemory);
-      if (!(output instanceof Error)) {
-        memory.result.add(submemory, `or operation (1)`);
+      if (output instanceof Error) {
+        // @OK, maybe next.
+      } else {
+        memory.result.addCheckpoint(submemory, `or operation (1)`);
         return true;
       }
       lastError = output;
@@ -15933,8 +15942,10 @@ $moduler.toolkit.makeInterface([
           astPointer: memory.astPointer.concat(["right", index]),
         });
         const output = this._validateDataRecursively(submemory);
-        if (!(output instanceof Error)) {
-          memory.result.add(submemory, `or operation (${index+2})`);
+        if (output instanceof Error) {
+          // @OK, maybe next.
+        } else {
+          memory.result.addCheckpoint(submemory, `or operation (${index+2})`);
           return true;
         }
         lastError = output;
@@ -15990,7 +16001,7 @@ $moduler.toolkit.makeInterface([
         });
       }
     }
-    memory.result.add(memory);
+    memory.result.addCheckpoint(memory);
     return true;
   },
   _validateClassType: function _validateClassType(memory) {
@@ -16072,7 +16083,64 @@ $moduler.toolkit.makeInterface([
         footer: "on method «TypesValidator._validateArrayType» while validating array type",
       });
     }
-    // return this._validateDataRecursively(memory);
+    let currentDataIndex = 0;
+    for(let index=0; index<memory.localAst.length; index++) {
+      const submemory = memory.clone({
+        data: memory.data,
+        dataPointer: memory.dataPointer.concat([currentDataIndex]),
+        ast: memory.ast,
+        astPointer: memory.astPointer.concat([index]),
+      });
+      const output = this._validateSpreadableType(submemory);
+      if(output instanceof Error) {
+        // @CHATGPT: aquí tengo dudas, de qué tendría que hacer si me encuentro un error.
+        // En principio
+      }
+    }
+  },
+  _validateSpreadableType: function _validateSpreadableType(memory) {
+    let hasMultiplier, isSpreadedList, multiplierMin, multiplierMax;
+    Initialize_spreadable_context: {
+      hasMultiplier = "multiplier" in memory.localAst;
+      isSpreadedList = memory.localAst.grammar === "spreaded list";
+      if(hasMultiplier) {
+        if(memory.localAst.multiplier === "?") {
+          multiplierMin = 0;
+          multiplierMax = 1;
+        } else if(memory.localAst.multiplier === "+") {
+          multiplierMin = 1;
+          multiplierMax = Infinity;
+        } else if(memory.localAst.multiplier === "*") {
+          multiplierMin = 0;
+          multiplierMax = Infinity;
+        }
+      }
+    }
+    let multiplierCounter = 0;
+    Iterating_as_much_as_possible:
+    while(multiplierCounter < multiplierMax) {
+      const output = this._validateDataRecursively(memory);
+      Si_error_o_no_error:
+      if(output instanceof Error) {
+        if(multiplierMin > multiplierCounter) {
+          Y_menos_del_minimo: {
+            return output;
+          }
+        } else if(multiplierMax < multiplierCounter) {
+          Y_mas_del_maximo: {
+            return output;
+          }
+        } else {
+          En_rango_aceptable: {
+            return true;
+          }
+        }
+      } else {
+        memory.result.addCheckpoint(memory, `listable (${localAst.id})`);
+      }
+      multiplierCounter++;
+    }
+    return true;
   },
   _validateIdType: function _validateIdType(memory) {
     this.trace("TypesValidator._validateIdType", memory);
@@ -16100,7 +16168,7 @@ $moduler.toolkit.makeInterface([
           });
         }
         if (!(validation instanceof Error)) {
-          memory.result.add(memory, `type id (${localAst.id})`);
+          memory.result.addCheckpoint(memory, `type id (${localAst.id})`);
         }
         return validation;
       }
@@ -16120,7 +16188,7 @@ $moduler.toolkit.makeInterface([
             label: undefined,
           };
         }
-        memory.result.add(submemory, `type id (${localAst.id}) + label`);
+        memory.result.addCheckpoint(submemory, `type id (${localAst.id}) + label`);
         return validation;
       }
     }
@@ -16153,7 +16221,7 @@ $moduler.toolkit.makeInterface([
         memory.hasPassed = true;
       }
     }
-    memory.result.add(memory, "script");
+    memory.result.addCheckpoint(memory, "script");
     // console.log(memory);
     return memory;
   },

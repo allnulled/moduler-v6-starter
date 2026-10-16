@@ -164,7 +164,7 @@
       super();
       this.memory = memory;
     }
-    add(memory, method) {
+    addCheckpoint(memory, method) {
       $moduler.assert(memory instanceof Std.classes.ValidationMemory, `Parameter «memory» must be instance of «ValidationMemory» on «ValidatorResult.prototype.add»`);
       this.push({
         grammar: method,
@@ -202,7 +202,7 @@
       if (output instanceof Error) {
         return output;
       } else {
-        memory.result.add(submemory, `and operation (1)`);
+        memory.result.addCheckpoint(submemory, `and operation (1)`);
       }
     }
     Validate_others: {
@@ -217,11 +217,11 @@
         if (output instanceof Error) {
           return output;
         } else {
-          memory.result.add(submemory, `and operation (${index+2})`);
+          memory.result.addCheckpoint(submemory, `and operation (${index+2})`);
         }
       }
     }
-    memory.result.add(memory, "and operation");
+    memory.result.addCheckpoint(memory, "and operation");
     return true;
   },
   _validateOrOperation: function _validateOrOperation(memory) {
@@ -241,8 +241,10 @@
         astPointer: memory.astPointer.concat(["left"]),
       });
       const output = this._validateDataRecursively(submemory);
-      if (!(output instanceof Error)) {
-        memory.result.add(submemory, `or operation (1)`);
+      if (output instanceof Error) {
+        // @OK, maybe next.
+      } else {
+        memory.result.addCheckpoint(submemory, `or operation (1)`);
         return true;
       }
       lastError = output;
@@ -256,8 +258,10 @@
           astPointer: memory.astPointer.concat(["right", index]),
         });
         const output = this._validateDataRecursively(submemory);
-        if (!(output instanceof Error)) {
-          memory.result.add(submemory, `or operation (${index+2})`);
+        if (output instanceof Error) {
+          // @OK, maybe next.
+        } else {
+          memory.result.addCheckpoint(submemory, `or operation (${index+2})`);
           return true;
         }
         lastError = output;
@@ -313,7 +317,7 @@
         });
       }
     }
-    memory.result.add(memory);
+    memory.result.addCheckpoint(memory);
     return true;
   },
   _validateClassType: function _validateClassType(memory) {
@@ -395,7 +399,64 @@
         footer: "on method «TypesValidator._validateArrayType» while validating array type",
       });
     }
-    // return this._validateDataRecursively(memory);
+    let currentDataIndex = 0;
+    for(let index=0; index<memory.localAst.length; index++) {
+      const submemory = memory.clone({
+        data: memory.data,
+        dataPointer: memory.dataPointer.concat([currentDataIndex]),
+        ast: memory.ast,
+        astPointer: memory.astPointer.concat([index]),
+      });
+      const output = this._validateSpreadableType(submemory);
+      if(output instanceof Error) {
+        // @CHATGPT: aquí tengo dudas, de qué tendría que hacer si me encuentro un error.
+        // En principio
+      }
+    }
+  },
+  _validateSpreadableType: function _validateSpreadableType(memory) {
+    let hasMultiplier, isSpreadedList, multiplierMin, multiplierMax;
+    Initialize_spreadable_context: {
+      hasMultiplier = "multiplier" in memory.localAst;
+      isSpreadedList = memory.localAst.grammar === "spreaded list";
+      if(hasMultiplier) {
+        if(memory.localAst.multiplier === "?") {
+          multiplierMin = 0;
+          multiplierMax = 1;
+        } else if(memory.localAst.multiplier === "+") {
+          multiplierMin = 1;
+          multiplierMax = Infinity;
+        } else if(memory.localAst.multiplier === "*") {
+          multiplierMin = 0;
+          multiplierMax = Infinity;
+        }
+      }
+    }
+    let multiplierCounter = 0;
+    Iterating_as_much_as_possible:
+    while(multiplierCounter < multiplierMax) {
+      const output = this._validateDataRecursively(memory);
+      Si_error_o_no_error:
+      if(output instanceof Error) {
+        if(multiplierMin > multiplierCounter) {
+          Y_menos_del_minimo: {
+            return output;
+          }
+        } else if(multiplierMax < multiplierCounter) {
+          Y_mas_del_maximo: {
+            return output;
+          }
+        } else {
+          En_rango_aceptable: {
+            return true;
+          }
+        }
+      } else {
+        memory.result.addCheckpoint(memory, `listable (${localAst.id})`);
+      }
+      multiplierCounter++;
+    }
+    return true;
   },
   _validateIdType: function _validateIdType(memory) {
     this.trace("TypesValidator._validateIdType", memory);
@@ -423,7 +484,7 @@
           });
         }
         if (!(validation instanceof Error)) {
-          memory.result.add(memory, `type id (${localAst.id})`);
+          memory.result.addCheckpoint(memory, `type id (${localAst.id})`);
         }
         return validation;
       }
@@ -443,7 +504,7 @@
             label: undefined,
           };
         }
-        memory.result.add(submemory, `type id (${localAst.id}) + label`);
+        memory.result.addCheckpoint(submemory, `type id (${localAst.id}) + label`);
         return validation;
       }
     }
@@ -476,7 +537,7 @@
         memory.hasPassed = true;
       }
     }
-    memory.result.add(memory, "script");
+    memory.result.addCheckpoint(memory, "script");
     // console.log(memory);
     return memory;
   },

@@ -132,14 +132,21 @@ Type_array_items = first:Type_array_item rest:Type_array_item_other* { return [f
 
 Type_array_item_other = _ "," _ item:Type_array_item { return item; }
 
-Type_array_item = Spreaded_evaluable / Evaluable
+Type_array_item = Spreaded_evaluable / Multiplicable
 
 Spreaded_evaluable = _ "..." _
-  spread:Evaluable
+  list:Spreadable
   multiplier:Multiplier_symbol?
-    { return { type: "spread on array", spread, multiplier }; }
+    { return { grammar: "spreaded list", list, multiplier }; }
 
 Multiplier_symbol = "?" / "*" / "+"
+
+Spreadable = Type_array / Type_label
+
+Multiplicable =
+  e:Evaluable _
+  multiplier:Multiplier_symbol?
+    { return { ...e, multiplier: multiplier || undefined } }
 
 // ------------------------------------------------------------
 // 8. IDENTIFIERS
@@ -323,6 +330,13 @@ json_space = [ \t\n\r]*
         },
       },
     },
+    "integer": {
+      abstraction: {
+        onValidate(memory) {
+          return Number.isInteger(memory.localData);
+        },
+      },
+    },
     "function": {
       abstraction: {
         onValidate(memory) {
@@ -337,6 +351,13 @@ json_space = [ \t\n\r]*
         },
       },
     },
+    "date": {
+      abstraction: {
+        onValidate(memory) {
+          return memory.localData instanceof Date;
+        }
+      }
+    }
   },
   Registry: Std.all.TypesRegistry = Std.functions.TypesRegistry = (it = {}) => {
     return Object.create(Std.objects.PrimitiveTypes, it);
@@ -375,7 +396,7 @@ json_space = [ \t\n\r]*
       super();
       this.memory = memory;
     }
-    add(memory, method) {
+    addCheckpoint(memory, method) {
       $moduler.assert(memory instanceof Std.classes.ValidationMemory, `Parameter «memory» must be instance of «ValidationMemory» on «ValidatorResult.prototype.add»`);
       this.push({
         grammar: method,
@@ -413,7 +434,7 @@ json_space = [ \t\n\r]*
       if (output instanceof Error) {
         return output;
       } else {
-        memory.result.add(submemory, `and operation (1)`);
+        memory.result.addCheckpoint(submemory, `and operation (1)`);
       }
     }
     Validate_others: {
@@ -428,11 +449,11 @@ json_space = [ \t\n\r]*
         if (output instanceof Error) {
           return output;
         } else {
-          memory.result.add(submemory, `and operation (${index+2})`);
+          memory.result.addCheckpoint(submemory, `and operation (${index+2})`);
         }
       }
     }
-    memory.result.add(memory, "and operation");
+    memory.result.addCheckpoint(memory, "and operation");
     return true;
   },
   _validateOrOperation: function _validateOrOperation(memory) {
@@ -452,8 +473,10 @@ json_space = [ \t\n\r]*
         astPointer: memory.astPointer.concat(["left"]),
       });
       const output = this._validateDataRecursively(submemory);
-      if (!(output instanceof Error)) {
-        memory.result.add(submemory, `or operation (1)`);
+      if (output instanceof Error) {
+        // @OK, maybe next.
+      } else {
+        memory.result.addCheckpoint(submemory, `or operation (1)`);
         return true;
       }
       lastError = output;
@@ -467,8 +490,10 @@ json_space = [ \t\n\r]*
           astPointer: memory.astPointer.concat(["right", index]),
         });
         const output = this._validateDataRecursively(submemory);
-        if (!(output instanceof Error)) {
-          memory.result.add(submemory, `or operation (${index+2})`);
+        if (output instanceof Error) {
+          // @OK, maybe next.
+        } else {
+          memory.result.addCheckpoint(submemory, `or operation (${index+2})`);
           return true;
         }
         lastError = output;
@@ -524,7 +549,7 @@ json_space = [ \t\n\r]*
         });
       }
     }
-    memory.result.add(memory);
+    memory.result.addCheckpoint(memory);
     return true;
   },
   _validateClassType: function _validateClassType(memory) {
@@ -561,8 +586,16 @@ json_space = [ \t\n\r]*
         ast: memory.ast,
         astPointer: memory.astPointer.concat(["properties", prop]),
       });
-      const item = this._validateDataRecursively(submemory);
-      output[prop] = item;
+      const result = this._validateDataRecursively(submemory);
+      if(result instanceof Error) {
+        return this.addValidationError({
+          name: "PropertyTypeNotAccomplished",
+          memory: submemory,
+          header: `Property type validation of ${mode} at «${prop}» was not accomplished`,
+          footer: `on method «TypesValidator._validateProperties» while validating class type`,
+        });
+      }
+      output[prop] = result;
     }
     return output;
   },
@@ -598,7 +631,64 @@ json_space = [ \t\n\r]*
         footer: "on method «TypesValidator._validateArrayType» while validating array type",
       });
     }
-    // return this._validateDataRecursively(memory);
+    let currentDataIndex = 0;
+    for(let index=0; index<memory.localAst.length; index++) {
+      const submemory = memory.clone({
+        data: memory.data,
+        dataPointer: memory.dataPointer.concat([currentDataIndex]),
+        ast: memory.ast,
+        astPointer: memory.astPointer.concat([index]),
+      });
+      const output = this._validateSpreadableType(submemory);
+      if(output instanceof Error) {
+        // @CHATGPT: aquí tengo dudas, de qué tendría que hacer si me encuentro un error.
+        // En principio
+      }
+    }
+  },
+  _validateSpreadableType: function _validateSpreadableType(memory) {
+    let hasMultiplier, isSpreadedList, multiplierMin, multiplierMax;
+    Initialize_spreadable_context: {
+      hasMultiplier = "multiplier" in memory.localAst;
+      isSpreadedList = memory.localAst.grammar === "spreaded list";
+      if(hasMultiplier) {
+        if(memory.localAst.multiplier === "?") {
+          multiplierMin = 0;
+          multiplierMax = 1;
+        } else if(memory.localAst.multiplier === "+") {
+          multiplierMin = 1;
+          multiplierMax = Infinity;
+        } else if(memory.localAst.multiplier === "*") {
+          multiplierMin = 0;
+          multiplierMax = Infinity;
+        }
+      }
+    }
+    let multiplierCounter = 0;
+    Iterating_as_much_as_possible:
+    while(multiplierCounter < multiplierMax) {
+      const output = this._validateDataRecursively(memory);
+      Si_error_o_no_error:
+      if(output instanceof Error) {
+        if(multiplierMin > multiplierCounter) {
+          Y_menos_del_minimo: {
+            return output;
+          }
+        } else if(multiplierMax < multiplierCounter) {
+          Y_mas_del_maximo: {
+            return output;
+          }
+        } else {
+          En_rango_aceptable: {
+            return true;
+          }
+        }
+      } else {
+        memory.result.addCheckpoint(memory, `listable (${localAst.id})`);
+      }
+      multiplierCounter++;
+    }
+    return true;
   },
   _validateIdType: function _validateIdType(memory) {
     this.trace("TypesValidator._validateIdType", memory);
@@ -626,7 +716,7 @@ json_space = [ \t\n\r]*
           });
         }
         if (!(validation instanceof Error)) {
-          memory.result.add(memory, `type id (${localAst.id})`);
+          memory.result.addCheckpoint(memory, `type id (${localAst.id})`);
         }
         return validation;
       }
@@ -646,7 +736,7 @@ json_space = [ \t\n\r]*
             label: undefined,
           };
         }
-        memory.result.add(submemory, `type id (${localAst.id}) + label`);
+        memory.result.addCheckpoint(submemory, `type id (${localAst.id}) + label`);
         return validation;
       }
     }
@@ -676,9 +766,10 @@ json_space = [ \t\n\r]*
       }
       if (isLastInstruction) {
         memory.exportedAst = this._materializeAst(submemory, submemory.localAst);
+        memory.hasPassed = true;
       }
     }
-    memory.result.add(memory, "script");
+    memory.result.addCheckpoint(memory, "script");
     // console.log(memory);
     return memory;
   },
@@ -933,15 +1024,17 @@ module.exports = async function ({ Tester }) {
     // @RETAKE from here:
     [`@file1 ^file:"./std/example/person.tyla";`, 1, "Import de file desde el validador no solo el parser (1)", Std.functions.noop, {
       name: "Carlos",
-      born: "1991/01/05",
+      born: new Date("1991/01/05"),
       email: "whatever@andever.you",
-      city: "Sion",
+      city: "LA",
+      polo: 2,
     }, 1],
     [`@file1 ^file:"./std/example/person.tyla";`, 1, "Import de file desde el validador no solo el parser (1)", Std.functions.noop, {
       name: "Carlos",
-      born: "1991/01/05",
+      born: new Date("1991/01/05"),
       email: "whatever@andever.you",
-      city: {},
+      city: "NY",
+      polo: 1,
     }, 1, function(validation, ast) {
       Test_que_demuestra_que_los_imports_han_sido_reemplazados: {
         // Std.all.Printer.json(validation.ast);
@@ -1010,73 +1103,45 @@ module.exports = async function ({ Tester }) {
 
   Test_con_mas_detalles_nivel_1: {
     const allTests = [
-      {
-        title: "Simplest mismatch (1) | Expects string but receives object",
-        expression: "string",
-        data: {},
-        success: true,
-        onParsed: function() {},
-        onValidated: Printer.noop
-      },
-      {
-        title: "Mismatch in object properties (1) | Expects string but receives object",
-        expression: "{name:string}",
-        data: {name:{}},
-        success: true,
-        onParsed: function() {},
-        onValidated: Printer.noop,
-      },
-      {
-        title: "Mismatch in object nested properties (1) | Expects string but receives object",
-        expression: "{person:{name:string}}",
-        data: {person:{name:{}}},
-        success: true,
-        onParsed: function() {},
-        onValidated: Printer.noop,
-      },
-      {
-        title: "Promatch in object nested properties (1) | Expects string and receives string",
-        expression: "{person:{name:string}}",
-        data: {person:{name:"Good"}},
-        success: true,
-        onParsed: function() {},
-        onValidated: function(it) {
-          assert(typeof it === "object", "Validation returns an object");
-        }
-      },
-      {
-        title: "Promatch in multiple object properties (1) | Expects and receives multiple properties",
-        expression: "{name:string,password:string,email:string,level:number}",
-        data: {
-          name: "user",
-          password: "wait.ok",
-          email: "user@domain.com",
-          level: 5,
-        },
-        success: true,
-        onParsed: function() {},
-        onValidated: function(it) {
-          assert(typeof it === "object", "Validation returns an object");
-          assert(it.validation.result.length === 5, "Validation returns result with items on success (1)");
-        }
-      },
-      ["Mismatch in multiple or options (1)","number|string|array",[],1,Printer.noop,Printer.noop,],
-      ["Mismatch in multiple or options (1)","number|!string|array",{},1,Printer.noop,Printer.log,],
+      ["string","Simplest mismatch (1) | Expects string but receives object",{},false,function() {},Printer.noop],
+      ["{name:string}","Mismatch in object properties (1) | Expects string but receives object",{name:{}},false,function() {},Printer.noop],
+      ["{person:{name:string}}","Mismatch in object nested properties (1) | Expects string but receives object",{person:{name:{}}},false,function() {},Printer.noop],
+      ["{person:{name:string}}","Promatch in object nested properties (1) | Expects string and receives string",{person:{name:"Good"}},true,function() {},function(it) {
+        assert(typeof it === "object", "Validation returns an object");
+      }],
+      ["{name:string,password:string,email:string,level:number}","Promatch in multiple object properties (1) | Expects and receives multiple properties",{
+        name: "user",
+        password: "wait.ok",
+        email: "user@domain.com",
+        level: 5,
+      },true,function() {},function(it) {
+        assert(typeof it === "object", "Validation returns an object");
+        assert(it.validation.result.length === 5, "Validation returns result with items on success (1)");
+      }],
+      ["number|string|array","Mismatch in multiple or options (1)",[],1,Printer.noop,Printer.noop,],
+      ["number|!string|array","Mismatch in multiple or options (1)",{},1,Printer.noop,Printer.noop,],
+      ["{message:string|[]}","Mismatch property in object (1)",{message:10},0,Printer.noop,Printer.noop,],
+      ["!(string|array)","Mismatch grouped negation (1)",[],0,Printer.noop,Printer.noop,],
+      ["!(string|array)","Promatch grouped negation (1)",222,1,Printer.noop,Printer.noop,],
+      ["integer","Mismatch integer (1)",0.1,0,Printer.noop,Printer.noop,],
     ];
     const NoDataObject = {};
     for(let index=0; index<allTests.length; index++) {
       let title, expression, data, success, onParsed, onValidated;
       const currentTest = allTests[index];
       if(Array.isArray(currentTest)) {
-        [ title, expression, data = NoDataObject, success = true, onParsed = Std.functions.noop, onValidated = Std.functions.noop ] = currentTest;
+        [ expression, title, data = NoDataObject, success = true, onParsed = Std.functions.noop, onValidated = Std.functions.noop ] = currentTest;
       } else {
         ({ title = "unnamed", expression, data = NoDataObject, success = true, onParsed = Std.functions.noop, onValidated = Std.functions.noop } = currentTest);
       }
+      console.log(`[*] Expression: ${expression}`);
       if(data === NoDataObject) {
         const parsification = await TypesParser.parse(expression);
         onParsed({ event: "onParsed", title, expression, data, success, parsification });
       } else {
         const validation = await TypesValidator.validateData(expression, data);
+        if(!success) assert(validation instanceof Error, `Expression at index ${index} succeded but should have failed saying «${expression}»`);
+        else if(validation instanceof Error) throw validation; // `Expression at index ${index} failed but should have succeeded saying «${expression}»`);
         onValidated({ event: "onValidated", title, expression, data, success, validation });
       }
     }
