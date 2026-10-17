@@ -384,7 +384,7 @@
     }
     return this._validateProperties(memory, "object");
   },
-  _validateArrayType: function _validateArrayType(memory) {
+  _validateArrayType: function _validateArrayType(memory, arrayContext = null) {
     this.trace("TypesValidator._validateArrayType", memory);
     Return_unless_checking: {
       if (memory.skipValidations || !memory.isLastInstruction) {
@@ -399,25 +399,46 @@
         footer: "on method «TypesValidator._validateArrayType» while validating array type",
       });
     }
-    let currentDataIndex = 0;
-    for(let index=0; index<memory.localAst.length; index++) {
+    const hasArrayContextOwner = typeof arrayContext === "object" && arrayContext !== null;
+    arrayContext ||= { dataIndex: 0 };
+    Validating_items:
+    for(let index=0; index<memory.localAst.items.length; index++) {
       const submemory = memory.clone({
         data: memory.data,
-        dataPointer: memory.dataPointer.concat([currentDataIndex]),
+        dataPointer: memory.dataPointer.concat([arrayContext.dataIndex]),
         ast: memory.ast,
-        astPointer: memory.astPointer.concat([index]),
+        astPointer: memory.astPointer.concat(["items", index]),
       });
-      const output = this._validateSpreadableType(submemory);
+      const output = this._validateSpreadableType(submemory, arrayContext);
       if(output instanceof Error) {
-        // @CHATGPT: aquí tengo dudas, de qué tendría que hacer si me encuentro un error.
-        // En principio
+        return output;
       }
     }
+    if ((!hasArrayContextOwner) && (arrayContext.dataIndex !== memory.localData.length)) {
+      return this.addValidationError({
+        name: "ArrayValidationNotFullyAccomplished",
+        memory: memory,
+        header: `Array schema validation with ${arrayContext.dataIndex} items did not completely match the data structure with ${memory.localData.length} items`,
+        footer: `on method «TypesValidator._validateArrayType» while validating array type`,
+      });
+    }
+    return true;
   },
-  _validateSpreadableType: function _validateSpreadableType(memory) {
+  _validateSpreadedList: function _validateSpreadedList(memory, arrayContext) {
+    this.trace("TypesValidator._validateSpreadedList", memory);
+    return this._validateArrayType(memory.clone({
+      data: memory.data,
+      dataPointer: memory.dataPointer.slice(0, -1),
+      ast: memory.ast,
+      astPointer: memory.astPointer.concat(["list"]),
+    }), arrayContext);
+  },
+  _validateSpreadableType: function _validateSpreadableType(memory, arrayContext) {
+    this.trace("TypesValidator._validateSpreadableType", memory);
+    let output;
     let hasMultiplier, isSpreadedList, multiplierMin, multiplierMax;
     Initialize_spreadable_context: {
-      hasMultiplier = "multiplier" in memory.localAst;
+      hasMultiplier = typeof memory.localAst.multiplier !== "undefined";
       isSpreadedList = memory.localAst.grammar === "spreaded list";
       if(hasMultiplier) {
         if(memory.localAst.multiplier === "?") {
@@ -429,13 +450,30 @@
         } else if(memory.localAst.multiplier === "*") {
           multiplierMin = 0;
           multiplierMax = Infinity;
+        } else {
+          multiplierMin = 1;
+          multiplierMax = 1;
         }
+      } else {
+        multiplierMin = 1;
+        multiplierMax = 1;
       }
     }
     let multiplierCounter = 0;
     Iterating_as_much_as_possible:
-    while(multiplierCounter < multiplierMax) {
-      const output = this._validateDataRecursively(memory);
+    while(multiplierCounter <= multiplierMax) {
+      const submemory = memory.clone({
+        data: memory.data,
+        dataPointer: memory.dataPointer.slice(0,-1).concat([arrayContext.dataIndex]),
+        ast: memory.ast,
+        astPointer: memory.astPointer,
+      });
+      // const output = this._validateDataRecursively(submemory);
+      if(isSpreadedList) {
+        output = this._validateSpreadedList(submemory, arrayContext);
+      } else {
+        output = this._validateDataRecursively(submemory);
+      }
       Si_error_o_no_error:
       if(output instanceof Error) {
         if(multiplierMin > multiplierCounter) {
@@ -452,7 +490,10 @@
           }
         }
       } else {
-        memory.result.addCheckpoint(memory, `listable (${localAst.id})`);
+        if(!isSpreadedList) {
+          memory.result.addCheckpoint(memory, `list item (${arrayContext.dataIndex+1}/${memory.localData.length})`);
+          arrayContext.dataIndex++;
+        }
       }
       multiplierCounter++;
     }
@@ -588,6 +629,8 @@
         output = this._validateArrayType(memory);
       } else if (grammar === "type id") {
         output = this._validateIdType(memory);
+      } else if (grammar === "spreaded list") {
+        output = this._validateSpreadedList(memory);
       } else if (grammar === "script") {
         output = this._validateScript(memory);
       } else {

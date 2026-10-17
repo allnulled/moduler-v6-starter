@@ -162,7 +162,14 @@ module.exports = async function ({ Tester }) {
       ["{message:string|[]}","Mismatch property in object (1)",{message:10},0,Printer.noop,Printer.noop,],
       ["!(string|array)","Mismatch grouped negation (1)",[],0,Printer.noop,Printer.noop,],
       ["!(string|array)","Promatch grouped negation (1)",222,1,Printer.noop,Printer.noop,],
-      ["integer","Mismatch integer (1)",0.1,0,Printer.noop,Printer.noop,],
+      ["integer","Mismatch integer (1)",555.555,0,Printer.noop,Printer.noop,],
+      ["[string]","Promatch array with string (1)",["text"],1,Printer.noop,Printer.noop,],
+      ["[string,number,{}]","Promatch array (1)",["",0,{}],1,Printer.noop,Printer.noop,],
+      ["[string,number]","Mismatch array (1)",[0,0],0,Printer.noop,Printer.noop,],
+      ["[...[number,object],...[boolean,number,...[string,array]]]","Promatch nested spreaded arrays (1)",[8,{},false,8,'',[]],1,Printer.noop,Printer.noop,],
+      ["[...[number,object],...[boolean,number,...[string,array]]]","Promatch nested spreaded arrays (1)",[8,{},false,8,'',{}],0,Printer.noop,Printer.noop,],
+      /*
+      //*/
     ];
     const NoDataObject = {};
     for(let index=0; index<allTests.length; index++) {
@@ -179,9 +186,9 @@ module.exports = async function ({ Tester }) {
         onParsed({ event: "onParsed", title, expression, data, success, parsification });
       } else {
         const validation = await TypesValidator.validateData(expression, data);
-        if(!success) assert(validation instanceof Error, `Expression at index ${index} succeded but should have failed saying «${expression}»`);
-        else if(validation instanceof Error) throw validation; // `Expression at index ${index} failed but should have succeeded saying «${expression}»`);
         onValidated({ event: "onValidated", title, expression, data, success, validation });
+        if(!success) assert(validation instanceof Error, `Expression titled «${title}» at index ${index} succeded but should have failed saying «${expression}»`);
+        else if(validation instanceof Error) throw validation; // `Expression at index ${index} failed but should have succeeded saying «${expression}»`);
       }
     }
   }
