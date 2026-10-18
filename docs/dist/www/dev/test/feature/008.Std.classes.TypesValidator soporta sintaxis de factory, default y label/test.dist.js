@@ -167,9 +167,33 @@ module.exports = async function ({ Tester }) {
       ["[string,number,{}]","Promatch array (1)",["",0,{}],1,Printer.noop,Printer.noop,],
       ["[string,number]","Mismatch array (1)",[0,0],0,Printer.noop,Printer.noop,],
       ["[...[number,object],...[boolean,number,...[string,array]]]","Promatch nested spreaded arrays (1)",[8,{},false,8,'',[]],1,Printer.noop,Printer.noop,],
-      ["@last [string,array];[...[number,object],...[boolean,number,...@last]]","Promatch nested spreaded arrays (1)",[8,{},false,8,'',{}],0,Printer.noop,Printer.noop,],
-      /*
-      //*/
+      ["@last [string,array];[...[number,object],...[boolean,number,...@last]]","Mismatch nested spreaded arrays (2)",[8,{},false,8,'',{}],0,Printer.noop,Printer.noop,],
+      ["@third [string,array]; @last [boolean,number,...@third]; @first [number,object]; @all [...@first,...@last]; @all","Mismatch nested spreaded arrays (3)",[8,{},false,8,'',[]],1,Printer.noop,Printer.noop,],
+      ["@third [string,array]; @last [boolean,number,...@third]; @first [number,object]; @all [...@first,...@last]; @all","Mismatch nested spreaded arrays (4)",[8,{},false,8,'',''],0,Printer.noop,Printer.noop,],
+      // Multiplicadores/Ejemplos de firmas tipo moduler:
+      ["[string*,[]+,function() => any,{}?]","Promatch multipliers (1) | Unmulitplied row signature",["name",[],class{},{}],1,Printer.noop,Printer.noop,],
+      ["[string*,[]+,function() => any,{}?]","Promatch multipliers (2) | Without ? element",["name",[],class{}],1,Printer.noop,Printer.noop,],
+      ["[string*,[]+,function() => any,{}?]","Promatch multipliers (3) | Without ? and * elements",[[],class{}],1,Printer.noop,Printer.noop,],
+      ["[string*,[]+,function() => any,{}?]","Promatch multipliers (4) | Without ? and * elements and multiplying + elements",[[],[],[],class{}],1,Printer.noop,Printer.noop,],
+      ["[string*,[]+,function() => any,{}?]","Mismatch multipliers (5) | Without ? and * elements and multiplying + elements but missing random element",[[],[],[]],0,Printer.noop,Printer.noop,],
+      ["[string*,[]+,function() => any,{}?]","Mismatch multipliers (6) | Multiplying * elements",["name1", "name2", [], class{}],1,Printer.noop,Printer.noop,],
+      // Multiplicadores/Signo ?:
+      ["[number?]","Mismatch multipliers (10) | Multiplying ? element per 3",[8,8,8],0,Printer.noop,Printer.noop,],
+      ["[number?]","Mismatch multipliers (11) | Multiplying ? element per 2",[8,8],0,Printer.noop,Printer.noop,],
+      ["[number?]","Promatch multipliers (12) | Multiplying ? element per 1",[8],1,Printer.noop,Printer.noop,],
+      ["[number?]","Promatch multipliers (13) | Multiplying ? element per 0",[],1,Printer.noop,Printer.noop,],
+      // Multiplicadores/Signo +:
+      ["[number+]","Promatch multipliers (20) | Multiplying + element per 3",[8,8,8],1,Printer.noop,Printer.noop,],
+      ["[number+]","Promatch multipliers (21) | Multiplying + element per 2",[8,8],1,Printer.noop,Printer.noop,],
+      ["[number+]","Promatch multipliers (22) | Multiplying + element per 1",[8],1,Printer.noop,Printer.noop,],
+      ["[number+]","Mismatch multipliers (23) | Multiplying + element per 0",[],0,Printer.noop,Printer.noop,],
+      // Multiplicadores/Signo *:
+      ["[number*]","Promatch multipliers (30) | Multiplying * element per 3",[8,8,8],1,Printer.noop,Printer.noop,],
+      ["[number*]","Promatch multipliers (31) | Multiplying * element per 2",[8,8],1,Printer.noop,Printer.noop,],
+      ["[number*]","Promatch multipliers (32) | Multiplying * element per 1",[8],1,Printer.noop,Printer.noop,],
+      ["[number*]","Promatch multipliers (33) | Multiplying * element per 0",[],1,Printer.noop,Printer.noop,],
+      // Multiplicadores/Ejemplos con signos, variables, spread operator, y negación:
+      ["@two [string+, boolean+]; @one [boolean, ...@two]; [string+, ...@one]","Promatch multipliers (201) | Random combination of variables, spread operators and negation",["","","",true,"","","",true,true],1,Printer.noop,Printer.noop,],
     ];
     const NoDataObject = {};
     for(let index=0; index<allTests.length; index++) {

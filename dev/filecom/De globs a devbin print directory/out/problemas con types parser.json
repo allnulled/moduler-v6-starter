@@ -696,12 +696,19 @@ json_space = [ \t\n\r]*
   },
   _validateSpreadedList: function _validateSpreadedList(memory, arrayContext) {
     this.trace("TypesValidator._validateSpreadedList", memory);
-    return this._validateArrayType(memory.clone({
+    const { list } = memory.localAst;
+    const config = {
       data: memory.data,
       dataPointer: memory.dataPointer.slice(0, -1),
-      ast: memory.ast,
-      astPointer: memory.astPointer.concat(["list"]),
-    }), arrayContext);
+    };
+    if(typeof list === "string") {
+      config.ast = memory.labels[list];
+      config.astPointer = [];
+    } else {
+      config.ast = memory.ast;
+      config.astPointer = memory.astPointer.concat(["list"]);
+    }
+    return this._validateArrayType(memory.clone(config), arrayContext);
   },
   _validateSpreadableType: function _validateSpreadableType(memory, arrayContext) {
     this.trace("TypesValidator._validateSpreadableType", memory);
@@ -1209,8 +1216,24 @@ module.exports = async function ({ Tester }) {
       ["[string,number,{}]","Promatch array (1)",["",0,{}],1,Printer.noop,Printer.noop,],
       ["[string,number]","Mismatch array (1)",[0,0],0,Printer.noop,Printer.noop,],
       ["[...[number,object],...[boolean,number,...[string,array]]]","Promatch nested spreaded arrays (1)",[8,{},false,8,'',[]],1,Printer.noop,Printer.noop,],
-      ["@last [string,array];[...[number,object],...[boolean,number,...@last]]","Promatch nested spreaded arrays (1)",[8,{},false,8,'',{}],0,Printer.noop,Printer.noop,],
+      ["@last [string,array];[...[number,object],...[boolean,number,...@last]]","Mismatch nested spreaded arrays (2)",[8,{},false,8,'',{}],0,Printer.noop,Printer.noop,],
+      ["@third [string,array]; @last [boolean,number,...@third]; @first [number,object]; @all [...@first,...@last]; @all","Mismatch nested spreaded arrays (3)",[8,{},false,8,'',[]],1,Printer.noop,Printer.noop,],
+      ["@third [string,array]; @last [boolean,number,...@third]; @first [number,object]; @all [...@first,...@last]; @all","Mismatch nested spreaded arrays (4)",[8,{},false,8,'',''],0,Printer.noop,Printer.noop,],
+      ["[string*,[]+,function() => any,{}?]","Promatch multipliers (1) | Unmulitplied row signature",["name",[],class{},{}],1,Printer.noop,Printer.noop,],
+      ["[string*,[]+,function() => any,{}?]","Promatch multipliers (2) | Without ? element",["name",[],class{}],1,Printer.noop,Printer.noop,],
+      ["[string*,[]+,function() => any,{}?]","Promatch multipliers (3) | Without ? and * elements",[[],class{}],1,Printer.noop,Printer.noop,],
+      ["[string*,[]+,function() => any,{}?]","Promatch multipliers (4) | Without ? and * elements and multiplying + elements",[[],[],[],class{}],1,Printer.noop,Printer.noop,],
+      ["[string*,[]+,function() => any,{}?]","Mismatch multipliers (5) | Without ? and * elements and multiplying + elements but missing random element",[[],[],[]],0,Printer.noop,Printer.noop,],
+      ["[string*,[]+,function() => any,{}?]","Mismatch multipliers (6) | Multiplying * elements",["name1", "name2", [], class{}],1,Printer.noop,Printer.noop,],
+      ["[number+]","Promatch multipliers (10) | Multiplying + element",[8,8,8],1,Printer.noop,Printer.noop,],
+      ["[number+]","Mismatch multipliers (11) | Missing + element",[],0,Printer.noop,Printer.noop,],
+      ["[number?]","Promatch multipliers (12) | Missing ? element",[],1,Printer.noop,Printer.noop,],
+      // @CHATGPT: mira, este sí va como debe, o sea, falla aquí:
+      ["[number?]","Promatch multipliers (13) | Multiplying ? element",[8,8,8],0,Printer.noop,Printer.noop,],
+      // @CHATGPT: pero en cambio, este no falla, y debería fallar. Tú sabes por qué? Debe ser algo de la cuenta final, oooh, no, la gestión del error, que lo hice yo.
+      ["[number?]","Promatch multipliers (13) | Multiplying ? element",[8,8],0,Printer.noop,Printer.noop,],
       /*
+
       //*/
     ];
     const NoDataObject = {};

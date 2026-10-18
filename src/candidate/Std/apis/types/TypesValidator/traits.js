@@ -424,17 +424,6 @@
     }
     return true;
   },
-  /*
-  _validateSpreadedList: function _validateSpreadedList(memory, arrayContext) {
-    this.trace("TypesValidator._validateSpreadedList", memory);
-    return this._validateArrayType(memory.clone({
-      data: memory.data,
-      dataPointer: memory.dataPointer.slice(0, -1),
-      ast: memory.ast,
-      astPointer: memory.astPointer.concat(["list"]),
-    }), arrayContext);
-  },
-  //*/
   _validateSpreadedList: function _validateSpreadedList(memory, arrayContext) {
     this.trace("TypesValidator._validateSpreadedList", memory);
     const { list } = memory.localAst;
@@ -479,14 +468,13 @@
     }
     let multiplierCounter = 0;
     Iterating_as_much_as_possible:
-    while(multiplierCounter <= multiplierMax) {
+    while(multiplierCounter < multiplierMax) {
       const submemory = memory.clone({
         data: memory.data,
         dataPointer: memory.dataPointer.slice(0,-1).concat([arrayContext.dataIndex]),
         ast: memory.ast,
         astPointer: memory.astPointer,
       });
-      // const output = this._validateDataRecursively(submemory);
       if(isSpreadedList) {
         output = this._validateSpreadedList(submemory, arrayContext);
       } else {
@@ -677,11 +665,6 @@
   },
   _replaceImportsRecursively: async function _replaceImportsRecursively(ast) {
     this.trace("TypesValidator._replaceImportsRecursively", ast);
-    // @CHATGPT: este sería el método que hace el:
-    //   - iterar recursivamente en busca de imports
-    //   - leer los imports internos
-    //   - parsear los imports internos
-    //   - reducir el ast de cada import interno
     if(typeof ast !== "object") return ast;
     if(ast === null) return ast;
     if(Array.isArray(ast)) {
@@ -766,24 +749,3 @@
   _readPath: ModulerV6.globalInstance._readPath,
   _readFile: ModulerV6.globalInstance._readFile,
   _readUrl: ModulerV6.globalInstance._readUrl,
-  extractErrors: function(validated, currentIndex = ["~"], allErrors = {}) {
-    /*
-    if(validated instanceof Error) {
-      allErrors[currentIndex.join("/")] = validated;
-      return allErrors;
-    }
-    if((typeof validated !== "object") || (validated === null)) {
-      return validated;
-    }
-    const allKeys = Object.keys(validated);
-    for(let index=0; index<allKeys.length; index++) {
-      const key = allKeys[index];
-      if(validated[key] instanceof Error) {
-        allErrors[currentIndex.join("/")] = validated[key];
-      } else {
-        this.extractErrors(validated[key], currentIndex.concat([key]), allErrors);
-      }
-    }
-    return allErrors;
-    //*/
-  }
