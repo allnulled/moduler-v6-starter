@@ -1,3 +1,41 @@
+[#FILE=@/src/candidate/Std/apis/patterns/ClonableInterface/ClonableInterface.interface.js]
+// @interface:ClonableInterface
+{
+  prototype: {
+    get newClone() {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"ClonableInterface.prototype.newClone"});
+      return this.clone();
+    },
+    clone: function(config = {}) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodIn.js", {name:"ClonableInterface.prototype.clone"});
+      Validate_unclonable_properties: {
+        if (this.unclonableProperties) {
+          for (let index = 0; index < this.unclonableProperties.length; index++) {
+            const unclonableProperty = this.unclonableProperties[index];
+            if (!(unclonableProperty in config)) {
+              $compiler.inject.template("@/src/candidate/Std/snippets/methodError.js", {name:"ClonableInterface.prototype.clone"});
+              throw new Error(`Cannot clone without specifying property «${unclonableProperty}» on «ClonableInterface.prototype.clone»`);
+            }
+          }
+        }
+      }
+      Transfer_cloned_properties: {
+        if (this.clonedProperties) {
+          for (let index = 0; index < this.clonedProperties.length; index++) {
+            const clonedProperty = this.clonedProperties[index];
+            const clonedValue = clonedProperty in config ? config[clonedProperty] : this[clonedProperty];
+            config[clonedProperty] = clonedValue;
+          }
+        }
+      }
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodOut.js", {name:"ClonableInterface.prototype.clone"});
+      return this.new.config(this).config(config);
+    }
+  },
+  static: {
+
+  },
+}
 [#FILE=@/src/candidate/Std/apis/types/TypesParser/TypesParser.source.pegjs]
 {
 
@@ -1170,7 +1208,8 @@ module.exports = async function ({ Tester }) {
       ["[string]","Promatch array with string (1)",["text"],1,Printer.noop,Printer.noop,],
       ["[string,number,{}]","Promatch array (1)",["",0,{}],1,Printer.noop,Printer.noop,],
       ["[string,number]","Mismatch array (1)",[0,0],0,Printer.noop,Printer.noop,],
-      ["[...[number,object],...[boolean]]","Mismatch array (1)",[0,{},''],1,Printer.noop,Printer.noop,],
+      ["[...[number,object],...[boolean,number,...[string,array]]]","Promatch nested spreaded arrays (1)",[8,{},false,8,'',[]],1,Printer.noop,Printer.noop,],
+      ["@last [string,array];[...[number,object],...[boolean,number,...@last]]","Promatch nested spreaded arrays (1)",[8,{},false,8,'',{}],0,Printer.noop,Printer.noop,],
       /*
       //*/
     ];

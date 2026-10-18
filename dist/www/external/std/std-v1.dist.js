@@ -16108,6 +16108,7 @@ $moduler.toolkit.makeInterface([
     }
     return true;
   },
+  /*
   _validateSpreadedList: function _validateSpreadedList(memory, arrayContext) {
     this.trace("TypesValidator._validateSpreadedList", memory);
     return this._validateArrayType(memory.clone({
@@ -16116,6 +16117,23 @@ $moduler.toolkit.makeInterface([
       ast: memory.ast,
       astPointer: memory.astPointer.concat(["list"]),
     }), arrayContext);
+  },
+  //*/
+  _validateSpreadedList: function _validateSpreadedList(memory, arrayContext) {
+    this.trace("TypesValidator._validateSpreadedList", memory);
+    const { list } = memory.localAst;
+    const config = {
+      data: memory.data,
+      dataPointer: memory.dataPointer.slice(0, -1),
+    };
+    if(typeof list === "string") {
+      config.ast = memory.labels[list];
+      config.astPointer = [];
+    } else {
+      config.ast = memory.ast;
+      config.astPointer = memory.astPointer.concat(["list"]);
+    }
+    return this._validateArrayType(memory.clone(config), arrayContext);
   },
   _validateSpreadableType: function _validateSpreadableType(memory, arrayContext) {
     this.trace("TypesValidator._validateSpreadableType", memory);

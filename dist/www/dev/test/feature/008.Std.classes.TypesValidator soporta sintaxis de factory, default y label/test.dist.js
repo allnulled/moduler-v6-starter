@@ -167,7 +167,7 @@ module.exports = async function ({ Tester }) {
       ["[string,number,{}]","Promatch array (1)",["",0,{}],1,Printer.noop,Printer.noop,],
       ["[string,number]","Mismatch array (1)",[0,0],0,Printer.noop,Printer.noop,],
       ["[...[number,object],...[boolean,number,...[string,array]]]","Promatch nested spreaded arrays (1)",[8,{},false,8,'',[]],1,Printer.noop,Printer.noop,],
-      ["[...[number,object],...[boolean,number,...[string,array]]]","Promatch nested spreaded arrays (1)",[8,{},false,8,'',{}],0,Printer.noop,Printer.noop,],
+      ["@last [string,array];[...[number,object],...[boolean,number,...@last]]","Promatch nested spreaded arrays (1)",[8,{},false,8,'',{}],0,Printer.noop,Printer.noop,],
       /*
       //*/
     ];
