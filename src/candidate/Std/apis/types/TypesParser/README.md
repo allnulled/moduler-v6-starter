@@ -6,47 +6,13 @@ Documentación oficial del parser de `typeslang`.
 
 - [TypesParser](#typesparser)
   - [Índice](#índice)
-  - [Proceso](#proceso)
   - [Features](#features)
     - [Feature 001: Primitivos básicos](#feature-001-primitivos-básicos)
     - [Feature 002: Negación, agrupación, conjunción y disyunción](#feature-002-negación-agrupación-conjunción-y-disyunción)
-    - [Feature 003: Opcionalidad](#feature-003-opcionalidad)
-    - [Feature 004: Opcionalidad en propiedad de objeto](#feature-004-opcionalidad-en-propiedad-de-objeto)
-    - [Feature 005: Listas, grupos de lista y multiplicadores](#feature-005-listas-grupos-de-lista-y-multiplicadores)
-
-## Proceso
-
-- [ ] Misión 1:
-   - [ ] Se anula la sintaxis de «Lista repetible»
-   - [ ] Se substituye por «Grupos paramétricos» y «Multiplicadores»
-- [ ] Misión 2:
-   - [ ] Se anula la sintaxis de opcionalidad ? en el evaluable
-   - [ ] Se substituye por `|undefined`
-   - [ ] Se mantiene opcionalidad en la propiedad de objeto
-   - [ ] Se extenderá opcionalidad en elementos de lista
-      - [ ] Para listas
-      - [ ] Para parámetros de función
-      - [ ] Para parámetros de tipo
-   - [ ] Se añadirá a la opcionalidad:
-      - [ ] 0 o más con *
-      - [ ] 1 o más con +
-   - [ ] Con esto, la opcionalidad desaparece para evaluable,
-      - [ ] pero se fusiona con la multiplicidad y sigue existiendo:
-         - [ ] para propiedad de objeto
-         - [ ] para elementos de array
-         - [ ] para parámetros de función
-         - [ ] para parámetros de tipo
-      - [ ] y no afecta, porque sigues teniendo la opción de `|undefined`
-   - [ ] y así se reserva el `?` con los `+` y `*` solo en los casos donde tienen sentido:
-      - [ ] en listas de elementos
-      - [ ] no en tipos, un tipo no tendrá esto en este lenguaje: `tipo?` `tipo(string)?`
-         - [ ] pudiendo poner esto y no inmiscuir al interrogante: `tipo|undefined` `tipo(string)|undefined`
-   - [ ] De aquí se deduce que:
-      - [ ] El símbolo de opcionalidad `?` no es nunca `o undefined`
-      - [ ] El símbolo de opcionalidad `?` nos dice que un elemento o grupo puede estar, o no estar.
-         - [ ] y esa expresión solo tiene sentido en un conjunto
-            - [ ] como las propiedades del objeto, con `?:`
-            - [ ] como los elementos de una lista, con `,?`
+    - [Feature 003: Operador de esparción en arrays y parámetros de función](#feature-003-operador-de-esparción-en-arrays-y-parámetros-de-función)
+    - [Feature 004: Multiplicadores en arrays y parámetros de función](#feature-004-multiplicadores-en-arrays-y-parámetros-de-función)
+    - [Feature 005: Variables reusables](#feature-005-variables-reusables)
+    - [Feature 006: Importación por fetch o fs](#feature-006-importación-por-fetch-o-fs)
 
 ## Features
 
@@ -85,59 +51,46 @@ Las operaciones lógicas más básicas.
 {user:string} & {password:string}
 ```
 
-### Feature 003: Opcionalidad
-
-- El `?` puede aplicarse a varias ontologías que son distintas:
-   - A un tipo nominado:
-      - `custom?`
-      - `custom(string)?`
-      - sería lo mismo que poner `custom(string) | undefined`
-   - A una propiedad de objeto:
-      - `{name?:string}`
-      - no sería lo mismo que poner `{name: string|undefined}`
-      - sería decir que esa propiedad puede no estar y no pasa nada
-   - A una agrupación de tipo:
-      - `(number|string|boolean)?`
-      - sería lo mismo que poner `number|string|boolean|undefined`
-   - A una agrupación de elementos:
-      - solo puede existir en:
-         - parámetros de funciones
-         - parámetros de tipo
-         - elementos de lista
-      - la opcionalidad se aplica a la coma
-         - sus posibles símbolos son:
-            - `[a,?]`
-            - `[a,b,c,?]`
-            - `[...(a,b,c)?]`
-         - porque se aplica a los elementos como elementos dentro del conjunto o fuera
-            - no se aplica a los tipos como tipos definidos o indefinidos
-      - sería decir que ese elemento o grupo de elementos
-
-
-### Feature 004: Opcionalidad en propiedad de objeto
-
-### Feature 005: Listas, grupos de lista y multiplicadores
-
-Ahora tendríamos que poder:
+### Feature 003: Operador de esparción en arrays y parámetros de función
 
 ```tyla
-[a?,]
-[a,b?,]
-[a,b,c?,]
-[...[a?,b?,c?,]?,]
-[...tipo?,]
-[...tipo1|tipo2|tipo3,?]
-[...tipo1|tipo2|tipo3,+]
-[...tipo1|tipo2|tipo3,*]
+// con arrays:
+[...[number, string], ...[boolean]];
+// con funciones:
+function(...[number, boolean], ...[{}]) => undefined;
 ```
 
-
-Antes:
+### Feature 004: Multiplicadores en arrays y parámetros de función
 
 ```tyla
-// Esto serían LAS ANTERIORMENTE CONOCIDAS COMO listas repetibles:
-// [^number|string, function() => undefined]
-// Pero en realidad usarías esto:
-// [...(number|string, function() => undefined)*]
+// con arrays:
+[number?, string+, function () => any*];
+// con funciones:
+function(number?, string+, function () => any*) => any;
 ```
 
+### Feature 005: Variables reusables
+
+```tyla
+@id number;
+@name string;
+// Reusable en un objeto:
+{id:@id,name:@name};
+// O incluso abreviado:
+{@id,@name};
+```
+
+### Feature 006: Importación por fetch o fs
+
+```tyla
+{
+   // Como path:
+   person: ^"./subtypes/persona.tyla",
+   // Como file con fs:
+   place: ^file:"./subtypes/geolocation.tyla",
+   // Como url con fetch:
+   moment: ^url:"./subtypes/moment.tyla",
+   // Como path, que es según el contexto:
+   message: ^path:"./subtypes/message.tyla",
+}
+```

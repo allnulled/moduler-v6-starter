@@ -135,8 +135,28 @@
       $moduler.toolkit.makeClass([
         Std.interfaces.InstantiableInterface,
         // @interface:ValidationMemoryInterface
-        Std.functions.IntrospectableInterfaceFactory("data", "getDataProperty", "setDataProperty", "hasDataProperty", "initializeDataProperty", "listDataProperties"),
-        Std.functions.IntrospectableInterfaceFactory("ast", "getAstProperty", "setAstProperty", "hasAstProperty", "initializeAstProperty", "listAstProperties"),
+        Std.functions.IntrospectableInterfaceFactory(
+          "data",
+          "getDataProperty",
+          "setDataProperty",
+          "hasDataProperty",
+          "deleteDataProperty",
+          "initializeDataProperty",
+          "listDataProperties",
+          "onRegisterDataProperty",
+          "onUnregisterDataProperty"
+        ),
+        Std.functions.IntrospectableInterfaceFactory(
+          "ast",
+          "getAstProperty",
+          "setAstProperty",
+          "hasAstProperty",
+          "deleteAstProperty",
+          "initializeAstProperty",
+          "listAstProperties",
+          "onRegisterAstProperty",
+          "onUnregisterAstProperty"
+        ),
         {
           prototype: {
             onCreate: function () {

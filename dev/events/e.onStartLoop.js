@@ -1,11 +1,12 @@
 module.exports = function({ devbin }) {
+  console.log("[*] Loop started.");
   let settingsProfile;
   settingsProfile = "clean";
   settingsProfile = "debug";
   const profiles = {
     debug: () => {
       // Restart logger
-      devbin.compiler._initializeLogger(`${__dirname}/logs/`);
+      devbin.compiler._initializeLogger(devbin.moduler.normalizationOf("@/dev/logs/"));
       // Logger by console off
       devbin.compiler._logger.current.setOption("development-setup", false);
       // Logger resets file
@@ -17,7 +18,7 @@ module.exports = function({ devbin }) {
     },
     clean: () => {
       // Restart logger
-      devbin.compiler._initializeLogger(`${__dirname}/logs/`);
+      devbin.compiler._initializeLogger(devbin.moduler.normalizationOf("@/dev/logs/"));
       // Logger by console off
       devbin.compiler._logger.current.setOption("development-setup", false);
       // Logger resets file

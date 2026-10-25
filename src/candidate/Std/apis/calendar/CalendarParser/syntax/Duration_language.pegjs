@@ -1,0 +1,1 @@
+Duration_language = "dur"

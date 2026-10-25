@@ -742,6 +742,21 @@ makeInterface(...args) {
 makeClass(...args) {
   return ModulerV6.ClassSkiller.makeClass(...args);
 }
+  /**
+ * @name ModulerV6.Toolkit.prototype.waitUntil
+ * @type 
+ * @description 
+ */
+waitUntil(callback, timeout = 10) {
+  return new Promise(async done => {
+    while(callback()) {
+      await new Promise(resolve => {
+        setTimeout(resolve, timeout);
+      });
+    };
+    done();
+  });
+}
 };
   /**
  * @name ModulerV6.Parser
@@ -1297,6 +1312,9 @@ static defaultGrammars = {
     this.nativeGrammars.EmbeddedFormFieldOpener,
     this.nativeGrammars.EmbeddedFormFieldCloser,
   ],
+  forPegjs: [
+    this.nativeGrammars.AtInjects,
+  ]
 };
   
   /**
@@ -2126,6 +2144,15 @@ cloneForFile(filepath) {
   return new ModulerV6(dirpath, this);
 }
   /**
+ * @name ModulerV6.prototype.cloneForDirectory
+ * @type 
+ * @description 
+ */
+cloneForDirectory(dirpathBrute) {
+  const dirpath = this._joinPaths([dirpathBrute]);
+  return new ModulerV6(dirpath, this);
+}
+  /**
  * @name ModulerV6.prototype.reserveFile
  * @type 
  * @description 
@@ -2400,6 +2427,7 @@ this.grammars = {
   forCss: this.constructor.defaultGrammars.forCss,
   forMd: this.constructor.defaultGrammars.forMd,
   forHtml: this.constructor.defaultGrammars.forHtml,
+  forPegjs: this.constructor.defaultGrammars.forPegjs,
   forTemplateComments: this.constructor.defaultGrammars.forTemplateComments,
   forEmbeddedForms: this.constructor.defaultGrammars.forEmbeddedForms,
 };
@@ -2412,6 +2440,7 @@ this.parser = {
   forJs: this.constructor.Parser.create(this.grammars.forJs),
   forCss: this.constructor.Parser.create(this.grammars.forCss),
   forMd: this.constructor.Parser.create(this.grammars.forMd),
+  forPegjs: this.constructor.Parser.create(this.grammars.forPegjs),
   forHtml: this.constructor.Parser.create(this.grammars.forHtml),
   forTemplateComments: this.constructor.Parser.create(this.grammars.forTemplateComments),
   forEmbeddedForms: this.constructor.Parser.create(this.grammars.forEmbeddedForms),

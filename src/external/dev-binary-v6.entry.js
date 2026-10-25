@@ -765,6 +765,21 @@ makeInterface(...args) {
 makeClass(...args) {
   return ModulerV6.ClassSkiller.makeClass(...args);
 }
+  /**
+ * @name ModulerV6.Toolkit.prototype.waitUntil
+ * @type 
+ * @description 
+ */
+waitUntil(callback, timeout = 10) {
+  return new Promise(async done => {
+    while(callback()) {
+      await new Promise(resolve => {
+        setTimeout(resolve, timeout);
+      });
+    };
+    done();
+  });
+}
 };
   /**
  * @name ModulerV6.Parser
@@ -1320,6 +1335,9 @@ static defaultGrammars = {
     this.nativeGrammars.EmbeddedFormFieldOpener,
     this.nativeGrammars.EmbeddedFormFieldCloser,
   ],
+  forPegjs: [
+    this.nativeGrammars.AtInjects,
+  ]
 };
   
   /**
@@ -2432,6 +2450,7 @@ this.grammars = {
   forCss: this.constructor.defaultGrammars.forCss,
   forMd: this.constructor.defaultGrammars.forMd,
   forHtml: this.constructor.defaultGrammars.forHtml,
+  forPegjs: this.constructor.defaultGrammars.forPegjs,
   forTemplateComments: this.constructor.defaultGrammars.forTemplateComments,
   forEmbeddedForms: this.constructor.defaultGrammars.forEmbeddedForms,
 };
@@ -2444,6 +2463,7 @@ this.parser = {
   forJs: this.constructor.Parser.create(this.grammars.forJs),
   forCss: this.constructor.Parser.create(this.grammars.forCss),
   forMd: this.constructor.Parser.create(this.grammars.forMd),
+  forPegjs: this.constructor.Parser.create(this.grammars.forPegjs),
   forHtml: this.constructor.Parser.create(this.grammars.forHtml),
   forTemplateComments: this.constructor.Parser.create(this.grammars.forTemplateComments),
   forEmbeddedForms: this.constructor.Parser.create(this.grammars.forEmbeddedForms),
@@ -2537,6 +2557,7 @@ static {
    * @type 
    * @description 
    */
+  
   /**
  * @name CompilerV6.Parser
  * @type 
@@ -2920,7 +2941,7 @@ resetFile(...args) {
     this.startedAt = new Date();
     this.lastLogAt = new Date();
     return this.log(...args);
-  });
+  }).catch(console.error);
 }
   /**
  * @name CompilerV6.Logger.prototype.getTimeOffset
@@ -3227,6 +3248,7 @@ async findByPattern(expressionBrute, basedir = process.cwd()) {
   return output;
 }
 };
+  
   /**
  * @name CompilerV6.CompilationProcess
  * @type 
@@ -3419,6 +3441,7 @@ toJsonable() {
   });
 }
 }
+  
   /**
  * @name CompilerV6._nativeGrammars
  * @type ?
@@ -3785,6 +3808,7 @@ static sensitiveFileAttributes = [
   "apply",
   "deleteProperty",
 ];
+  
   /**
  * @name CompilerV6.constructor  
  * @type 
@@ -3836,6 +3860,7 @@ this._grammars = this.moduler.grammars;
  */
 this._parser = this.moduler.parser;
 }
+
 
   /**
  * @name CompilerV6.prototype._readPath
@@ -4043,6 +4068,8 @@ _tokenizeText(compilationFile, compilationProcess) {
     out = {formatted:[]};
   } else if(compilationFile.extension === "html") {
     out = this._parser.forHtml.parse(compilationFile.source);
+  } else if(compilationFile.extension === "pegjs") {
+    out = this._parser.forPegjs.parse(compilationFile.source);
   } else {
     throw new Error(`File extension cannot be tokenized: «${compilationFile.resource}»`);
   }
@@ -4233,7 +4260,7 @@ _fetchCompilable(compilationFile, compilationProcess) {
       return compilationFile.compilation.json = "";
     });
   }
-  const validFilesRegex = /\.(js|css|md|html)$/g;
+  const validFilesRegex = /\.(js|css|md|html|pegjs)$/g;
   this.assert(validFilesRegex.test(compilationFile.resource), `Parameter «compilationFile.resource» now «${compilationFile.resource}» must match with valid extension on «CompilerV6.prototype._fetchCompilable»`);
   Sacar_la_extension_del_fichero: {
     compilationFile.extension = compilationFile.resource.match(validFilesRegex)[0].substr(1);
@@ -4541,10 +4568,9 @@ async _compileAsInjectSource(compilationFile, compilationProcess, { token, token
         compilationFile.compilation.html = this._replaceTextRange(compilationFile.compilation.html, token.location[0], token.location[1], newContent, token);
       } else {
         currentStep.push("5.a. from js");
-        const validExtensions = ["js"];
+        const validExtensions = ["js", "pegjs"];
         this.assert(validExtensions.includes(compilationFile.extension), `Syntax of «$compiler.inject.source» can only inject files from «js,html» files and not on «${compilationFile.extension}» when importing «${targetPath}» from «${compilationFile.resource}»`);
-        this.assert(targetPath.endsWith(".js"), `Syntax of «$compiler.inject.source» is trying to import foraneous extension format file «${targetPath}» from «${compilationFile.resource}» on «CompilerV6.prototype._compileAsInjectSource»`);
-        // if (!targetCaches.js) targetCaches.js = targetCompilation?.js || "";
+        this.assert(this._hasExtensionLike(targetPath, validExtensions), `Syntax of «$compiler.inject.source» is trying to import foraneous extension format file «${targetPath}» from «${compilationFile.resource}» on «CompilerV6.prototype._compileAsInjectSource»`);
         if (typeof targetCaches.js !== "string") targetCaches.js = targetCompilation.js;
         targetCaches.css = targetCaches.css || targetCompilation?.css;
         targetCaches.md = targetCaches.md || targetCompilation?.md;
@@ -4552,7 +4578,11 @@ async _compileAsInjectSource(compilationFile, compilationProcess, { token, token
         if (options?.modifySource) {
           outputJs = options.modifySource(outputJs);
         }
-        compilationFile.compilation.js = this._replaceTextRange(compilationFile.compilation.js, token.location[0], token.location[1], outputJs, token);
+        if(compilationFile.extension === "js") {
+          compilationFile.compilation.js = this._replaceTextRange(compilationFile.compilation.js, token.location[0], token.location[1], outputJs, token);
+        } else if(compilationFile.extension === "pegjs") {
+          compilationFile.compilation.pegjs = this._replaceTextRange(compilationFile.compilation.pegjs, token.location[0], token.location[1], targetCompilation.pegjs || targetCompilation.js, token);
+        }
       }
       Esto_tiene_que_hacerse_desde_dentro_del_compileRecursively: {
         // compilationFile.compilation.css += targetCaches.css;
@@ -4699,7 +4729,6 @@ _compileAsInjectModule(compilationFile, compilationProcess, { token, tokenIndex 
  * @description 
  */
 async _compileAsInjectModules(compilationFile, compilationProcess, { token, tokenIndex }) {
-  // @TODO: CHATGPT, estyo en esta funcionalidad.
   let out = "";
   let subcompilerForAll = this._cloneForFile(compilationFile.resource, this);
   let subcode1 = "";
@@ -5002,10 +5031,10 @@ async _compileAsInjects(compilationFile, compilationProcess, { token, tokenIndex
     });
   }
   Early_delegation_to_compileAsInjectSource: {
-    const fromJs = compilationFile.resource?.endsWith(".js");
-    if(!fromJs) break Early_delegation_to_compileAsInjectSource;
-    const injectsJs = parameters[0].endsWith(".js");
-    if(!injectsJs) break Early_delegation_to_compileAsInjectSource;
+    const fromJsOrPegjs = this._hasExtensionLike(compilationFile.resource, [".js", ".pegjs"]);
+    if(!fromJsOrPegjs) break Early_delegation_to_compileAsInjectSource;
+    const injectsJsOrPegjs = this._hasExtensionLike(parameters[0], [".js", ".pegjs"]);
+    if(!injectsJsOrPegjs) break Early_delegation_to_compileAsInjectSource;
     return await this._compileAsInjectSource(compilationFile, compilationProcess, { token, tokenIndex });
   }
   Extend_token: {
@@ -5027,7 +5056,6 @@ async _compileAsInjects(compilationFile, compilationProcess, { token, tokenIndex
       // Cuando desde un JS se hace @injects...
       let replacement = "";
       if (targetPath.endsWith(".js")) { // ...a un .js
-        // @CHATGPT: hablo de este caso exactamente. Tendría que poder hacer lo mismo que _compileAsInjectSource, pero antes estaba esto bloqueando porque era una feature confusa, ahora ya he visto que sí tiene sentido permitir una sintaxis de inyección de código mediante comentario y diferente a las sintaxis de plantillaje genéricas.
         return this._compileAsInjectSource(...arguments);
         throw new Error("Syntax of «@injects» should not be used to import «js» files from «js» files. Use another syntax instead, like «$v6.injects.source» or «commented template injection» on «CompilerV6.prototype._compileAsInjects»");
       } else if (targetPath.endsWith(".css")) { // ...a un .css
@@ -5699,6 +5727,18 @@ _unifyCompilationMarkdown(compilationFile, compilationProcess) {
     }
   }
 }
+  /**
+ * @name CompilerV6.prototype._hasExtensionLike
+ * @type 
+ * @description 
+ */
+_hasExtensionLike(file, extensions = []) {
+  for(let index=0; index<extensions.length; index++) {
+    const extensionString = extensions[index];
+    if(file.endsWith(extensionString)) return true;
+  }
+  return false;
+}
 
   /**
  * @name CompilerV6.prototype.normalizationOf
@@ -6326,6 +6366,9 @@ getDistribuibleFilenamesOf(fileBrute, event) {
   } else if(file.endsWith(".entry.md")) {
     filename = file.substr(0, file.length - ".entry.md".length);
     fileExtension = "md";
+  } else if(file.endsWith(".entry.pegjs")) {
+    filename = file.substr(0, file.length - ".entry.pegjs".length);
+    fileExtension = "pegjs";
   } else {
     throw new Error(`Parameter «file» must end with «.entry.js», «.entry.css» or «.entry.md» but it is «${file}» on «DevBinaryV6.Utils.prototype.getDistribuibleFilenamesOf»`);
   }
@@ -6339,6 +6382,7 @@ getDistribuibleFilenamesOf(fileBrute, event) {
     js: filename + ".dist.js",
     css: filename + ".dist.css",
     md: filename + ".md",
+    ...(fileExtension !== "pegjs" ? {} : {pegjs: filename + ".pegjs"})
   };
 }
   /**
@@ -6627,6 +6671,23 @@ async touchFile(fileBrute, optionsInput = {}) {
             return event;
           }
         }
+        Caso_previo_8_pegjs: {
+          if(rootPath.endsWith(".pegjs")) {
+            let outputFile = false;
+            if(rootPath.startsWith("@/src/www/")) {
+              outputFile = rootPath.replace("@/src/www/", "@/dist/www/");
+            } else if(rootPath.startsWith("@/src/")) {
+              outputFile = rootPath.replace("@/src/", "@/dist/src/");
+            }
+            const outputCompilation = await this.devbin.compiler.compile(rootPath);
+            if(event.isRoot) {
+              const outputFile = outputCompilation.file.replace(/\.entry\.pegjs$/g, ".dist.pegjs");
+              await require("fs").promises.writeFile(outputFile, outputCompilation.pegjs, "utf8");
+            }
+            return event;
+          }
+        }
+        // @FLUJO PRINCIPAL AQUÍ: excepciones antes
         Caso_js_o_test_js: {
           Paso_0_descartar_si_no_es_entry_o_test: {
             if (!isProcessable) {
@@ -6987,6 +7048,7 @@ existsFile(file) {
 async triggerCallbackFromFile(fileBrute, injection = {}, dontThrow = false) {
   const file = this.devbin.moduler.normalizationOf(fileBrute);
   if(!await this.existsFile(file)) {
+    this.devbin.console.setProfile("blackBright").print("[*] DevBinaryV6 ignored callback file trigger for non-existent: " + this.devbin.moduler.rootdirOf(file));
     return -1;
   }
   const callback = require(file);
@@ -7997,7 +8059,7 @@ async loop(args) {
   const devControllersFile = `${targetRoot}/dev/controllers.js`;
   const devControllers = await this.devbin.utils.existsFile(devControllersFile) ? [devControllersFile] : [];
   Run_setup_callback_file_first: {
-    await this.devbin.utils.triggerCallbackFromFile(`@/dev/e.onStartLoop.js`, { devbin: this.devbin, rootdir: targetRoot, });
+    await this.devbin.utils.triggerCallbackFromFile(`@/dev/events/e.onStartLoop.js`, { devbin: this.devbin, rootdir: targetRoot, });
   }
   return this.devbin.constructor.Refrescador.run({
     watch: targetDirs,
@@ -8027,6 +8089,10 @@ async loop(args) {
       "html",
       "md",
       "txt",
+      "pegjs",
+      // Extensiones del framework:
+      "cale",
+      "tyla",
       ...settingsExtensions,
     ],
     execute: [

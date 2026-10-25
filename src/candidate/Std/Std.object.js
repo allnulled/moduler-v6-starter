@@ -46,10 +46,11 @@
     externals: {
       peggy: peggyjs,
       picomatch: picomatch,
-    }
+    },
+    // @LATER: Este lo inicializa Std.classes.ViewsRegistry.globalInstance
+    views: null,
   });
 
-  
   Wave_1_Lowest_interfaces_only: {
     Std.all.CreableInterface = Std.interfaces.CreableInterface = $compiler.inject.source("./apis/patterns/CreableInterface/CreableInterface.interface.js");
     Std.all.ClonableInterface = Std.interfaces.ClonableInterface = $compiler.inject.source("./apis/patterns/ClonableInterface/ClonableInterface.interface.js");
@@ -72,7 +73,7 @@
     Std.all.NativePrototypes = Std.objects.NativePrototypes = $compiler.inject.source("./apis/reflection/NativePrototypes/NativePrototypes.object.js");
     Std.all.EnvironmenterInterface = Std.interfaces.EnvironmenterInterface = $compiler.inject.source("./apis/environment/Environmenter/EnvironmenterInterface.interface.js");
     Std.all.Environmenter = Std.classes.Environmenter = $compiler.inject.source("./apis/environment/Environmenter/Environmenter.class.js");
-    Std.all.Printer = Std.functions.Printer = $compiler.inject.source("./apis/debug/Printer.class.js");
+    Std.all.Printer = Std.classes.Printer = $compiler.inject.source("./apis/debug/Printer.class.js");
     Std.all.triggerMethodIfExists = Std.functions.triggerMethodIfExists = $compiler.inject.source("./apis/hooks/triggerMethodIfExists.function.js");
     Std.all.Ansi = Std.objects.Ansi = $compiler.inject.source("./apis/console/Ansi/Ansi.object.js");
     Std.all.BooleanUtil = Std.classes.BooleanUtil = $compiler.inject.source("./apis/testing/BooleanUtil/BooleanUtil.class.js");
@@ -126,9 +127,36 @@
 
   }
   Wave_10_Operative_system: {
-    Std.all.ProcessUtils = Std.classes.ProcessUtils = $compiler.inject.source("./apis/os/ProcessUtils/ProcessUtils.class.js");
+    Std.all.ProcessUtils = Std.classes.ProcessUtils = $compiler.inject.source("./apis/os/process/ProcessUtils.class.js");
+    Std.all.ThreadInterface = Std.interfaces.ThreadInterface = $compiler.inject.source("./apis/os/threads/ThreadInterface/ThreadInterface.interface.js");
+    Std.all.Thread = Std.classes.Thread = $compiler.inject.source("./apis/os/threads/Thread/Thread.class.js");
+  }
+  
+  Wave_12_Views_system: {
+    External_Vue2_js: {
+      if(typeof window === "undefined") break External_Vue2_js;
+      if(typeof Vue2 !== "undefined") break External_Vue2_js;
+      Std.externals.Vue2 = globalThis.Vue2 = $compiler.inject.plain("@/src/www/external/vue2/vue2.js");
+    }
+    Std.all.ViewsRegistry = Std.classes.ViewsRegistry = $compiler.inject.source("./apis/views/ViewsRegistry/ViewsRegistry.class.js");
+    Std.all.ViewsStaticMerger = Std.classes.ViewsStaticMerger = $compiler.inject.source("./apis/merge/ViewsStaticMerger/ViewsStaticMerger.class.js");
+    Std.all.DynamicView = Std.views.DynamicView = $compiler.inject.source("./apis/views/DynamicView/DynamicView.object.js");
   }
 
+  Wave_14_Dialogs: {
+    Std.all.Dialogs = Std.classes.Dialogs = $compiler.inject.source("./apis/views/dialogs/Dialogs/Dialogs.class.js");
+    Std.all.DialogsFactory = Std.classes.DialogsFactory = $compiler.inject.source("./apis/views/dialogs/DialogsFactory/DialogsFactory.class.js");
+    Std.all.DialogsPort = Std.views.DialogsPort = $compiler.inject.source("./apis/views/dialogs/DialogsPort/DialogsPort.object.js");
+  }
+
+  Wave_15_Calendar: {
+    Std.all.CalendarParser = Std.objects.CalendarParser = $compiler.inject.source("./apis/calendar/CalendarParser/CalendarParser.object.js");
+  }
+
+  Wave_95_Application_starter: {
+    Std.all.MainApplication = Std.views.MainApplication = $compiler.inject.source("./apis/application/MainApplication/MainApplication.object.js");
+    Std.all.ApplicationStarter = Std.classes.ApplicationStarter = $compiler.inject.source("./apis/application/ApplicationStarter/ApplicationStarter.class.js");
+  }
 
 
 

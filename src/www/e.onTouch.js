@@ -1,5 +1,8 @@
 module.exports = async function({ file, devbin }) {
-  const compilation = await devbin.compiler.compile("@/src/www/index.html");
-  // console.log(compilation);
-  await compilation.toFile("@/dist/www/index.dist.html");
+  Actualizar_index_html: {
+    if(devbin.moduler.rootdirOf(file) === "@/src/www/index.html") {
+      break Actualizar_index_html;
+    }
+    await devbin.utils.touchFile("@/src/www/index.html");
+  }
 };

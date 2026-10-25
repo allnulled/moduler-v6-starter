@@ -16,5 +16,5 @@ module.exports = $moduler.export("#Std", [], async function([]) {
    */
   const peggyjs = await $compiler.inject.module("@/src/www/external/pegjs/peggyjs.object.js");
   const picomatch = await $compiler.inject.module("@/src/external/picomatch/picomatch.entry.js");
-  return $compiler.inject.source("./Std.object.js");
+  return await $compiler.inject.source("./Std.object.js");
 });

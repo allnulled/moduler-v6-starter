@@ -5,5 +5,5 @@ function set(data, key, value) {
     output = output[property];
   });
   output[key[key.length - 1]] = value;
-  return data;
+  return value;
 }

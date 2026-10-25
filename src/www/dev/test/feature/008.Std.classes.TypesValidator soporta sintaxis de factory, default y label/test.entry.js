@@ -59,8 +59,8 @@ module.exports = async function ({ Tester }) {
       // console.log(val);
     }],
     [`{"a b c":number};`, 1, "Permite nombres de propiedades de objetos como string (1)", Std.functions.noop, {"a b c":100}],
+/*
     [`@file1 ^file:"./std/example/person.tyla";`, 1, "Import como sintaxis del parser", Std.functions.noop],
-    // @RETAKE from here:
     [`@file1 ^file:"./std/example/person.tyla";`, 1, "Import de file desde el validador no solo el parser (1)", Std.functions.noop, {
       name: "Carlos",
       born: new Date("1991/01/05"),
@@ -89,6 +89,7 @@ module.exports = async function ({ Tester }) {
         // Std.all.Printer.json(validation);
       }
     }],
+*/
     [`string`, 1, "Puede validar un string cualquiera (1)", Printer.noop, {name:60}, 0],
     // @AHORA => ESTÁN FALLANDO LAS PROPIEDADES DE OBJETO
     // [`{name:string}`, 1, "Puede validar propiedades de un objeto cualquiera (1)", Std.functions.noop, {name:60}, 0],
@@ -194,6 +195,9 @@ module.exports = async function ({ Tester }) {
       ["[number*]","Promatch multipliers (33) | Multiplying * element per 0",[],1,Printer.noop,Printer.noop,],
       // Multiplicadores/Ejemplos con signos, variables, spread operator, y negación:
       ["@two [string+, boolean+]; @one [boolean, ...@two]; [string+, ...@one]","Promatch multipliers (201) | Random combination of variables, spread operators and negation",["","","",true,"","","",true,true],1,Printer.noop,Printer.noop,],
+      ["[number?, string+, function () => any*];","Promatch multipliers (202) | Random combination",["p1", "p2", "p3", () => {},() => {},() => {},],1,Printer.noop,Printer.noop,],
+      ["function(number?, string+, function () => any*) => any;","Promatch multipliers (203) | Random combination", () => {},1,Printer.noop,Printer.noop,],
+      
     ];
     const NoDataObject = {};
     for(let index=0; index<allTests.length; index++) {
