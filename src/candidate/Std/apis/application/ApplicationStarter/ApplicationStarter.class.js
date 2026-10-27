@@ -12,13 +12,17 @@ class ApplicationStarter {
       }
     }
     let promise, resolve, reject;
-    Export_transaction_material: {
+    Export_transaction_variables: {
       console.log("[*] Creating application promise...");
       ({ promise, resolve, reject } = ModulerV6.createResolvable());
     }
     Collapse_cache: {
       console.log("[*] Setting application promise...");
       this.isStarted = promise;
+    }
+    Declare_static_globals: {
+      Std.externals.Vue2.prototype.$window = window;
+      Std.externals.Vue2.prototype.$std = Std;
     }
     Resolve_start: {
       (async () => {

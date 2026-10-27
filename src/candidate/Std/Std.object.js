@@ -67,6 +67,7 @@
     Std.all.trify = Std.functions.trify = $compiler.inject.source("./apis/errors/trify/trify.function.js");
     Std.all.extractSubstrings = Std.functions.extractSubstrings = $compiler.inject.source("./apis/string/extractSubstrings/extractSubstrings.function.js");
     Std.all.capitalizeString = Std.functions.capitalizeString = $compiler.inject.source("./apis/string/capitalizeString.function.js");
+    Std.all.Timeout = Std.classes.Timeout = $compiler.inject.source("./apis/time/Timeout/Timeout.class.js");
     Std.all.TryableProxy = Std.classes.TryableProxy = $compiler.inject.source("./apis/errors/TryableProxy/TryableProxy.class.js");
     Std.all.TryableInterface = Std.interfaces.TryableInterface = $compiler.inject.source("./apis/patterns/TryableInterface/TryableInterface.interface.js");
     Std.all.JsonStringifier = Std.classes.JsonStringifier = $compiler.inject.source("./apis/json/JsonStringifier/JsonStringifier.class.js");
@@ -105,6 +106,7 @@
     Std.all.AbstractionMerger = Std.classes.AbstractionMerger = $compiler.inject.source("./apis/merge/AbstractionMerger/AbstractionMerger.class.js");
     Std.all.Tester = Std.classes.Tester = $compiler.inject.source("./apis/testing/Tester/Tester.class.js");
     Std.all.Progresser = Std.classes.Progresser = $compiler.inject.source("./apis/debug/Progresser/Progresser.class.js");
+    Std.all.Randomizer = Std.classes.Randomizer = $compiler.inject.source("./apis/random/Randomizer/Randomizer.class.js");
   }
   Wave_6_Types_system: {
     Std.all.TypesParser = Std.classes.TypesParser = $compiler.inject.source("./apis/types/TypesParser/TypesParser.object.js");
@@ -140,7 +142,8 @@
     }
     Std.all.ViewsRegistry = Std.classes.ViewsRegistry = $compiler.inject.source("./apis/views/ViewsRegistry/ViewsRegistry.class.js");
     Std.all.ViewsStaticMerger = Std.classes.ViewsStaticMerger = $compiler.inject.source("./apis/merge/ViewsStaticMerger/ViewsStaticMerger.class.js");
-    Std.all.DynamicView = Std.views.DynamicView = $compiler.inject.source("./apis/views/DynamicView/DynamicView.object.js");
+    Std.all.DynamicView = Std.views.DynamicView = $compiler.inject.source("./apis/views/containers/DynamicView/DynamicView.object.js");
+    Std.all.ContextualView = Std.views.ContextualView = $compiler.inject.source("./apis/views/containers/ContextualView/ContextualView.object.js");
   }
 
   Wave_14_Dialogs: {
@@ -151,6 +154,9 @@
 
   Wave_15_Calendar: {
     Std.all.CalendarParser = Std.objects.CalendarParser = $compiler.inject.source("./apis/calendar/CalendarParser/CalendarParser.object.js");
+    Std.all.CalendarClasses = Std.objects.CalendarClasses = $compiler.inject.source("./apis/calendar/Calendar/CalendarClasses.object.js");
+    Std.all.CalendarInterface = Std.interfaces.CalendarInterface = $compiler.inject.source("./apis/calendar/Calendar/CalendarInterface.interface.js");
+    Std.all.Calendar = Std.objects.Calendar = $compiler.inject.source("./apis/calendar/Calendar/Calendar.class.js");
   }
 
   Wave_95_Application_starter: {

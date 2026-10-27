@@ -13204,7 +13204,7 @@ module.exports = $moduler.export("#Std", [], async function([]) {
         if(instanze.onCreate) {
           output = instanze.onCreate({
             // parent: this,
-            config
+            ...config,
           }, ...constructorArgs) || output;
         }
       }
@@ -13897,6 +13897,21 @@ $moduler.toolkit.makeInterface([
 };
     Std.all.capitalizeString = Std.functions.capitalizeString = function capitalizeString(text) {
   return text.substr(0,1).toUpperCase() + text.substr(1);
+};
+    Std.all.Timeout = Std.classes.Timeout = class Timeout{
+  
+  static {
+    $moduler.toolkit.makeClass([
+      // Std.interfaces.InstantiableInterface,
+    ], this);
+  }
+  
+  static of(milliseconds) {
+    return new Promise((resolve) => {
+      setTimeout(resolve, milliseconds);
+    });
+  }
+
 };
     Std.all.TryableProxy = Std.classes.TryableProxy = class TryableProxy {
 
@@ -15444,6 +15459,85 @@ $moduler.toolkit.makeInterface([
     ], this);
   }
 };
+    Std.all.Randomizer = Std.classes.Randomizer = class Randomizer {
+  static letters = "abcdefghijklmnopqrstuvwxyz".split("");
+  static alphanumeric = "abcdefghijklmnopqrstuvwxyz0123456789".split("");
+  static numbers = "01234567489".split("");
+  static consonants = "bcdfghjklmnpqrstvwxyz".split("");
+  static vocals = "aeiou".split("");
+  static getRandomClassName (len = 20) {
+  let out = this.getRandomLetters(len);
+  return out.substr(0,1).toUpperCase() + out.substr(1);
+}
+  static getRandomConsonant (len = 1, consonants = this.consonants) {
+  let out = "";
+  while(out.length < len) {
+    out += this.getRandomItemFrom(consonants);
+  }
+  return out;
+}
+  static getRandomVocal (len = 1, vocals = this.vocals) {
+  let out = "";
+  let previous = null;
+  while(out.length < len) {
+    out += previous = this.getRandomItemFrom(vocals.filter(v => v !== previous));
+  }
+  return out;
+}
+  static getRandomLetters (len = 1, letters = this.letters) {
+  let out = "";
+  while(out.length < len) {
+    out += letters[Math.floor(Math.random() * letters.length)];
+  }
+  return out;
+}
+  static getRandomNumbers (len = 1, numbersList = this.numbers) {
+  let out = "";
+  while(out.length < len) {
+    out += numbersList[Math.floor(Math.random() * numbersList.length)];
+  }
+  return out;
+}
+  static getRandomSyllabus (vocalsBrute = 0) {
+  const vocals =
+    vocalsBrute === 0 ? this.getRandomItemFrom([1,2]) :
+    vocalsBrute > 0 ? vocalsBrute : 
+    vocalsBrute < 0 ? (
+      vocalsBrute === -1 ? this.getRandomItemFrom([1,1,2]) :
+      vocalsBrute === -2 ? this.getRandomItemFrom([1,2,2]) :
+      vocalsBrute === -3 ? this.getRandomItemFrom([1,1,1,2]) :
+      vocalsBrute === -4 ? this.getRandomItemFrom([1,2,2,2]) : 
+      this.getRandomItemFrom([1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,3])
+    ) : "never";
+    ;
+  let out = "";
+  out += this.getRandomConsonant(1);
+  out += this.getRandomVocal(vocals);
+  return out;
+}
+  static getRandomWord (syllabusBrute = 2) {
+  const syllabus = syllabusBrute > 0 ? syllabusBrute : parseInt(this.getRandomItemFrom("11111112222222222223333333444455".split("")));
+  let counter = 0;
+  let out = "";
+  while(counter < syllabus) {
+    out += this.getRandomSyllabus(-5);
+    counter++;
+  }
+  return out;
+}
+  static getRandomSentence (wordsBrute = 0) {
+  const words = wordsBrute > 0 ? wordsBrute : parseInt(this.getRandomItemFrom("2233333344444444555555555556666666666666777788".split("")));
+  const items = [];
+  while(items.length < words) {
+    items.push(this.getRandomWord(0));
+  }
+  const out = items.join(" ");
+  return out.substr(0,1).toUpperCase() + out.substr(1) + ".";
+}
+  static getRandomItemFrom (list) {
+  return list[Math.floor(Math.random() * list.length)];
+}
+};
   }
   Wave_6_Types_system: {
     Std.all.TypesParser = Std.classes.TypesParser = Std.parsers.peggy.generate("{" + '\n'
@@ -16488,7 +16582,7 @@ $moduler.toolkit.makeInterface([
     ], this);
   }
 };
-    Std.all.Domer = Std.classes.Domer = class Domer{
+    Std.all.Domer = Std.classes.Domer = class Domer {
   static {
     $moduler.toolkit.makeClass([
       Std.interfaces.InstantiableInterface,
@@ -16501,7 +16595,37 @@ $moduler.toolkit.makeInterface([
       document.body.appendChild(elem);
       return elem;
     })();
-    
+  }
+  static find(selector = "*", base = document) {
+    let output = undefined;
+    if(typeof selector === "string") {
+      output = [...base.querySelectorAll(selector)];
+    } else if(typeof selector === "function") {
+      output = [...base.querySelectorAll("*")].filter(el => selector(el));
+    }
+    return output;
+  }
+  static first(select, base = document) {
+    return this.find(select, base)[0];
+  }
+  static findFirstParentWhere(filter, base) {
+    let pivot = base;
+    while(pivot !== null) {
+      if(filter(pivot)) {
+        return pivot;
+      }
+      pivot = pivot.parentElement;
+    }
+    return null;
+  }
+  static {
+    Native_HTMLElement_extensions: {
+      if(Std.classes.Environmenter.isBrowser) {
+        HTMLElement.prototype.getVueComponent = function() {
+          return this.__vue__;
+        };
+      }
+    }
   }
 };
   }
@@ -16870,9 +16994,8 @@ $moduler.toolkit.makeInterface([
   static: {},
   prototype: {
     onCreate: function (parameters) {
-      Validation: {
+      Pre_validation: {
         $moduler.assert(typeof parameters === "object", `Required «parameters» to be object on «ThreadInterface.prototype.onCreate»`);
-        $moduler.assert(typeof parameters.parent === "object", `Required «parameters.parent» to be object on «ThreadInterface.prototype.onCreate»`);
       }
       Initialization: {
         this.parent = null;
@@ -16881,13 +17004,25 @@ $moduler.toolkit.makeInterface([
       }
       Polyfillment: {
         Object.assign(this, parameters);
+        if(this.parent === null) {
+          this.parent = Std.classes.Thread.globalInstance;
+        }
+      }
+      Post_validation: {
+        $moduler.assert(typeof this.parent === "object", `Required «this.parent» to be object on «ThreadInterface.prototype.onCreate»`);
+        if(this.parent !== false) {
+          $moduler.assert(this.parent instanceof Std.classes.Thread, `Required «this.parent» to be instance of «Std.classes.Thread» on «ThreadInterface.prototype.onCreate»`);
+          $moduler.assert(Array.isArray(this.parent.children), `Required «this.parent.children» to be array on «ThreadInterface.prototype.onCreate»`);
+        }
       }
       Self_push_into_parent: {
-        if (!this.parent) break Self_push_into_parent;
+        if (this.parent === false) {
+          break Self_push_into_parent;
+        }
         this.parent.children.push(this);
       }
     },
-    createSubthread: function () {
+    get newThread() {
       return Std.classes.Thread.create({ parent: this });
     },
     close: function () {
@@ -16914,8 +17049,14 @@ $moduler.toolkit.makeInterface([
       Std.interfaces.InstantiableInterface,
       Std.interfaces.ThreadInterface,
     ], this);
+    this.globalInstance = this.$ = Std.objects.GlobalThread = new Thread();
+    Object.assign(this.globalInstance, {
+      name: "Std.objects.GlobalThread",
+      parent: false,
+      children: [],
+      isClosed: false,
+    });
   }
-  static globalInstance = this.$ = Std.objects.GlobalThread = new Thread();
 };
   }
   
@@ -29007,39 +29148,170 @@ $moduler.toolkit.makeInterface([
 };
     Std.all.DynamicView = Std.views.DynamicView = Std.classes.ViewsRegistry.$.set("DynamicView", {
   name: "DynamicView",
-  template: "<div>" + '\n'
- + "<div>Esto es la changeable view</div>" + '\n'
- + "<button style=\"width:100%;\">reok</button>" + '\n'
- + "<textarea></textarea>" + '\n'
+  template: "<div class=\"View DynamicView\">" + '\n'
+ + "    <component v-bind:is=\"$locals.currentView.name\" v-bind=\"$locals.currentArgs\" />" + '\n'
  + "</div>",
   props: {
-    from: {
+    view: {
+      type: Object,
+      default: () => ({}),
+    },
+    args: {
       type: Object,
       default: () => ({}),
     }
   },
-  data: function() {
-    return {
-      currentView: this.from,
+  created() {
+    this.$locals = {
+      currentView: this.view,
+      currentArgs: this.args,
     };
   },
+  mounted() {
+    this.setView(this.$locals.currentView, this.$locals.currentArgs);
+  },
   methods: {
-    unregisterPrevious() {
-      if(!this.currentView.registeredName) {
-        return -2;
-      }
-      Std.classes.ViewsRegistry.globalInstance.delete(this.currentView.registeredName);
+    refreshView() {
+      this.$forceUpdate(true);
     },
-    setView(view) {
-      $moduler.assert(typeof view === "object", `Required parameter «view» to be object but «${typeof view}» was found instead on «Std.objects.DynamicView.methods.setView»`);
-      $moduler.assert(typeof view.template === "string", `Required property «view.template» to be string but «${typeof view}» was found instead on «Std.objects.DynamicView.methods.setView»`);
-      this.unregisterPrevious();
-      Chatgpt: {
-        // @TODO:
+    setView(view, args = {}) {
+      const { ViewsRegistry } = Std.all;
+      Validate_input: {
+        $moduler.assert(typeof view === "object", `Required parameter «view» to be object but «${typeof view}» was found instead on «Std.objects.DynamicView.methods.setView»`);
+        $moduler.assert(typeof view.template === "string", `Required property «view.template» to be string but «${typeof view}» was found instead on «Std.objects.DynamicView.methods.setView»`);
+        $moduler.assert(typeof args === "object", `Required property «args» to be object but «${typeof args}» was found instead on «Std.objects.DynamicView.methods.setView»`);
+      }
+      Unregister_previous: {
+        if(this.$locals.currentView.name && ViewsRegistry.$.get(this.$locals.currentView.name)?.isVolatile) {
+          ViewsRegistry.$.delete(this.$locals.currentView.name);
+        }
+      }
+      Register_new_or_polyfill_with_old: {
+        if(!view.name) {
+          view.name = `DynamicViewUnit${Std.classes.Randomizer.getRandomNumbers(10)}`;
+        }
+        if(!(view.name in Std.externals.Vue2.options.components)) {
+          ViewsRegistry.$.set(view.name, {
+            isVolatile: true,
+            ...view,
+          });
+        } else {
+          view = { ...view, ...ViewsRegistry.$.get(view.name) };
+        }
+      }
+      Hydrate_view: {
+        this.$locals.currentArgs = args;
+        this.$locals.currentView = view;
+        this.refreshView();
       }
     },
     setHtml(html) {
-      return this.setView({ template: html });
+      return this.setView({
+        template: html.startsWith("<") ? html : `<div>${html}</div>`,
+      });
+    },
+  }
+});
+    Std.all.ContextualView = Std.views.ContextualView = Std.classes.ViewsRegistry.$.set("ContextualView", {
+  name: "ContextualView",
+  template: "<div class=\"View ContextualView\">" + '\n'
+ + "    <div class=\"contextual_view_top_panel\">" + '\n'
+ + "        <div class=\"contextual_view_option\"" + '\n'
+ + "            :class=\"{activated: ctxIndex === $locals.selectedContext}\"" + '\n'
+ + "            v-on:click=\"() => goToContext(ctxIndex)\"" + '\n'
+ + "            v-for=\"ctx, ctxIndex in $locals.contexts\"" + '\n'
+ + "            v-bind:key=\"'context_' + ctxIndex\">{{ ctxIndex + 1 }}</div>" + '\n'
+ + "        <div class=\"contextual_view_option\" style=\"flex:100;\"></div>" + '\n'
+ + "        <div class=\"contextual_view_option\" style=\"flex:1;\" v-on:click=\"appendCleanContext\">+</div>" + '\n'
+ + "    </div>" + '\n'
+ + "    <div class=\"contextual_view_center_panel\">" + '\n'
+ + "        <DynamicView" + '\n'
+ + "            v-for=\"ctx, ctxIndex in $locals.contexts\"" + '\n'
+ + "            v-bind:key=\"($locals.isFirst || ($locals.hasChanged === true) || ($locals.hasChanged === ctxIndex))? $window.Std.classes.Randomizer.getRandomWord(10) : null\"" + '\n'
+ + "            v-show=\"ctxIndex === $locals.selectedContext\"" + '\n'
+ + "            class=\"contextual_view_tab\"" + '\n'
+ + "            :class=\"{activated: ctxIndex === $locals.selectedContext}\"" + '\n'
+ + "            :view=\"ctx.view\"" + '\n'
+ + "            :args=\"ctx.args\"" + '\n'
+ + "        />" + '\n'
+ + "    </div>" + '\n'
+ + "</div>",
+  props: {
+    view: {
+      type: Object,
+      default: () => false,
+    },
+    args: {
+      type: Object,
+      default: () => ({}),
+    },
+  },
+  created: function() {
+    this.$locals = {
+      isFirst: true,
+      isContextualView: true,
+      selectedContext: 0,
+      contexts: this.view ? [{ view: this.view, args: this.args, }] : [],
+      hasChanged: false,
+    };
+  },
+  updated() {
+    this.$locals.hasChanged = false;
+    this.$locals.isFirst = false;
+  },
+  mounted() {
+    
+  },
+  methods: {
+    refreshView(hasChanged = false) {
+      this.$locals.hasChanged = hasChanged;
+      this.$nextTick(() => {
+        this.$locals.hasChanged = false;
+      });
+      this.$forceUpdate(true);
+    },
+    resetContext(view, args = {}) {
+      this.$locals.contexts = [{ view, args }];
+      this.refreshView(true);
+    },
+    goBackInContext() {
+      if(this.$locals.selectedContext === 0) return -1;
+      this.$locals.selectedContext--;
+      this.refreshView(false);
+    },
+    goForwardInContext() {
+      if(this.$locals.selectedContext === (this.$locals.contexts.length - 1)) return -1;
+      this.$locals.selectedContext++;
+      this.refreshView(false);
+    },
+    goToContext(index) {
+      this.$locals.selectedContext = index;
+      this.refreshView(false);
+    },
+    addContext(view, args = {}) {
+      if(this.$locals.selectedContext === (this.$locals.contexts.length - 1)) {
+        this.$locals.contexts.push({ view, args });
+      } else {
+        this.$locals.contexts = this.$locals.contexts.splice(0, this.$locals.selectedContext+1).concat([{ view, args }]);
+      }
+      this.$locals.selectedContext = this.$locals.contexts.length - 1;
+      this.refreshView(this.$locals.selectedContext);
+    },
+    appendCleanContext() {
+      return this.addContext(this.view, this.args);
+    },
+    getClassesForContext(ctx, ctxIndex) {
+      if(ctxIndex === this.$locals.selectedContext) {
+        return "active_context";
+      }
+      return "inactive_context";
+    }
+  },
+  static: {
+    findContextualViewOf(base) {
+      const contextualElement = Std.all.Domer.findFirstParentWhere(e => e.__vue__?.$locals?.isContextualView === true, base);
+      if(!contextualElement) return contextualElement;
+      return contextualElement.__vue__;
     },
   }
 });
@@ -29142,14 +29414,54 @@ $moduler.toolkit.makeInterface([
  + "Duration_language = \"dur\"", {
   output: "parser" // also: "source", "parser"
 });
+    Std.all.CalendarClasses = Std.objects.CalendarClasses = {
+  Moment: Std.classes.Moment,
+  Duration: Std.classes.Duration,
+  Action: Std.classes.Duration,
+  Task: Std.classes.Task,
+};
+    Std.all.CalendarInterface = Std.interfaces.CalendarInterface = // @interface:CalendarInterface
+{
+  prototype: {
+    classes: Std.objects.CalendarClasses,
+  },
+  static: {},
+};
+    Std.all.Calendar = Std.objects.Calendar = class Calendar {
+
+  static {
+    $moduler.toolkit.makeClass([
+      Std.interfaces.InstantiableInterface,
+      Std.interfaces.CalendarInterface,
+    ], this);
+  }
+
+  static globalInstance = new this();
+
+};
   }
 
   Wave_95_Application_starter: {
     Std.all.MainApplication = Std.views.MainApplication = Std.classes.ViewsRegistry.$.set("MainApplication", {
   name: "MainApplication",
   template: "<div>" + '\n'
- + "    <DialogsPort :application=\"this\" />" + '\n'
- + "    <DynamicView :from=\"{}\" />" + '\n'
+ + "    <DialogsPort" + '\n'
+ + "        :application=\"this\"" + '\n'
+ + "    />" + '\n'
+ + "    <DynamicView" + '\n'
+ + "        :view=\"{template:'<div>{{msg}}</div>', props: {msg:String}}\"" + '\n'
+ + "        :args=\"{msg:'This is the base of dynamic view'}\"" + '\n'
+ + "    />" + '\n'
+ + "    <ContextualView" + '\n'
+ + "        :view=\"{" + '\n'
+ + "            template: `<div>{{msg}}: <textarea v-model='filecontent' spellcheck='false'/></div>`," + '\n'
+ + "            props: {msg:String}," + '\n'
+ + "            data() {" + '\n'
+ + "                return { filecontent:'' }" + '\n'
+ + "            }" + '\n'
+ + "        }\"" + '\n'
+ + "        :args=\"{msg:'This is the base of contextual view'}\"" + '\n'
+ + "    />" + '\n'
  + "</div>",
   data: function() {
     return {};
@@ -29170,13 +29482,17 @@ $moduler.toolkit.makeInterface([
       }
     }
     let promise, resolve, reject;
-    Export_transaction_material: {
+    Export_transaction_variables: {
       console.log("[*] Creating application promise...");
       ({ promise, resolve, reject } = ModulerV6.createResolvable());
     }
     Collapse_cache: {
       console.log("[*] Setting application promise...");
       this.isStarted = promise;
+    }
+    Declare_static_globals: {
+      Std.externals.Vue2.prototype.$window = window;
+      Std.externals.Vue2.prototype.$std = Std;
     }
     Resolve_start: {
       (async () => {

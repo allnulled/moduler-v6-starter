@@ -1,4 +1,19 @@
 <div>
-    <DialogsPort :application="this" />
-    <DynamicView :from="{}" />
+    <DialogsPort
+        :application="this"
+    />
+    <DynamicView
+        :view="{template:'<div>{{msg}}</div>', props: {msg:String}}"
+        :args="{msg:'This is the base of dynamic view'}"
+    />
+    <ContextualView
+        :view="{
+            template: `<div>{{msg}}: <textarea v-model='filecontent' spellcheck='false'/></div>`,
+            props: {msg:String},
+            data() {
+                return { filecontent:'' }
+            }
+        }"
+        :args="{msg:'This is the base of contextual view'}"
+    />
 </div>

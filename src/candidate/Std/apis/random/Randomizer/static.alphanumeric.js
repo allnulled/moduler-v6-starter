@@ -1,0 +1,1 @@
+static alphanumeric = "abcdefghijklmnopqrstuvwxyz0123456789".split("");

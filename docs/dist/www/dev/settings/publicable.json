@@ -33,7 +33,11 @@
             "@/dist/www/dev/test/feature/010.Std.objects.ViewsRegistry puede registrar y desregistrar componentes para vue2/test.dist.js",
             "@/dist/www/dev/test/feature/011.Mix de ViewsMerger, DynamicView, Dialogs y Threads/test.dist.js",
             "@/dist/www/dev/test/feature/011.Mix de ViewsStaticMerger, DynamicView, Dialogs y Threads/test.dist.js",
-            "@/dist/www/dev/test/feature/012.Std.objects.CalendarParser puede parsear scripts/test.dist.js"
+            "@/dist/www/dev/test/feature/012.Std.objects.CalendarParser puede parsear scripts/test.dist.js",
+            "@/dist/www/dev/test/feature/014.Ejemplo de Calendar API/test.dist.js",
+            "@/dist/www/dev/test/feature/015.Std.classes.Thread puede crear árboles/test.dist.js",
+            "@/dist/www/dev/test/feature/016.Std.views.DynamicView puede renderizar contenido variable eficientemente/test.dist.js",
+            "@/dist/www/dev/test/feature/017.Std.views.ContextualView puede renderizar contenido contextualizado eficientemente/test.dist.js"
           ]
         },
         "@/dist/www/dev/test/integrity": {

@@ -1,0 +1,1 @@
+static letters = "abcdefghijklmnopqrstuvwxyz".split("");

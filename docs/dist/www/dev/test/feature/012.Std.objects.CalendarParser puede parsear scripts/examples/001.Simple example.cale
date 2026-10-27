@@ -1,1 +1,189 @@
-json
+// F001: Insertar tarea concreta en minuto concreto
+
+2026/12/25 a las 21:00pm <Celebrar la Navidad> por 1h;
+
+// F002: Insertar bloque de tareas contiguas en minuto concreto
+
+en 2026/12/25 {
+    a las 09:00am {
+        <Ducharse> por 30min,
+        <Desayunar> por 20min,
+        <Meditar> por 15min
+    }
+}
+
+// F003: Insertar bloque de tareas contiguas en minuto concreto basándose en variable para el minuto
+
+en 2026/12/25 {
+    al #despertar {
+        <Ducharse> por 30min,
+        <Desayunar> por 20min,
+        <Meditar> por 15min
+    }
+}
+
+// F004: Insertar bloque de tareas contiguas en minuto concreto basándose en variable resuelta para el minuto
+
+en 2026/12/25 {
+    al #despertar [=09:00am] {
+        <Ducharse> por 30min,
+        <Desayunar> por 20min,
+        <Meditar> por 15min
+    }
+}
+
+// F005: Insertar tareas en minuto concreto para todos los años
+
+*/12/25 21:00pm <Celebrar Navidad> por 1h;
+
+// F006: Insertar tareas en minuto concreto para todos los meses
+
+*/*/01 21:00pm <Celebrar inicio de mes> por 1h;
+
+// F006/b: Insertar tareas en minuto concreto para todos los meses basándose en días desde el final del mes para atrás (días negativos)
+
+*/*/-01 21:00pm <Celebrar final de mes> por 1h;
+
+// F007: Insertar tareas en minuto concreto para todos los días
+
+*/*/* 21:00pm <Celebrar la cena del día> por 1h;
+
+// F008: Insertar tareas en minuto concreto para todas las horas
+
+*/*/* *:30pm <Celebrar la media hora> por 1min;
+
+// F009: Insertar tareas en un rango y frecuencia específicos:
+
+en [2026..2028]/*/* los lunes, miércoles y viernes {
+
+}
+
+IDEA!
+
+UN LENGUAJE PARA FECHAS, MOMENTOS, RANGOS Y FRECUENCIAS
+
+OTRO LENGUAJE PARA TAREAS Y ATRIBUTACIONES Y AGLUTINAMIENTOS
+
+Y LOS MEZCLAS COMO SI FUERAN OPERACIONES MATEMÁTICAS:
+
+{ 2026/12/25 21:00 } * <Celebrar la Navidad> [por: 1h];
+
+{ */12/25 21:00 } * <Celebrar la Navidad> [por: 1h];
+
+[en */*/* al @despertar:]
+
+// O lo que es lo mismo:
+
+[al @despertar:]
+
+<Ducharse> [por: 30min],
+<Desayunar> [por: 20min],
+<Meditar> [por: 15min],
+<Estiramientos de piernas> [por: 10min],
+<Bicicleta> [por: 45min | 1h 30min];
+
+[al @primerDescanso:]
+
+<Revisar tal> [por: 2min],
+<Fumarse un cig> [por: 10min],
+<Estiramientos de tronco bajo> [por: 15min];
+
+diariamente {
+    pregunto @"momento de despertar" como tipo "momento" con "HH:mm".
+    al @"momento de despertar" {
+        por 20min <Ducharse>.
+        por 30min <Desayunar>.
+        por 10min <Reflexión estática>.
+        pregunto @"modalidad de paseo" como tipo "opción" con ["rápido", "largo"].
+        si @"modalidad de paseo" == "rápido" {
+            por 20min <Sacar a perrilla>.
+        } o si @"modalidad de paseo" == "largo" {
+            por 1h 30min <Sacar a perrilla>.
+        }.
+        pregunto @"modalidad de entreno matutino" como tipo "opción" con ["tranquilo", "moderado", "intenso"].
+        creo @rondas = 3.
+        creo @"iteraciones grupo 1" = 10.
+        creo @"iteraciones grupo 2" = 20.
+        creo @"iteraciones grupo 3" = 50.
+        si @"modalidad de entreno matutino" == "tranquilo" {
+            modifico @"iteraciones grupo 1" = 5.
+            modifico @"iteraciones grupo 2" = 10.
+            modifico @"iteraciones grupo 3" = 30.
+            modifico @rondas = 4.
+        } o si @"modalidad de entreno matutino" == "moderado" {
+            modifico @"iteraciones grupo 1" = 10.
+            modifico @"iteraciones grupo 2" = 20.
+            modifico @"iteraciones grupo 3" = 40.
+            modifico @rondas = 4.
+        } o si @"modalidad de entreno matutino" == "intenso" {
+            modifico @"iteraciones grupo 1" = 20.
+            modifico @"iteraciones grupo 2" = 30.
+            modifico @"iteraciones grupo 3" = 60.
+            modifico @rondas = 3.
+        }.
+
+    }
+}
+
+Si la cosa va a ir por ahí entonces mejor pensar en:
+
+Moment
+    + ...
+Duration
+    + .toObject,
+Action
+    + .name,
+    + .moment,
+    + .duration,
+    + .composition
+Question
+    + .ask,
+Range
+    + .range.from
+    + .range.to
+    + .frequency
+
+UnorderedList: los ítems no tienen un orden estricto
+OrderedList: los ítems están ordenados por prioridad, primero se consume el primero, luego el segundo, etc.
+LoopedList:los ítems se seguirían repitiendo hasta el infinito
+
+async function(calendar, classes) {
+
+    await calendar.isolate({
+        range: classes.Range.new.config({
+            from: classes.Moment.new.config({ year: "2026" }),
+            to: classes.Moment.new.config({ year: "2027" }),
+        }),
+        frequency: classes.Duration.new.config({ expression: "4h" }).toObject(),
+    }).for(async function() {
+
+        const despertar = await classes.Question.new.config({
+            type: classes.Moment,
+            parameters: ["HH:mm"]
+        }).ask();
+
+        await classes.Action.new.config({
+            moment: despertar,
+            composition: classes.OrderedList.new.config({
+                items: [
+                    classes.Action.new.config({
+                        name: "Ducharse",
+                        duration: classes.Duration.new.config({ expression: "20min" }).toObject(),
+                    }),
+                    classes.Action.new.config({
+                        name: "Desayunar",
+                        duration: classes.Duration.new.config({ expression: "20min" }).toObject(),
+                    }),
+                    classes.Action.new.config({
+                        name: "Reflexión estática",
+                        duration: classes.Duration.new.config({ expression: "20min" }).toObject(),
+                    }),
+                ]
+            }),
+        }).registerInto(calendar);
+
+    });
+
+
+}
+

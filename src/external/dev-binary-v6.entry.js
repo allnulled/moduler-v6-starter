@@ -6648,7 +6648,11 @@ async touchFile(fileBrute, optionsInput = {}) {
             const outputCompilation = await this.devbin.compiler.compile(filepath);
             const outputHtml = outputCompilation.html;
             const outputFullpath = this.devbin.moduler.normalizationOf(outputFile);
-            await require("fs").promises.writeFile(outputFullpath, outputHtml, "utf8");
+            Lo_dejamos_petar_en_paralelo_si_falla: {
+              require("fs").promises.writeFile(outputFullpath, outputHtml, "utf8").catch(error => {
+                console.log(this.devbin.compiler.constructor.ansi.colors.style("blackBright").text(`[-] DevBinaryV6 could not export *.html file to «@/dist» directory: ${rootPath}`));
+              });
+            }
           }
         }
         Caso_previo_6_test_de_test_dir: {

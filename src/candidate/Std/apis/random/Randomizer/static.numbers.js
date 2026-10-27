@@ -1,0 +1,1 @@
+static numbers = "01234567489".split("");

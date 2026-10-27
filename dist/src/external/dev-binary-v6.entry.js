@@ -5508,9 +5508,6 @@ _getDataForTokenCompilation(input, options = {}) {
   this.assert(typeof input.token === "object", "Parameter «input.token» must be object on «CompilerV6.prototype._getDataForTokenCompilation»");
   this.assert(typeof input.token.inner === "string", "Parameter «input.token.inner» must be string on «CompilerV6.prototype._getDataForTokenCompilation»");
   // this.assert(typeof input.tokenIndex === "number", "Parameter «input.tokenIndex» must be number on «CompilerV6.prototype._getDataForTokenCompilation»");
-  console.log(input.token.inner);
-  console.log(input.token.inner);
-  console.log(input.token.inner);
   let output, parameters = undefined;
   if(typeof options.onError === "function") {
     try {
@@ -6651,7 +6648,11 @@ async touchFile(fileBrute, optionsInput = {}) {
             const outputCompilation = await this.devbin.compiler.compile(filepath);
             const outputHtml = outputCompilation.html;
             const outputFullpath = this.devbin.moduler.normalizationOf(outputFile);
-            await require("fs").promises.writeFile(outputFullpath, outputHtml, "utf8");
+            Lo_dejamos_petar_en_paralelo_si_falla: {
+              require("fs").promises.writeFile(outputFullpath, outputHtml, "utf8").catch(error => {
+                console.log(this.devbin.compiler.constructor.ansi.colors.style("blackBright").text(`[-] DevBinaryV6 could not export *.html file to «@/dist» directory: ${rootPath}`));
+              });
+            }
           }
         }
         Caso_previo_6_test_de_test_dir: {
@@ -6683,7 +6684,10 @@ async touchFile(fileBrute, optionsInput = {}) {
               outputFile = rootPath.replace("@/src/", "@/dist/src/");
             }
             const outputCompilation = await this.devbin.compiler.compile(rootPath);
-            console.log(outputCompilation);
+            if(event.isRoot) {
+              const outputFile = outputCompilation.file.replace(/\.entry\.pegjs$/g, ".dist.pegjs");
+              await require("fs").promises.writeFile(outputFile, outputCompilation.pegjs, "utf8");
+            }
             return event;
           }
         }
@@ -8090,6 +8094,9 @@ async loop(args) {
       "md",
       "txt",
       "pegjs",
+      // Extensiones del framework:
+      "cale",
+      "tyla",
       ...settingsExtensions,
     ],
     execute: [

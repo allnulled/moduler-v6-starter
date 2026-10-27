@@ -1,0 +1,22 @@
+<div class="View ContextualView">
+    <div class="contextual_view_top_panel">
+        <div class="contextual_view_option"
+            :class="{activated: ctxIndex === $locals.selectedContext}"
+            v-on:click="() => goToContext(ctxIndex)"
+            v-for="ctx, ctxIndex in $locals.contexts"
+            v-bind:key="'context_' + ctxIndex">{{ ctxIndex + 1 }}</div>
+        <div class="contextual_view_option" style="flex:100;"></div>
+        <div class="contextual_view_option" style="flex:1;" v-on:click="appendCleanContext">+</div>
+    </div>
+    <div class="contextual_view_center_panel">
+        <DynamicView
+            v-for="ctx, ctxIndex in $locals.contexts"
+            v-bind:key="($locals.isFirst || ($locals.hasChanged === true) || ($locals.hasChanged === ctxIndex))? $window.Std.classes.Randomizer.getRandomWord(10) : null"
+            v-show="ctxIndex === $locals.selectedContext"
+            class="contextual_view_tab"
+            :class="{activated: ctxIndex === $locals.selectedContext}"
+            :view="ctx.view"
+            :args="ctx.args"
+        />
+    </div>
+</div>

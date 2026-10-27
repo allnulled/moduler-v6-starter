@@ -26,7 +26,7 @@
         if(instanze.onCreate) {
           output = instanze.onCreate({
             // parent: this,
-            config
+            ...config,
           }, ...constructorArgs) || output;
         }
       }

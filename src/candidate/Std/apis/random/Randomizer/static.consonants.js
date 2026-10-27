@@ -1,0 +1,1 @@
+static consonants = "bcdfghjklmnpqrstvwxyz".split("");

@@ -20,9 +20,9 @@ module.exports = async function ({ file, devbin }) {
     if (isCopiable) {
       const rootpath = DevBinaryV6.globalInstance.moduler.rootdirOf(file);
       if (rootpath.startsWith("@/src/www/")) {
-        await DevBinaryV6.globalInstance.files.copyFile(rootpath, rootpath.replace("@/src/www/", "@/dist/www/"));
+        await DevBinaryV6.globalInstance.files.copyFile.try(rootpath, rootpath.replace("@/src/www/", "@/dist/www/"));
       } else if (rootpath.startsWith("@/src/")) {
-        await DevBinaryV6.globalInstance.files.copyFile(rootpath, rootpath.replace("@/src/", "@/dist/src/"));
+        await DevBinaryV6.globalInstance.files.copyFile.try(rootpath, rootpath.replace("@/src/", "@/dist/src/"));
       }
     }
   }
