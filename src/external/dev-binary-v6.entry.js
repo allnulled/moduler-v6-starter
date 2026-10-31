@@ -5573,31 +5573,31 @@ _createDefaultInjectedFile(file, targetId) {
     }
     First_type: {
       if (attr.class) {
-        output = `class ${name || ""}{\n  static {\n    $moduler.toolkit.makeClass([\n      Std.interfaces.InstantiableInterface,\n    ], this);\n  }\n}`;
+        output = `class ${this._getPostSpacedOrEmpty(name)}{\n  static {\n    $moduler.toolkit.makeClass([\n      Std.interfaces.InstantiableInterface,\n    ], this);\n  }\n}`;
       } else if (attr.function) {
-        output = `function ${name || ""}() {\n  \n}`;
+        output = `function ${this._getPostSpacedOrEmpty(name)}() {\n  \n}`;
       } else if (attr.member || attr.any) {
         output = `0`;
       } else if (attr.fact) {
-        output = `(function ${name || ""}() {\n  \n}).call(this)`;
+        output = `(function ${this._getPostSpacedOrEmpty(name)}() {\n  \n}).call(this)`;
       } else if (attr.part) {
         output = name ? `Step_${name}: {\n  \n}` : "";
       } else if (attr.promise) {
         output = `new Promise(async (resolve, reject) => {\n  \n})`;
       } else if (attr.get) {
-        output = `get ${name || ""} () {\n  \n}`;
+        output = `get ${this._getPostSpacedOrEmpty(name)}() {\n  \n}`;
       } else if (attr.set) {
-        output = `set ${name || ""} () {\n  \n}`;
+        output = `set ${this._getPostSpacedOrEmpty(name)}() {\n  \n}`;
       } else if (attr.construct) {
-        output = `construct ${name || ""} () {\n  \n}`;
+        output = `construct ${this._getPostSpacedOrEmpty(name)}() {\n  \n}`;
       } else if (attr.apply) {
-        output = `apply ${name || ""} () {\n  \n}`;
+        output = `apply ${this._getPostSpacedOrEmpty(name)}() {\n  \n}`;
       } else if (attr.deleteProperty) {
-        output = `deleteProperty ${name || ""} () {\n  \n}`;
+        output = `deleteProperty ${this._getPostSpacedOrEmpty(name)}() {\n  \n}`;
       } else if (attr.interface) {
-        output = `// @interface:${name || ""}\n{\n  prototype: {},\n  static: {},\n}`;
+        output = `// @interface:${this._getPostSpacedOrEmpty(name)}\n{\n  prototype: {},\n  static: {},\n}`;
       } else if (!cannotBeMethod) {
-        output = `${name || ""} () {\n  \n}`;
+        output = `${this._getPostSpacedOrEmpty(name)}() {\n  \n}`;
       }
     }
     Second_presentation: {
@@ -5738,6 +5738,15 @@ _hasExtensionLike(file, extensions = []) {
     if(file.endsWith(extensionString)) return true;
   }
   return false;
+}
+  /**
+ * @name CompilerV6.prototype._getPostSpacedOrEmpty
+ * @type 
+ * @description 
+ */
+_getPostSpacedOrEmpty(text) {
+  if(!text) return "";
+  return text + " ";
 }
 
   /**

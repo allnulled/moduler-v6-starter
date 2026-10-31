@@ -5,6 +5,7 @@
     basedir: "~",
     rootdir: "~",
     normalizationOf(input) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"Std.interfaces.UrlerInterface.prototype.normalizationOf"});
       let output = input.replaceAll("\\", "/");
       if (/^[a-z]+:\/\//i.test(output)) output = output;
       if (output.startsWith("@/")) output = this.rootdir + output.slice(1);
@@ -20,12 +21,15 @@
       return output;
     },
     basepathOf(input) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"Std.interfaces.UrlerInterface.prototype.basepathOf"});
       return this._relativePath(input, this.basedir, ".");
     },
     rootpathOf(input) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"Std.interfaces.UrlerInterface.prototype.rootpathOf"});
       return this._relativePath(input, this.rootdir, "@");
     },
     _relativePath(_path, _anchor, prefix) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"Std.interfaces.UrlerInterface.prototype._relativePath"});
       let output = undefined;
       let path = this.normalizationOf(_path);
       let anchor = _anchor === "/" ? "/" : _anchor.replace(/\/$/, "");
@@ -35,9 +39,11 @@
       return output;
     },
     setBasedir(input) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"Std.interfaces.UrlerInterface.prototype.setBasedir"});
       this.basedir = this.normalizationOf(input);
     },
     setRootdir(input) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"Std.interfaces.UrlerInterface.prototype.setRootdir"});
       this.rootdir = this.normalizationOf(input);
     },
   }

@@ -93,7 +93,7 @@ module.exports = async function ({ Tester }) {
     $moduler.assert(secondWatch === second.watch.value);
     $moduler.assert(firstCreated === first.created);
     $moduler.assert(secondCreated === second.created);
-    console.log("OK: mergeo de propiedades compatibles");
+    // console.log("OK: mergeo de propiedades compatibles");
   }
 
   // ------------------------------------------------------------
@@ -124,7 +124,7 @@ module.exports = async function ({ Tester }) {
         return error;
       },
     );
-    console.log("OK: detección de métodos duplicados");
+    // console.log("OK: detección de métodos duplicados");
   }
   // ------------------------------------------------------------
   // 4. Referencias originales
@@ -137,14 +137,14 @@ module.exports = async function ({ Tester }) {
     const merged = ViewsStaticMerger.mergeViews([first, {}]);
     $moduler.assert(method === merged.methods.method);
     $moduler.assert(merged.methods !== first.methods);
-    console.log("OK: referencias conservadas sin compartir el contenedor");
+    // console.log("OK: referencias conservadas sin compartir el contenedor");
   }
 
   console.log("Todos los tests han finalizado correctamente.");
 
 
 
-  console.log(extractions);
+  // console.log(extractions);
 
 
 };

@@ -4,9 +4,8 @@ class Thread {
       Std.interfaces.InstantiableInterface,
       Std.interfaces.ThreadInterface,
     ], this);
-    this.globalInstance = this.$ = Std.objects.GlobalThread = new Thread();
-    Object.assign(this.globalInstance, {
-      name: "Std.objects.GlobalThread",
+    this.globalInstance = this.$ = Std.objects.GlobalThread = Thread.create({
+      threadId: "Std.objects.GlobalThread",
       parent: false,
       children: [],
       isClosed: false,

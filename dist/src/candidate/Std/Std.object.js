@@ -68,6 +68,7 @@
     Std.all.extractSubstrings = Std.functions.extractSubstrings = $compiler.inject.source("./apis/string/extractSubstrings/extractSubstrings.function.js");
     Std.all.capitalizeString = Std.functions.capitalizeString = $compiler.inject.source("./apis/string/capitalizeString.function.js");
     Std.all.Timeout = Std.classes.Timeout = $compiler.inject.source("./apis/time/Timeout/Timeout.class.js");
+    Std.all.Performancer = Std.classes.Performancer = $compiler.inject.source("./apis/time/Performancer/Performancer.class.js");
     Std.all.TryableProxy = Std.classes.TryableProxy = $compiler.inject.source("./apis/errors/TryableProxy/TryableProxy.class.js");
     Std.all.TryableInterface = Std.interfaces.TryableInterface = $compiler.inject.source("./apis/patterns/TryableInterface/TryableInterface.interface.js");
     Std.all.JsonStringifier = Std.classes.JsonStringifier = $compiler.inject.source("./apis/json/JsonStringifier/JsonStringifier.class.js");
@@ -81,6 +82,7 @@
     Std.all.ObjectReflector = Std.classes.ObjectReflector = $compiler.inject.source("./apis/reflection/ObjectReflector/ObjectReflector.class.js");
     Std.all.FunctionReflector = Std.classes.FunctionReflector = $compiler.inject.source("./apis/reflection/FunctionReflector/FunctionReflector.class.js");
     Std.all.ClassReflector = Std.classes.ClassReflector = $compiler.inject.source("./apis/reflection/ClassReflector/ClassReflector.class.js");
+    Std.all.FunctionsList = Std.classes.FunctionsList = $compiler.inject.source("./apis/events/FunctionsList/FunctionsList.class.js");
   }
   Wave_4_Utility_interfaces: {
     Std.all.IntrospectorInterface = Std.interfaces.IntrospectorInterface = $compiler.inject.source("./apis/reflection/Introspector/IntrospectorInterface.interface.js");
@@ -149,14 +151,22 @@
   Wave_14_Dialogs: {
     Std.all.Dialogs = Std.classes.Dialogs = $compiler.inject.source("./apis/views/dialogs/Dialogs/Dialogs.class.js");
     Std.all.DialogsFactory = Std.classes.DialogsFactory = $compiler.inject.source("./apis/views/dialogs/DialogsFactory/DialogsFactory.class.js");
+    Std.all.DialogView = Std.views.DialogView = $compiler.inject.source("./apis/views/dialogs/DialogView/DialogView.object.js");
     Std.all.DialogsPort = Std.views.DialogsPort = $compiler.inject.source("./apis/views/dialogs/DialogsPort/DialogsPort.object.js");
   }
 
   Wave_15_Calendar: {
-    Std.all.CalendarParser = Std.objects.CalendarParser = $compiler.inject.source("./apis/calendar/CalendarParser/CalendarParser.object.js");
-    Std.all.CalendarClasses = Std.objects.CalendarClasses = $compiler.inject.source("./apis/calendar/Calendar/CalendarClasses.object.js");
-    Std.all.CalendarInterface = Std.interfaces.CalendarInterface = $compiler.inject.source("./apis/calendar/Calendar/CalendarInterface.interface.js");
-    Std.all.Calendar = Std.objects.Calendar = $compiler.inject.source("./apis/calendar/Calendar/Calendar.class.js");
+    En_entredicho_por_v2: {
+      Std.all.CalendarParser = Std.objects.CalendarParser = $compiler.inject.source("./apis/calendar/CalendarParser/CalendarParser.object.js");
+      Std.all.CalendarClasses = Std.objects.CalendarClasses = $compiler.inject.source("./apis/calendar/Calendar/CalendarClasses.object.js");
+      Std.all.CalendarInterface = Std.interfaces.CalendarInterface = $compiler.inject.source("./apis/calendar/Calendar/CalendarInterface.interface.js");
+      Std.all.Calendar = Std.objects.Calendar = $compiler.inject.source("./apis/calendar/Calendar/Calendar.class.js");
+    }
+    Std.all.CalendarV2 = Std.classes.CalendarV2 = $compiler.inject.source("./apis/calendar/v2/CalendarV2/CalendarV2.class.js");
+  }
+
+  Wave_16_Graphics: {
+    Std.functions.CielabColorConverter = Std.objects.CielabColorConverter = $compiler.inject.source("./apis/graphics/colors/scale/CielabColorConverter/CielabColorConverter.class.js");
   }
 
   Wave_95_Application_starter: {

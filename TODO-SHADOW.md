@@ -1,3 +1,40 @@
+ACTUAL:
+
+1. Dialogs.
+  1.1. El css de las ventanitas
+    - Estilo brutalista + blanquinegrista
+    - Respetando modulación
+    - El css de los temas también como módulo y clases comunes a otros módulos
+      - porque indican estados de un componente de ui
+      - y todos lo son, por lo cual todos son susceptibles de usar estas clases
+  1.2. Las lógicas asociadas a los diálogos:
+    - Flexibilidad:
+      - Devolver los 2 en un objeto: { dialog, promise }
+    - Controlabilidad / Panel inferior:
+      - Cerrar / aceptar diálogo: los botones de cancel / accept
+    - Panel central: el layout
+      - Scroleable (por defecto: "scrollable")
+      - Fijo y centrado (opcional: "fixed")
+    - Movilidad:
+      - El drag'n'drop de la barra superior
+    - Redimensionalidad: el drag'n'drop de los bordes
+      - Incluyendo la delicada de la izquierda y superior (chatgpt powered)
+    - Superposicionalidad:
+      - El que gana el foco, superpone su z-index
+      - El foco debe poder ganarse programáticamente, sin DOM, desde API
+        - puede que HTMLElement.prototype.focus sí sirva por eso
+    - Cohabitabilidad:
+      - Los diálogos no se destruyen (v-bind:key, sin v-if)
+      - Solo se ocultan (v-show)
+    - Ubicabilidad:
+      - La barra inferior con mensajito variable
+    - Minimizabilidad y maximizabilidad:
+      - Los botones de _ y [] y X de la barra superior
+
+2. Commit de esto.
+
+ANTERIOR:
+
 ```typeslang
 
 @fn async function(@user string, @password string)

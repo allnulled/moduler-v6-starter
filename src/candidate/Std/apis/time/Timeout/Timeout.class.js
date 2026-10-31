@@ -1,4 +1,4 @@
-class Timeout{
+class Timeout {
   
   static {
     $moduler.toolkit.makeClass([
@@ -7,6 +7,7 @@ class Timeout{
   }
   
   static of(milliseconds) {
+    $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"Std.classes.Timeout.of"});
     return new Promise((resolve) => {
       setTimeout(resolve, milliseconds);
     });

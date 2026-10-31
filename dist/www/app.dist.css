@@ -1,9 +1,338 @@
 html {
-    background-color: black;
-    color: purple;
     font-size: 13px;
     font-family: Arial;
 }
+
+:root {
+    --border_dark_concept_1: 1px solid var(--grey48);
+    --border_dark_concept_2: 3px double var(--grey48);
+    --border_light_concept_1: 1px solid #BBB;
+    --border_light_concept_2: 1px solid #EEE;
+    --shadow_concept_1: 0 0 5px var(--grey48);
+    --font_size_small_1: 10px;
+    --spacing_size_0: 0px;
+    --spacing_size_1: 2px;
+    --spacing_size_2: 4px;
+    --grey0: #000000;
+    --grey1: #040404;
+    --grey2: #070707;
+    --grey3: #0b0b0b;
+    --grey4: #0e0e0e;
+    --grey5: #111111;
+    --grey6: #131313;
+    --grey7: #151515;
+    --grey8: #181818;
+    --grey9: #191919;
+    --grey10: #1b1b1b;
+    --grey11: #1d1d1d;
+    --grey12: #1f1f1f;
+    --grey13: #222222;
+    --grey14: #242424;
+    --grey15: #262626;
+    --grey16: #282828;
+    --grey17: #2a2a2a;
+    --grey18: #2c2c2c;
+    --grey19: #2e2e2e;
+    --grey20: #303030;
+    --grey21: #323232;
+    --grey22: #353535;
+    --grey23: #373737;
+    --grey24: #393939;
+    --grey25: #3b3b3b;
+    --grey26: #3e3e3e;
+    --grey27: #404040;
+    --grey28: #424242;
+    --grey29: #444444;
+    --grey30: #474747;
+    --grey31: #494949;
+    --grey32: #4b4b4b;
+    --grey33: #4e4e4e;
+    --grey34: #505050;
+    --grey35: #525252;
+    --grey36: #555555;
+    --grey37: #575757;
+    --grey38: #595959;
+    --grey39: #5c5c5c;
+    --grey40: #5e5e5e;
+    --grey41: #616161;
+    --grey42: #636363;
+    --grey43: #666666;
+    --grey44: #686868;
+    --grey45: #6a6a6a;
+    --grey46: #6d6d6d;
+    --grey47: #6f6f6f;
+    --grey48: #727272;
+    --grey49: #747474;
+    --grey50: #777777;
+    --grey51: #797979;
+    --grey52: #7c7c7c;
+    --grey53: #7f7f7f;
+    --grey54: #818181;
+    --grey55: #848484;
+    --grey56: #868686;
+    --grey57: #898989;
+    --grey58: #8b8b8b;
+    --grey59: #8e8e8e;
+    --grey60: #919191;
+    --grey61: #939393;
+    --grey62: #969696;
+    --grey63: #989898;
+    --grey64: #9b9b9b;
+    --grey65: #9e9e9e;
+    --grey66: #a0a0a0;
+    --grey67: #a3a3a3;
+    --grey68: #a6a6a6;
+    --grey69: #a8a8a8;
+    --grey70: #ababab;
+    --grey71: #aeaeae;
+    --grey72: #b0b0b0;
+    --grey73: #b3b3b3;
+    --grey74: #b6b6b6;
+    --grey75: #b9b9b9;
+    --grey76: #bbbbbb;
+    --grey77: #bebebe;
+    --grey78: #c1c1c1;
+    --grey79: #c4c4c4;
+    --grey80: #c6c6c6;
+    --grey81: #c9c9c9;
+    --grey82: #cccccc;
+    --grey83: #cfcfcf;
+    --grey84: #d1d1d1;
+    --grey85: #d4d4d4;
+    --grey86: #d7d7d7;
+    --grey87: #dadada;
+    --grey88: #dddddd;
+    --grey89: #dfdfdf;
+    --grey90: #e2e2e2;
+    --grey91: #e5e5e5;
+    --grey92: #e8e8e8;
+    --grey93: #ebebeb;
+    --grey94: #eeeeee;
+    --grey95: #f1f1f1;
+    --grey96: #f3f3f3;
+    --grey97: #f6f6f6;
+    --grey98: #f9f9f9;
+    --grey99: #fcfcfc;
+    --grey100: #ffffff;
+    --dialog_border_width: 5px;
+}
+
+
+
+
+
+.DialogPort {
+    position: relative;
+}
+
+.DialogView {
+    position: absolute;
+    border: var(--border_dark_concept_2);
+    margin: 2px;
+    border-radius: 3pt;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+}
+
+.DialogView .dialog_topbar {
+    display: flex;
+    flex-direction: row;
+    border-bottom: var(--border_dark_concept_1);
+    align-items: center;
+    background-color: var(--grey75);
+    color: black;
+    user-select: none;
+}
+.DialogView .dialog_title {
+    flex: 100;
+    cursor: default;
+    touch-action: none;
+    align-self: stretch;
+    overflow: hidden;
+    display: flex;
+}
+
+.DialogView .dialog_title:active {
+    cursor: grabbing;
+}
+.DialogView .dialog_title_text {
+    display: flex;
+    align-items: center;
+    padding-left: 4px;
+}
+.DialogView .dialog_top_buttons {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-right: 2px;
+    gap: 2px;
+}
+.DialogView .dialog_top_button {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 12px;
+    min-height: 12px;
+    padding: 3px;
+    border: var(--border_dark_concept_1);
+    border-radius: 3pt; /*50%;*/
+    background-color: var(--grey95);
+    cursor: pointer;
+}
+.DialogView .dialog_top_button:hover {
+    box-shadow: var(--shadow_concept_1);
+}
+.DialogView .dialog_body {
+    padding: var(--spacing_size_2);
+    background-color: var(--grey98);
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    overflow: auto;
+}
+.DialogView .dialog_footer {
+    background-color: var(--grey90);
+    color: var(--grey0);
+}
+.DialogView .dialog_status_bar {
+    display: flex;
+    flex-direction: row;
+    border-top: var(--border_dark_concept_1);
+    font-size: var(--font_size_small_1);
+}
+.DialogView .dialog_status_item {
+    flex: 1;
+    padding: var(--spacing_size_1);
+    white-space: nowrap;
+}
+
+.DialogView .dialog_status_bar > .dialog_status_item {
+    border-right: var(--border_dark_concept_1);
+}
+
+.DialogView .dialog_status_bar > .dialog_status_item:first-child {
+    border-left: none;
+}
+.DialogView .dialog_status_bar > .dialog_status_item:last-child {
+    border-right: none;
+}
+
+
+.DialogView .dialog_box {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+
+.DialogView .dialog_border {
+    position: relative;
+}
+.DialogView .dialog_border > div {
+    position: absolute;
+    top: 0px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    /*background-color: blue;*/
+}
+.DialogView .dialog_border.top_border > div {
+    height: 6px;
+    top: -6px;
+    cursor: n-resize;
+}
+.DialogView .dialog_border.bottom_border > div {
+    height: 6px;
+    bottom: -6px;
+    cursor: s-resize;
+}
+.DialogView .dialog_border.left_border,
+.DialogView .dialog_border.right_border {
+    height: 100%;
+}
+.DialogView .dialog_border.left_border > div {
+    width: 6px;
+    left: -6px;
+    cursor: w-resize;
+}
+.DialogView .dialog_border.right_border > div {
+    width: 6px;
+    right: -6px;
+    cursor: e-resize;
+}
+
+.DialogView .dialog_corner {
+    position: relative;
+}
+.DialogView .dialog_corner > div {
+    position: absolute;
+    top: 0px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    width: 10px;
+    height: 10px;
+    /*background-color: red;*/
+}
+.DialogView .dialog_corner.top_left_corner > div {
+    top: -10px;
+    left: -10px;
+    cursor: nw-resize;
+}
+.DialogView .dialog_corner.top_right_corner > div {
+    top: -10px;
+    right: -10px;
+    cursor: ne-resize;
+}
+.DialogView .dialog_corner.bottom_left_corner > div {
+    bottom: -10px;
+    left: -10px;
+    cursor: sw-resize;
+}
+.DialogView .dialog_corner.bottom_right_corner > div {
+    bottom: -10px;
+    right: -10px;
+    cursor: se-resize;
+}
+
+
+
+
+
+
+
+
+
+
+
+.flex_column {
+    display: flex;
+    flex-direction: column;
+}
+
+.flex_row {
+    display: flex;
+    flex-direction: row;
+}
+
+.flex_1 {
+    flex: 1 !important;
+}
+.flex_100 {
+    flex: 100 !important;
+}
+.flex_0 {
+    flex: 0 0 0px;
+}
+
+/* Estados de activación: */
+
 
 .inactive_context {
     display: none;

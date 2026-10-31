@@ -13,6 +13,6 @@ module.exports = async function ({ Tester }) {
     $moduler.assert(viewName in Std.externals.Vue2.options.components, `View named «${viewName}» is not defined as Vue component`);
   }
 
-  console.log(allViewNames);
+  // console.log(allViewNames);
 
 };

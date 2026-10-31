@@ -13181,7 +13181,7 @@ module.exports = $moduler.export("#Std", [], async function([]) {
   prototype: {
 
     get new() {
-      Std.all.Tracer?.globalInstance.log("CreableInterface.prototype.new", arguments || []);;
+      Std.all.Tracer?.globalInstance.log("Std.interfaces.CreableInterface.prototype.new", arguments || []);;
       return this.constructor.create();
     },
 
@@ -13189,12 +13189,12 @@ module.exports = $moduler.export("#Std", [], async function([]) {
   static: {
     
     get new() {
-      Std.all.Tracer?.globalInstance.log("CreableInterface.static.new", arguments || []);;
+      Std.all.Tracer?.globalInstance.log("Std.interfaces.CreableInterface.static.new", arguments || []);;
       return this.create();
     },
     
     create: function(config = {}, ...constructorArgs) {
-      Std.all.Tracer?.globalInstance.in("CreableInterface.static.create", arguments || []);;
+      Std.all.Tracer?.globalInstance.log("Std.interfaces.CreableInterface.static.create", arguments || []);;
       const instanze = new this(...constructorArgs);
       let output = instanze;
       Apply_new_configurations: {
@@ -13208,7 +13208,6 @@ module.exports = $moduler.export("#Std", [], async function([]) {
           }, ...constructorArgs) || output;
         }
       }
-      Std.all.Tracer?.globalInstance.out("CreableInterface.static.create", arguments || []);;
       return output;
     },
   },
@@ -13218,17 +13217,17 @@ module.exports = $moduler.export("#Std", [], async function([]) {
 {
   prototype: {
     get newClone() {
-      Std.all.Tracer?.globalInstance.log("ClonableInterface.prototype.newClone", arguments || []);;
+      Std.all.Tracer?.globalInstance.log("Std.interfaces.ClonableInterface.prototype.newClone", arguments || []);;
       return this.clone();
     },
     clone: function(config = {}) {
-      Std.all.Tracer?.globalInstance.in("ClonableInterface.prototype.clone", arguments || []);;
+      Std.all.Tracer?.globalInstance.log("Std.interfaces.ClonableInterface.prototype.clone", arguments || []);;
       Validate_unclonable_properties: {
         if (this.unclonableProperties) {
           for (let index = 0; index < this.unclonableProperties.length; index++) {
             const unclonableProperty = this.unclonableProperties[index];
             if (!(unclonableProperty in config)) {
-              Std.all.Tracer?.globalInstance.error("ClonableInterface.prototype.clone", arguments || []);;
+              Std.all.Tracer?.globalInstance.error("Std.interfaces.ClonableInterface.prototype.clone", arguments || []);;
               throw new Error(`Cannot clone without specifying property «${unclonableProperty}» on «ClonableInterface.prototype.clone»`);
             }
           }
@@ -13243,7 +13242,6 @@ module.exports = $moduler.export("#Std", [], async function([]) {
           }
         }
       }
-      Std.all.Tracer?.globalInstance.out("ClonableInterface.prototype.clone", arguments || []);;
       return this.new.config(this).config(config);
     }
   },
@@ -13255,7 +13253,7 @@ module.exports = $moduler.export("#Std", [], async function([]) {
 {
   prototype: {
     config: function(props = {}) {
-      Std.all.Tracer?.globalInstance.log("ConfigurableInterface.prototype.config", arguments || []);;
+      Std.all.Tracer?.globalInstance.log("Std.interfaces.ConfigurableInterface.prototype.config", arguments || []);;
       return Object.assign(this, props);
     }
   },
@@ -13898,7 +13896,7 @@ $moduler.toolkit.makeInterface([
     Std.all.capitalizeString = Std.functions.capitalizeString = function capitalizeString(text) {
   return text.substr(0,1).toUpperCase() + text.substr(1);
 };
-    Std.all.Timeout = Std.classes.Timeout = class Timeout{
+    Std.all.Timeout = Std.classes.Timeout = class Timeout {
   
   static {
     $moduler.toolkit.makeClass([
@@ -13907,11 +13905,95 @@ $moduler.toolkit.makeInterface([
   }
   
   static of(milliseconds) {
+    Std.all.Tracer?.globalInstance.log("Std.classes.Timeout.of", arguments || []);;
     return new Promise((resolve) => {
       setTimeout(resolve, milliseconds);
     });
   }
 
+};
+    Std.all.Performancer = Std.classes.Performancer = class Performancer {
+  static {
+    $moduler.toolkit.makeClass([
+      Std.interfaces.InstantiableInterface,
+    ], this);
+  }
+  onCreate() {
+    Std.all.Tracer?.globalInstance.log("Std.classes.Performancer.prototype.onCreate", arguments || []);;
+    const d = new Date();
+    this.cronometers = {
+      "$": {
+        started: d,
+        stopped: false,
+        lastUpdate: d,
+      }
+    };
+  }
+  start(id) {
+    Std.all.Tracer?.globalInstance.log("Std.classes.Performancer.prototype.start", arguments || []);;
+    $moduler.assert(typeof id === "string", `Required property «id» to be string on «Performancer.prototype.start»`);
+    $moduler.assert(!(id in this.cronometers), `Required property «id» to not exist as cronometer but «${id}» was already started on «Performancer.prototype.start»`);
+    this.cronometers[id] = {
+      started: new Date(),
+      stopped: false,
+    };
+  }
+  getTime() {
+    const now = new Date();
+    const time = now - this.cronometers.$.lastUpdate;
+    this.cronometers.$.lastUpdate = now;
+    return time;
+  }
+  stop(id) {
+    Std.all.Tracer?.globalInstance.log("Std.classes.Performancer.prototype.stop", arguments || []);;
+    $moduler.assert(typeof id === "string", `Required property «id» to be string on «Performancer.prototype.stop»`);
+    $moduler.assert(id in this.cronometers, `Required property «id» to exist as cronometer but «${id}» was not started yet on «Performancer.prototype.stop»`);
+    $moduler.assert(this.cronometers[id].stopped === false, `Required cronometer «${id}}» to not be stopped already on «Performancer.prototype.stop»`);
+    this.cronometers[id].stopped = new Date();
+    return this.cronometers[id].total = this.cronometers[id].stopped - this.cronometers[id].started;
+  }
+  totalOfAll() {
+    Std.all.Tracer?.globalInstance.log("Std.classes.Performancer.prototype.totalOfAll", arguments || []);;
+    const output = {};
+    Object.keys(this.cronometers).forEach(id => {
+      output[id] = this.totalOf(id);
+    });
+    return output;
+  }
+  totalOf(id) {
+    if(!(id in this.cronometers)) return 0;
+    const total = this.cronometers[id].total;
+    return typeof total === "number" ? total : ((new Date()) - this.cronometers[id].started);
+  }
+  secondsOfAll(id) {
+    Std.all.Tracer?.globalInstance.log("Std.classes.Performancer.prototype.secondsOfAll", arguments || []);;
+    const output = {};
+    Object.keys(this.cronometers).forEach(id => {
+      output[id] = this.secondsOf(id);
+    });
+    return output;
+  }
+  secondsOf(id) {
+    const ms = this.totalOf(id);
+    if(!ms) return 0;
+    if(Number.isNaN(ms)) return 0;
+    if(ms === 0) return 0;
+    return (ms / 1000).toFixed(3);
+  }
+  print(id = null) {
+    Std.all.Tracer?.globalInstance.log("Std.classes.Performancer.prototype.print", arguments || []);;
+    if(id === null) {
+      let counter = 0;
+      for(let key in this.cronometers) {
+        console.log(` - ${++counter}. ${key}: ${this.totalOf(key)}`);
+      }
+      return;
+    }
+    return console.log(this.totalOf(id));
+  }
+  static globalInstance = this.$ = Std.objects.GlobalPerformancer = Performancer.new.config({
+    name: "Std.objects.GlobalPerformancer"
+  });
 };
     Std.all.TryableProxy = Std.classes.TryableProxy = class TryableProxy {
 
@@ -14033,7 +14115,7 @@ $moduler.toolkit.makeInterface([
     for (let index = 0; index < args.length; index++) {
       const arg = args[index];
       try {
-        console.log(index + ": " + typeof arg, JSON.stringify(arg, null, 2));
+        console.log(index + ": " + typeof arg, Std.classes.JsonStringifier.stringify(arg, null, 2));
       } catch (error) {
         console.log(index + ": " + typeof arg, arg);
       }
@@ -14116,13 +14198,15 @@ $moduler.toolkit.makeInterface([
    *    - scope?:any - scope al que bindear
    * 
    */
-  Std.all.Tracer?.globalInstance.in("Std.functions.triggerMethodIfExists", arguments || []);;
+  Std.all.Tracer?.globalInstance.log("Std.functions.triggerMethodIfExists", arguments || []);;
   let output = undefined;
   if(base && (typeof base[method] === "function")) {
-    if(scope) return base[method].call(scope, ...args);
+    if(scope) {
+      const output = base[method].call(scope, ...args);
+      return output;
+    }
     output = base[method](...args);
   }
-  Std.all.Tracer?.globalInstance.out("Std.functions.triggerMethodIfExists", arguments || []);;
   return output;
 };
     Std.all.Ansi = Std.objects.Ansi = (Colors => {
@@ -14452,6 +14536,33 @@ $moduler.toolkit.makeInterface([
     ], this);
   }
 };
+    Std.all.FunctionsList = Std.classes.FunctionsList = class FunctionList extends Array {
+  addFunction(callback) {
+    Std.all.Tracer?.globalInstance.log("Std.classes.FunctionsList.prototype.addFunction", arguments || []);;
+    $moduler.assert(typeof callback == "function", `Required parameter «callback» to be function on «FunctionList.prototype.addFunction»`);
+    this.push(callback);
+  }
+  evaluateFunctionsSync(args = []) {
+    Std.all.Tracer?.globalInstance.log("Std.classes.FunctionsList.prototype.evaluateFunctionsSync", arguments || []);;
+    const outputs = [];
+    for(let index=0; index<this.length; index++) {
+      const callback = this[index];
+      const result = callback(...args);
+      outputs.push(result);
+    }
+    return outputs;
+  }
+  async evaluateFunctionsAsync(args = []) {
+    Std.all.Tracer?.globalInstance.log("Std.classes.FunctionsList.prototype.evaluateFunctionsAsync", arguments || []);;
+    const outputs = [];
+    for(let index=0; index<this.length; index++) {
+      const callback = this[index];
+      const result = await callback(...args);
+      outputs.push(result);
+    }
+    return outputs;
+  }
+};
   }
   Wave_4_Utility_interfaces: {
     Std.all.IntrospectorInterface = Std.interfaces.IntrospectorInterface = // @interface:IntrospectorInterface
@@ -14647,10 +14758,30 @@ $moduler.toolkit.makeInterface([
     isTracing: false,
     parentTracer: null,
     level: null,
+    onCreate() {
+      Object.assign(this, {
+        totalCalls: 0,
+        shoutersByString: [
+          //"CreableInterf"
+        ],
+        silencersByString: [
+          "Performancer.",
+        ],
+      });
+    },
+    cronometer: Std.classes.Performancer.create(),
     onTraceMessageFormat(operation, method, args = []) {
       let id = this.id || "";
-      if(id) id = `[${id}] `;
-      return `${id}[${" ".repeat(Math.max(0, this.level + (operation === "out" ? -1 : 0)))}${operation==="in"?">":operation==="out"?"<":operation==="log"?"=":"!"}] ${method}`;
+      const levelMark = this.level || 0; // `${this.level || 0}`.padStart(2,"0") || 0; // " ".repeat(Math.max(0, this.level + (operation === "out" ? -1 : 0)));
+      if(id) id = `[${id}]`;
+      let output = "";
+      output += `${id}`;
+      output += ` [${this.totalCalls}]`;
+      output += ` [${levelMark}]`;
+      output += ` [${(operation==="in")?">":(operation==="out")?"<":(operation==="log")?"·":"!"}]`;
+      output += ` [⏱️${Std.classes.Performancer.$.secondsOf("$")}s|+${this.cronometer.getTime()}ms]`;
+      output += ` ${method.replace(/^Std\.(classes|functions|objects|views|interfaces)\./g,"")}`;
+      return output;
     },
     onTraceArgumentsFormat: function(args, message) {
       let output = "";
@@ -14658,7 +14789,7 @@ $moduler.toolkit.makeInterface([
       output += args.length ? ` with 0-${args.length-1}:` : "";
       output += Array.from(args).map((arg, index) => {
         let part = "";
-        part += ` @${index}`;
+        part += ` @arguments[${index}]`;
         if(typeof arg === "string") {
           if(args.length && arg.length < 25) {
             part += ` ${JSON.stringify(arg)}`;
@@ -14672,7 +14803,7 @@ $moduler.toolkit.makeInterface([
           if(arg.length) {
             part += ` [${arg.length}`;
             if(arg.length < 20) {
-              part += `=${arg.map(row => typeof row).join(",")}`;
+              part += `:${arg.map(row => typeof row).join(",")}`;
             }
             part += `]`;
           } else {
@@ -14698,22 +14829,25 @@ $moduler.toolkit.makeInterface([
       return output;
     },
     log: function(method, args = []) {
-      if(!this.isTracing) return false;
+      if(!this.shouldBeTraced(method, args)) return false;
       const message = this.onTraceMessageFormat("log", method, args);
+      this.totalCalls++;
       Std.all.Ansi.style("blackBright").print(this.onTraceArgumentsFormat(args, message));
     },
     in: function(method, args = []) {
-      if(!this.isTracing) return false;
+      if(!this.shouldBeTraced(method, args)) return false;
       const message = this.onTraceMessageFormat("in", method, args);
       this.level = this.level || 0;
       this.level++;
+      this.totalCalls++;
       Std.all.Ansi.style("cyanBright").print(this.onTraceArgumentsFormat(args, message));
     },
     out: function(method, args = []) {
-      if(!this.isTracing) return false;
+      if(!this.shouldBeTraced(method, args)) return false;
       const message = this.onTraceMessageFormat("out", method, args);
       this.level = this.level || 0;
       this.level--;
+      this.totalCalls++;
       Std.all.Ansi.style("blackBright").print(this.onTraceArgumentsFormat(args, message));
     },
     error: function(method, args = []) {
@@ -14721,7 +14855,44 @@ $moduler.toolkit.makeInterface([
       const message = this.onTraceMessageFormat("error", method, args);
       this.level = this.level || 0;
       this.level--;
+      this.totalCalls++;
       Std.all.Ansi.style("red,bold").print(this.onTraceArgumentsFormat(args, message));
+    },
+    shouldBeTraced: function(method, args) {
+      Si_no_esta_traceando_no:
+      if(!this.isTracing) {
+        return false;
+      }
+      Si_tiene_gritadores_entonces_si_matchea_alguno_si_y_si_no_no: 
+      if(this.hasShouters()) {
+        return this.matchesShouter(method, args);
+      }
+      Si_matchea_algun_silenciador_no: 
+      if(this.matchesSilencer(method, args)) {
+        return false;
+      }
+      return true;
+    },
+    hasShouters: function() {
+      return this.shoutersByString.length;
+    },
+    matchesSilencer: function(method, args) {
+      for(let index=0; index<this.silencersByString.length; index++) {
+        const silencerByString = this.silencersByString[index];
+        if(method.includes(silencerByString)) {
+          return true;
+        }
+      }
+      return false;
+    },
+    matchesShouter: function(method, args) {
+      for(let index=0; index<this.shoutersByString.length; index++) {
+        const shouterByString = this.shoutersByString[index];
+        if(method.includes(shouterByString)) {
+          return true;
+        }
+      }
+      return false;
     },
   },
   static: {},
@@ -14761,7 +14932,7 @@ $moduler.toolkit.makeInterface([
       } else throw new Error("Parameter «expectedError» must be function, object or string");
     },
     assert: function(condition, message = "untitled error", ...otherParameters) {
-      Std.all.Tracer?.globalInstance.in("AsserterInterface.prototype.assert", arguments || []);;
+      Std.all.Tracer?.globalInstance.log("Std.interfaces.AsserterInterface.prototype.assert", arguments || []);;
       const eventParameters = [condition, message].concat(otherParameters);
       Std.functions.triggerMethodIfExists(this, "onAssertStart", eventParameters);
       if (condition) {
@@ -14773,14 +14944,12 @@ $moduler.toolkit.makeInterface([
       if (!condition) {
         const error = new Error(message);
         error.name = "AssertionError";
-        Std.all.Tracer?.globalInstance.error("AsserterInterface.prototype.assert", arguments || []);;
         throw error;
       }
-      Std.all.Tracer?.globalInstance.out("AsserterInterface.prototype.assert", arguments || []);;
       return true;
     },
     assertThrowsSync: function(callback, message = "", expectedError = false) {
-      Std.all.Tracer?.globalInstance.in("AsserterInterface.prototype.assertThrowsSync", arguments || []);;
+      Std.all.Tracer?.globalInstance.log("Std.interfaces.AsserterInterface.prototype.assertThrowsSync", arguments || []);;
       let thrownError = false;
       const fakeError = new Error();
       try {
@@ -14792,18 +14961,15 @@ $moduler.toolkit.makeInterface([
         }
       }
       if (!thrownError) {
-        Std.all.Tracer?.globalInstance.error("AsserterInterface.prototype.assert", arguments || []);;
         throw new Error(`Method «assertThrowsSync» expected callback to throw but it did not on: ${message}`);
       }
       if (!this.matchesError(expectedError, thrownError)) {
-        Std.all.Tracer?.globalInstance.error("AsserterInterface.prototype.assert", arguments || []);;
         throw new Error(`Method «assertThrowsSync» expected one error but got another:\n  - expected: ${expectedError.name} | ${expectedError.message}\n  - current:  ${thrownError.name} | ${thrownError.message}`)
       }
-      Std.all.Tracer?.globalInstance.out("AsserterInterface.prototype.assert", arguments || []);;
       return true;
     },
     assertThrowsAsync: async function(callback, message = "", expectedError = false) {
-      Std.all.Tracer?.globalInstance.in("AsserterInterface.prototype.assertThrowsAsync", arguments || []);;
+      Std.all.Tracer?.globalInstance.log("Std.interfaces.AsserterInterface.prototype.assertThrowsAsync", arguments || []);;
       let thrownError = false;
       const fakeError = new Error();
       try {
@@ -14815,18 +14981,15 @@ $moduler.toolkit.makeInterface([
         }
       }
       if (!thrownError) {
-        Std.all.Tracer?.globalInstance.error("AsserterInterface.prototype.assertThrowsAsync", arguments || []);;
         throw new Error(`Method «assertThrowsAsync» expected callback to throw but it did not on: ${message}`);
       }
       if (!this.matchesError(expectedError, thrownError)) {
-        Std.all.Tracer?.globalInstance.error("AsserterInterface.prototype.assertThrowsAsync", arguments || []);;
         throw new Error(`Method «assertThrowsSync» expected one error but got another:\n  - expected: ${expectedError.name} | ${expectedError.message}\n  - current:  ${thrownError.name} | ${thrownError.message}`)
       }
-      Std.all.Tracer?.globalInstance.out("AsserterInterface.prototype.assertThrowsAsync", arguments || []);;
       return true;
     },
     assertDoesNotThrowSync: function(callback, message = "") {
-      Std.all.Tracer?.globalInstance.in("AsserterInterface.prototype.assertThrowsAsync", arguments || []);;
+      Std.all.Tracer?.globalInstance.log("Std.interfaces.AsserterInterface.prototype.assertThrowsAsync", arguments || []);;
       let thrownError = false;
       const fakeError = new Error();
       try {
@@ -14838,16 +15001,13 @@ $moduler.toolkit.makeInterface([
         }
       }
       if (thrownError) {
-        Std.all.Tracer?.globalInstance.error("AsserterInterface.prototype.assertDoesNotThrowSync", arguments || []);;
         throw thrownError;
       }
-      Std.all.Tracer?.globalInstance.out("AsserterInterface.prototype.assertDoesNotThrowSync", arguments || []);;
       return true;
     },
     assertDoesNotThrowAsync: async function(callback, message = "") {
-      Std.all.Tracer?.globalInstance.in("AsserterInterface.prototype.assertDoesNotThrowAsync", arguments || []);;
+      Std.all.Tracer?.globalInstance.log("Std.interfaces.AsserterInterface.prototype.assertDoesNotThrowAsync", arguments || []);;
       await callback();
-      Std.all.Tracer?.globalInstance.out("AsserterInterface.prototype.assertDoesNotThrowAsync", arguments || []);;
       return true;
     },
   },
@@ -15116,6 +15276,7 @@ $moduler.toolkit.makeInterface([
     basedir: "~",
     rootdir: "~",
     normalizationOf(input) {
+      Std.all.Tracer?.globalInstance.log("Std.interfaces.UrlerInterface.prototype.normalizationOf", arguments || []);;
       let output = input.replaceAll("\\", "/");
       if (/^[a-z]+:\/\//i.test(output)) output = output;
       if (output.startsWith("@/")) output = this.rootdir + output.slice(1);
@@ -15131,12 +15292,15 @@ $moduler.toolkit.makeInterface([
       return output;
     },
     basepathOf(input) {
+      Std.all.Tracer?.globalInstance.log("Std.interfaces.UrlerInterface.prototype.basepathOf", arguments || []);;
       return this._relativePath(input, this.basedir, ".");
     },
     rootpathOf(input) {
+      Std.all.Tracer?.globalInstance.log("Std.interfaces.UrlerInterface.prototype.rootpathOf", arguments || []);;
       return this._relativePath(input, this.rootdir, "@");
     },
     _relativePath(_path, _anchor, prefix) {
+      Std.all.Tracer?.globalInstance.log("Std.interfaces.UrlerInterface.prototype._relativePath", arguments || []);;
       let output = undefined;
       let path = this.normalizationOf(_path);
       let anchor = _anchor === "/" ? "/" : _anchor.replace(/\/$/, "");
@@ -15146,9 +15310,11 @@ $moduler.toolkit.makeInterface([
       return output;
     },
     setBasedir(input) {
+      Std.all.Tracer?.globalInstance.log("Std.interfaces.UrlerInterface.prototype.setBasedir", arguments || []);;
       this.basedir = this.normalizationOf(input);
     },
     setRootdir(input) {
+      Std.all.Tracer?.globalInstance.log("Std.interfaces.UrlerInterface.prototype.setRootdir", arguments || []);;
       this.rootdir = this.normalizationOf(input);
     },
   }
@@ -15406,7 +15572,7 @@ $moduler.toolkit.makeInterface([
       Std.interfaces.TracerInterface,
     ], this);
   }
-  static globalInstance = this.new.config({ id: "main", isTracing: false, });
+  static globalInstance = this.$ = Std.objects.GlobalTracer = this.new.config({ id: "main", isTracing: true, });
 };
     Std.all.Checker = Std.classes.Checker = class Checker {
   static {
@@ -16994,23 +17160,31 @@ $moduler.toolkit.makeInterface([
   static: {},
   prototype: {
     onCreate: function (parameters) {
+      Std.all.Tracer?.globalInstance.log("Std.interfaces.ThreadInterface.prototype.onCreate", arguments || []);;
       Pre_validation: {
         $moduler.assert(typeof parameters === "object", `Required «parameters» to be object on «ThreadInterface.prototype.onCreate»`);
       }
       Initialization: {
+        this.threadId = Std.classes.Randomizer.getRandomLetters(10);
         this.parent = null;
         this.children = [];
         this.isClosed = false;
       }
       Polyfillment: {
         Object.assign(this, parameters);
+      }
+      Corrections: {
         if(this.parent === null) {
           this.parent = Std.classes.Thread.globalInstance;
         }
+        this.onChange = new Std.classes.FunctionsList();
+        this.onChange.push(...(parameters.onChange || []));
+        this.onClose = new Std.classes.FunctionsList();
+        this.onClose.push(...(parameters.onClose || []));
       }
       Post_validation: {
-        $moduler.assert(typeof this.parent === "object", `Required «this.parent» to be object on «ThreadInterface.prototype.onCreate»`);
         if(this.parent !== false) {
+          $moduler.assert(typeof this.parent === "object", `Required «this.parent» to be object on «ThreadInterface.prototype.onCreate»`);
           $moduler.assert(this.parent instanceof Std.classes.Thread, `Required «this.parent» to be instance of «Std.classes.Thread» on «ThreadInterface.prototype.onCreate»`);
           $moduler.assert(Array.isArray(this.parent.children), `Required «this.parent.children» to be array on «ThreadInterface.prototype.onCreate»`);
         }
@@ -17021,11 +17195,23 @@ $moduler.toolkit.makeInterface([
         }
         this.parent.children.push(this);
       }
+      Emit_related_events: {
+        this.onChange.evaluateFunctionsSync({ thread: this });
+      }
+      Emit_dialogs_update: {
+        Std.objects.GlobalDialog?.port?.refreshView();
+      }
     },
-    get newThread() {
-      return Std.classes.Thread.create({ parent: this });
+    get newSubthread() {
+      Std.all.Tracer?.globalInstance.log("Std.interfaces.ThreadInterface.prototype.newSubthread", arguments || []);;
+      return this.createSubthread();
+    },
+    createSubthread(config = {}) {
+      Std.all.Tracer?.globalInstance.log("Std.interfaces.ThreadInterface.prototype.createSubthread", arguments || []);;
+      return Std.classes.Thread.create({ ...config, parent: this });
     },
     close: function () {
+      Std.all.Tracer?.globalInstance.log("Std.interfaces.ThreadInterface.prototype.close", arguments || []);;
       Close_children: {
         for (let index = this.children.length - 1; index >= 0; index--) {
           this.children[index].close();
@@ -17040,6 +17226,12 @@ $moduler.toolkit.makeInterface([
         if (pos === -1) break Self_remove_from_parent;
         this.parent.children.splice(pos, 1);
       }
+      Emit_related_events: {
+        this.onClose.evaluateFunctionsSync({ thread: this });
+      }
+      Emit_dialogs_update: {
+        Std.objects.GlobalDialog?.port?.refreshView();
+      }
     }
   },
 };
@@ -17049,9 +17241,8 @@ $moduler.toolkit.makeInterface([
       Std.interfaces.InstantiableInterface,
       Std.interfaces.ThreadInterface,
     ], this);
-    this.globalInstance = this.$ = Std.objects.GlobalThread = new Thread();
-    Object.assign(this.globalInstance, {
-      name: "Std.objects.GlobalThread",
+    this.globalInstance = this.$ = Std.objects.GlobalThread = Thread.create({
+      threadId: "Std.objects.GlobalThread",
       parent: false,
       children: [],
       isClosed: false,
@@ -29162,19 +29353,23 @@ $moduler.toolkit.makeInterface([
     }
   },
   created() {
+    Std.all.Tracer?.globalInstance.log("Std.views.DynamicView.created", arguments || []);;
     this.$locals = {
       currentView: this.view,
       currentArgs: this.args,
     };
   },
   mounted() {
+    Std.all.Tracer?.globalInstance.log("Std.views.DynamicView.mounted", arguments || []);;
     this.setView(this.$locals.currentView, this.$locals.currentArgs);
   },
   methods: {
     refreshView() {
+      Std.all.Tracer?.globalInstance.log("Std.views.DynamicView.methods.refreshView", arguments || []);;
       this.$forceUpdate(true);
     },
     setView(view, args = {}) {
+      Std.all.Tracer?.globalInstance.log("Std.views.DynamicView.methods.setView", arguments || []);;
       const { ViewsRegistry } = Std.all;
       Validate_input: {
         $moduler.assert(typeof view === "object", `Required parameter «view» to be object but «${typeof view}» was found instead on «Std.objects.DynamicView.methods.setView»`);
@@ -29206,6 +29401,7 @@ $moduler.toolkit.makeInterface([
       }
     },
     setHtml(html) {
+      Std.all.Tracer?.globalInstance.log("Std.views.DynamicView.methods.setHtml", arguments || []);;
       return this.setView({
         template: html.startsWith("<") ? html : `<div>${html}</div>`,
       });
@@ -29215,7 +29411,7 @@ $moduler.toolkit.makeInterface([
     Std.all.ContextualView = Std.views.ContextualView = Std.classes.ViewsRegistry.$.set("ContextualView", {
   name: "ContextualView",
   template: "<div class=\"View ContextualView\">" + '\n'
- + "    <div class=\"contextual_view_top_panel\">" + '\n'
+ + "    <div class=\"contextual_view_top_panel\" style=\"display:none;\">" + '\n'
  + "        <div class=\"contextual_view_option\"" + '\n'
  + "            :class=\"{activated: ctxIndex === $locals.selectedContext}\"" + '\n'
  + "            v-on:click=\"() => goToContext(ctxIndex)\"" + '\n'
@@ -29247,6 +29443,7 @@ $moduler.toolkit.makeInterface([
     },
   },
   created: function() {
+    Std.all.Tracer?.globalInstance.log("Std.views.ContextualView.created", arguments || []);;
     this.$locals = {
       isFirst: true,
       isContextualView: true,
@@ -29256,14 +29453,16 @@ $moduler.toolkit.makeInterface([
     };
   },
   updated() {
+    Std.all.Tracer?.globalInstance.log("Std.views.ContextualView.updated", arguments || []);;
     this.$locals.hasChanged = false;
     this.$locals.isFirst = false;
   },
   mounted() {
-    
+    Std.all.Tracer?.globalInstance.log("Std.views.ContextualView.mounted", arguments || []);;
   },
   methods: {
     refreshView(hasChanged = false) {
+      Std.all.Tracer?.globalInstance.log("Std.views.ContextualView.methods.refreshView", arguments || []);;
       this.$locals.hasChanged = hasChanged;
       this.$nextTick(() => {
         this.$locals.hasChanged = false;
@@ -29271,24 +29470,29 @@ $moduler.toolkit.makeInterface([
       this.$forceUpdate(true);
     },
     resetContext(view, args = {}) {
+      Std.all.Tracer?.globalInstance.log("Std.views.ContextualView.methods.resetContext", arguments || []);;
       this.$locals.contexts = [{ view, args }];
       this.refreshView(true);
     },
     goBackInContext() {
+      Std.all.Tracer?.globalInstance.log("Std.views.ContextualView.methods.goBackInContext", arguments || []);;
       if(this.$locals.selectedContext === 0) return -1;
       this.$locals.selectedContext--;
       this.refreshView(false);
     },
     goForwardInContext() {
+      Std.all.Tracer?.globalInstance.log("Std.views.ContextualView.methods.goForwardInContext", arguments || []);;
       if(this.$locals.selectedContext === (this.$locals.contexts.length - 1)) return -1;
       this.$locals.selectedContext++;
       this.refreshView(false);
     },
     goToContext(index) {
+      Std.all.Tracer?.globalInstance.log("Std.views.ContextualView.methods.goToContext", arguments || []);;
       this.$locals.selectedContext = index;
       this.refreshView(false);
     },
     addContext(view, args = {}) {
+      Std.all.Tracer?.globalInstance.log("Std.views.ContextualView.methods.addContext", arguments || []);;
       if(this.$locals.selectedContext === (this.$locals.contexts.length - 1)) {
         this.$locals.contexts.push({ view, args });
       } else {
@@ -29298,9 +29502,11 @@ $moduler.toolkit.makeInterface([
       this.refreshView(this.$locals.selectedContext);
     },
     appendCleanContext() {
+      Std.all.Tracer?.globalInstance.log("Std.views.ContextualView.methods.appendCleanContext", arguments || []);;
       return this.addContext(this.view, this.args);
     },
     getClassesForContext(ctx, ctxIndex) {
+      Std.all.Tracer?.globalInstance.log("Std.views.ContextualView.methods.getClassesForContext", arguments || []);;
       if(ctxIndex === this.$locals.selectedContext) {
         return "active_context";
       }
@@ -29309,6 +29515,7 @@ $moduler.toolkit.makeInterface([
   },
   static: {
     findContextualViewOf(base) {
+      Std.all.Tracer?.globalInstance.log("Std.views.ContextualView.static.findContextualViewOf", arguments || []);;
       const contextualElement = Std.all.Domer.findFirstParentWhere(e => e.__vue__?.$locals?.isContextualView === true, base);
       if(!contextualElement) return contextualElement;
       return contextualElement.__vue__;
@@ -29320,14 +29527,24 @@ $moduler.toolkit.makeInterface([
   Wave_14_Dialogs: {
     Std.all.Dialogs = Std.classes.Dialogs = class Dialogs {
   constructor() {
+    Std.all.Tracer?.globalInstance.log("Std.classes.Dialogs.constructor", arguments || []);;
     this.port = null;
     this.thread = Std.classes.Thread.globalInstance;
   }
-  setPort(port) {
-    $moduler.assert(port instanceof Std.externals.Vue2, `Required parameter «port» to be Vue2 component but «${typeof port}» was found instead on «Dialogs.prototype.setPort»`);
-    this.port = port;
+  initializePort(port) {
+    Std.all.Tracer?.globalInstance.log("Std.classes.Dialogs.prototype.initializePort", arguments || []);;
+    $moduler.assert(port instanceof Std.externals.Vue2, `Required parameter «port» to be Vue2 component but «${typeof port}» was found instead on «Dialogs.prototype.initializePort»`);
+    if(!this.port) {
+      this.port = port;
+    }
+    return this;
   }
-  static globalInstance = Std.objects.GlobalDialog = new this();
+  open(...args) {
+    Std.all.Tracer?.globalInstance.log("Std.classes.Dialogs.prototype.open", arguments || []);;
+    $moduler.assert(this.port instanceof Std.externals.Vue2, "Required property «port» to be instance of Vue2 on «Dialogs.prototype.open»");
+    return this.port.open(...args);
+  }
+  static globalInstance = this.$ = Std.objects.GlobalDialog = new this();
 };
     Std.all.DialogsFactory = Std.classes.DialogsFactory = class DialogsFactory {
   static {
@@ -29368,42 +29585,333 @@ $moduler.toolkit.makeInterface([
   static globalInstance = this.new;
   static $ = this.globalInstance;
 };
+    Std.all.DialogView = Std.views.DialogView = Std.classes.ViewsRegistry.$.set("DialogView", {
+  name: "DialogView",
+  template: "<div class=\"DialogView View\" v-on:click=\"focusMe\" :class=\"{" + '\n'
+ + "        is_maximized: $locals.isMaximized," + '\n'
+ + "        is_minimized: $locals.isMinimized," + '\n'
+ + "    }\">" + '\n'
+ + "    <div class=\"flex_column flex_100\">" + '\n'
+ + "        <div class=\"flex_0 flex_row\">" + '\n'
+ + "            <div class=\"flex_0\">" + '\n'
+ + "                <div class=\"dialog_corner top_left_corner\"><div" + '\n'
+ + "                    v-on:pointerdown=\"event => startResize(event, 'top+left')\"" + '\n'
+ + "                    v-on:pointermove=\"event => moveResize(event, 'top+left')\"" + '\n'
+ + "                    v-on:pointerup=\"event => stopResize(event, 'top+left')\"" + '\n'
+ + "                    v-on:pointercancel=\"event => stopResize(event, 'top+left')\"></div></div>" + '\n'
+ + "            </div>" + '\n'
+ + "            <div class=\"flex_100\">" + '\n'
+ + "                <div class=\"dialog_border top_border\"><div" + '\n'
+ + "                    v-on:pointerdown=\"event => startResize(event, 'top')\"" + '\n'
+ + "                    v-on:pointermove=\"event => moveResize(event, 'top')\"" + '\n'
+ + "                    v-on:pointerup=\"event => stopResize(event, 'top')\"" + '\n'
+ + "                    v-on:pointercancel=\"event => stopResize(event, 'top')\"></div></div>" + '\n'
+ + "            </div>" + '\n'
+ + "            <div class=\"flex_0\">" + '\n'
+ + "                <div class=\"dialog_corner top_right_corner\"><div" + '\n'
+ + "                    v-on:pointerdown=\"event => startResize(event, 'top+right')\"" + '\n'
+ + "                    v-on:pointermove=\"event => moveResize(event, 'top+right')\"" + '\n'
+ + "                    v-on:pointerup=\"event => stopResize(event, 'top+right')\"" + '\n'
+ + "                    v-on:pointercancel=\"event => stopResize(event, 'top+right')\"></div></div>" + '\n'
+ + "            </div>" + '\n'
+ + "        </div>" + '\n'
+ + "        <div class=\"flex_100 flex_row\">" + '\n'
+ + "            <div class=\"flex_0\">" + '\n'
+ + "                <div class=\"dialog_border left_border\"><div" + '\n'
+ + "                    v-on:pointerdown=\"event => startResize(event, 'left')\"" + '\n'
+ + "                    v-on:pointermove=\"event => moveResize(event, 'left')\"" + '\n'
+ + "                    v-on:pointerup=\"event => stopResize(event, 'left')\"" + '\n'
+ + "                    v-on:pointercancel=\"event => stopResize(event, 'left')\"></div></div>" + '\n'
+ + "            </div>" + '\n'
+ + "            <div class=\"flex_100 dialog_box\">" + '\n'
+ + "                <div class=\"dialog_header\">" + '\n'
+ + "                    <div class=\"dialog_topbar\">" + '\n'
+ + "                        <div class=\"dialog_title\"" + '\n'
+ + "                            v-on:pointerdown=\"startDrag\"" + '\n'
+ + "                            v-on:pointermove=\"moveDrag\"" + '\n'
+ + "                            v-on:pointerup=\"stopDrag\"" + '\n'
+ + "                            v-on:pointercancel=\"stopDrag\">" + '\n'
+ + "                            <div class=\"dialog_title_text\">{{ thread.threadId || \"no id found\"}}</div>" + '\n'
+ + "                        </div>" + '\n'
+ + "                        <div class=\"dialog_top_buttons\">" + '\n'
+ + "                            <div class=\"dialog_top_button minimize_button\" data-alt-text=\"▪️\" v-on:click=\"minimize\">➖​</div>" + '\n'
+ + "                            <div class=\"dialog_top_button maximize_button\" data-alt-text=\"◼️\" v-on:click=\"toggleMaximize\">" + '\n'
+ + "                                {{ $locals.isMaximized ? \"▪️​\" : \"◼️​\" }}" + '\n'
+ + "                            ​</div>" + '\n'
+ + "                            <div class=\"dialog_top_button exit_button\" v-on:click=\"close\">✖️</div>" + '\n'
+ + "                        </div>" + '\n'
+ + "                    </div>" + '\n'
+ + "                </div>" + '\n'
+ + "                <div class=\"dialog_body\">" + '\n'
+ + "                    <DynamicView :view=\"thread\" :args=\"{dialog:this}\" />" + '\n'
+ + "                </div>" + '\n'
+ + "                <div class=\"dialog_footer\">" + '\n'
+ + "                    <div class=\"dialog_status_bar\">" + '\n'
+ + "                        <div class=\"dialog_status_item flex_100\">This is a message.</div>" + '\n'
+ + "                        <div class=\"dialog_status_item\">Another.</div>" + '\n'
+ + "                        <div class=\"dialog_status_item\">And more.</div>" + '\n'
+ + "                    </div>" + '\n'
+ + "                </div>" + '\n'
+ + "            </div>" + '\n'
+ + "            <div class=\"flex_0\">" + '\n'
+ + "                <div class=\"dialog_border right_border\"><div" + '\n'
+ + "                    v-on:pointerdown=\"event => startResize(event, 'right')\"" + '\n'
+ + "                    v-on:pointermove=\"event => moveResize(event, 'right')\"" + '\n'
+ + "                    v-on:pointerup=\"event => stopResize(event, 'right')\"" + '\n'
+ + "                    v-on:pointercancel=\"event => stopResize(event, 'right')\"></div></div>" + '\n'
+ + "            </div>" + '\n'
+ + "        </div>" + '\n'
+ + "        <div class=\"flex_0 flex_row\">" + '\n'
+ + "            <div class=\"flex_0\">" + '\n'
+ + "                <div class=\"dialog_corner bottom_left_corner\"><div" + '\n'
+ + "                    v-on:pointerdown=\"event => startResize(event, 'bottom+left')\"" + '\n'
+ + "                    v-on:pointermove=\"event => moveResize(event, 'bottom+left')\"" + '\n'
+ + "                    v-on:pointerup=\"event => stopResize(event, 'bottom+left')\"" + '\n'
+ + "                    v-on:pointercancel=\"event => stopResize(event, 'bottom+left')\"></div></div>" + '\n'
+ + "            </div>" + '\n'
+ + "            <div class=\"flex_100\">" + '\n'
+ + "                <div class=\"dialog_border bottom_border\"><div" + '\n'
+ + "                    v-on:pointerdown=\"event => startResize(event, 'bottom')\"" + '\n'
+ + "                    v-on:pointermove=\"event => moveResize(event, 'bottom')\"" + '\n'
+ + "                    v-on:pointerup=\"event => stopResize(event, 'bottom')\"" + '\n'
+ + "                    v-on:pointercancel=\"event => stopResize(event, 'bottom')\"></div></div>" + '\n'
+ + "            </div>" + '\n'
+ + "            <div class=\"flex_0\">" + '\n'
+ + "                <div class=\"dialog_corner bottom_right_corner\"><div" + '\n'
+ + "                    v-on:pointerdown=\"event => startResize(event, 'bottom+right')\"" + '\n'
+ + "                    v-on:pointermove=\"event => moveResize(event, 'bottom+right')\"" + '\n'
+ + "                    v-on:pointerup=\"event => stopResize(event, 'bottom+right')\"" + '\n'
+ + "                    v-on:pointercancel=\"event => stopResize(event, 'bottom+right')\"></div></div>" + '\n'
+ + "            </div>" + '\n'
+ + "        </div>" + '\n'
+ + "    </div>" + '\n'
+ + "</div>",
+  props: {
+    port: {
+      type: Object,
+      required: true,
+    },
+    thread: {
+      type: Object,
+      required: true,
+    }
+  },
+  created() {
+    this.$locals = {
+      isMaximized: false,
+      isMinimized: false,
+      isDragging: false,
+      drag: null,
+      isResizing: false,
+      resize: null,
+    };
+  },
+  methods: {
+    focusMe() {
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.focusMe", arguments || []);;
+      this.port.setFocusToDialog(this);
+    },
+    startDrag(event) {
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.startDrag", arguments || []);;
+      if (event.button !== 0) return;
+      this.focusMe();
+      const element = this.$el;
+      const rect = element.getBoundingClientRect();
+      this.$locals.drag = {
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        left: rect.left,
+        top: rect.top
+      };
+      this.$locals.isDragging = true;
+      event.currentTarget.setPointerCapture(event.pointerId);
+    },
+    moveDrag(event) {
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.moveDrag", arguments || []);;
+      if (!this.$locals.isDragging) return;
+      if (event.pointerId !== this.$locals.drag.pointerId) return;
+      const drag = this.$locals.drag;
+      const element = this.$el;
+      element.style.left = `${drag.left + event.clientX - drag.startX}px`;
+      element.style.top = `${drag.top + event.clientY - drag.startY}px`;
+    },
+    stopDrag(event) {
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.stopDrag", arguments || []);;
+      if (!this.$locals.isDragging) return;
+      if (event.pointerId !== this.$locals.drag.pointerId) return;
+      this.$locals.isDragging = false;
+      this.$locals.drag = null;
+    },
+    startResize(event, position) {
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.startResize", arguments || []);;
+
+      console.log("INICIANDO START");
+      const element = this.$el;
+      const rect = element.getBoundingClientRect();
+      this.$locals.resize = {
+        position,
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height,
+      };
+      this.$locals.isResizing = true;
+      console.log("activated resiz")
+      event.currentTarget.setPointerCapture(event.pointerId);
+    },
+    moveResize(event, position) {
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.moveResize", arguments || []);;
+      console.log("INICIANDO MOVE");
+      if (!this.$locals.isResizing) return console.log("Not resiginz");
+      const resize = this.$locals.resize;
+      if (event.pointerId !== resize.pointerId) return console.log("Not pointercaptureds");;
+      const element = this.$el;
+      const deltaX = event.clientX - resize.startX;
+      const deltaY = event.clientY - resize.startY;
+      console.log(deltaX, deltaY);
+      if (position.includes("right")) {
+        element.style.width = `${resize.width + deltaX}px`;
+      }
+      if (position.includes("left")) {
+        element.style.width = `${resize.width - deltaX}px`;
+        element.style.left = `${resize.left + deltaX}px`;
+      }
+      if (position.includes("bottom")) {
+        element.style.height = `${resize.height + deltaY}px`;
+      }
+      if (position.includes("top")) {
+        element.style.height = `${resize.height - deltaY}px`;
+        element.style.top = `${resize.top + deltaY}px`;
+      }
+    },
+    stopResize(event, position) {
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.stopResize", arguments || []);;
+      console.log("INICIANDO STOP");
+      if (!this.$locals.isResizing) return;
+      const resize = this.$locals.resize;
+      if (event.pointerId !== resize.pointerId) return;
+      this.$locals.isResizing = false;
+      this.$locals.resize = null;
+    },
+    minimize() {
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.minimize", arguments || []);;
+      this.$locals.isMinimized = true;
+      console.log("INICIANDO MINIMIZ");
+      this.refreshPort();
+    },
+    toggleMaximize() {
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.toggleMaximize", arguments || []);;
+      this.$locals.isMaximized = !this.$locals.isMaximized;
+      this.refreshPort();
+    },
+    close() {
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.close", arguments || []);;
+      this.thread.close();
+      this.refreshPort();
+    },
+    refreshPort() {
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.refreshPort", arguments || []);;
+      this.port.refreshView();
+    }
+  },
+  static: {
+    findDialogFrom(element) {
+
+    }
+  }
+});
     Std.all.DialogsPort = Std.views.DialogsPort = Std.classes.ViewsRegistry.$.set("DialogsPort", {
   name: "DialogsPort",
   template: "<div class=\"View DialogsPort\">" + '\n'
- + "    Dialogs port." + '\n'
+ + "    <div v-on:click=\"setFocusToDialog\">Dialogs port:</div>" + '\n'
+ + "    <DialogView class=\"GlobalDialog\"" + '\n'
+ + "        v-for=\"subthread, subthreadIndex in $locals.opened\"" + '\n'
+ + "        v-bind:key=\"'global_dialog_' + subthread.threadId\"" + '\n'
+ + "        ref=\"currentDialogs\"" + '\n'
+ + "        :port=\"$locals.self\"" + '\n'
+ + "        :thread=\"subthread\" />" + '\n'
  + "</div>",
   props: {
-    
+
   },
-  data: function() {
+  data: function () {
+    Std.all.Tracer?.globalInstance.log("Std.views.DialogsPort.data", arguments || []);;
     return {};
   },
-  created: function() {
+  created: function () {
+    Std.all.Tracer?.globalInstance.log("Std.views.DialogsPort.created", arguments || []);;
+    Std.classes.Dialogs.globalInstance.initializePort(this);
     this.$locals = {
-      thread: Std.objects.DialogsThread,
+      self: this,
+      thread: Std.objects.GlobalThread,
+      opened: [],
+      order: [],
+      nextZIndex: 500,
     };
   },
   methods: {
     open(config) {
-      Validate_dialog_config_to_be_self_compliant: {
-        if(config.top) $moduler.assert(Array.isArray(config.top), `Required parameter «config.top» to be array on «DialogsPort.methods.open»`);
-        if(config.letf) $moduler.assert(Array.isArray(config.letf), `Required parameter «config.left» to be array on «DialogsPort.methods.open»`);
-        if(config.right) $moduler.assert(Array.isArray(config.right), `Required parameter «config.right» to be array on «DialogsPort.methods.open»`);
-        if(config.bottom) $moduler.assert(Array.isArray(config.bottom), `Required parameter «config.bottom» to be array on «DialogsPort.methods.open»`);
-        if(config.layout) $moduler.assert(typeof config.layout === "string", `Required parameter «config.layout» to be string on «DialogsPort.methods.open»`);
-        if(config.title) $moduler.assert(typeof config.title === "string", `Required parameter «config.title» to be string on «DialogsPort.methods.open»`);
-        if(config.thread) $moduler.assert(typeof config.thread === "object", `Required parameter «config.thread» to be object on «DialogsPort.methods.open»`);
-        if(config.size) $moduler.assert(typeof config.size === "number", `Required parameter «config.size» to be number on «DialogsPort.methods.open»`);
-        if(config.footer) $moduler.assert(typeof config.footer === "string", `Required parameter «config.footer» to be string on «DialogsPort.methods.open»`);
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogsPort.methods.open", arguments || []);;
+      Validate_dialog_properties: {
+        if (config.title) $moduler.assert(typeof config.title === "string", `Required parameter «config.title» to be string on «DialogsPort.methods.open»`);
+        if (config.top) $moduler.assert(Array.isArray(config.top), `Required parameter «config.top» to be array on «DialogsPort.methods.open»`);
+        if (config.letf) $moduler.assert(Array.isArray(config.letf), `Required parameter «config.left» to be array on «DialogsPort.methods.open»`);
+        if (config.right) $moduler.assert(Array.isArray(config.right), `Required parameter «config.right» to be array on «DialogsPort.methods.open»`);
+        if (config.bottom) $moduler.assert(Array.isArray(config.bottom), `Required parameter «config.bottom» to be array on «DialogsPort.methods.open»`);
+        if (config.footer) $moduler.assert(typeof config.footer === "string", `Required parameter «config.footer» to be string on «DialogsPort.methods.open»`);
+        if (config.layout) $moduler.assert(typeof config.layout === "string", `Required parameter «config.layout» to be string on «DialogsPort.methods.open»`);
+        if (config.size) $moduler.assert(typeof config.size === "number", `Required parameter «config.size» to be number on «DialogsPort.methods.open»`);
       }
+      Validate_thread_properties: {
+        $moduler.assert(typeof config.parent === "undefined", `Required parameter «config.parent» to be undefined on «DialogsPort.methods.open»`);
+        $moduler.assert(typeof config.children === "undefined", `Required parameter «config.children» to be undefined on «DialogsPort.methods.open»`);
+        $moduler.assert(typeof config.isClosed === "undefined", `Required parameter «config.isClosed» to be undefined on «DialogsPort.methods.open»`);
+        $moduler.assert(typeof config.threadId === "undefined", `Required parameter «config.threadId» to be undefined on «DialogsPort.methods.open»`);
+      }
+      const newSubthread = this.$locals.thread.newSubthread.config(config);
+      this.refreshView();
+      return newSubthread;
+    },
+    synchronizeThreads(thread = this.$locals.thread, collectedBrute = null) {
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogsPort.methods.synchronizeThreads", arguments || []);;
+      const collected = collectedBrute || [];
+      Collect_threads: {
+        for (let index = 0; index < thread.children.length; index++) {
+          const subthread = thread.children[index];
+          collected.push(subthread);
+          this.synchronizeThreads(subthread, collected);
+        }
+      }
+      Synchronize_opened_threads: {
+        if (collectedBrute === null) {
+          this.$locals.opened = collected;
+        }
+      }
+      this.$forceUpdate(true);
+      return collected;
+    },
+    refreshView() {
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogsPort.methods.refreshView", arguments || []);;
+      this.synchronizeThreads();
+    },
+    setFocusToDialog(dialog) {
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogsPort.methods.setFocusToDialog", arguments || []);;
+      dialog.$el.style.zIndex = ++this.$locals.nextZIndex;
     }
+  },
+  static: {
+    globalInstance: null,
   }
 });
   }
 
   Wave_15_Calendar: {
-    Std.all.CalendarParser = Std.objects.CalendarParser = Std.parsers.peggy.generate("Calendar_parser = Sentence" + '\n'
+    En_entredicho_por_v2: {
+      Std.all.CalendarParser = Std.objects.CalendarParser = Std.parsers.peggy.generate("Calendar_parser = Sentence" + '\n'
  + "" + '\n'
  + "Sentence = New_event_sentence" + '\n'
  + "" + '\n'
@@ -29414,20 +29922,20 @@ $moduler.toolkit.makeInterface([
  + "Duration_language = \"dur\"", {
   output: "parser" // also: "source", "parser"
 });
-    Std.all.CalendarClasses = Std.objects.CalendarClasses = {
+      Std.all.CalendarClasses = Std.objects.CalendarClasses = {
   Moment: Std.classes.Moment,
   Duration: Std.classes.Duration,
   Action: Std.classes.Duration,
   Task: Std.classes.Task,
 };
-    Std.all.CalendarInterface = Std.interfaces.CalendarInterface = // @interface:CalendarInterface
+      Std.all.CalendarInterface = Std.interfaces.CalendarInterface = // @interface:CalendarInterface
 {
   prototype: {
     classes: Std.objects.CalendarClasses,
   },
   static: {},
 };
-    Std.all.Calendar = Std.objects.Calendar = class Calendar {
+      Std.all.Calendar = Std.objects.Calendar = class Calendar {
 
   static {
     $moduler.toolkit.makeClass([
@@ -29437,6 +29945,221 @@ $moduler.toolkit.makeInterface([
   }
 
   static globalInstance = new this();
+
+};
+    }
+    Std.all.CalendarV2 = Std.classes.CalendarV2 = (function() {
+  const CalendarV2 = class CalendarV2 {
+    // $ compiler.inject.source("@/src/candidate/Std/apis/calendar/v2/CalendarV2/Utils/Utils.class.js");
+    static Utils = class Utils {
+      // @CHATGPT aqui para que puedas poner métodos utilitarios
+    };
+    static Action = class Action {
+  static {
+    $moduler.toolkit.makeClass([
+      Std.interfaces.InstantiableInterface,
+    ], this);
+  }
+};
+    static Activity = class Activity {
+  static {
+    $moduler.toolkit.makeClass([
+      Std.interfaces.InstantiableInterface,
+    ], this);
+  }
+};
+    static Book = class Book {
+  static {
+    $moduler.toolkit.makeClass([
+      Std.interfaces.InstantiableInterface,
+    ], this);
+  }
+  onCreate() {
+    this.instructions = [];
+  }
+  addInstruction(instructionBrute) {
+    const instruction = Std.all.CalendarV2.Instruction.create(instructionBrute);
+    this.instructions.push(instruction);
+  }
+};
+    static Duration = class Duration {
+  static {
+    $moduler.toolkit.makeClass([
+      Std.interfaces.InstantiableInterface,
+    ], this);
+  }
+};
+    static Interval = class Interval {
+  static {
+    $moduler.toolkit.makeClass([
+      Std.interfaces.InstantiableInterface,
+    ], this);
+  }
+  static validate(intervalInput) {
+    $moduler.assert(typeof intervalInput === "object", `Required parameter «intervalInput» to be object but «${typeof intervalInput}» was found instead on «Interval.validate»`);
+    $moduler.assert(typeof intervalInput.from === "object", `Required parameter «intervalInput.from» to be object but «${typeof intervalInput.from}» was found instead on «Interval.validate»`);
+    $moduler.assert(typeof intervalInput.to === "object", `Required parameter «intervalInput.to» to be object but «${typeof intervalInput.to}» was found instead on «Interval.validate»`);
+    Std.classes.CalendarV2.TimePattern.validate(intervalInput.from);
+    Std.classes.CalendarV2.TimePattern.validate(intervalInput.to);
+  }
+};
+    static Instruction = class Instruction {
+  static {
+    $moduler.toolkit.makeClass([
+      Std.interfaces.InstantiableInterface,
+    ], this);
+  }
+  onCreate(parameters) {
+    $moduler.assert(typeof parameters === "object");
+    $moduler.assert(typeof parameters.timePattern !== "undefined", `Required property «timePattern» to be function on «CalendarV2.Instruction.prototype.onCreate»`);
+    $moduler.assert(typeof parameters.activityPattern !== "undefined", `Required property «activityPattern» to be function on «CalendarV2.Instruction.prototype.onCreate»`);
+    Object.assign(this, parameters);
+  }
+};
+    static TimePattern = class TimePattern {
+  static {
+    $moduler.toolkit.makeClass([
+      Std.interfaces.InstantiableInterface,
+    ], this);
+  }
+  static validate(timePattern) {
+    $moduler.assert(typeof timePattern === "object", `Required parameter «timePattern» to be object but «${typeof timePattern}» was found instead on «TimePattern.validate»`);
+    if("year" in timePattern) $moduler.assert(this.isValidDatePart(timePattern.year), `Required parameter «timePattern.year» to be '*', number or false but «${timePattern.year}» was found instead on «TimePattern.validate»`);
+    if("month" in timePattern) $moduler.assert(this.isValidDatePart(timePattern.month), `Required parameter «timePattern.month» to be '*', number or false but «${timePattern.month}» was found instead on «TimePattern.validate»`);
+    if("day" in timePattern) $moduler.assert(this.isValidDatePart(timePattern.day), `Required parameter «timePattern.day» to be '*', number or false but «${timePattern.day}» was found instead on «TimePattern.validate»`);
+    if("weekday" in timePattern) $moduler.assert(this.isValidDatePart(timePattern.weekday), `Required parameter «timePattern.weekday» to be '*', number or false but «${timePattern.weekday}» was found instead on «TimePattern.validate»`);
+    if("hour" in timePattern) $moduler.assert(this.isValidDatePart(timePattern.hour), `Required parameter «timePattern.hour» to be '*', number or false but «${timePattern.hour}» was found instead on «TimePattern.validate»`);
+    if("minute" in timePattern) $moduler.assert(this.isValidDatePart(timePattern.minute), `Required parameter «timePattern.minute» to be '*', number or false but «${timePattern.minute}» was found instead on «TimePattern.validate»`);
+  }
+  static isValidDatePart(year) {
+    if(typeof year === "number") return true;
+    if(year === "*") return true;
+    if(year === false) return true;
+    return false;
+  }
+  static validWeekdays = ["lunes","martes","miércoles","jueves","viernes","sábado","domingo"];
+  static isValidWeekday(weekday) {
+    if(this.validWeekdays.includes(weekday)) return true;
+    if(weekday === false) return true;
+    return false;
+  }
+};
+    static ActivityFactory = class ActivityFactory {
+  static {
+    $moduler.toolkit.makeClass([
+      Std.interfaces.InstantiableInterface,
+    ], this);
+  }
+};
+    static from = {
+      timePattern: {
+        to: {
+          timeMatrix: (timePattern, timeInterval) => {
+            this.TimePattern.validate(timePattern);
+            this.Interval.validate(timeInterval);
+            const timeMatrix = [];
+            Lo_chunguisimo_aqui_iria: {
+
+            }
+            return timeMatrix;
+          },
+        }
+      },
+      timeMatrix: {
+        to: {
+          timePoints: (timeMatrix, timeInterval) => {
+            const timePoints = [];
+            Lo_chunguisimo_aqui_iria: {
+
+            }
+            return timePoints;
+          },
+        }
+      },
+      timePoints: {
+        to: {
+          timeTree: (timePoints) => {
+            const timeTree = [];
+            Lo_chunguisimo_aqui_iria: {
+
+            }
+            return timeTree;
+          },
+        }
+      }
+    }
+  };
+  Precontexto_a_borrar: {
+    Std.classes.CalendarV2 = CalendarV2;
+  }
+  Test_de_la_clase: {
+    const predefinedInterval = {
+      from: {
+        year: 2026,
+      },
+      to: {
+        year: 2026,
+      }
+    };
+    const timeMatrix = CalendarV2.from.timePattern.to.timeMatrix({
+      year: false,
+      month: 1,
+      day: 5,
+      hour: 10,
+      minute: 20,
+    }, predefinedInterval);
+    const timePoints = CalendarV2.from.timeMatrix.to.timePoints(timeMatrix, predefinedInterval);
+    const timeTree = CalendarV2.from.timePoints.to.timeTree(timePoints, predefinedInterval);
+    console.log(timeTree);
+  }
+  return CalendarV2;
+})();;
+  }
+
+  Wave_16_Graphics: {
+    Std.functions.CielabColorConverter = Std.objects.CielabColorConverter = class CielabColorConverter {
+
+  static convert(value, max = 10) {
+    if (!Number.isFinite(value) || !Number.isFinite(max) || max <= 0 || value < 0 || value > max) {
+      throw new RangeError(`Value must be between 0 and ${max}`);
+    }
+
+    // ------------------------------------------------------------
+    // 1. Convertir el valor a luminosidad CIELAB (L*)
+    const lightness = value / max * 100;
+
+    // ------------------------------------------------------------
+    // 2. Convertir L* a luminancia lineal Y
+    let luminance;
+    if (lightness > 8) {
+      luminance = Math.pow((lightness + 16) / 116, 3);
+    } else {
+      luminance = lightness / 903.3;
+    }
+
+    // ------------------------------------------------------------
+    // 3. Convertir luminancia lineal a sRGB
+    let channel;
+    if (luminance <= 0.0031308) {
+      channel = 12.92 * luminance;
+    } else {
+      channel = 1.055 * Math.pow(luminance, 1 / 2.4) - 0.055;
+    }
+
+    // ------------------------------------------------------------
+    // 4. Generar el color hexadecimal
+    const hex = Math.round(channel * 255).toString(16).padStart(2, "0");
+
+    return `#${hex}${hex}${hex}`;
+  }
+
+  static convertRange(max = 100) {
+    const output = {};
+    for(let index=0; index<=max; index++) {
+      output[index] = CielabColorConverter.convert(index, max);
+    }
+    return output;
+  }
 
 };
   }
@@ -29475,6 +30198,7 @@ $moduler.toolkit.makeInterface([
   static globalApplication = null;
 
   static start() {
+    Std.all.Tracer?.globalInstance.log("Std.classes.ApplicationStarter.start", arguments || []);;
     Shortcut_cache_start_promise: {
       if(this.isStarted) {
         console.log("[*] Returning previously created application promise");

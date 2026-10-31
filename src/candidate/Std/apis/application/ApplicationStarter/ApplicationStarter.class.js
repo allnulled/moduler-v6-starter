@@ -5,6 +5,7 @@ class ApplicationStarter {
   static globalApplication = null;
 
   static start() {
+    $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"Std.classes.ApplicationStarter.start"});
     Shortcut_cache_start_promise: {
       if(this.isStarted) {
         console.log("[*] Returning previously created application promise");

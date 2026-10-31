@@ -1,0 +1,99 @@
+<div class="DialogView View" v-on:click="focusMe" :class="{
+        is_maximized: $locals.isMaximized,
+        is_minimized: $locals.isMinimized,
+    }">
+    <div class="flex_column flex_100">
+        <div class="flex_0 flex_row">
+            <div class="flex_0">
+                <div class="dialog_corner top_left_corner"><div
+                    v-on:pointerdown="event => startResize(event, 'top+left')"
+                    v-on:pointermove="event => moveResize(event, 'top+left')"
+                    v-on:pointerup="event => stopResize(event, 'top+left')"
+                    v-on:pointercancel="event => stopResize(event, 'top+left')"></div></div>
+            </div>
+            <div class="flex_100">
+                <div class="dialog_border top_border"><div
+                    v-on:pointerdown="event => startResize(event, 'top')"
+                    v-on:pointermove="event => moveResize(event, 'top')"
+                    v-on:pointerup="event => stopResize(event, 'top')"
+                    v-on:pointercancel="event => stopResize(event, 'top')"></div></div>
+            </div>
+            <div class="flex_0">
+                <div class="dialog_corner top_right_corner"><div
+                    v-on:pointerdown="event => startResize(event, 'top+right')"
+                    v-on:pointermove="event => moveResize(event, 'top+right')"
+                    v-on:pointerup="event => stopResize(event, 'top+right')"
+                    v-on:pointercancel="event => stopResize(event, 'top+right')"></div></div>
+            </div>
+        </div>
+        <div class="flex_100 flex_row">
+            <div class="flex_0">
+                <div class="dialog_border left_border"><div
+                    v-on:pointerdown="event => startResize(event, 'left')"
+                    v-on:pointermove="event => moveResize(event, 'left')"
+                    v-on:pointerup="event => stopResize(event, 'left')"
+                    v-on:pointercancel="event => stopResize(event, 'left')"></div></div>
+            </div>
+            <div class="flex_100 dialog_box">
+                <div class="dialog_header">
+                    <div class="dialog_topbar">
+                        <div class="dialog_title"
+                            v-on:pointerdown="startDrag"
+                            v-on:pointermove="moveDrag"
+                            v-on:pointerup="stopDrag"
+                            v-on:pointercancel="stopDrag">
+                            <div class="dialog_title_text">{{ thread.threadId || "no id found"}}</div>
+                        </div>
+                        <div class="dialog_top_buttons">
+                            <div class="dialog_top_button minimize_button" data-alt-text="▪️" v-on:click="minimize">➖​</div>
+                            <div class="dialog_top_button maximize_button" data-alt-text="◼️" v-on:click="toggleMaximize">
+                                {{ $locals.isMaximized ? "▪️​" : "◼️​" }}
+                            ​</div>
+                            <div class="dialog_top_button exit_button" v-on:click="close">✖️</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dialog_body">
+                    <DynamicView :view="thread" :args="{dialog:this}" />
+                </div>
+                <div class="dialog_footer">
+                    <div class="dialog_status_bar">
+                        <div class="dialog_status_item flex_100">This is a message.</div>
+                        <div class="dialog_status_item">Another.</div>
+                        <div class="dialog_status_item">And more.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex_0">
+                <div class="dialog_border right_border"><div
+                    v-on:pointerdown="event => startResize(event, 'right')"
+                    v-on:pointermove="event => moveResize(event, 'right')"
+                    v-on:pointerup="event => stopResize(event, 'right')"
+                    v-on:pointercancel="event => stopResize(event, 'right')"></div></div>
+            </div>
+        </div>
+        <div class="flex_0 flex_row">
+            <div class="flex_0">
+                <div class="dialog_corner bottom_left_corner"><div
+                    v-on:pointerdown="event => startResize(event, 'bottom+left')"
+                    v-on:pointermove="event => moveResize(event, 'bottom+left')"
+                    v-on:pointerup="event => stopResize(event, 'bottom+left')"
+                    v-on:pointercancel="event => stopResize(event, 'bottom+left')"></div></div>
+            </div>
+            <div class="flex_100">
+                <div class="dialog_border bottom_border"><div
+                    v-on:pointerdown="event => startResize(event, 'bottom')"
+                    v-on:pointermove="event => moveResize(event, 'bottom')"
+                    v-on:pointerup="event => stopResize(event, 'bottom')"
+                    v-on:pointercancel="event => stopResize(event, 'bottom')"></div></div>
+            </div>
+            <div class="flex_0">
+                <div class="dialog_corner bottom_right_corner"><div
+                    v-on:pointerdown="event => startResize(event, 'bottom+right')"
+                    v-on:pointermove="event => moveResize(event, 'bottom+right')"
+                    v-on:pointerup="event => stopResize(event, 'bottom+right')"
+                    v-on:pointercancel="event => stopResize(event, 'bottom+right')"></div></div>
+            </div>
+        </div>
+    </div>
+</div>

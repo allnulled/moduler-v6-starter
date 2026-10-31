@@ -2,7 +2,7 @@ module.exports = async function ({ Tester }) {
 
   const { DynamicView, Timeout, Domer } = Std.all;
 
-  await Timeout.of(10);
+  // await Timeout.of(10);
 
   const dynamicElement = Domer.first(".DynamicView");
   const dynamicView = dynamicElement.getVueComponent();

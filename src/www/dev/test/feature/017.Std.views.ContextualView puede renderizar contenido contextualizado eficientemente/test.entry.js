@@ -2,7 +2,7 @@ module.exports = async function ({ Tester }) {
 
   const { ContextualView, Timeout, Domer } = Std.all;
 
-  await Timeout.of(10);
+  // await Timeout.of(10);
 
   const contextualElement = Domer.first(".ContextualView");
   const contextualView = contextualElement.getVueComponent();

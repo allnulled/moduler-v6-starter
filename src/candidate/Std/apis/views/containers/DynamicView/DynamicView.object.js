@@ -12,19 +12,23 @@ Std.classes.ViewsRegistry.$.set("DynamicView", {
     }
   },
   created() {
+    $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"Std.views.DynamicView.created"});
     this.$locals = {
       currentView: this.view,
       currentArgs: this.args,
     };
   },
   mounted() {
+    $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"Std.views.DynamicView.mounted"});
     this.setView(this.$locals.currentView, this.$locals.currentArgs);
   },
   methods: {
     refreshView() {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"Std.views.DynamicView.methods.refreshView"});
       this.$forceUpdate(true);
     },
     setView(view, args = {}) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"Std.views.DynamicView.methods.setView"});
       const { ViewsRegistry } = Std.all;
       Validate_input: {
         $moduler.assert(typeof view === "object", `Required parameter «view» to be object but «${typeof view}» was found instead on «Std.objects.DynamicView.methods.setView»`);
@@ -56,6 +60,7 @@ Std.classes.ViewsRegistry.$.set("DynamicView", {
       }
     },
     setHtml(html) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"Std.views.DynamicView.methods.setHtml"});
       return this.setView({
         template: html.startsWith("<") ? html : `<div>${html}</div>`,
       });

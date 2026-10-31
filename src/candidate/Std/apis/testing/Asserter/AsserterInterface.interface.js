@@ -15,7 +15,7 @@
       } else throw new Error("Parameter «expectedError» must be function, object or string");
     },
     assert: function(condition, message = "untitled error", ...otherParameters) {
-      $compiler.inject.template("@/src/candidate/Std/snippets/methodIn.js", { name: "AsserterInterface.prototype.assert" });
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.interfaces.AsserterInterface.prototype.assert" });
       const eventParameters = [condition, message].concat(otherParameters);
       Std.functions.triggerMethodIfExists(this, "onAssertStart", eventParameters);
       if (condition) {
@@ -27,14 +27,12 @@
       if (!condition) {
         const error = new Error(message);
         error.name = "AssertionError";
-        $compiler.inject.template("@/src/candidate/Std/snippets/methodError.js", { name: "AsserterInterface.prototype.assert" });
         throw error;
       }
-      $compiler.inject.template("@/src/candidate/Std/snippets/methodOut.js", { name: "AsserterInterface.prototype.assert" });
       return true;
     },
     assertThrowsSync: function(callback, message = "", expectedError = false) {
-      $compiler.inject.template("@/src/candidate/Std/snippets/methodIn.js", { name: "AsserterInterface.prototype.assertThrowsSync" });
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.interfaces.AsserterInterface.prototype.assertThrowsSync" });
       let thrownError = false;
       const fakeError = new Error();
       try {
@@ -46,18 +44,15 @@
         }
       }
       if (!thrownError) {
-        $compiler.inject.template("@/src/candidate/Std/snippets/methodError.js", { name: "AsserterInterface.prototype.assert" });
         throw new Error(`Method «assertThrowsSync» expected callback to throw but it did not on: ${message}`);
       }
       if (!this.matchesError(expectedError, thrownError)) {
-        $compiler.inject.template("@/src/candidate/Std/snippets/methodError.js", { name: "AsserterInterface.prototype.assert" });
         throw new Error(`Method «assertThrowsSync» expected one error but got another:\n  - expected: ${expectedError.name} | ${expectedError.message}\n  - current:  ${thrownError.name} | ${thrownError.message}`)
       }
-      $compiler.inject.template("@/src/candidate/Std/snippets/methodOut.js", { name: "AsserterInterface.prototype.assert" });
       return true;
     },
     assertThrowsAsync: async function(callback, message = "", expectedError = false) {
-      $compiler.inject.template("@/src/candidate/Std/snippets/methodIn.js", { name: "AsserterInterface.prototype.assertThrowsAsync" });
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.interfaces.AsserterInterface.prototype.assertThrowsAsync" });
       let thrownError = false;
       const fakeError = new Error();
       try {
@@ -69,18 +64,15 @@
         }
       }
       if (!thrownError) {
-        $compiler.inject.template("@/src/candidate/Std/snippets/methodError.js", { name: "AsserterInterface.prototype.assertThrowsAsync" });
         throw new Error(`Method «assertThrowsAsync» expected callback to throw but it did not on: ${message}`);
       }
       if (!this.matchesError(expectedError, thrownError)) {
-        $compiler.inject.template("@/src/candidate/Std/snippets/methodError.js", { name: "AsserterInterface.prototype.assertThrowsAsync" });
         throw new Error(`Method «assertThrowsSync» expected one error but got another:\n  - expected: ${expectedError.name} | ${expectedError.message}\n  - current:  ${thrownError.name} | ${thrownError.message}`)
       }
-      $compiler.inject.template("@/src/candidate/Std/snippets/methodOut.js", { name: "AsserterInterface.prototype.assertThrowsAsync" });
       return true;
     },
     assertDoesNotThrowSync: function(callback, message = "") {
-      $compiler.inject.template("@/src/candidate/Std/snippets/methodIn.js", { name: "AsserterInterface.prototype.assertThrowsAsync" });
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.interfaces.AsserterInterface.prototype.assertThrowsAsync" });
       let thrownError = false;
       const fakeError = new Error();
       try {
@@ -92,16 +84,13 @@
         }
       }
       if (thrownError) {
-        $compiler.inject.template("@/src/candidate/Std/snippets/methodError.js", { name: "AsserterInterface.prototype.assertDoesNotThrowSync" });
         throw thrownError;
       }
-      $compiler.inject.template("@/src/candidate/Std/snippets/methodOut.js", { name: "AsserterInterface.prototype.assertDoesNotThrowSync" });
       return true;
     },
     assertDoesNotThrowAsync: async function(callback, message = "") {
-      $compiler.inject.template("@/src/candidate/Std/snippets/methodIn.js", { name: "AsserterInterface.prototype.assertDoesNotThrowAsync" });
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.interfaces.AsserterInterface.prototype.assertDoesNotThrowAsync" });
       await callback();
-      $compiler.inject.template("@/src/candidate/Std/snippets/methodOut.js", { name: "AsserterInterface.prototype.assertDoesNotThrowAsync" });
       return true;
     },
   },

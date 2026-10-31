@@ -3,7 +3,7 @@
   prototype: {
 
     get new() {
-      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"CreableInterface.prototype.new"});
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"Std.interfaces.CreableInterface.prototype.new"});
       return this.constructor.create();
     },
 
@@ -11,12 +11,12 @@
   static: {
     
     get new() {
-      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"CreableInterface.static.new"});
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"Std.interfaces.CreableInterface.static.new"});
       return this.create();
     },
     
     create: function(config = {}, ...constructorArgs) {
-      $compiler.inject.template("@/src/candidate/Std/snippets/methodIn.js", {name:"CreableInterface.static.create"});
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"Std.interfaces.CreableInterface.static.create"});
       const instanze = new this(...constructorArgs);
       let output = instanze;
       Apply_new_configurations: {
@@ -30,7 +30,6 @@
           }, ...constructorArgs) || output;
         }
       }
-      $compiler.inject.template("@/src/candidate/Std/snippets/methodOut.js", {name:"CreableInterface.static.create"});
       return output;
     },
   },

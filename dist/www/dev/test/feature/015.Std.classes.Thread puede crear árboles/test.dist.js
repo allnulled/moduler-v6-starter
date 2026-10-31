@@ -4,9 +4,9 @@ module.exports = async function ({ Tester }) {
   const { Thread } = Std.all;
 
   const one = Thread.create({ name: "one" });
-  const one_a = one.newThread.config({ name: "one.a" });
-  const one_b = one.newThread.config({ name: "one.b" });
-  const one_c = one.newThread.config({ name: "one.c" });
+  const one_a = one.newSubthread.config({ name: "one.a" });
+  const one_b = one.newSubthread.config({ name: "one.b" });
+  const one_c = one.newSubthread.config({ name: "one.c" });
 
   $moduler.assert(one_a.parent === one, "Can find parent thread (1)");
   $moduler.assert(one_b.parent === one, "Can find parent thread (2)");
@@ -23,5 +23,14 @@ module.exports = async function ({ Tester }) {
   $moduler.assert(one.children.includes(one_a), "Can find non-orphan threads from their parent (30)");
   $moduler.assert(one.children.includes(one_b), "Can find non-orphan threads from their parent (31)");
   $moduler.assert(one.children.includes(one_c), "Can find non-orphan threads from their parent (32)");
+
+  Can_close_too: {
+    one.close();
+    $moduler.assert(one.isClosed === true, "Should have closed self thread (1)");
+    $moduler.assert(one_a.isClosed === true, "Should have closed children 1 thread (2)");
+    $moduler.assert(one_b.isClosed === true, "Should have closed children 2 thread (3)");
+    $moduler.assert(one_c.isClosed === true, "Should have closed children 3 thread (4)");
+    $moduler.assert(!Std.objects.GlobalThread.children.includes(one), "Should have removed thread from global (5)");
+  }
 
 };

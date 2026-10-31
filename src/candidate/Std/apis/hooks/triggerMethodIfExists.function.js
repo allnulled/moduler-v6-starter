@@ -11,12 +11,14 @@ function triggerMethodIfExists(base, method, args = [], scope = false) {
    *    - scope?:any - scope al que bindear
    * 
    */
-  $compiler.inject.template("@/src/candidate/Std/snippets/methodIn.js", {name:"Std.functions.triggerMethodIfExists"});
+  $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"Std.functions.triggerMethodIfExists"});
   let output = undefined;
   if(base && (typeof base[method] === "function")) {
-    if(scope) return base[method].call(scope, ...args);
+    if(scope) {
+      const output = base[method].call(scope, ...args);
+      return output;
+    }
     output = base[method](...args);
   }
-  $compiler.inject.template("@/src/candidate/Std/snippets/methodOut.js", {name:"Std.functions.triggerMethodIfExists"});
   return output;
 }

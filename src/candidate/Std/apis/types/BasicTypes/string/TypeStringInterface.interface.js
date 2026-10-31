@@ -4,6 +4,7 @@
   static: {
     abstraction: {
       onValidateData(input, validator, step, state) {
+        $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"Std.interfaces.TypeStringInterface.static.abstraction.onValidateData"});
         if(typeof input !== "string") {
           throw Error.normalize({
             name: "ValidationError",

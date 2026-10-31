@@ -1,3 +1,9 @@
 <div class="View DialogsPort">
-    Dialogs port.
+    <div v-on:click="setFocusToDialog">Dialogs port:</div>
+    <DialogView class="GlobalDialog"
+        v-for="subthread, subthreadIndex in $locals.opened"
+        v-bind:key="'global_dialog_' + subthread.threadId"
+        ref="currentDialogs"
+        :port="$locals.self"
+        :thread="subthread" />
 </div>

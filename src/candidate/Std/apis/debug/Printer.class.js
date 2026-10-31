@@ -26,7 +26,7 @@ class Printer {
     for (let index = 0; index < args.length; index++) {
       const arg = args[index];
       try {
-        console.log(index + ": " + typeof arg, JSON.stringify(arg, null, 2));
+        console.log(index + ": " + typeof arg, Std.classes.JsonStringifier.stringify(arg, null, 2));
       } catch (error) {
         console.log(index + ": " + typeof arg, arg);
       }

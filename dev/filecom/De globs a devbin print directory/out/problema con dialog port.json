@@ -1,0 +1,656 @@
+[#FILE=@/src/candidate/Std/apis/views/dialogs/DialogView/DialogView.object.js]
+Std.classes.ViewsRegistry.$.set("DialogView", {
+  name: "DialogView",
+  template: $compiler.inject.string("@/src/candidate/Std/apis/views/dialogs/DialogView/DialogView.view.html"),
+  props: {
+    port: {
+      type: Object,
+      required: true,
+    },
+    thread: {
+      type: Object,
+      required: true,
+    }
+  },
+  created() {
+    this.$locals = {
+      isMaximized: false,
+      isMinimized: false,
+      isDragging: false,
+      drag: null,
+      isResizing: false,
+      resize: null,
+    };
+  },
+  methods: {
+    focusMe() {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.focusMe" });
+      this.port.setFocusToDialog(this);
+    },
+    startDrag(event) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.startDrag" });
+      if (event.button !== 0) return;
+      this.focusMe();
+      const element = this.$el;
+      const rect = element.getBoundingClientRect();
+      this.$locals.drag = {
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        left: rect.left,
+        top: rect.top
+      };
+      this.$locals.isDragging = true;
+      event.currentTarget.setPointerCapture(event.pointerId);
+    },
+    moveDrag(event) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.moveDrag" });
+      if (!this.$locals.isDragging) return;
+      if (event.pointerId !== this.$locals.drag.pointerId) return;
+      const drag = this.$locals.drag;
+      const element = this.$el;
+      element.style.left = `${drag.left + event.clientX - drag.startX}px`;
+      element.style.top = `${drag.top + event.clientY - drag.startY}px`;
+    },
+    stopDrag(event) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.stopDrag" });
+      if (!this.$locals.isDragging) return;
+      if (event.pointerId !== this.$locals.drag.pointerId) return;
+      this.$locals.isDragging = false;
+      this.$locals.drag = null;
+    },
+    startResize(event, position) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.startResize" });
+
+      console.log("INICIANDO START");
+      const element = this.$el;
+      const rect = element.getBoundingClientRect();
+      this.$locals.resize = {
+        position,
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height,
+      };
+      this.$locals.isResizing = true;
+      console.log("activated resiz")
+      event.currentTarget.setPointerCapture(event.pointerId);
+    },
+    moveResize(event, position) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.moveResize" });
+      console.log("INICIANDO MOVE");
+      if (!this.$locals.isResizing) return console.log("Not resiginz");
+      const resize = this.$locals.resize;
+      if (event.pointerId !== resize.pointerId) return console.log("Not pointercaptureds");;
+      const element = this.$el;
+      const deltaX = event.clientX - resize.startX;
+      const deltaY = event.clientY - resize.startY;
+      console.log(deltaX, deltaY);
+      if (position.includes("right")) {
+        element.style.width = `${resize.width + deltaX}px`;
+      }
+      if (position.includes("left")) {
+        element.style.width = `${resize.width - deltaX}px`;
+        element.style.left = `${resize.left + deltaX}px`;
+      }
+      if (position.includes("bottom")) {
+        element.style.height = `${resize.height + deltaY}px`;
+      }
+      if (position.includes("top")) {
+        element.style.height = `${resize.height - deltaY}px`;
+        element.style.top = `${resize.top + deltaY}px`;
+      }
+    },
+    stopResize(event, position) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.stopResize" });
+      console.log("INICIANDO STOP");
+      if (!this.$locals.isResizing) return;
+      const resize = this.$locals.resize;
+      if (event.pointerId !== resize.pointerId) return;
+      this.$locals.isResizing = false;
+      this.$locals.resize = null;
+    },
+    minimize() {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.minimize" });
+      this.$locals.isMinimized = true;
+      console.log("INICIANDO MINIMIZ");
+      this.refreshPort();
+    },
+    toggleMaximize() {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.toggleMaximize" });
+      this.$locals.isMaximized = !this.$locals.isMaximized;
+      this.refreshPort();
+    },
+    close() {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.close" });
+      this.thread.close();
+      this.refreshPort();
+    },
+    refreshPort() {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.refreshPort" });
+      this.port.refreshView();
+    }
+  },
+  static: {
+    findDialogFrom(element) {
+
+    }
+  }
+})
+[#FILE=@/src/candidate/Std/apis/views/dialogs/DialogView/DialogView.style.css]
+:root {
+    --border_dark_concept_1: 1px solid var(--grey48);
+    --border_dark_concept_2: 3px double var(--grey48);
+    --border_light_concept_1: 1px solid #BBB;
+    --border_light_concept_2: 1px solid #EEE;
+    --shadow_concept_1: 0 0 5px var(--grey48);
+    --font_size_small_1: 10px;
+    --spacing_size_0: 0px;
+    --spacing_size_1: 2px;
+    --spacing_size_2: 4px;
+    --grey0: #000000;
+    --grey1: #040404;
+    --grey2: #070707;
+    --grey3: #0b0b0b;
+    --grey4: #0e0e0e;
+    --grey5: #111111;
+    --grey6: #131313;
+    --grey7: #151515;
+    --grey8: #181818;
+    --grey9: #191919;
+    --grey10: #1b1b1b;
+    --grey11: #1d1d1d;
+    --grey12: #1f1f1f;
+    --grey13: #222222;
+    --grey14: #242424;
+    --grey15: #262626;
+    --grey16: #282828;
+    --grey17: #2a2a2a;
+    --grey18: #2c2c2c;
+    --grey19: #2e2e2e;
+    --grey20: #303030;
+    --grey21: #323232;
+    --grey22: #353535;
+    --grey23: #373737;
+    --grey24: #393939;
+    --grey25: #3b3b3b;
+    --grey26: #3e3e3e;
+    --grey27: #404040;
+    --grey28: #424242;
+    --grey29: #444444;
+    --grey30: #474747;
+    --grey31: #494949;
+    --grey32: #4b4b4b;
+    --grey33: #4e4e4e;
+    --grey34: #505050;
+    --grey35: #525252;
+    --grey36: #555555;
+    --grey37: #575757;
+    --grey38: #595959;
+    --grey39: #5c5c5c;
+    --grey40: #5e5e5e;
+    --grey41: #616161;
+    --grey42: #636363;
+    --grey43: #666666;
+    --grey44: #686868;
+    --grey45: #6a6a6a;
+    --grey46: #6d6d6d;
+    --grey47: #6f6f6f;
+    --grey48: #727272;
+    --grey49: #747474;
+    --grey50: #777777;
+    --grey51: #797979;
+    --grey52: #7c7c7c;
+    --grey53: #7f7f7f;
+    --grey54: #818181;
+    --grey55: #848484;
+    --grey56: #868686;
+    --grey57: #898989;
+    --grey58: #8b8b8b;
+    --grey59: #8e8e8e;
+    --grey60: #919191;
+    --grey61: #939393;
+    --grey62: #969696;
+    --grey63: #989898;
+    --grey64: #9b9b9b;
+    --grey65: #9e9e9e;
+    --grey66: #a0a0a0;
+    --grey67: #a3a3a3;
+    --grey68: #a6a6a6;
+    --grey69: #a8a8a8;
+    --grey70: #ababab;
+    --grey71: #aeaeae;
+    --grey72: #b0b0b0;
+    --grey73: #b3b3b3;
+    --grey74: #b6b6b6;
+    --grey75: #b9b9b9;
+    --grey76: #bbbbbb;
+    --grey77: #bebebe;
+    --grey78: #c1c1c1;
+    --grey79: #c4c4c4;
+    --grey80: #c6c6c6;
+    --grey81: #c9c9c9;
+    --grey82: #cccccc;
+    --grey83: #cfcfcf;
+    --grey84: #d1d1d1;
+    --grey85: #d4d4d4;
+    --grey86: #d7d7d7;
+    --grey87: #dadada;
+    --grey88: #dddddd;
+    --grey89: #dfdfdf;
+    --grey90: #e2e2e2;
+    --grey91: #e5e5e5;
+    --grey92: #e8e8e8;
+    --grey93: #ebebeb;
+    --grey94: #eeeeee;
+    --grey95: #f1f1f1;
+    --grey96: #f3f3f3;
+    --grey97: #f6f6f6;
+    --grey98: #f9f9f9;
+    --grey99: #fcfcfc;
+    --grey100: #ffffff;
+    --dialog_border_width: 5px;
+}
+
+
+
+
+
+.DialogPort {
+    position: relative;
+}
+
+.DialogView {
+    position: absolute;
+    border: var(--border_dark_concept_2);
+    margin: 2px;
+    border-radius: 3pt;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+}
+
+.DialogView .dialog_topbar {
+    display: flex;
+    flex-direction: row;
+    border-bottom: var(--border_dark_concept_1);
+    align-items: center;
+    background-color: var(--grey75);
+    color: black;
+    user-select: none;
+}
+.DialogView .dialog_title {
+    flex: 100;
+    cursor: default;
+    touch-action: none;
+    align-self: stretch;
+    overflow: hidden;
+    display: flex;
+}
+
+.DialogView .dialog_title:active {
+    cursor: grabbing;
+}
+.DialogView .dialog_title_text {
+    display: flex;
+    align-items: center;
+    padding-left: 4px;
+}
+.DialogView .dialog_top_buttons {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-right: 2px;
+    gap: 2px;
+}
+.DialogView .dialog_top_button {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 12px;
+    min-height: 12px;
+    padding: 3px;
+    border: var(--border_dark_concept_1);
+    border-radius: 3pt; /*50%;*/
+    background-color: var(--grey95);
+    cursor: pointer;
+}
+.DialogView .dialog_top_button:hover {
+    box-shadow: var(--shadow_concept_1);
+}
+.DialogView .dialog_body {
+    padding: var(--spacing_size_2);
+    background-color: var(--grey98);
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    overflow: auto;
+}
+.DialogView .dialog_footer {
+    background-color: var(--grey90);
+    color: var(--grey0);
+}
+.DialogView .dialog_status_bar {
+    display: flex;
+    flex-direction: row;
+    border-top: var(--border_dark_concept_1);
+    font-size: var(--font_size_small_1);
+}
+.DialogView .dialog_status_item {
+    flex: 1;
+    padding: var(--spacing_size_1);
+    white-space: nowrap;
+}
+
+.DialogView .dialog_status_bar > .dialog_status_item {
+    border-right: var(--border_dark_concept_1);
+}
+
+.DialogView .dialog_status_bar > .dialog_status_item:first-child {
+    border-left: none;
+}
+.DialogView .dialog_status_bar > .dialog_status_item:last-child {
+    border-right: none;
+}
+
+
+.DialogView .dialog_box {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+
+.DialogView .dialog_border {
+    position: relative;
+}
+.DialogView .dialog_border > div {
+    position: absolute;
+    top: 0px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    background-color: blue;
+}
+.DialogView .dialog_border.top_border > div {
+    height: 6px;
+    top: -6px;
+    cursor: n-resize;
+}
+.DialogView .dialog_border.bottom_border > div {
+    height: 6px;
+    bottom: -6px;
+    cursor: s-resize;
+}
+.DialogView .dialog_border.left_border > div {
+    width: 6px;
+    left: -6px;
+    cursor: w-resize;
+}
+.DialogView .dialog_border.right_border > div {
+    width: 6px;
+    right: -6px;
+    cursor: e-resize;
+}
+
+.DialogView .dialog_corner {
+    position: relative;
+}
+.DialogView .dialog_corner > div {
+    position: absolute;
+    top: 0px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    width: 6px;
+    height: 6px;
+    background-color: red;
+}
+.DialogView .dialog_corner.top_left_corner > div {
+    top: -6px;
+    left: -6px;
+    cursor: nw-resize;
+}
+.DialogView .dialog_corner.top_right_corner > div {
+    top: -6px;
+    right: -6px;
+    cursor: ne-resize;
+}
+.DialogView .dialog_corner.bottom_left_corner > div {
+    bottom: -6px;
+    left: -6px;
+    cursor: sw-resize;
+}
+.DialogView .dialog_corner.bottom_right_corner > div {
+    bottom: -6px;
+    right: -6px;
+    cursor: se-resize;
+}
+
+
+
+
+
+
+
+
+
+
+
+.flex_column {
+    display: flex;
+    flex-direction: column;
+}
+
+.flex_row {
+    display: flex;
+    flex-direction: row;
+}
+
+.flex_1 {
+    flex: 1 !important;
+}
+.flex_100 {
+    flex: 100 !important;
+}
+.flex_type_dialog_border {
+    flex: 0 0 0px;
+}
+
+/* Estados de activación: */
+
+
+[#FILE=@/src/candidate/Std/apis/views/dialogs/DialogView/DialogView.view.html]
+<div class="DialogView View" v-on:click="focusMe" :class="{
+        is_maximized: $locals.isMaximized,
+        is_minimized: $locals.isMinimized,
+    }">
+    <div class="flex_column flex_100">
+        <div class="flex_type_dialog_border flex_row">
+            <div class="flex_type_dialog_border">
+                <div class="dialog_corner top_left_corner"><div
+                    v-on:pointerdown="event => startResize(event, 'top+left')"
+                    v-on:pointermove="event => moveResize(event, 'top+left')"
+                    v-on:pointerup="event => stopResize(event, 'top+left')"
+                    v-on:pointercancel="event => stopResize(event, 'top+left')"></div></div>
+            </div>
+            <div class="flex_100">
+                <div class="dialog_border top_border"><div
+                    v-on:pointerdown="event => startResize(event, 'top')"
+                    v-on:pointermove="event => moveResize(event, 'top')"
+                    v-on:pointerup="event => stopResize(event, 'top')"
+                    v-on:pointercancel="event => stopResize(event, 'top')"></div></div>
+            </div>
+            <div class="flex_type_dialog_border">
+                <div class="dialog_corner top_right_corner"><div
+                    v-on:pointerdown="event => startResize(event, 'top+right')"
+                    v-on:pointermove="event => moveResize(event, 'top+right')"
+                    v-on:pointerup="event => stopResize(event, 'top+right')"
+                    v-on:pointercancel="event => stopResize(event, 'top+right')"></div></div>
+            </div>
+        </div>
+        <div class="flex_100 flex_row">
+            <div class="flex_type_dialog_border">
+                <div class="dialog_border left_border"><div
+                    v-on:pointerdown="event => startResize(event, 'left')"
+                    v-on:pointermove="event => moveResize(event, 'left')"
+                    v-on:pointerup="event => stopResize(event, 'left')"
+                    v-on:pointercancel="event => stopResize(event, 'left')"></div></div>
+            </div>
+            <div class="flex_100 dialog_box">
+                <div class="dialog_header">
+                    <div class="dialog_topbar">
+                        <div class="dialog_title"
+                            v-on:pointerdown="startDrag"
+                            v-on:pointermove="moveDrag"
+                            v-on:pointerup="stopDrag"
+                            v-on:pointercancel="stopDrag">
+                            <div class="dialog_title_text">{{ thread.threadId || "no id found"}}</div>
+                        </div>
+                        <div class="dialog_top_buttons">
+                            <div class="dialog_top_button minimize_button" data-alt-text="▪️" v-on:click="minimize">➖​</div>
+                            <div class="dialog_top_button maximize_button" data-alt-text="◼️" v-on:click="toggleMaximize">
+                                {{ $locals.isMaximized ? "▪️​" : "◼️​" }}
+                            ​</div>
+                            <div class="dialog_top_button exit_button" v-on:click="close">✖️</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dialog_body">
+                    <DynamicView :view="thread" :args="{dialog:this}" />
+                </div>
+                <div class="dialog_footer">
+                    <div class="dialog_status_bar">
+                        <div class="dialog_status_item flex_100">This is a message.</div>
+                        <div class="dialog_status_item">Another.</div>
+                        <div class="dialog_status_item">And more.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex_type_dialog_border">
+                <div class="dialog_border right_border"><div
+                    v-on:pointerdown="event => startResize(event, 'right')"
+                    v-on:pointermove="event => moveResize(event, 'right')"
+                    v-on:pointerup="event => stopResize(event, 'right')"
+                    v-on:pointercancel="event => stopResize(event, 'right')"></div></div>
+            </div>
+        </div>
+        <div class="flex_type_dialog_border flex_row">
+            <div class="flex_type_dialog_border">
+                <div class="dialog_corner bottom_left_corner"><div
+                    v-on:pointerdown="event => startResize(event, 'bottom+left')"
+                    v-on:pointermove="event => moveResize(event, 'bottom+left')"
+                    v-on:pointerup="event => stopResize(event, 'bottom+left')"
+                    v-on:pointercancel="event => stopResize(event, 'bottom+left')"></div></div>
+            </div>
+            <div class="flex_100">
+                <div class="dialog_border bottom_border"><div
+                    v-on:pointerdown="event => startResize(event, 'bottom')"
+                    v-on:pointermove="event => moveResize(event, 'bottom')"
+                    v-on:pointerup="event => stopResize(event, 'bottom')"
+                    v-on:pointercancel="event => stopResize(event, 'bottom')"></div></div>
+            </div>
+            <div class="flex_type_dialog_border">
+                <div class="dialog_corner bottom_right_corner"><div
+                    v-on:pointerdown="event => startResize(event, 'bottom+right')"
+                    v-on:pointermove="event => moveResize(event, 'bottom+right')"
+                    v-on:pointerup="event => stopResize(event, 'bottom+right')"
+                    v-on:pointercancel="event => stopResize(event, 'bottom+right')"></div></div>
+            </div>
+        </div>
+    </div>
+</div>
+[#FILE=@/src/candidate/Std/apis/views/dialogs/DialogsPort/DialogsPort.object.js]
+Std.classes.ViewsRegistry.$.set("DialogsPort", {
+  name: "DialogsPort",
+  template: $compiler.inject.string("@/src/candidate/Std/apis/views/dialogs/DialogsPort/DialogsPort.view.html"),
+  props: {
+
+  },
+  data: function () {
+    $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.data" });
+    return {};
+  },
+  created: function () {
+    $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.created" });
+    Std.classes.Dialogs.globalInstance.initializePort(this);
+    this.$locals = {
+      self: this,
+      thread: Std.objects.GlobalThread,
+      opened: [],
+      order: [],
+      nextZIndex: 500,
+    };
+  },
+  methods: {
+    open(config) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.methods.open" });
+      Validate_dialog_properties: {
+        if (config.title) $moduler.assert(typeof config.title === "string", `Required parameter «config.title» to be string on «DialogsPort.methods.open»`);
+        if (config.top) $moduler.assert(Array.isArray(config.top), `Required parameter «config.top» to be array on «DialogsPort.methods.open»`);
+        if (config.letf) $moduler.assert(Array.isArray(config.letf), `Required parameter «config.left» to be array on «DialogsPort.methods.open»`);
+        if (config.right) $moduler.assert(Array.isArray(config.right), `Required parameter «config.right» to be array on «DialogsPort.methods.open»`);
+        if (config.bottom) $moduler.assert(Array.isArray(config.bottom), `Required parameter «config.bottom» to be array on «DialogsPort.methods.open»`);
+        if (config.footer) $moduler.assert(typeof config.footer === "string", `Required parameter «config.footer» to be string on «DialogsPort.methods.open»`);
+        if (config.layout) $moduler.assert(typeof config.layout === "string", `Required parameter «config.layout» to be string on «DialogsPort.methods.open»`);
+        if (config.size) $moduler.assert(typeof config.size === "number", `Required parameter «config.size» to be number on «DialogsPort.methods.open»`);
+      }
+      Validate_thread_properties: {
+        $moduler.assert(typeof config.parent === "undefined", `Required parameter «config.parent» to be undefined on «DialogsPort.methods.open»`);
+        $moduler.assert(typeof config.children === "undefined", `Required parameter «config.children» to be undefined on «DialogsPort.methods.open»`);
+        $moduler.assert(typeof config.isClosed === "undefined", `Required parameter «config.isClosed» to be undefined on «DialogsPort.methods.open»`);
+        $moduler.assert(typeof config.threadId === "undefined", `Required parameter «config.threadId» to be undefined on «DialogsPort.methods.open»`);
+      }
+      const newSubthread = this.$locals.thread.newSubthread.config(config);
+      this.refreshView();
+      return newSubthread;
+    },
+    synchronizeThreads(thread = this.$locals.thread, collectedBrute = null) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.methods.synchronizeThreads" });
+      const collected = collectedBrute || [];
+      Collect_threads: {
+        for (let index = 0; index < thread.children.length; index++) {
+          const subthread = thread.children[index];
+          collected.push(subthread);
+          this.synchronizeThreads(subthread, collected);
+        }
+      }
+      Synchronize_opened_threads: {
+        if (collectedBrute === null) {
+          this.$locals.opened = collected;
+        }
+      }
+      this.$forceUpdate(true);
+      return collected;
+    },
+    refreshView() {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.methods.refreshView" });
+      this.synchronizeThreads();
+    },
+    setFocusToDialog(dialog) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.methods.setFocusToDialog" });
+      dialog.$el.style.zIndex = ++this.$locals.nextZIndex;
+    }
+  },
+  static: {
+    globalInstance: null,
+  }
+})
+[#FILE=@/src/candidate/Std/apis/views/dialogs/DialogsPort/DialogsPort.view.html]
+<div class="View DialogsPort">
+    <div v-on:click="setFocusToDialog">Dialogs port:</div>
+    <DialogView class="GlobalDialog"
+        v-for="subthread, subthreadIndex in $locals.opened"
+        v-bind:key="'global_dialog_' + subthread.threadId"
+        ref="currentDialogs"
+        :port="$locals.self"
+        :thread="subthread" />
+</div>
