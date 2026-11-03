@@ -82,6 +82,7 @@
     Std.all.ObjectReflector = Std.classes.ObjectReflector = $compiler.inject.source("./apis/reflection/ObjectReflector/ObjectReflector.class.js");
     Std.all.FunctionReflector = Std.classes.FunctionReflector = $compiler.inject.source("./apis/reflection/FunctionReflector/FunctionReflector.class.js");
     Std.all.ClassReflector = Std.classes.ClassReflector = $compiler.inject.source("./apis/reflection/ClassReflector/ClassReflector.class.js");
+    Std.all.UniqueEvent = Std.classes.UniqueEvent = $compiler.inject.source("./apis/events/UniqueEvent/UniqueEvent.class.js");
     Std.all.FunctionsList = Std.classes.FunctionsList = $compiler.inject.source("./apis/events/FunctionsList/FunctionsList.class.js");
   }
   Wave_4_Utility_interfaces: {

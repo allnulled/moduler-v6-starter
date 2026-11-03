@@ -3,14 +3,14 @@
 
 - Que funcione con el openDialogsTree
 
-# Mapear contenido de las barras de abajo
+# ~~Mapear contenido de las barras de abajo~~
 
-- Permitirlo con parámetros de dialogo
-   - Compartidos con thread, cuidado ahí, en principio no pasa nada porque se eliminan a la par
-   - el parámetro es: `@statusBar [{name:string,text?:string,html?:string,flex:number}*]`
-- Permitir etiquetas para cada caja
-- Permitir recuperar las cajas según etiqueta
-- Permitir que el contenido de cada caja se pueda cambiar en runtime
+- ~~Permitirlo con parámetros de dialogo~~
+   - ~~Compartidos con thread, cuidado ahí, en principio no pasa nada porque se eliminan a la par~~
+   - ~~el parámetro es: `@statusBar [{name:string,text?:string,html?:string,flex:number}*]`~~
+- ~~Permitir etiquetas para cada caja~~
+- ~~Permitir recuperar las cajas según etiqueta~~
+- ~~Permitir que el contenido de cada caja se pueda cambiar en runtime~~
 
 ```js
 Std.classes.Dialogs.$.open({
@@ -30,6 +30,10 @@ Std.classes.Dialogs.$.open({
 # Mapear contenido de los botones de abajo del diálogo:
 
 - Permitir que se puedan mapear fácil:
+   - Sin usar botones
+   - Con botones mediante array de objetos
+   - Con botones mediante 1 objeto
+   - Con botones mediante constantes de DialogView.static.buttons.ACCEPT|CANCEL|ACCEPT_OR_CANCEL
 
 # Permitir un size que contemple:
 

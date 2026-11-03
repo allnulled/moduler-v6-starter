@@ -1,51 +1,59 @@
 class ApplicationStarter {
   
-  static isStarted = false;
-
   static globalApplication = null;
+
+  static globalFactory = Std.views.MainApplication;
+
+  static events = {
+    onStarted: new Std.classes.UniqueEvent("Std.views.MainApplication.static.events.onStarted"),
+  };
 
   static start() {
     $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"Std.classes.ApplicationStarter.start"});
-    Shortcut_cache_start_promise: {
-      if(this.isStarted) {
-        console.log("[*] Returning previously created application promise");
-        return this.isStarted;
-      }
+    $moduler.assert(typeof Std.objects.GlobalApplication === "undefined", "Method «ApplicationStarter.start» can only be called once in a runtime but object «Std.objects.GlobalApplication» is already set");
+    let promise, resolve;
+    Prepare_started_promise: {
+      ({ promise, resolve } = $moduler.constructor.createResolvable());
     }
-    let promise, resolve, reject;
-    Export_transaction_variables: {
-      console.log("[*] Creating application promise...");
-      ({ promise, resolve, reject } = ModulerV6.createResolvable());
+    Define_vue2_globals: {
+      Object.assign(Std.externals.Vue2.prototype, {
+        $window: window,
+        $std: Std,
+        $findDialogFrom: Std.views.DialogView.static.findDialogFrom,
+      });
     }
-    Collapse_cache: {
-      console.log("[*] Setting application promise...");
-      this.isStarted = promise;
+    Define_vue2_application: {
+      $moduler.assert(!Std.objects.GlobalApplication, "ApplicationStarter.start can only be called once in a runtime");
+      Std.objects.GlobalApplication = this.globalApplication = new Std.externals.Vue2({
+        render: h => {
+          console.log("[*] Rendering application");
+          return h(this.globalFactory);
+        },
+      });
     }
-    Declare_static_globals: {
-      Std.externals.Vue2.prototype.$window = window;
-      Std.externals.Vue2.prototype.$std = Std;
-    }
-    Resolve_start: {
-      (async () => {
-        try {
-          console.log("[*] Deploying application...");
-          this.globalApplication = new Std.externals.Vue2({
-            render: h => {
-              console.log("[*] Rendering application");
-              return h(Std.externals.Vue2.options.components.MainApplication);
-            },
-          });
-          console.log("[*] Mounting application...");
-          this.globalApplication.$mount("#app");
-          resolve(this.globalApplication);
-          console.log("[!] Application deployed successfully");
-        } catch (error) {
-          console.log("[!] Application deployment failed:", error);
-          reject(error);
+    Register_application_events_for_onStarted: {
+      this.events.onStarted.addTrigger(parameters => {
+        resolve(parameters);
+      });
+      this.events.onStarted.addTrigger(async function () {
+        Execute_tests: {
+          console.log("[*] Starting tests in browser");
+          if(["dev","test"].includes($moduler.settings.data.env)) {
+            await Std.all.Tester.evaluateBrowserDirectory({ title: "Integridad", directory: "@/dist/www/dev/test/integrity" });
+            await Std.all.Tester.evaluateBrowserDirectory({ title: "Unitarios", directory: "@/dist/www/dev/test/unit" });
+            await Std.all.Tester.evaluateBrowserDirectory({ title: "Prestaciones", directory: "@/dist/www/dev/test/feature" });
+            await Std.all.Tester.evaluateBrowserDirectory({ title: "Caso concreto", directory: "@/dist/www/dev/test/case" });
+            await Std.all.Tester.evaluateBrowserDirectory({ title: "Espontáneos", directory: "@/dist/www/dev/test/spontaneous" });
+          }
         }
-      })();
+      });
     }
-    return this.isStarted;
+    Mount_vue2_application: {
+      this.globalApplication.$mount("#app");
+    }
+    Return_promise_for_when_started: {
+      return promise;
+    }
   }
 
 }

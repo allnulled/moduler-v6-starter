@@ -10,6 +10,7 @@ module.exports = $moduler.export("#Std", [], async function([]) {
    * - Entry point for Std library.
    * - Depends on:
    *    - peggyjs
+   *    - picomatch
    * - Injects:
    *    - ./Std.object.js
    * 
@@ -14538,18 +14539,66 @@ $moduler.toolkit.makeInterface([
     ], this);
   }
 };
+    Std.all.UniqueEvent = Std.classes.UniqueEvent = class UniqueEvent extends Array {
+
+  constructor(name) {
+    super();
+    Std.all.Tracer?.globalInstance.log("Std.classes.UniqueEvent.constructor", arguments || []);;
+    if(typeof name !== "string") throw new Error(`Parameter «name» must be stirng but «${typeof name}» was found instead on «UniqueEvent.constructor»`);
+    this.eventName = name;
+    this.eventParameters = null;
+  }
+
+  evaluateEventSync(parameters = {}) {
+    Std.all.Tracer?.globalInstance.log("Std.classes.UniqueEvent.prototype.evaluateEventSync", arguments || []);;
+    if(this.eventParameters !== null) {
+      throw new Error(`Event «${this.eventName}» was already triggered on «UniqueEvent.prototype.evaluateEventSync»`);
+    }
+    this.eventParameters = parameters;
+    for(let index=0; index<this.length; index++) {
+      const trigger = this[index];
+      trigger(parameters);
+    }
+    this.length = 0;
+  }
+
+  addTrigger(trigger) {
+    Std.all.Tracer?.globalInstance.log("Std.classes.UniqueEvent.prototype.addTrigger", arguments || []);;
+    if(typeof trigger !== "function") throw new Error(`Parameter «trigger» must be function but «${typeof trigger}» was found instead on «UniqueEvent.prototype.addTrigger»`);
+    if(this.eventParameters === null) {
+      return this.push(trigger);
+    }
+    return trigger(this.eventParameters);
+  }
+
+};
     Std.all.FunctionsList = Std.classes.FunctionsList = class FunctionList extends Array {
+  
+  /**
+   * # FunctionList extends Array
+   * 
+   * - La Std.classes.FunctionList es para una lista de eventos que se van a ir llamando.
+   * - La FunctionList NO HACE la función de una promesa donde:
+   *    - una vez llamada, los siguientes pushes se triggean al momento
+   *       - para eso hay que usar Std.classes.UniqueEvent
+   *    - sino la de un stack que, cuando se da un evento, es llamado todo.
+   * 
+   * 
+   */
+
   addFunction(callback) {
     Std.all.Tracer?.globalInstance.log("Std.classes.FunctionsList.prototype.addFunction", arguments || []);;
     $moduler.assert(typeof callback == "function", `Required parameter «callback» to be function on «FunctionList.prototype.addFunction»`);
     this.push(callback);
   }
+
   removeFunction(callback) {
     Std.all.Tracer?.globalInstance.log("Std.classes.FunctionsList.prototype.removeFunction", arguments || []);;
     const pos = this.indexOf(callback);
     if(pos === -1) return -1;
     return this.splice(pos, 1);
   }
+  
   evaluateFunctionsSync(args = []) {
     Std.all.Tracer?.globalInstance.log("Std.classes.FunctionsList.prototype.evaluateFunctionsSync", arguments || []);;
     const outputs = [];
@@ -14560,6 +14609,7 @@ $moduler.toolkit.makeInterface([
     }
     return outputs;
   }
+  
   async evaluateFunctionsAsync(args = []) {
     Std.all.Tracer?.globalInstance.log("Std.classes.FunctionsList.prototype.evaluateFunctionsAsync", arguments || []);;
     const outputs = [];
@@ -14570,6 +14620,7 @@ $moduler.toolkit.makeInterface([
     }
     return outputs;
   }
+
 };
   }
   Wave_4_Utility_interfaces: {
@@ -16790,7 +16841,7 @@ $moduler.toolkit.makeInterface([
       }
       pivot = pivot.parentElement;
     }
-    return null;
+    throw new Error("No parent found passing the specified filter");
   }
   static {
     Native_HTMLElement_extensions: {
@@ -29676,7 +29727,7 @@ $moduler.toolkit.makeInterface([
  + "                            v-on:pointermove=\"moveDrag\"" + '\n'
  + "                            v-on:pointerup=\"stopDrag\"" + '\n'
  + "                            v-on:pointercancel=\"stopDrag\">" + '\n'
- + "                            <div class=\"dialog_title_text\">{{ thread.title || thread.threadId || \"no id found\"}}</div>" + '\n'
+ + "                            <div class=\"dialog_title_text\">{{ thread.title || thread.threadId || \"no id found\" }}</div>" + '\n'
  + "                        </div>" + '\n'
  + "                        <div class=\"dialog_topbar_buttons\">" + '\n'
  + "                            <div class=\"dialog_topbar_button minimize_button\" ref=\"minimize_button\" v-on:click=\"minimize\">➖​</div>" + '\n'
@@ -29691,14 +29742,9 @@ $moduler.toolkit.makeInterface([
  + "                <div class=\"dialog_footer\">" + '\n'
  + "                    <div class=\"dialog_buttons\" v-if=\"thread.buttons?.length\">" + '\n'
  + "                        <div class=\"flex_100\"></div>" + '\n'
- + "                        <template v-for=\"button, buttonIndex in thread.buttons\" v-if=\"Array.isArray(thread.buttons)\">" + '\n'
+ + "                        <template v-for=\"button, buttonIndex in adaptThreadButtons()\" v-if=\"thread.buttons\">" + '\n'
  + "                            <div class=\"flex_1 dialog_button_box\" v-bind:key=\"'button_box_' + buttonIndex\">" + '\n'
  + "                                <button class=\"dialog_button\" v-on:click=\"e => button.click(e, $locals.self)\">{{ button.text }}</button>" + '\n'
- + "                            </div>" + '\n'
- + "                        </template>" + '\n'
- + "                        <template v-for=\"buttonEvent, buttonText in thread.buttons\" v-else-if=\"typeof thread.buttons === 'object'\">" + '\n'
- + "                            <div class=\"flex_1 dialog_button_box\" v-bind:key=\"'button_box_' + buttonText\">" + '\n'
- + "                                <button class=\"dialog_button\" v-on:click=\"e => buttonEvent(e, $locals.self)\">{{ buttonText }}</button>" + '\n'
  + "                            </div>" + '\n'
  + "                        </template>" + '\n'
  + "                    </div>" + '\n'
@@ -29763,16 +29809,17 @@ $moduler.toolkit.makeInterface([
       self: this,
       isMaximized: undefined,
       isMinimized: undefined,
-      unmaximizedBoundaries: {
-        width:200,
-        height:200,
-      },
+      unmaximizedBoundaries: false, // { width, height }
       isDragging: false,
       drag: null,
       isResizing: false,
       resize: null,
       resolvable: ModulerV6.createResolvable(),
     };
+  },
+  mounted() {
+    Std.all.Tracer?.globalInstance.log("Std.views.DialogView.mounted", arguments || []);;
+
   },
   methods: {
     getPort() {
@@ -29921,6 +29968,31 @@ $moduler.toolkit.makeInterface([
       Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.getBody", arguments || []);;
       return this.$refs.body.getContent();
     },
+    adaptThreadButtons(buttons = this.thread.buttons || []) {
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.adaptThreadButtons", arguments || []);;
+      if(Array.isArray(buttons)) {
+        // Via 1: array de objetos
+        const output = [];
+        for(let index=0; index<buttons.length; index++) {
+          const buttonInput = buttons[index];
+          if(typeof buttonInput === "string") {
+            output.push(Std.views.DialogView.static.fromStringToDialogButton(buttonInput));
+          } else {
+            output.push(buttonInput);
+          }
+        }
+        return output;
+      } else if(typeof buttons === "object") {
+        // Via 2: objeto único con pares text-function
+        return Object.keys(buttons).reduce((output, text) => {
+          output.push({ text, click: buttons[text] });
+          return output;
+        }, []);
+      } else if(typeof buttons === "string") {
+        // Via 3: texto que leerá los: "|" "@" "@@" y "="
+        return Std.views.DialogView.static.fromStringToDialogButtons(buttons);
+      }
+    },
   },
   static: {
     sizes: {
@@ -29959,10 +30031,57 @@ $moduler.toolkit.makeInterface([
         }
       }]
     },
-    findDialogFrom(element) {
+    findDialogFrom(elementOrComponent) {
       Std.all.Tracer?.globalInstance.log("Std.views.DialogView.static.findDialogFrom", arguments || []);;
-      $moduler.assert(element instanceof HTMLElement, `Parameter «element» must be instance of HTMLElement but «${typeof element}» was found instead on «DialogView.static.findDialogFrom»`);
+      let element = undefined;
+      if(elementOrComponent instanceof HTMLElement) {
+        element = elementOrComponent;
+      } else if(elementOrComponent instanceof Std.externals.Vue2) {
+        element = elementOrComponent.$el;
+      } else {
+        $moduler.assert(element, `Parameter «element» must be instance of HTMLElement or Vue2 component but «${typeof element}» was found instead on «DialogView.static.findDialogFrom»`);
+      }
       return Std.classes.Domer.findFirstParentWhere(el => el.matches(".DialogView"), element).__vue__;
+    },
+    fromStringToDialogButton(buttonContent, index) {
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogView.static.fromStringToDialogButton", arguments || []);;
+      let buttonObject = {};
+      const viaDialogEvent = buttonContent.split("@@");
+      const viaContentEvent = buttonContent.split("@");
+      const viaProperty = buttonContent.split("=");
+      if(viaDialogEvent.length > 1) {
+        buttonObject = { text: viaDialogEvent[0], click: (e, dialog) => dialog[viaDialogEvent[1]]() };
+      } else if(viaContentEvent.length > 1) {
+        buttonObject = { text: viaDialogEvent[0], click: (e, dialog) => dialog.accept(dialog.getContent()[viaDialogEvent[1]]()) };
+      } else if(viaProperty.length > 1) {
+        buttonObject = { text: viaProperty[0], click: (e, dialog) => dialog.accept(dialog.getContent()[viaProperty[1]]) };
+      } else {
+        if(buttons.length === 3) {
+          if(false) {}
+          else if(indexButton === 0) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.accept(true) };
+          else if(indexButton === 1) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.accept(false) };
+          else if(indexButton === 2) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.close() };
+        } else if(buttons.length === 2) {
+          if(false) {}
+          else if(indexButton === 0) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.accept(true) };
+          else if(indexButton === 1) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.close() };
+        } else if(buttons.length === 1) {
+          if(false) {}
+          else if(indexButton === 0) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.close() };
+        }
+      }
+      return buttonObject;
+    },
+    fromStringToDialogButtons(code) {
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogView.static.fromStringToDialogButtons", arguments || []);;
+      const output = [];
+      const buttons = code.split("|");
+      for (let indexButton = 0; indexButton < buttons.length; indexButton++) {
+        const buttonContent = buttons[indexButton];
+        const buttonObject = Std.views.DialogView.static.fromStringToDialogButton(buttonContent, indexButton);
+        output.push(buttonObject);
+      }
+      return output;
     }
   }
 });
@@ -30438,6 +30557,14 @@ $moduler.toolkit.makeInterface([
  + "        :args=\"{msg:'This is the base of contextual view'}\"" + '\n'
  + "    />" + '\n'
  + "</div>",
+  created() {
+    Std.all.Tracer?.globalInstance.log("Std.views.MainApplication.created", arguments || []);;
+  },
+  mounted() {
+    Std.all.Tracer?.globalInstance.log("Std.views.MainApplication.mounted", arguments || []);;
+    Std.classes.ApplicationStarter.events.onStarted.evaluateEventSync({ application: this });
+    console.log("[*] Main application was started successfully.");
+  },
   data: function() {
     return {};
   },
@@ -30445,52 +30572,60 @@ $moduler.toolkit.makeInterface([
 });
     Std.all.ApplicationStarter = Std.classes.ApplicationStarter = class ApplicationStarter {
   
-  static isStarted = false;
-
   static globalApplication = null;
+
+  static globalFactory = Std.views.MainApplication;
+
+  static events = {
+    onStarted: new Std.classes.UniqueEvent("Std.views.MainApplication.static.events.onStarted"),
+  };
 
   static start() {
     Std.all.Tracer?.globalInstance.log("Std.classes.ApplicationStarter.start", arguments || []);;
-    Shortcut_cache_start_promise: {
-      if(this.isStarted) {
-        console.log("[*] Returning previously created application promise");
-        return this.isStarted;
-      }
+    $moduler.assert(typeof Std.objects.GlobalApplication === "undefined", "Method «ApplicationStarter.start» can only be called once in a runtime but object «Std.objects.GlobalApplication» is already set");
+    let promise, resolve;
+    Prepare_started_promise: {
+      ({ promise, resolve } = $moduler.constructor.createResolvable());
     }
-    let promise, resolve, reject;
-    Export_transaction_variables: {
-      console.log("[*] Creating application promise...");
-      ({ promise, resolve, reject } = ModulerV6.createResolvable());
+    Define_vue2_globals: {
+      Object.assign(Std.externals.Vue2.prototype, {
+        $window: window,
+        $std: Std,
+        $findDialogFrom: Std.views.DialogView.static.findDialogFrom,
+      });
     }
-    Collapse_cache: {
-      console.log("[*] Setting application promise...");
-      this.isStarted = promise;
+    Define_vue2_application: {
+      $moduler.assert(!Std.objects.GlobalApplication, "ApplicationStarter.start can only be called once in a runtime");
+      Std.objects.GlobalApplication = this.globalApplication = new Std.externals.Vue2({
+        render: h => {
+          console.log("[*] Rendering application");
+          return h(this.globalFactory);
+        },
+      });
     }
-    Declare_static_globals: {
-      Std.externals.Vue2.prototype.$window = window;
-      Std.externals.Vue2.prototype.$std = Std;
-    }
-    Resolve_start: {
-      (async () => {
-        try {
-          console.log("[*] Deploying application...");
-          this.globalApplication = new Std.externals.Vue2({
-            render: h => {
-              console.log("[*] Rendering application");
-              return h(Std.externals.Vue2.options.components.MainApplication);
-            },
-          });
-          console.log("[*] Mounting application...");
-          this.globalApplication.$mount("#app");
-          resolve(this.globalApplication);
-          console.log("[!] Application deployed successfully");
-        } catch (error) {
-          console.log("[!] Application deployment failed:", error);
-          reject(error);
+    Register_application_events_for_onStarted: {
+      this.events.onStarted.addTrigger(parameters => {
+        resolve(parameters);
+      });
+      this.events.onStarted.addTrigger(async function () {
+        Execute_tests: {
+          console.log("[*] Starting tests in browser");
+          if(["dev","test"].includes($moduler.settings.data.env)) {
+            await Std.all.Tester.evaluateBrowserDirectory({ title: "Integridad", directory: "@/dist/www/dev/test/integrity" });
+            await Std.all.Tester.evaluateBrowserDirectory({ title: "Unitarios", directory: "@/dist/www/dev/test/unit" });
+            await Std.all.Tester.evaluateBrowserDirectory({ title: "Prestaciones", directory: "@/dist/www/dev/test/feature" });
+            await Std.all.Tester.evaluateBrowserDirectory({ title: "Caso concreto", directory: "@/dist/www/dev/test/case" });
+            await Std.all.Tester.evaluateBrowserDirectory({ title: "Espontáneos", directory: "@/dist/www/dev/test/spontaneous" });
+          }
         }
-      })();
+      });
     }
-    return this.isStarted;
+    Mount_vue2_application: {
+      this.globalApplication.$mount("#app");
+    }
+    Return_promise_for_when_started: {
+      return promise;
+    }
   }
 
 };

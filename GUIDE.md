@@ -27,14 +27,42 @@
    - getter.*.js: cuando es un getter
    - setter.*.js: cuando es un setter
 
-Std.object.js
-objects/
-functions/
-classes/
-traits/
-interfaces/
+# Diálogos
 
-prototype.member.events.js
-prototype.function.on.js
+Tienes:
 
-EventListener.trait.js
+```js
+const output = await Std.classes.Dialogs.$.open({
+   name: "NombreDelComponenteReusable",
+   template: "Puede ir texto directo también: <input v-model='message' />",
+   data: { message: "acepta objeto en lugar de factory" },
+   uniqueActionId: "Singletoner para diálogos",
+   // Botones vía 1: por array de objetos
+   buttons: [{
+      text: "ok",
+      click: (e, dialog) => dialog.accept(dialog.getContent().message),
+   }, {
+      text: "cancel",
+      click: (e, dialog) => dialog.close(),
+   }],
+   // Botones vía 2: por objeto
+   buttons: {
+      ok: (e, dialog) => dialog.accept(dialog.getContent().message),
+      cancel: (e, dialog) => dialog.close(),
+   },
+   // Botones vía 3: por constantes
+   buttons: Std.classes.DialogView.static.ACCEPT, // YES
+   buttons: Std.classes.DialogView.static.CONFIRM, // YES|NO
+   buttons: Std.classes.DialogView.static.CONFIRMABLE, // YES|NO|CANCEL
+   // Botones vía 4: por texto
+   buttons: "Sí|No|Cancelar",
+   buttons: "Aceptar=message|Resetear@reset|Cancelar@@close",
+   methods: {
+      reset() {
+         
+         }
+   }
+});
+
+const { dialog, thread, promise, accept, close } = output;
+```

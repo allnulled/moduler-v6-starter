@@ -40,7 +40,7 @@
                             v-on:pointermove="moveDrag"
                             v-on:pointerup="stopDrag"
                             v-on:pointercancel="stopDrag">
-                            <div class="dialog_title_text">{{ thread.title || thread.threadId || "no id found"}}</div>
+                            <div class="dialog_title_text">{{ thread.title || thread.threadId || "no id found" }}</div>
                         </div>
                         <div class="dialog_topbar_buttons">
                             <div class="dialog_topbar_button minimize_button" ref="minimize_button" v-on:click="minimize">➖​</div>
@@ -55,14 +55,9 @@
                 <div class="dialog_footer">
                     <div class="dialog_buttons" v-if="thread.buttons?.length">
                         <div class="flex_100"></div>
-                        <template v-for="button, buttonIndex in thread.buttons" v-if="Array.isArray(thread.buttons)">
+                        <template v-for="button, buttonIndex in adaptThreadButtons()" v-if="thread.buttons">
                             <div class="flex_1 dialog_button_box" v-bind:key="'button_box_' + buttonIndex">
                                 <button class="dialog_button" v-on:click="e => button.click(e, $locals.self)">{{ button.text }}</button>
-                            </div>
-                        </template>
-                        <template v-for="buttonEvent, buttonText in thread.buttons" v-else-if="typeof thread.buttons === 'object'">
-                            <div class="flex_1 dialog_button_box" v-bind:key="'button_box_' + buttonText">
-                                <button class="dialog_button" v-on:click="e => buttonEvent(e, $locals.self)">{{ buttonText }}</button>
                             </div>
                         </template>
                     </div>

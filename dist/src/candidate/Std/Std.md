@@ -31,6 +31,7 @@
 - Entry point for Std library.
 - Depends on:
    - peggyjs
+   - picomatch
 - Injects:
    - ./Std.object.js
 

@@ -13,16 +13,17 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
       self: this,
       isMaximized: undefined,
       isMinimized: undefined,
-      unmaximizedBoundaries: {
-        width:200,
-        height:200,
-      },
+      unmaximizedBoundaries: false, // { width, height }
       isDragging: false,
       drag: null,
       isResizing: false,
       resize: null,
       resolvable: ModulerV6.createResolvable(),
     };
+  },
+  mounted() {
+    $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.mounted" });
+
   },
   methods: {
     getPort() {
@@ -171,6 +172,31 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.getBody" });
       return this.$refs.body.getContent();
     },
+    adaptThreadButtons(buttons = this.thread.buttons || []) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.adaptThreadButtons" });
+      if(Array.isArray(buttons)) {
+        // Via 1: array de objetos
+        const output = [];
+        for(let index=0; index<buttons.length; index++) {
+          const buttonInput = buttons[index];
+          if(typeof buttonInput === "string") {
+            output.push(Std.views.DialogView.static.fromStringToDialogButton(buttonInput));
+          } else {
+            output.push(buttonInput);
+          }
+        }
+        return output;
+      } else if(typeof buttons === "object") {
+        // Via 2: objeto único con pares text-function
+        return Object.keys(buttons).reduce((output, text) => {
+          output.push({ text, click: buttons[text] });
+          return output;
+        }, []);
+      } else if(typeof buttons === "string") {
+        // Via 3: texto que leerá los: "|" "@" "@@" y "="
+        return Std.views.DialogView.static.fromStringToDialogButtons(buttons);
+      }
+    },
   },
   static: {
     sizes: {
@@ -209,10 +235,57 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
         }
       }]
     },
-    findDialogFrom(element) {
+    findDialogFrom(elementOrComponent) {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.static.findDialogFrom" });
-      $moduler.assert(element instanceof HTMLElement, `Parameter «element» must be instance of HTMLElement but «${typeof element}» was found instead on «DialogView.static.findDialogFrom»`);
+      let element = undefined;
+      if(elementOrComponent instanceof HTMLElement) {
+        element = elementOrComponent;
+      } else if(elementOrComponent instanceof Std.externals.Vue2) {
+        element = elementOrComponent.$el;
+      } else {
+        $moduler.assert(element, `Parameter «element» must be instance of HTMLElement or Vue2 component but «${typeof element}» was found instead on «DialogView.static.findDialogFrom»`);
+      }
       return Std.classes.Domer.findFirstParentWhere(el => el.matches(".DialogView"), element).__vue__;
+    },
+    fromStringToDialogButton(buttonContent, index) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.static.fromStringToDialogButton" });
+      let buttonObject = {};
+      const viaDialogEvent = buttonContent.split("@@");
+      const viaContentEvent = buttonContent.split("@");
+      const viaProperty = buttonContent.split("=");
+      if(viaDialogEvent.length > 1) {
+        buttonObject = { text: viaDialogEvent[0], click: (e, dialog) => dialog[viaDialogEvent[1]]() };
+      } else if(viaContentEvent.length > 1) {
+        buttonObject = { text: viaDialogEvent[0], click: (e, dialog) => dialog.accept(dialog.getContent()[viaDialogEvent[1]]()) };
+      } else if(viaProperty.length > 1) {
+        buttonObject = { text: viaProperty[0], click: (e, dialog) => dialog.accept(dialog.getContent()[viaProperty[1]]) };
+      } else {
+        if(buttons.length === 3) {
+          if(false) {}
+          else if(indexButton === 0) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.accept(true) };
+          else if(indexButton === 1) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.accept(false) };
+          else if(indexButton === 2) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.close() };
+        } else if(buttons.length === 2) {
+          if(false) {}
+          else if(indexButton === 0) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.accept(true) };
+          else if(indexButton === 1) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.close() };
+        } else if(buttons.length === 1) {
+          if(false) {}
+          else if(indexButton === 0) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.close() };
+        }
+      }
+      return buttonObject;
+    },
+    fromStringToDialogButtons(code) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.static.fromStringToDialogButtons" });
+      const output = [];
+      const buttons = code.split("|");
+      for (let indexButton = 0; indexButton < buttons.length; indexButton++) {
+        const buttonContent = buttons[indexButton];
+        const buttonObject = Std.views.DialogView.static.fromStringToDialogButton(buttonContent, indexButton);
+        output.push(buttonObject);
+      }
+      return output;
     }
   }
 })

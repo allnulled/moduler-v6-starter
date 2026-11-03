@@ -32,7 +32,7 @@ class Domer {
       }
       pivot = pivot.parentElement;
     }
-    return null;
+    throw new Error("No parent found passing the specified filter");
   }
   static {
     Native_HTMLElement_extensions: {

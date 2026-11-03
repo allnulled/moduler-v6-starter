@@ -4,8 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aplicaciones</title>
+    <title>std | ui</title>
 </head>
+
 <body>
     <style>html {
     font-size: 13px;
@@ -231,6 +232,9 @@
     border-top: var(--border_dark_concept_1);
     background-color: var(--grey96);
 }
+.DialogView .dialog_button {
+    white-space: nowrap;
+}
 .DialogView .dialog_status_bar {
     display: flex;
     flex-direction: row;
@@ -401,11 +405,6 @@
     background-color: #666;
     color: white;
 }</style>
-    <h3>Aplicaciones disponibles III:</h3>
-    <ol>
-        <li><a data-mv6-href="@/dist/www/apps/CalendarScript/index.html">CalendarScript</a> es un editor de un lenguaje de scripting raro y sirve para organizarse tareas en el tiempo.</li>
-        <li>No hay más, de momento.</li>
-    </ol>
     <div id="app"></div>
     <script>window.addEventListener("load", async function() {
   Load_libraries: {
@@ -2931,21 +2930,6 @@ static {
 }.call());;
     await $moduler.import("@/src/www/external/std/std-v1.entry.js");
     await $moduler.settings.load();
-  }
-  La_guarradinhia: {
-    break La_guarradinhia;
-    await $moduler.toolkit.waitUntil(function() {
-      const isLoadingStd =
-        (typeof Std === "undefined") ||
-        (typeof Std.all === "undefined") ||
-        (typeof Std.all.Tester === "undefined");
-      const isLoadingMv6 = typeof ModulerV6 === "undefined";
-      return isLoadingStd || isLoadingMv6;
-    }, 10);
-  }
-  Update_page_links: {
-    console.log("[*] Changing links from browser page");
-    await ModulerV6.updateAllHtmlLinks();
   }
   Initialize_ui: {
     console.log("[*] Starting application in browser");

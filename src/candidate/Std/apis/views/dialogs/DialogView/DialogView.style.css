@@ -217,6 +217,9 @@
     border-top: var(--border_dark_concept_1);
     background-color: var(--grey96);
 }
+.DialogView .dialog_button {
+    white-space: nowrap;
+}
 .DialogView .dialog_status_bar {
     display: flex;
     flex-direction: row;
