@@ -80,17 +80,6 @@ log = this.trace;
  * @description 
  */
 isTracing = true;
-  /**
- * @name ModulerV6.Tracer.prototype.createSubtracer
- * @type 
- * @description 
- */
-createSubtracer() {
-  
-}
-  createSubtracer(id) {
-
-  }
 };
   /**
  * @name ModulerV6.static.tracer

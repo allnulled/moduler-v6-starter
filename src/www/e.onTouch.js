@@ -3,6 +3,6 @@ module.exports = async function({ file, devbin }) {
     if(devbin.moduler.rootdirOf(file) === "@/src/www/index.html") {
       break Actualizar_index_html;
     }
-    await devbin.utils.touchFile("@/src/www/index.html");
+    //await devbin.utils.touchFile("@/src/www/index.html");
   }
 };

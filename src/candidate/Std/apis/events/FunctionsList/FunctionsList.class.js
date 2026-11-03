@@ -4,6 +4,12 @@ class FunctionList extends Array {
     $moduler.assert(typeof callback == "function", `Required parameter «callback» to be function on «FunctionList.prototype.addFunction»`);
     this.push(callback);
   }
+  removeFunction(callback) {
+    $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"Std.classes.FunctionsList.prototype.removeFunction"});
+    const pos = this.indexOf(callback);
+    if(pos === -1) return -1;
+    return this.splice(pos, 1);
+  }
   evaluateFunctionsSync(args = []) {
     $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"Std.classes.FunctionsList.prototype.evaluateFunctionsSync"});
     const outputs = [];

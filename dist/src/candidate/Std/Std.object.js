@@ -152,6 +152,8 @@
     Std.all.Dialogs = Std.classes.Dialogs = $compiler.inject.source("./apis/views/dialogs/Dialogs/Dialogs.class.js");
     Std.all.DialogsFactory = Std.classes.DialogsFactory = $compiler.inject.source("./apis/views/dialogs/DialogsFactory/DialogsFactory.class.js");
     Std.all.DialogView = Std.views.DialogView = $compiler.inject.source("./apis/views/dialogs/DialogView/DialogView.object.js");
+    Std.all.DialogsTree = Std.views.DialogsTree = $compiler.inject.source("./apis/views/dialogs/DialogsTree/DialogsTree.object.js");
+    Std.all.DialogsTreeNode = Std.views.DialogsTreeNode = $compiler.inject.source("./apis/views/dialogs/DialogsTreeNode/DialogsTreeNode.object.js");
     Std.all.DialogsPort = Std.views.DialogsPort = $compiler.inject.source("./apis/views/dialogs/DialogsPort/DialogsPort.object.js");
   }
 

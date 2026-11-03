@@ -1,0 +1,10 @@
+<div class="View DialogsTreeNode">
+    <div>🔷​ {{ thread.threadId }}</div>
+    <div class="tree_padding" v-if="thread.children">
+        <DialogsTreeNode
+            v-for="subthread, subid in thread.children"
+            v-bind:key="'subthread_' + subid"
+            :thread="subthread"
+        />
+    </div>
+</div>

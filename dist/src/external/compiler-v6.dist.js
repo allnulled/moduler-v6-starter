@@ -91,17 +91,6 @@ log = this.trace;
  * @description 
  */
 isTracing = true;
-  /**
- * @name ModulerV6.Tracer.prototype.createSubtracer
- * @type 
- * @description 
- */
-createSubtracer() {
-  
-}
-  createSubtracer(id) {
-
-  }
 };
   /**
  * @name ModulerV6.static.tracer
@@ -3411,8 +3400,11 @@ toFile(file, options = {}) {
     promises.push(require("fs").promises.writeFile(fileMd, this.md, "utf8"));
     console.log("[*] DevBinaryV6 is saving «compilation.md» at: " + this.compiler.moduler.rootdirOf(fileMd));
   } else if (this.html) {
-    promises.push(require("fs").promises.writeFile(fileMd, this.html, "utf8"));
+    promises.push(require("fs").promises.writeFile(fileHtml, this.html, "utf8"));
     console.log("[*] DevBinaryV6 is saving «compilation.html» at: " + this.compiler.moduler.rootdirOf(fileHtml));
+  } else if (this.pegjs) {
+    promises.push(require("fs").promises.writeFile(fileHtml, this.pegjs, "utf8"));
+    console.log("[*] DevBinaryV6 is saving «compilation.pegjs» at: " + this.compiler.moduler.rootdirOf(fileHtml));
   }
   return Promise.all(promises);
 }

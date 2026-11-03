@@ -95,4 +95,6 @@ class Printer {
     return args.length ? args[args.length - 1] : out;
   }
 
+  static return = this.log;
+
 }

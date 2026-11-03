@@ -1,7 +1,4 @@
-<div class="DialogView View" v-on:click="focusMe" :class="{
-        is_maximized: $locals.isMaximized,
-        is_minimized: $locals.isMinimized,
-    }">
+<div class="DialogView View" v-on:click="focusMe">
     <div class="flex_column flex_100">
         <div class="flex_0 flex_row">
             <div class="flex_0">
@@ -38,29 +35,50 @@
                 <div class="dialog_header">
                     <div class="dialog_topbar">
                         <div class="dialog_title"
+                            v-on:dblclick="toggleMaximize"
                             v-on:pointerdown="startDrag"
                             v-on:pointermove="moveDrag"
                             v-on:pointerup="stopDrag"
                             v-on:pointercancel="stopDrag">
-                            <div class="dialog_title_text">{{ thread.threadId || "no id found"}}</div>
+                            <div class="dialog_title_text">{{ thread.title || thread.threadId || "no id found"}}</div>
                         </div>
-                        <div class="dialog_top_buttons">
-                            <div class="dialog_top_button minimize_button" data-alt-text="▪️" v-on:click="minimize">➖​</div>
-                            <div class="dialog_top_button maximize_button" data-alt-text="◼️" v-on:click="toggleMaximize">
-                                {{ $locals.isMaximized ? "▪️​" : "◼️​" }}
-                            ​</div>
-                            <div class="dialog_top_button exit_button" v-on:click="close">✖️</div>
+                        <div class="dialog_topbar_buttons">
+                            <div class="dialog_topbar_button minimize_button" ref="minimize_button" v-on:click="minimize">➖​</div>
+                            <div class="dialog_topbar_button maximize_button" ref="maximize_button" v-on:click="toggleMaximize">​◼️</div>
+                            <div class="dialog_topbar_button exit_button" v-on:click="close">✖️</div>
                         </div>
                     </div>
                 </div>
                 <div class="dialog_body">
-                    <DynamicView :view="thread" :args="{dialog:this}" />
+                    <DynamicView :view="thread" :args="{dialog:this}" ref="body" />
                 </div>
                 <div class="dialog_footer">
-                    <div class="dialog_status_bar">
-                        <div class="dialog_status_item flex_100">This is a message.</div>
-                        <div class="dialog_status_item">Another.</div>
-                        <div class="dialog_status_item">And more.</div>
+                    <div class="dialog_buttons" v-if="thread.buttons?.length">
+                        <div class="flex_100"></div>
+                        <template v-for="button, buttonIndex in thread.buttons" v-if="Array.isArray(thread.buttons)">
+                            <div class="flex_1 dialog_button_box" v-bind:key="'button_box_' + buttonIndex">
+                                <button class="dialog_button" v-on:click="e => button.click(e, $locals.self)">{{ button.text }}</button>
+                            </div>
+                        </template>
+                        <template v-for="buttonEvent, buttonText in thread.buttons" v-else-if="typeof thread.buttons === 'object'">
+                            <div class="flex_1 dialog_button_box" v-bind:key="'button_box_' + buttonText">
+                                <button class="dialog_button" v-on:click="e => buttonEvent(e, $locals.self)">{{ buttonText }}</button>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="dialog_status_bar" v-if="thread.statusBar?.length">
+                        <template v-for="statusBox, statusIndex in thread.statusBar">
+                            <div class="dialog_status_item"
+                                :class="typeof statusBox.flex !== 'number' ? '' : 'flex_' + statusBox.flex"
+                                v-bind:key="'statusbar_' + statusIndex">
+                                <template v-if="statusBox.text">
+                                    <span>{{ statusBox.text }}</span>
+                                </template>
+                                <template v-else-if="statusBox.html">
+                                    <DynamicView :view="{template:statusBox.html,data:{statusBox}}" ref="statusBarItems" />
+                                </template>
+                            </div>
+                        </template>
                     </div>
                 </div>
             </div>

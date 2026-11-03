@@ -14,6 +14,7 @@
         this.isClosed = false;
       }
       Polyfillment: {
+        // @SIP: aquí se están juntando las APIs de Dialogs y Thread, intencionalmente, por cierto:
         Object.assign(this, parameters);
       }
       Corrections: {
@@ -39,7 +40,11 @@
         this.parent.children.push(this);
       }
       Emit_related_events: {
-        this.onChange.evaluateFunctionsSync({ thread: this });
+        let pivot = this;
+        while(pivot) {
+          pivot.onChange.evaluateFunctionsSync([{ thread: this }]);
+          pivot = pivot.parent;
+        }
       }
       Emit_dialogs_update: {
         Std.objects.GlobalDialog?.port?.refreshView();
@@ -70,7 +75,12 @@
         this.parent.children.splice(pos, 1);
       }
       Emit_related_events: {
-        this.onClose.evaluateFunctionsSync({ thread: this });
+        this.onClose.evaluateFunctionsSync([{ thread: this }]);
+        let pivot = this;
+        while(pivot) {
+          pivot.onChange.evaluateFunctionsSync([{ thread: this }]);
+          pivot = pivot.parent;
+        }
       }
       Emit_dialogs_update: {
         Std.objects.GlobalDialog?.port?.refreshView();

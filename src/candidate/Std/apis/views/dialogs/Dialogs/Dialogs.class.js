@@ -17,5 +17,10 @@ class Dialogs {
     $moduler.assert(this.port instanceof Std.externals.Vue2, "Required property «port» to be instance of Vue2 on «Dialogs.prototype.open»");
     return this.port.open(...args);
   }
-  static globalInstance = this.$ = Std.objects.GlobalDialog = new this();
+  answer(...args) {
+    $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"Std.classes.Dialogs.prototype.answer"});
+    $moduler.assert(this.port instanceof Std.externals.Vue2, "Required property «port» to be instance of Vue2 on «Dialogs.prototype.answer»");
+    return this.port.answer(...args);
+  }
+  static globalInstance = this.$ = globalThis.StdDialogs = Std.objects.GlobalDialog = new this();
 }

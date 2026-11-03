@@ -12,7 +12,7 @@ module.exports = async function ({ file, devbin }) {
     Iterating_extensions:
     for(let index=0; index<extensionesCopiables.length; index++) {
       const extensionCopiable = extensionesCopiables[index];
-      if(extensionCopiable) {
+      if(file.endsWith(extensionCopiable)) {
         isCopiable = true;
         break Iterating_extensions;
       }

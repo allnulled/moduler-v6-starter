@@ -103,17 +103,6 @@ log = this.trace;
  * @description 
  */
 isTracing = true;
-  /**
- * @name ModulerV6.Tracer.prototype.createSubtracer
- * @type 
- * @description 
- */
-createSubtracer() {
-  
-}
-  createSubtracer(id) {
-
-  }
 };
   /**
  * @name ModulerV6.static.tracer
@@ -3423,8 +3412,11 @@ toFile(file, options = {}) {
     promises.push(require("fs").promises.writeFile(fileMd, this.md, "utf8"));
     console.log("[*] DevBinaryV6 is saving «compilation.md» at: " + this.compiler.moduler.rootdirOf(fileMd));
   } else if (this.html) {
-    promises.push(require("fs").promises.writeFile(fileMd, this.html, "utf8"));
+    promises.push(require("fs").promises.writeFile(fileHtml, this.html, "utf8"));
     console.log("[*] DevBinaryV6 is saving «compilation.html» at: " + this.compiler.moduler.rootdirOf(fileHtml));
+  } else if (this.pegjs) {
+    promises.push(require("fs").promises.writeFile(fileHtml, this.pegjs, "utf8"));
+    console.log("[*] DevBinaryV6 is saving «compilation.pegjs» at: " + this.compiler.moduler.rootdirOf(fileHtml));
   }
   return Promise.all(promises);
 }
@@ -6246,7 +6238,7 @@ normalizeCliPropertyName(k, aliasesMap) {
  * @description 
  */
 async compileDistribuiblesOf(filepath, event) {
-  let compilation, srcDistJs, srcDistMd, distJs, distCss, distMd, report;
+  let compilation, srcDistJs, srcDistMd, distJs, distCss, distMd, distHtml, report;
   const currentStep = [];
   try {
     currentStep.push("1. begin");
@@ -6274,28 +6266,33 @@ async compileDistribuiblesOf(filepath, event) {
           outputDir = this.devbin.compiler.fullpathOf(inputRootdir.replace(/^\@\//g, "@/dist/"));
         }
       }
-      distJs = require("path").resolve(outputDir, outputNames.js);
-      distCss = require("path").resolve(outputDir, outputNames.css);
-      distMd = require("path").resolve(outputDir, outputNames.md);
-      srcDistJs = require("path").resolve(inputDir, outputNames.js);
-      srcDistMd = require("path").resolve(inputDir, outputNames.md);
+      distJs = outputNames.js ? require("path").resolve(outputDir, outputNames.js) : null;
+      distCss = outputNames.css ? require("path").resolve(outputDir, outputNames.css) : null;
+      distMd = outputNames.md ? require("path").resolve(outputDir, outputNames.md) : null;
+      distHtml = outputNames.html ? require("path").resolve(outputDir, outputNames.html) : null;
+      srcDistJs = outputNames.js ? require("path").resolve(inputDir, outputNames.js) : null;
+      srcDistMd = outputNames.md ? require("path").resolve(inputDir, outputNames.md) : null;
       report.names = outputNames;
     }
     Make_assertions_for_safety: {
       currentStep.push("4. safety assertions 1");
-      this.assert(distJs.endsWith(".dist.js"), `File should end with «.dist.js» but it is not the case on «${distJs}»`);
-      this.assert(distCss.endsWith(".dist.css"), `File should end with «.dist.css» but it is not the case on «${distCss}»`);
-      this.assert(distMd.endsWith(".md"), `File should end with «.md» but it is not the case on «${distMd}»`);
+      if (distJs) this.assert(distJs.endsWith(".dist.js"), `File should end with «.dist.js» but it is not the case on «${distJs}»`);
+      if (distCss) this.assert(distCss.endsWith(".dist.css"), `File should end with «.dist.css» but it is not the case on «${distCss}»`);
+      if (distMd) this.assert(distMd.endsWith(".md"), `File should end with «.md» but it is not the case on «${distMd}»`);
       // this.assert(distJs.includes("/dist/"), `File should include «/dist/» but it is not the case on «${distJs}»`);
     }
     Overwrite_dist_files: {
-      currentStep.push("5. ensure output directory");
-      await this.ensureDirectoryOf(distJs);
-      if (compilation.js) {
+      Output_container_directory: {
+        if(!distJs) break Output_container_directory;
+        currentStep.push("5. ensure output directory");
+        await this.ensureDirectoryOf(distJs);
+      }
+      Output_js: {
+        if (!compilation.js) break Output_js;
         currentStep.push("6. beautify");
         let output = undefined;
         Minify_js_output: {
-          output = {code: compilation.js};
+          output = { code: compilation.js };
           break Minify_js_output;
           output = await this.devbin.compiler.constructor.softMinifyJs(compilation.js, {
             compress: false,
@@ -6310,7 +6307,7 @@ async compileDistribuiblesOf(filepath, event) {
         Persist_js_file: {
           currentStep.push("7. write js file");
           await require("fs").promises.writeFile(distJs, output.code, "utf8");
-          console.log(this.devbin.compiler.constructor.ansi.colors.style("blackBright").text(`[*] DevBinaryV6 generated distribution file at: ${this.devbin.compiler.rootdirOf(distJs)}`));
+          this.devbin.compiler.constructor.ansi.colors.style("blackBright").print(`[*] DevBinaryV6 generated js distribution file at: ${this.devbin.compiler.rootdirOf(distJs)}`);
           report.js = distJs;
         }
         Save_in_touch_event_cache: {
@@ -6329,24 +6326,37 @@ async compileDistribuiblesOf(filepath, event) {
               const instrJs = distJs.replace(/\.dist\.js$/g, ".dist.instr.js");
               const instrSource = this.instrumentCode(output.code, distJs);
               await require("fs").promises.writeFile(instrJs, instrSource, "utf8");
-              console.log(this.devbin.compiler.constructor.ansi.colors.style("blackBright").text(`[*] DevBinaryV6 generated instrumentation file at: ${this.devbin.compiler.rootdirOf(instrJs)}`));
+              this.devbin.compiler.constructor.ansi.colors.style("blackBright").print(`[*] DevBinaryV6 generated js instrumentation file at: ${this.devbin.compiler.rootdirOf(instrJs)}`);
             }
           }
         }
       }
-      if (compilation.css) {
+      Output_css: {
+        if (!compilation.css) break Output_css;
         currentStep.push("9. write css file");
         await require("fs").promises.writeFile(distCss, compilation.css, "utf8");
+        this.devbin.compiler.constructor.ansi.colors.style("blackBright").print(`[*] DevBinaryV6 generated css distribution file at: ${this.devbin.compiler.rootdirOf(distCss)}`);
         if (!event.processedEntries[compilation.file]) event.processedEntries[compilation.file] = {};
         event.processedEntries[compilation.file].distCss = distCss;
         report.css = distCss;
       }
-      if (compilation.md) {
+      Output_md: {
+        if (!compilation.md) break Output_md;
         currentStep.push("10. write md file");
         await require("fs").promises.writeFile(distMd, compilation.md, "utf8");
+        this.devbin.compiler.constructor.ansi.colors.style("blackBright").print(`[*] DevBinaryV6 generated md distribution file at: ${this.devbin.compiler.rootdirOf(distMd)}`);
         if (!event.processedEntries[compilation.file]) event.processedEntries[compilation.file] = {};
         event.processedEntries[compilation.file].distMd = distMd;
         report.md = distMd;
+      }
+      Output_html: {
+        if (!compilation.html) break Output_html;
+        currentStep.push("11. write html file");
+        await require("fs").promises.writeFile(distHtml, compilation.html, "utf8");
+        this.devbin.compiler.constructor.ansi.colors.style("blackBright").print(`[*] DevBinaryV6 generated html distribution file at: ${this.devbin.compiler.rootdirOf(distHtml)}`);
+        if (!event.processedEntries[compilation.file]) event.processedEntries[compilation.file] = {};
+        event.processedEntries[compilation.file].distHtml = distHtml;
+        report.html = distHtml;
       }
     }
     Feedback_report: {
@@ -6366,33 +6376,61 @@ async compileDistribuiblesOf(filepath, event) {
 getDistribuibleFilenamesOf(fileBrute, event) {
   let file, filename, fileExtension;
   file = require("path").basename(fileBrute);
-  if(file.endsWith(".entry.js")) {
-    filename = file.substr(0, file.length - ".entry.js".length);
-    fileExtension = "js";
-  } else if(file.endsWith(".entry.css")) {
-    filename = file.substr(0, file.length - ".entry.css".length);
-    fileExtension = "css";
-  } else if(file.endsWith(".entry.md")) {
-    filename = file.substr(0, file.length - ".entry.md".length);
-    fileExtension = "md";
-  } else if(file.endsWith(".entry.pegjs")) {
-    filename = file.substr(0, file.length - ".entry.pegjs".length);
-    fileExtension = "pegjs";
-  } else {
-    throw new Error(`Parameter «file» must end with «.entry.js», «.entry.css» or «.entry.md» but it is «${file}» on «DevBinaryV6.Utils.prototype.getDistribuibleFilenamesOf»`);
+  BLOCKER_2_PARA_NUEVAS_EXTENSIONES: {
+    if (file.endsWith(".entry.js")) {
+      filename = file.substr(0, file.length - ".entry.js".length);
+      fileExtension = "js";
+    } else if (file.endsWith(".entry.css")) {
+      filename = file.substr(0, file.length - ".entry.css".length);
+      fileExtension = "css";
+    } else if (file.endsWith(".entry.md")) {
+      filename = file.substr(0, file.length - ".entry.md".length);
+      fileExtension = "md";
+    } else if (file.endsWith(".entry.html")) {
+      filename = file.substr(0, file.length - ".entry.html".length);
+      fileExtension = "html";
+    } else if (file.endsWith(".entry.pegjs")) {
+      filename = file.substr(0, file.length - ".entry.pegjs".length);
+      fileExtension = "pegjs";
+    } else {
+      throw new Error(`Parameter «file» must end with «.entry.js|.entry.css|.entry.md|.entry.html|.entry.pegjs» but it is «${file}» on «DevBinaryV6.Utils.prototype.getDistribuibleFilenamesOf»`);
+    }
   }
-  return {
+  const data = {
     file: fileBrute,
     rootdir: this.devbin.compiler.rootdirOf(this.devbin.compiler.normalizationOf(fileBrute)),
     rootdirDirectory: require("path").dirname(this.devbin.compiler.rootdirOf(fileBrute)),
     basename: file,
     extension: fileExtension,
     test: filename + ".test.js",
-    js: filename + ".dist.js",
-    css: filename + ".dist.css",
-    md: filename + ".md",
-    ...(fileExtension !== "pegjs" ? {} : {pegjs: filename + ".pegjs"})
   };
+  if(fileExtension === "js") {    
+    Object.assign(data, {
+      js: filename + ".dist.js",
+      css: filename + ".dist.css",
+      md: filename + ".md",
+    });
+  } else if(fileExtension === "css") {    
+    Object.assign(data, {
+      css: filename + ".dist.css",
+      md: filename + ".md",
+    });
+  } else if(fileExtension === "md") {    
+    Object.assign(data, {
+      md: filename + ".dist.md",
+    });
+  } else if(fileExtension === "html") {    
+    Object.assign(data, {
+      html: filename + ".dist.html",
+      md: filename + ".md",
+    });
+  } else if(fileExtension === "pegjs") {    
+    Object.assign(data, {
+      pegjs: filename + ".dist.pegjs",
+      md: filename + ".md",
+    });
+  }
+  return data;
 }
   /**
  * @name DevBinaryV6.Utils.prototype.fabricateUnitTestFileOf
@@ -6602,7 +6640,9 @@ async touchFile(fileBrute, optionsInput = {}) {
       event.isInTestDir = rootPath.startsWith("@/test/");
       event.isRunnableTest = event.isInTestDir && rootPath.endsWith(".run.js");
       event.isTestItself = event.isInTestDir && event.isJsTest;
-      event.isEntry = event.isJsEntry || event.isCssEntry || event.isMdEntry;
+      BLOCKER_1_PARA_NUEVAS_EXTENSIONES: {
+        event.isEntry = event.isJsEntry || event.isCssEntry || event.isMdEntry || event.isHtml;
+      }
       isProcessable = event.isEntry;
     }
     // console.log(this.devbin.compiler.constructor.ansi.colors.style("blackBright").text(event.uncacheInjections));
@@ -6640,6 +6680,7 @@ async touchFile(fileBrute, optionsInput = {}) {
           }
         }
         Caso_previo_5_caso_src_html: {
+          break Caso_previo_5_caso_src_html;
           if (event.isHtml) {
             currentStep.push("3.2. found html file");
             if (event.isSrcWww) {
@@ -6685,6 +6726,7 @@ async touchFile(fileBrute, optionsInput = {}) {
           }
         }
         Caso_previo_8_pegjs: {
+          break Caso_previo_8_pegjs;
           if(rootPath.endsWith(".pegjs")) {
             let outputFile = false;
             if(rootPath.startsWith("@/src/www/")) {
@@ -8682,6 +8724,193 @@ this.tester = parent ? parent.tester : new this.constructor.Tester(this);
  * @description 
  */
 this.console = parent ? parent.console : this.constructor.Console.create({ devbin: this });
+}
+  static {
+  Hook_filesystem_writtings: {
+
+    const fs = require("fs");
+    const path = require("path");
+
+    // ------------------------------------------------------------
+    // 1. CONFIGURATION
+    // ------------------------------------------------------------
+
+    const FS_DEBUG = {
+      enabled: true,
+      onlyDist: false,
+      onlyTarget: false,
+      onlyPersistors: true,
+      target: path.resolve("dist/src/external/compiler-v6.entry.js"),
+      showStack: true,
+      showArguments: true,
+    };
+
+    // ------------------------------------------------------------
+    // 2. HELPERS
+    // ------------------------------------------------------------
+
+    function normalizePath(value) {
+      if (typeof value === "string") return path.resolve(value);
+      if (Buffer.isBuffer(value)) return path.resolve(value.toString());
+      if (value instanceof URL) return path.resolve(value.pathname);
+      return value;
+    }
+
+    function shouldTrace(args, operation) {
+      if (!FS_DEBUG.enabled) return false;
+
+      if(FS_DEBUG.onlyPersistors) {
+        if(![
+          "appendFile",
+          "chmod",
+          "chown",
+          "copyFile",
+          "cp",
+          "lchmod",
+          "lchown",
+          "link",
+          "mkdir",
+          "mkdtemp",
+          "rename",
+          "rmdir",
+          "rm",
+          "symlink",
+          "truncate",
+          "unlink",
+          // "utimes",
+          "writeFile",
+        ].includes(operation.replace("fs.", "").replace("promises.", ""))) return false;
+      }
+
+      const paths = args
+        .filter(arg => typeof arg === "string" || Buffer.isBuffer(arg) || arg instanceof URL)
+        .map(normalizePath);
+
+      if (FS_DEBUG.onlyTarget) {
+        return paths.some(file => file === FS_DEBUG.target);
+      }
+
+      if (FS_DEBUG.onlyDist) {
+        return paths.some(file => file.includes(`${path.sep}dist${path.sep}`));
+      }
+
+      return true;
+    }
+
+    function truncateMiddle(string, maxLength = 20) {
+      if (string.length <= maxLength) return string;
+
+      const available = (maxLength*2) - 3;
+      const start = Math.ceil(available / 2);
+      const end = Math.floor(available / 2);
+
+      return `${string.slice(0, start)}...${string.slice(-end)}`;
+    }
+
+    function trace(operation, args) {
+      if (!shouldTrace(args, operation)) return;
+
+      const argsString = `[fs.debug] Calling method ${operation}(${[...args].map((arg, index) => {
+        let out = "";
+        out += `@${index}:${typeof arg}`;
+        if (typeof arg === "string") {
+          out += `=${truncateMiddle(arg, 40)}`;
+        }
+        return out;
+      }).join(", ")})`
+
+      if (FS_DEBUG.showStack) {
+        console.trace(argsString);
+      } else {
+        console.log(argsString);
+      }
+
+    }
+
+    // ------------------------------------------------------------
+    // 3. PATCH CALLBACK / SYNC METHODS
+    // ------------------------------------------------------------
+
+    const methods = [
+      "access",
+      "appendFile",
+      "chmod",
+      "chown",
+      "copyFile",
+      "cp",
+      "lchmod",
+      "lchown",
+      "link",
+      "lstat",
+      "mkdir",
+      "mkdtemp",
+      "open",
+      "opendir",
+      "readFile",
+      "readdir",
+      "readlink",
+      "realpath",
+      "rename",
+      "rmdir",
+      "rm",
+      "stat",
+      "symlink",
+      "truncate",
+      "unlink",
+      "utimes",
+      "writeFile",
+    ];
+
+    for (const method of methods) {
+      for (const suffix of ["", "Sync"]) {
+        const name = `${method}${suffix}`;
+        const original = fs[name];
+
+        if (typeof original !== "function") continue;
+
+        fs[name] = function (...args) {
+          trace(`fs.${name}`, args);
+          return original.apply(this, args);
+        };
+      }
+    }
+
+    // ------------------------------------------------------------
+    // 4. PATCH PROMISE METHODS
+    // ------------------------------------------------------------
+
+    for (const method of methods) {
+      const original = fs.promises[method];
+
+      if (typeof original !== "function") continue;
+
+      fs.promises[method] = function (...args) {
+        trace(`fs.promises.${method}`, args);
+        return original.apply(this, args);
+      };
+    }
+
+    // ------------------------------------------------------------
+    // 5. PATCH STREAMS
+    // ------------------------------------------------------------
+
+    for (const method of ["createReadStream", "createWriteStream"]) {
+      const original = fs[method];
+
+      fs[method] = function (...args) {
+        trace(`fs.${method}`, args);
+        return original.apply(this, args);
+      };
+    }
+
+    // ------------------------------------------------------------
+    // 6. PATCH STREAM / OTHER ACCESS
+    // ------------------------------------------------------------
+
+    console.log("[FS DEBUG] Global filesystem interceptor activated.");
+
+
+  }
 }
 };
 }.call());

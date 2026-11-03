@@ -14184,6 +14184,8 @@ $moduler.toolkit.makeInterface([
     return args.length ? args[args.length - 1] : out;
   }
 
+  static return = this.log;
+
 };
     Std.all.triggerMethodIfExists = Std.functions.triggerMethodIfExists = function triggerMethodIfExists(base, method, args = [], scope = false) {
   /**@:
@@ -14541,6 +14543,12 @@ $moduler.toolkit.makeInterface([
     Std.all.Tracer?.globalInstance.log("Std.classes.FunctionsList.prototype.addFunction", arguments || []);;
     $moduler.assert(typeof callback == "function", `Required parameter «callback» to be function on «FunctionList.prototype.addFunction»`);
     this.push(callback);
+  }
+  removeFunction(callback) {
+    Std.all.Tracer?.globalInstance.log("Std.classes.FunctionsList.prototype.removeFunction", arguments || []);;
+    const pos = this.indexOf(callback);
+    if(pos === -1) return -1;
+    return this.splice(pos, 1);
   }
   evaluateFunctionsSync(args = []) {
     Std.all.Tracer?.globalInstance.log("Std.classes.FunctionsList.prototype.evaluateFunctionsSync", arguments || []);;
@@ -17171,6 +17179,7 @@ $moduler.toolkit.makeInterface([
         this.isClosed = false;
       }
       Polyfillment: {
+        // @SIP: aquí se están juntando las APIs de Dialogs y Thread, intencionalmente, por cierto:
         Object.assign(this, parameters);
       }
       Corrections: {
@@ -17196,7 +17205,11 @@ $moduler.toolkit.makeInterface([
         this.parent.children.push(this);
       }
       Emit_related_events: {
-        this.onChange.evaluateFunctionsSync({ thread: this });
+        let pivot = this;
+        while(pivot) {
+          pivot.onChange.evaluateFunctionsSync([{ thread: this }]);
+          pivot = pivot.parent;
+        }
       }
       Emit_dialogs_update: {
         Std.objects.GlobalDialog?.port?.refreshView();
@@ -17227,7 +17240,12 @@ $moduler.toolkit.makeInterface([
         this.parent.children.splice(pos, 1);
       }
       Emit_related_events: {
-        this.onClose.evaluateFunctionsSync({ thread: this });
+        this.onClose.evaluateFunctionsSync([{ thread: this }]);
+        let pivot = this;
+        while(pivot) {
+          pivot.onChange.evaluateFunctionsSync([{ thread: this }]);
+          pivot = pivot.parent;
+        }
       }
       Emit_dialogs_update: {
         Std.objects.GlobalDialog?.port?.refreshView();
@@ -29339,9 +29357,12 @@ $moduler.toolkit.makeInterface([
 };
     Std.all.DynamicView = Std.views.DynamicView = Std.classes.ViewsRegistry.$.set("DynamicView", {
   name: "DynamicView",
-  template: "<div class=\"View DynamicView\">" + '\n'
- + "    <component v-bind:is=\"$locals.currentView.name\" v-bind=\"$locals.currentArgs\" />" + '\n'
- + "</div>",
+  template: "<component" + '\n'
+ + "    class=\"DynamicView View\"" + '\n'
+ + "    v-bind:is=\"$locals.currentView.name\"" + '\n'
+ + "    v-bind=\"$locals.currentArgs\"" + '\n'
+ + "    ref=\"content\"" + '\n'
+ + "/>",
   props: {
     view: {
       type: Object,
@@ -29354,6 +29375,9 @@ $moduler.toolkit.makeInterface([
   },
   created() {
     Std.all.Tracer?.globalInstance.log("Std.views.DynamicView.created", arguments || []);;
+    Sanitize_unwrapped_templates: {
+      this.view.template = this.fixUnwrappedHtml(this.view.template);
+    }
     this.$locals = {
       currentView: this.view,
       currentArgs: this.args,
@@ -29364,6 +29388,10 @@ $moduler.toolkit.makeInterface([
     this.setView(this.$locals.currentView, this.$locals.currentArgs);
   },
   methods: {
+    fixUnwrappedHtml(html) {
+      if(html.trim().startsWith("<")) return html;
+      return `<div>${html}</div>`;
+    },
     refreshView() {
       Std.all.Tracer?.globalInstance.log("Std.views.DynamicView.methods.refreshView", arguments || []);;
       this.$forceUpdate(true);
@@ -29380,6 +29408,16 @@ $moduler.toolkit.makeInterface([
         if(this.$locals.currentView.name && ViewsRegistry.$.get(this.$locals.currentView.name)?.isVolatile) {
           ViewsRegistry.$.delete(this.$locals.currentView.name);
         }
+      }
+      Sanitize_unwrapped_templates: {
+        view.template = this.fixUnwrappedHtml(view.template);
+      }
+      Sanitize_objectual_data: {
+        if(typeof view.data !== "object") break Sanitize_objectual_data;
+        const copyOfData = {...view.data};
+        view.data = function() {
+          return copyOfData;
+        };
       }
       Register_new_or_polyfill_with_old: {
         if(!view.name) {
@@ -29403,9 +29441,13 @@ $moduler.toolkit.makeInterface([
     setHtml(html) {
       Std.all.Tracer?.globalInstance.log("Std.views.DynamicView.methods.setHtml", arguments || []);;
       return this.setView({
-        template: html.startsWith("<") ? html : `<div>${html}</div>`,
+        template: html,
       });
     },
+    getContent() {
+      Std.all.Tracer?.globalInstance.log("Std.views.DynamicView.methods.getContent", arguments || []);;
+      return this.$refs.content;
+    }
   }
 });
     Std.all.ContextualView = Std.views.ContextualView = Std.classes.ViewsRegistry.$.set("ContextualView", {
@@ -29544,7 +29586,12 @@ $moduler.toolkit.makeInterface([
     $moduler.assert(this.port instanceof Std.externals.Vue2, "Required property «port» to be instance of Vue2 on «Dialogs.prototype.open»");
     return this.port.open(...args);
   }
-  static globalInstance = this.$ = Std.objects.GlobalDialog = new this();
+  answer(...args) {
+    Std.all.Tracer?.globalInstance.log("Std.classes.Dialogs.prototype.answer", arguments || []);;
+    $moduler.assert(this.port instanceof Std.externals.Vue2, "Required property «port» to be instance of Vue2 on «Dialogs.prototype.answer»");
+    return this.port.answer(...args);
+  }
+  static globalInstance = this.$ = globalThis.StdDialogs = Std.objects.GlobalDialog = new this();
 };
     Std.all.DialogsFactory = Std.classes.DialogsFactory = class DialogsFactory {
   static {
@@ -29587,10 +29634,7 @@ $moduler.toolkit.makeInterface([
 };
     Std.all.DialogView = Std.views.DialogView = Std.classes.ViewsRegistry.$.set("DialogView", {
   name: "DialogView",
-  template: "<div class=\"DialogView View\" v-on:click=\"focusMe\" :class=\"{" + '\n'
- + "        is_maximized: $locals.isMaximized," + '\n'
- + "        is_minimized: $locals.isMinimized," + '\n'
- + "    }\">" + '\n'
+  template: "<div class=\"DialogView View\" v-on:click=\"focusMe\">" + '\n'
  + "    <div class=\"flex_column flex_100\">" + '\n'
  + "        <div class=\"flex_0 flex_row\">" + '\n'
  + "            <div class=\"flex_0\">" + '\n'
@@ -29627,29 +29671,50 @@ $moduler.toolkit.makeInterface([
  + "                <div class=\"dialog_header\">" + '\n'
  + "                    <div class=\"dialog_topbar\">" + '\n'
  + "                        <div class=\"dialog_title\"" + '\n'
+ + "                            v-on:dblclick=\"toggleMaximize\"" + '\n'
  + "                            v-on:pointerdown=\"startDrag\"" + '\n'
  + "                            v-on:pointermove=\"moveDrag\"" + '\n'
  + "                            v-on:pointerup=\"stopDrag\"" + '\n'
  + "                            v-on:pointercancel=\"stopDrag\">" + '\n'
- + "                            <div class=\"dialog_title_text\">{{ thread.threadId || \"no id found\"}}</div>" + '\n'
+ + "                            <div class=\"dialog_title_text\">{{ thread.title || thread.threadId || \"no id found\"}}</div>" + '\n'
  + "                        </div>" + '\n'
- + "                        <div class=\"dialog_top_buttons\">" + '\n'
- + "                            <div class=\"dialog_top_button minimize_button\" data-alt-text=\"▪️\" v-on:click=\"minimize\">➖​</div>" + '\n'
- + "                            <div class=\"dialog_top_button maximize_button\" data-alt-text=\"◼️\" v-on:click=\"toggleMaximize\">" + '\n'
- + "                                {{ $locals.isMaximized ? \"▪️​\" : \"◼️​\" }}" + '\n'
- + "                            ​</div>" + '\n'
- + "                            <div class=\"dialog_top_button exit_button\" v-on:click=\"close\">✖️</div>" + '\n'
+ + "                        <div class=\"dialog_topbar_buttons\">" + '\n'
+ + "                            <div class=\"dialog_topbar_button minimize_button\" ref=\"minimize_button\" v-on:click=\"minimize\">➖​</div>" + '\n'
+ + "                            <div class=\"dialog_topbar_button maximize_button\" ref=\"maximize_button\" v-on:click=\"toggleMaximize\">​◼️</div>" + '\n'
+ + "                            <div class=\"dialog_topbar_button exit_button\" v-on:click=\"close\">✖️</div>" + '\n'
  + "                        </div>" + '\n'
  + "                    </div>" + '\n'
  + "                </div>" + '\n'
  + "                <div class=\"dialog_body\">" + '\n'
- + "                    <DynamicView :view=\"thread\" :args=\"{dialog:this}\" />" + '\n'
+ + "                    <DynamicView :view=\"thread\" :args=\"{dialog:this}\" ref=\"body\" />" + '\n'
  + "                </div>" + '\n'
  + "                <div class=\"dialog_footer\">" + '\n'
- + "                    <div class=\"dialog_status_bar\">" + '\n'
- + "                        <div class=\"dialog_status_item flex_100\">This is a message.</div>" + '\n'
- + "                        <div class=\"dialog_status_item\">Another.</div>" + '\n'
- + "                        <div class=\"dialog_status_item\">And more.</div>" + '\n'
+ + "                    <div class=\"dialog_buttons\" v-if=\"thread.buttons?.length\">" + '\n'
+ + "                        <div class=\"flex_100\"></div>" + '\n'
+ + "                        <template v-for=\"button, buttonIndex in thread.buttons\" v-if=\"Array.isArray(thread.buttons)\">" + '\n'
+ + "                            <div class=\"flex_1 dialog_button_box\" v-bind:key=\"'button_box_' + buttonIndex\">" + '\n'
+ + "                                <button class=\"dialog_button\" v-on:click=\"e => button.click(e, $locals.self)\">{{ button.text }}</button>" + '\n'
+ + "                            </div>" + '\n'
+ + "                        </template>" + '\n'
+ + "                        <template v-for=\"buttonEvent, buttonText in thread.buttons\" v-else-if=\"typeof thread.buttons === 'object'\">" + '\n'
+ + "                            <div class=\"flex_1 dialog_button_box\" v-bind:key=\"'button_box_' + buttonText\">" + '\n'
+ + "                                <button class=\"dialog_button\" v-on:click=\"e => buttonEvent(e, $locals.self)\">{{ buttonText }}</button>" + '\n'
+ + "                            </div>" + '\n'
+ + "                        </template>" + '\n'
+ + "                    </div>" + '\n'
+ + "                    <div class=\"dialog_status_bar\" v-if=\"thread.statusBar?.length\">" + '\n'
+ + "                        <template v-for=\"statusBox, statusIndex in thread.statusBar\">" + '\n'
+ + "                            <div class=\"dialog_status_item\"" + '\n'
+ + "                                :class=\"typeof statusBox.flex !== 'number' ? '' : 'flex_' + statusBox.flex\"" + '\n'
+ + "                                v-bind:key=\"'statusbar_' + statusIndex\">" + '\n'
+ + "                                <template v-if=\"statusBox.text\">" + '\n'
+ + "                                    <span>{{ statusBox.text }}</span>" + '\n'
+ + "                                </template>" + '\n'
+ + "                                <template v-else-if=\"statusBox.html\">" + '\n'
+ + "                                    <DynamicView :view=\"{template:statusBox.html,data:{statusBox}}\" ref=\"statusBarItems\" />" + '\n'
+ + "                                </template>" + '\n'
+ + "                            </div>" + '\n'
+ + "                        </template>" + '\n'
  + "                    </div>" + '\n'
  + "                </div>" + '\n'
  + "            </div>" + '\n'
@@ -29687,33 +29752,41 @@ $moduler.toolkit.makeInterface([
  + "    </div>" + '\n'
  + "</div>",
   props: {
-    port: {
-      type: Object,
-      required: true,
-    },
     thread: {
       type: Object,
       required: true,
     }
   },
   created() {
+    Std.all.Tracer?.globalInstance.log("Std.views.DialogView.created", arguments || []);;
     this.$locals = {
-      isMaximized: false,
-      isMinimized: false,
+      self: this,
+      isMaximized: undefined,
+      isMinimized: undefined,
+      unmaximizedBoundaries: {
+        width:200,
+        height:200,
+      },
       isDragging: false,
       drag: null,
       isResizing: false,
       resize: null,
+      resolvable: ModulerV6.createResolvable(),
     };
   },
   methods: {
+    getPort() {
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.getPort", arguments || []);;
+      return Std.views.DialogsPort.static.findDialogPortFrom(this.$el);
+    },
     focusMe() {
       Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.focusMe", arguments || []);;
-      this.port.setFocusToDialog(this);
+      this.getPort().setFocusToDialog(this);
     },
     startDrag(event) {
-      Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.startDrag", arguments || []);;
       if (event.button !== 0) return;
+      if (this.$locals.isMaximized) return -3;
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.startDrag", arguments || []);;
       this.focusMe();
       const element = this.$el;
       const rect = element.getBoundingClientRect();
@@ -29728,25 +29801,24 @@ $moduler.toolkit.makeInterface([
       event.currentTarget.setPointerCapture(event.pointerId);
     },
     moveDrag(event) {
-      Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.moveDrag", arguments || []);;
       if (!this.$locals.isDragging) return;
       if (event.pointerId !== this.$locals.drag.pointerId) return;
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.moveDrag", arguments || []);;
       const drag = this.$locals.drag;
       const element = this.$el;
-      element.style.left = `${drag.left + event.clientX - drag.startX}px`;
-      element.style.top = `${drag.top + event.clientY - drag.startY}px`;
+      element.style.left = Std.all.Printer.log(`${Math.round(drag.left + event.clientX - drag.startX)}px`);
+      element.style.top = Std.all.Printer.log(`${Math.round(drag.top + event.clientY - drag.startY)}px`);
     },
     stopDrag(event) {
-      Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.stopDrag", arguments || []);;
       if (!this.$locals.isDragging) return;
       if (event.pointerId !== this.$locals.drag.pointerId) return;
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.stopDrag", arguments || []);;
       this.$locals.isDragging = false;
       this.$locals.drag = null;
     },
     startResize(event, position) {
+      if (this.$locals.isMaximized) return -3;
       Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.startResize", arguments || []);;
-
-      console.log("INICIANDO START");
       const element = this.$el;
       const rect = element.getBoundingClientRect();
       this.$locals.resize = {
@@ -29760,19 +29832,16 @@ $moduler.toolkit.makeInterface([
         height: rect.height,
       };
       this.$locals.isResizing = true;
-      console.log("activated resiz")
       event.currentTarget.setPointerCapture(event.pointerId);
     },
     moveResize(event, position) {
-      Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.moveResize", arguments || []);;
-      console.log("INICIANDO MOVE");
-      if (!this.$locals.isResizing) return console.log("Not resiginz");
+      if (!this.$locals.isResizing) return -1;
       const resize = this.$locals.resize;
-      if (event.pointerId !== resize.pointerId) return console.log("Not pointercaptureds");;
+      if (event.pointerId !== resize.pointerId) return -2;
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.moveResize", arguments || []);;
       const element = this.$el;
       const deltaX = event.clientX - resize.startX;
       const deltaY = event.clientY - resize.startY;
-      console.log(deltaX, deltaY);
       if (position.includes("right")) {
         element.style.width = `${resize.width + deltaX}px`;
       }
@@ -29789,9 +29858,8 @@ $moduler.toolkit.makeInterface([
       }
     },
     stopResize(event, position) {
-      Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.stopResize", arguments || []);;
-      console.log("INICIANDO STOP");
       if (!this.$locals.isResizing) return;
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.stopResize", arguments || []);;
       const resize = this.$locals.resize;
       if (event.pointerId !== resize.pointerId) return;
       this.$locals.isResizing = false;
@@ -29799,63 +29867,209 @@ $moduler.toolkit.makeInterface([
     },
     minimize() {
       Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.minimize", arguments || []);;
-      this.$locals.isMinimized = true;
-      console.log("INICIANDO MINIMIZ");
-      this.refreshPort();
+      Update_elements_class: {
+        this.$el.classList.add("is_minimized");
+      }
+      Update_state_flag: {
+        this.$locals.isMinimized = true;
+      }
     },
-    toggleMaximize() {
+    toggleMaximize(forceTo = undefined) {
       Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.toggleMaximize", arguments || []);;
-      this.$locals.isMaximized = !this.$locals.isMaximized;
+      const becomesMaximized = typeof forceTo === "boolean" ? forceTo : !this.$el.classList.contains("is_maximized");
+      Update_elements_class: {
+        this.$el.classList[becomesMaximized ? "add" : "remove"]("is_maximized");
+      }
+      Update_topbar_maximize_button_text: {
+        this.$refs.maximize_button.textContent = becomesMaximized ? "▪️​" : "◼️";
+      }
+      Update_state_boundaries: {
+        this.$locals.unmaximizedBoundaries = becomesMaximized ? this.$el.getBoundingClientRect() : null;
+      }
+      Update_blocker_for_resize_and_drag_events_by_state: {
+        this.$locals.isMaximized = becomesMaximized;
+      }
+    },
+    accept(...args) {
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.close", arguments || []);;
+      this.thread.close();
+      this.$locals.resolvable.resolve(args.length !== 0 ? args[0] : true);
       this.refreshPort();
     },
     close() {
       Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.close", arguments || []);;
       this.thread.close();
+      this.$locals.resolvable.resolve(null);
       this.refreshPort();
     },
     refreshPort() {
       Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.refreshPort", arguments || []);;
-      this.port.refreshView();
-    }
+      if(!this.$el.parentElement) return;
+      this.getPort().refreshView();
+    },
+    getStatusBar(name) {
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.getStatusBar", arguments || []);;
+      const statusBars = this.$refs.statusBarItems.filter(dynamicView => dynamicView.getContent().statusBox.name === name);
+      $moduler.assert(statusBars.length !== 0, `Status bar with name «${name}» does not exist`);
+      return statusBars[0];
+    },
+    getBody() {
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.getBody", arguments || []);;
+      return this.$refs.body;
+    },
+    getContent() {
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.getBody", arguments || []);;
+      return this.$refs.body.getContent();
+    },
   },
   static: {
+    sizes: {
+      SMALL: 1,
+      MEDIUM: 2,
+      BIG: 3,
+      MAXIMIZED: 4,
+      MINIMIZED: 5,
+    },
+    layouts: {
+      SCROLLABLE: 1,
+      CENTER: 1,
+    },
+    buttons: {
+      ACCEPT: [{
+        text: "Aceptar",
+        click: (e, dialog) => {
+          return dialog.accept(true);
+        }
+      }],
+      CANCEL: [{
+        text: "Cancelar",
+        click: (e, dialog) => {
+          return dialog.close();
+        }
+      }],
+      ACCEPT_OR_CANCEL: [{
+        text: "Aceptar",
+        click: (e, dialog) => {
+          return dialog.accept(true);
+        }
+      }, {
+        text: "Cancelar",
+        click: (e, dialog) => {
+          return dialog.close();
+        }
+      }]
+    },
     findDialogFrom(element) {
-
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogView.static.findDialogFrom", arguments || []);;
+      $moduler.assert(element instanceof HTMLElement, `Parameter «element» must be instance of HTMLElement but «${typeof element}» was found instead on «DialogView.static.findDialogFrom»`);
+      return Std.classes.Domer.findFirstParentWhere(el => el.matches(".DialogView"), element).__vue__;
     }
+  }
+});
+    Std.all.DialogsTree = Std.views.DialogsTree = Std.classes.ViewsRegistry.$.set("DialogsTree", {
+  name: "DialogsTree",
+  template: "<div class=\"View DialogsTree\" v-on:click=\"() => $forceUpdate(true)\">" + '\n'
+ + "    árbol de diálogos aquí con: {{ dialogsPort.$locals.opened.length }}" + '\n'
+ + "    <DialogsTreeNode :thread=\"dialogsPort.$locals.thread\" v-bind:key=\"$window.Std.classes.Randomizer.getRandomLetters(5)\" />" + '\n'
+ + "</div>",
+  props: {
+    dialogsPort: {
+      type: Std.externals.Vue2,
+      default: () => Std.objects.GlobalDialog.port,
+    }
+  },
+  created() {
+    Std.all.Tracer?.globalInstance.log("Std.views.DialogsTree.created", arguments || []);;
+    const component = this;
+    Initialize_locals: {
+      this.$locals = {
+        onChange: function () {
+          Std.all.Tracer?.globalInstance.log("Std.views.DialogsTree.#.$locals.onChange", arguments || []);;
+          component.$forceUpdate(true);
+        },
+      };
+    }
+    Register_refresher: {
+      this.dialogsPort.$locals.thread.onChange.addFunction(this.$locals.onChange);
+    }
+  },
+  destroyed() {
+    Std.all.Tracer?.globalInstance.log("Std.views.DialogsTree.destroyed", arguments || []);;
+    Unregister_refresher: {
+      this.dialogsPort.$locals.thread.onChange.removeFunction(this.$locals.onChange);
+    }
+  },
+  methods: {
+    
+  },
+  static: {
+    
+  }
+});
+    Std.all.DialogsTreeNode = Std.views.DialogsTreeNode = Std.classes.ViewsRegistry.$.set("DialogsTreeNode", {
+  name: "DialogsTreeNode",
+  template: "<div class=\"View DialogsTreeNode\">" + '\n'
+ + "    <div>🔷​ {{ thread.threadId }}</div>" + '\n'
+ + "    <div class=\"tree_padding\" v-if=\"thread.children\">" + '\n'
+ + "        <DialogsTreeNode" + '\n'
+ + "            v-for=\"subthread, subid in thread.children\"" + '\n'
+ + "            v-bind:key=\"'subthread_' + subid\"" + '\n'
+ + "            :thread=\"subthread\"" + '\n'
+ + "        />" + '\n'
+ + "    </div>" + '\n'
+ + "</div>",
+  props: {
+    thread: {
+      type: Object,
+      required: true,
+    }
+  },
+  methods: {
+    
+  },
+  static: {
+    
   }
 });
     Std.all.DialogsPort = Std.views.DialogsPort = Std.classes.ViewsRegistry.$.set("DialogsPort", {
   name: "DialogsPort",
   template: "<div class=\"View DialogsPort\">" + '\n'
- + "    <div v-on:click=\"setFocusToDialog\">Dialogs port:</div>" + '\n'
  + "    <DialogView class=\"GlobalDialog\"" + '\n'
  + "        v-for=\"subthread, subthreadIndex in $locals.opened\"" + '\n'
  + "        v-bind:key=\"'global_dialog_' + subthread.threadId\"" + '\n'
  + "        ref=\"currentDialogs\"" + '\n'
- + "        :port=\"$locals.self\"" + '\n'
  + "        :thread=\"subthread\" />" + '\n'
+ + "    <div class=\"DialogsPortView position_fixed top_auto left_auto\" style=\"bottom:4px;right:4px;\"" + '\n'
+ + "        v-on:click=\"openTreeView\"></div>" + '\n'
  + "</div>",
-  props: {
-
-  },
+  props: {},
   data: function () {
     Std.all.Tracer?.globalInstance.log("Std.views.DialogsPort.data", arguments || []);;
     return {};
   },
   created: function () {
     Std.all.Tracer?.globalInstance.log("Std.views.DialogsPort.created", arguments || []);;
-    Std.classes.Dialogs.globalInstance.initializePort(this);
-    this.$locals = {
-      self: this,
-      thread: Std.objects.GlobalThread,
-      opened: [],
-      order: [],
-      nextZIndex: 500,
-    };
+    Initialize_in_globals: {
+      Std.classes.Dialogs.globalInstance.initializePort(this);
+      this.$locals = {
+        self: this,
+        thread: Std.objects.GlobalThread,
+        opened: [],
+        order: [],
+        nextZIndex: 500,
+      };
+    }
   },
   methods: {
     open(config) {
       Std.all.Tracer?.globalInstance.log("Std.views.DialogsPort.methods.open", arguments || []);;
+      Shortcut_by_unique_action: {
+        if (!config.uniqueActionId) break Shortcut_by_unique_action;
+        $moduler.assert(typeof config.uniqueActionId === "string", `Required parameter «config.uniqueActionId» to be string on «DialogsPort.methods.open»`);
+        const matched = this.$locals.opened.filter(thread => thread.uniqueActionId === config.uniqueActionId);
+        if (!matched.length) break Shortcut_by_unique_action;
+        return this.setFocusToThread(matched[0]);
+      }
       Validate_dialog_properties: {
         if (config.title) $moduler.assert(typeof config.title === "string", `Required parameter «config.title» to be string on «DialogsPort.methods.open»`);
         if (config.top) $moduler.assert(Array.isArray(config.top), `Required parameter «config.top» to be array on «DialogsPort.methods.open»`);
@@ -29873,8 +30087,27 @@ $moduler.toolkit.makeInterface([
         $moduler.assert(typeof config.threadId === "undefined", `Required parameter «config.threadId» to be undefined on «DialogsPort.methods.open»`);
       }
       const newSubthread = this.$locals.thread.newSubthread.config(config);
+      let newSubdialog = undefined;
+      const openPromise = new Promise((resolve, reject) => {
+        this.$nextTick(() => {
+          newSubdialog = this.setFocusToThread(newSubthread);
+          return resolve({
+            dialog: newSubdialog,
+            thread: newSubthread,
+            promise: newSubdialog.$locals.resolvable.promise,
+            accept: (...args) => newSubdialog.accept(...args),
+            close: (...args) => newSubdialog.close(...args),
+            config: config,
+          });
+        });
+      });
       this.refreshView();
-      return newSubthread;
+      return openPromise;
+    },
+    async answer(config) {
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogsPort.methods.answer", arguments || []);;
+      const { promise } = await this.open(config);
+      return await promise;
     },
     synchronizeThreads(thread = this.$locals.thread, collectedBrute = null) {
       Std.all.Tracer?.globalInstance.log("Std.views.DialogsPort.methods.synchronizeThreads", arguments || []);;
@@ -29900,11 +30133,30 @@ $moduler.toolkit.makeInterface([
     },
     setFocusToDialog(dialog) {
       Std.all.Tracer?.globalInstance.log("Std.views.DialogsPort.methods.setFocusToDialog", arguments || []);;
-      dialog.$el.style.zIndex = ++this.$locals.nextZIndex;
+      dialog.$el.style.zIndex = this.$locals.nextZIndex++;
+      return dialog;
+    },
+    setFocusToThread(thread) {
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogsPort.methods.setFocusToThread", arguments || []);;
+      if (!this.$refs.currentDialogs) return -2;
+      const matches = this.$refs.currentDialogs.filter(dialog => dialog.thread === thread);
+      if (!matches.length) return -2;
+      return this.setFocusToDialog(matches[0]);
+    },
+    openTreeView() {
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogsPort.methods.openTreeView", arguments || []);;
+      return this.open({
+        title: "Árbol de diálogos",
+        template: "<DialogsTree />",
+        uniqueActionId: "Dialogs tree view",
+      });
     }
   },
   static: {
-    globalInstance: null,
+    findDialogPortFrom(element) {
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogsPort.static.findDialogPortFrom", arguments || []);;
+      return Std.classes.Domer.findFirstParentWhere(it => it.matches(".DialogsPort.View"), element).__vue__;
+    },
   }
 });
   }

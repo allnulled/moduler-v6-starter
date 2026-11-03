@@ -1,3 +1,6 @@
-<div class="View DynamicView">
-    <component v-bind:is="$locals.currentView.name" v-bind="$locals.currentArgs" />
-</div>
+<component
+    class="DynamicView View"
+    v-bind:is="$locals.currentView.name"
+    v-bind="$locals.currentArgs"
+    ref="content"
+/>

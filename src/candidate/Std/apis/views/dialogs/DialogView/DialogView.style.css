@@ -116,18 +116,37 @@
 
 
 
-.DialogPort {
+.DialogsPort {
     position: relative;
+    z-index: 999999;
+}
+
+.DialogsPort .DialogsPortView {
+    z-index: 999999;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: var(--border_dark_concept_2);
+    background-color: rgb(0, 0, 0, 0.2);
 }
 
 .DialogView {
-    position: absolute;
+    position: fixed;
     border: var(--border_dark_concept_2);
     margin: 2px;
     border-radius: 3pt;
     display: flex;
     flex-direction: row;
     align-items: stretch;
+}
+.DialogView.is_maximized {
+    position: fixed;
+    inset: 0 !important;
+    width: auto !important;
+    height: auto !important;
+}
+.DialogView.is_minimized {
+    display: none;
 }
 
 .DialogView .dialog_topbar {
@@ -156,16 +175,14 @@
     align-items: center;
     padding-left: 4px;
 }
-.DialogView .dialog_top_buttons {
+.DialogView .dialog_topbar_buttons {
     flex: 1;
     display: flex;
     flex-direction: row;
-    padding-top: 2px;
-    padding-bottom: 2px;
-    padding-right: 2px;
+    padding: 2px;
     gap: 2px;
 }
-.DialogView .dialog_top_button {
+.DialogView .dialog_topbar_button {
     flex: 1;
     display: flex;
     align-items: center;
@@ -178,7 +195,7 @@
     background-color: var(--grey95);
     cursor: pointer;
 }
-.DialogView .dialog_top_button:hover {
+.DialogView .dialog_topbar_button:hover {
     box-shadow: var(--shadow_concept_1);
 }
 .DialogView .dialog_body {
@@ -190,14 +207,23 @@
     overflow: auto;
 }
 .DialogView .dialog_footer {
-    background-color: var(--grey90);
-    color: var(--grey0);
+    
+}
+.DialogView .dialog_buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 2px;
+    padding: 2px;
+    border-top: var(--border_dark_concept_1);
+    background-color: var(--grey96);
 }
 .DialogView .dialog_status_bar {
     display: flex;
     flex-direction: row;
     border-top: var(--border_dark_concept_1);
     font-size: var(--font_size_small_1);
+    background-color: var(--grey90);
+    color: black;
 }
 .DialogView .dialog_status_item {
     flex: 1;
@@ -296,35 +322,39 @@
     cursor: se-resize;
 }
 
-
-
-
-
-
-
-
-
-
-
-.flex_column {
-    display: flex;
-    flex-direction: column;
+.DialogsTreeNode .tree_padding {
+    padding-left: 12px;
 }
 
-.flex_row {
-    display: flex;
-    flex-direction: row;
-}
 
-.flex_1 {
-    flex: 1 !important;
-}
-.flex_100 {
-    flex: 100 !important;
-}
-.flex_0 {
-    flex: 0 0 0px;
-}
 
-/* Estados de activación: */
+
+
+
+
+/* FLEX LAYOUT */
+
+.flex_column { display: flex; flex-direction: column; }
+.flex_row { display: flex; flex-direction: row; }
+.flex_1 { flex: 1 !important; }
+.flex_100 { flex: 100 !important; }
+.flex_0 { flex: 0 0 0px; }
+
+/* RELATIVE, FIXED AND ABSOLUTE LAYOUTS */
+
+.position_relative { position: relative; }
+.position_absolute { position: absolute; }
+.position_fixed { position: fixed; }
+
+.top_0 { top: 0px; }
+.bottom_0 { bottom: 0px; }
+.left_0 { left: 0px; }
+.right_0 { right: 0px; }
+
+.top_auto { top: auto; }
+.bottom_auto { bottom: auto; }
+.left_auto { left: auto; }
+.right_auto { right: auto; }
+
+/* COMMON STATES */
 

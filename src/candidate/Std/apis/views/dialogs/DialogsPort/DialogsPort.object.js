@@ -1,27 +1,34 @@
 Std.classes.ViewsRegistry.$.set("DialogsPort", {
   name: "DialogsPort",
   template: $compiler.inject.string("@/src/candidate/Std/apis/views/dialogs/DialogsPort/DialogsPort.view.html"),
-  props: {
-
-  },
+  props: {},
   data: function () {
     $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.data" });
     return {};
   },
   created: function () {
     $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.created" });
-    Std.classes.Dialogs.globalInstance.initializePort(this);
-    this.$locals = {
-      self: this,
-      thread: Std.objects.GlobalThread,
-      opened: [],
-      order: [],
-      nextZIndex: 500,
-    };
+    Initialize_in_globals: {
+      Std.classes.Dialogs.globalInstance.initializePort(this);
+      this.$locals = {
+        self: this,
+        thread: Std.objects.GlobalThread,
+        opened: [],
+        order: [],
+        nextZIndex: 500,
+      };
+    }
   },
   methods: {
     open(config) {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.methods.open" });
+      Shortcut_by_unique_action: {
+        if (!config.uniqueActionId) break Shortcut_by_unique_action;
+        $moduler.assert(typeof config.uniqueActionId === "string", `Required parameter «config.uniqueActionId» to be string on «DialogsPort.methods.open»`);
+        const matched = this.$locals.opened.filter(thread => thread.uniqueActionId === config.uniqueActionId);
+        if (!matched.length) break Shortcut_by_unique_action;
+        return this.setFocusToThread(matched[0]);
+      }
       Validate_dialog_properties: {
         if (config.title) $moduler.assert(typeof config.title === "string", `Required parameter «config.title» to be string on «DialogsPort.methods.open»`);
         if (config.top) $moduler.assert(Array.isArray(config.top), `Required parameter «config.top» to be array on «DialogsPort.methods.open»`);
@@ -39,8 +46,27 @@ Std.classes.ViewsRegistry.$.set("DialogsPort", {
         $moduler.assert(typeof config.threadId === "undefined", `Required parameter «config.threadId» to be undefined on «DialogsPort.methods.open»`);
       }
       const newSubthread = this.$locals.thread.newSubthread.config(config);
+      let newSubdialog = undefined;
+      const openPromise = new Promise((resolve, reject) => {
+        this.$nextTick(() => {
+          newSubdialog = this.setFocusToThread(newSubthread);
+          return resolve({
+            dialog: newSubdialog,
+            thread: newSubthread,
+            promise: newSubdialog.$locals.resolvable.promise,
+            accept: (...args) => newSubdialog.accept(...args),
+            close: (...args) => newSubdialog.close(...args),
+            config: config,
+          });
+        });
+      });
       this.refreshView();
-      return newSubthread;
+      return openPromise;
+    },
+    async answer(config) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.methods.answer" });
+      const { promise } = await this.open(config);
+      return await promise;
     },
     synchronizeThreads(thread = this.$locals.thread, collectedBrute = null) {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.methods.synchronizeThreads" });
@@ -66,10 +92,29 @@ Std.classes.ViewsRegistry.$.set("DialogsPort", {
     },
     setFocusToDialog(dialog) {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.methods.setFocusToDialog" });
-      dialog.$el.style.zIndex = ++this.$locals.nextZIndex;
+      dialog.$el.style.zIndex = this.$locals.nextZIndex++;
+      return dialog;
+    },
+    setFocusToThread(thread) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.methods.setFocusToThread" });
+      if (!this.$refs.currentDialogs) return -2;
+      const matches = this.$refs.currentDialogs.filter(dialog => dialog.thread === thread);
+      if (!matches.length) return -2;
+      return this.setFocusToDialog(matches[0]);
+    },
+    openTreeView() {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.methods.openTreeView" });
+      return this.open({
+        title: "Árbol de diálogos",
+        template: "<DialogsTree />",
+        uniqueActionId: "Dialogs tree view",
+      });
     }
   },
   static: {
-    globalInstance: null,
+    findDialogPortFrom(element) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.static.findDialogPortFrom" });
+      return Std.classes.Domer.findFirstParentWhere(it => it.matches(".DialogsPort.View"), element).__vue__;
+    },
   }
 })

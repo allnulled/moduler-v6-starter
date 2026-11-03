@@ -13,6 +13,9 @@ Std.classes.ViewsRegistry.$.set("DynamicView", {
   },
   created() {
     $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"Std.views.DynamicView.created"});
+    Sanitize_unwrapped_templates: {
+      this.view.template = this.fixUnwrappedHtml(this.view.template);
+    }
     this.$locals = {
       currentView: this.view,
       currentArgs: this.args,
@@ -23,6 +26,10 @@ Std.classes.ViewsRegistry.$.set("DynamicView", {
     this.setView(this.$locals.currentView, this.$locals.currentArgs);
   },
   methods: {
+    fixUnwrappedHtml(html) {
+      if(html.trim().startsWith("<")) return html;
+      return `<div>${html}</div>`;
+    },
     refreshView() {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"Std.views.DynamicView.methods.refreshView"});
       this.$forceUpdate(true);
@@ -39,6 +46,16 @@ Std.classes.ViewsRegistry.$.set("DynamicView", {
         if(this.$locals.currentView.name && ViewsRegistry.$.get(this.$locals.currentView.name)?.isVolatile) {
           ViewsRegistry.$.delete(this.$locals.currentView.name);
         }
+      }
+      Sanitize_unwrapped_templates: {
+        view.template = this.fixUnwrappedHtml(view.template);
+      }
+      Sanitize_objectual_data: {
+        if(typeof view.data !== "object") break Sanitize_objectual_data;
+        const copyOfData = {...view.data};
+        view.data = function() {
+          return copyOfData;
+        };
       }
       Register_new_or_polyfill_with_old: {
         if(!view.name) {
@@ -62,8 +79,12 @@ Std.classes.ViewsRegistry.$.set("DynamicView", {
     setHtml(html) {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"Std.views.DynamicView.methods.setHtml"});
       return this.setView({
-        template: html.startsWith("<") ? html : `<div>${html}</div>`,
+        template: html,
       });
     },
+    getContent() {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"Std.views.DynamicView.methods.getContent"});
+      return this.$refs.content;
+    }
   }
 })

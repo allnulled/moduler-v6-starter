@@ -14,8 +14,12 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
   },
   created() {
     this.$locals = {
-      isMaximized: false,
-      isMinimized: false,
+      isMaximized: undefined,
+      isMinimized: undefined,
+      unmaximizedBoundaries: {
+        width:200,
+        height:200,
+      },
       isDragging: false,
       drag: null,
       isResizing: false,
@@ -28,8 +32,9 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
       this.port.setFocusToDialog(this);
     },
     startDrag(event) {
-      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.startDrag" });
       if (event.button !== 0) return;
+      if (this.$locals.isMaximized) return -3;
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.startDrag" });
       this.focusMe();
       const element = this.$el;
       const rect = element.getBoundingClientRect();
@@ -44,25 +49,24 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
       event.currentTarget.setPointerCapture(event.pointerId);
     },
     moveDrag(event) {
-      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.moveDrag" });
       if (!this.$locals.isDragging) return;
       if (event.pointerId !== this.$locals.drag.pointerId) return;
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.moveDrag" });
       const drag = this.$locals.drag;
       const element = this.$el;
-      element.style.left = `${drag.left + event.clientX - drag.startX}px`;
-      element.style.top = `${drag.top + event.clientY - drag.startY}px`;
+      element.style.left = Std.all.Printer.log(`${Math.round(drag.left + event.clientX - drag.startX)}px`);
+      element.style.top = Std.all.Printer.log(`${Math.round(drag.top + event.clientY - drag.startY)}px`);
     },
     stopDrag(event) {
-      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.stopDrag" });
       if (!this.$locals.isDragging) return;
       if (event.pointerId !== this.$locals.drag.pointerId) return;
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.stopDrag" });
       this.$locals.isDragging = false;
       this.$locals.drag = null;
     },
     startResize(event, position) {
+      if (this.$locals.isMaximized) return -3;
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.startResize" });
-
-      console.log("INICIANDO START");
       const element = this.$el;
       const rect = element.getBoundingClientRect();
       this.$locals.resize = {
@@ -76,19 +80,16 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
         height: rect.height,
       };
       this.$locals.isResizing = true;
-      console.log("activated resiz")
       event.currentTarget.setPointerCapture(event.pointerId);
     },
     moveResize(event, position) {
-      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.moveResize" });
-      console.log("INICIANDO MOVE");
-      if (!this.$locals.isResizing) return console.log("Not resiginz");
+      if (!this.$locals.isResizing) return -1;
       const resize = this.$locals.resize;
-      if (event.pointerId !== resize.pointerId) return console.log("Not pointercaptureds");;
+      if (event.pointerId !== resize.pointerId) return -2;
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.moveResize" });
       const element = this.$el;
       const deltaX = event.clientX - resize.startX;
       const deltaY = event.clientY - resize.startY;
-      console.log(deltaX, deltaY);
       if (position.includes("right")) {
         element.style.width = `${resize.width + deltaX}px`;
       }
@@ -105,9 +106,8 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
       }
     },
     stopResize(event, position) {
-      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.stopResize" });
-      console.log("INICIANDO STOP");
       if (!this.$locals.isResizing) return;
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.stopResize" });
       const resize = this.$locals.resize;
       if (event.pointerId !== resize.pointerId) return;
       this.$locals.isResizing = false;
@@ -115,14 +115,28 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
     },
     minimize() {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.minimize" });
-      this.$locals.isMinimized = true;
-      console.log("INICIANDO MINIMIZ");
-      this.refreshPort();
+      Update_elements_class: {
+        this.$el.classList.add("is_minimized");
+      }
+      Update_state_flag: {
+        this.$locals.isMinimized = true;
+      }
     },
-    toggleMaximize() {
+    toggleMaximize(forceTo = undefined) {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.toggleMaximize" });
-      this.$locals.isMaximized = !this.$locals.isMaximized;
-      this.refreshPort();
+      const becomesMaximized = typeof forceTo === "boolean" ? forceTo : !this.$el.classList.contains("is_maximized");
+      Update_elements_class: {
+        this.$el.classList[becomesMaximized ? "add" : "remove"]("is_maximized");
+      }
+      Update_topbar_maximize_button_text: {
+        this.$refs.maximize_button.textContent = becomesMaximized ? "▪️​" : "◼️";
+      }
+      Update_state_boundaries: {
+        this.$locals.unmaximizedBoundaries = becomesMaximized ? this.$el.getBoundingClientRect() : null;
+      }
+      Update_blocker_for_resize_and_drag_events_by_state: {
+        this.$locals.isMaximized = becomesMaximized;
+      }
     },
     close() {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.close" });
@@ -136,7 +150,7 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
   },
   static: {
     findDialogFrom(element) {
-
+      return Std.classes.Domer.findFirstParentWhere(el => el.matches(".DialogView"), element);
     }
   }
 })
@@ -259,8 +273,18 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
 
 
 
-.DialogPort {
+.DialogsPort {
     position: relative;
+    z-index: 999999;
+}
+
+.DialogsPort .DialogsPortView {
+    z-index: 999999;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: var(--border_dark_concept_2);
+    background-color: rgb(0, 0, 0, 0.2);
 }
 
 .DialogView {
@@ -271,6 +295,15 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
     display: flex;
     flex-direction: row;
     align-items: stretch;
+}
+.DialogView.is_maximized {
+    position: fixed;
+    inset: 0 !important;
+    width: auto !important;
+    height: auto !important;
+}
+.DialogView.is_minimized {
+    display: none;
 }
 
 .DialogView .dialog_topbar {
@@ -299,7 +332,7 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
     align-items: center;
     padding-left: 4px;
 }
-.DialogView .dialog_top_buttons {
+.DialogView .dialog_topbar_buttons {
     flex: 1;
     display: flex;
     flex-direction: row;
@@ -308,7 +341,7 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
     padding-right: 2px;
     gap: 2px;
 }
-.DialogView .dialog_top_button {
+.DialogView .dialog_topbar_button {
     flex: 1;
     display: flex;
     align-items: center;
@@ -321,7 +354,7 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
     background-color: var(--grey95);
     cursor: pointer;
 }
-.DialogView .dialog_top_button:hover {
+.DialogView .dialog_topbar_button:hover {
     box-shadow: var(--shadow_concept_1);
 }
 .DialogView .dialog_body {
@@ -378,7 +411,7 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
     bottom: 0px;
     left: 0px;
     right: 0px;
-    background-color: blue;
+    /*background-color: blue;*/
 }
 .DialogView .dialog_border.top_border > div {
     height: 6px;
@@ -389,6 +422,10 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
     height: 6px;
     bottom: -6px;
     cursor: s-resize;
+}
+.DialogView .dialog_border.left_border,
+.DialogView .dialog_border.right_border {
+    height: 100%;
 }
 .DialogView .dialog_border.left_border > div {
     width: 6px;
@@ -410,28 +447,28 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
     bottom: 0px;
     left: 0px;
     right: 0px;
-    width: 6px;
-    height: 6px;
-    background-color: red;
+    width: 10px;
+    height: 10px;
+    /*background-color: red;*/
 }
 .DialogView .dialog_corner.top_left_corner > div {
-    top: -6px;
-    left: -6px;
+    top: -10px;
+    left: -10px;
     cursor: nw-resize;
 }
 .DialogView .dialog_corner.top_right_corner > div {
-    top: -6px;
-    right: -6px;
+    top: -10px;
+    right: -10px;
     cursor: ne-resize;
 }
 .DialogView .dialog_corner.bottom_left_corner > div {
-    bottom: -6px;
-    left: -6px;
+    bottom: -10px;
+    left: -10px;
     cursor: sw-resize;
 }
 .DialogView .dialog_corner.bottom_right_corner > div {
-    bottom: -6px;
-    right: -6px;
+    bottom: -10px;
+    right: -10px;
     cursor: se-resize;
 }
 
@@ -443,39 +480,38 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
 
 
 
+/* FLEX LAYOUT */
 
+.flex_column { display: flex; flex-direction: column; }
+.flex_row { display: flex; flex-direction: row; }
+.flex_1 { flex: 1 !important; }
+.flex_100 { flex: 100 !important; }
+.flex_0 { flex: 0 0 0px; }
 
-.flex_column {
-    display: flex;
-    flex-direction: column;
-}
+/* RELATIVE, FIXED AND ABSOLUTE LAYOUTS */
 
-.flex_row {
-    display: flex;
-    flex-direction: row;
-}
+.position_relative { position: relative; }
+.position_absolute { position: absolute; }
+.position_fixed { position: fixed; }
 
-.flex_1 {
-    flex: 1 !important;
-}
-.flex_100 {
-    flex: 100 !important;
-}
-.flex_type_dialog_border {
-    flex: 0 0 0px;
-}
+.top_0 { top: 0px; }
+.bottom_0 { bottom: 0px; }
+.left_0 { left: 0px; }
+.right_0 { right: 0px; }
 
-/* Estados de activación: */
+.top_auto { top: auto; }
+.bottom_auto { bottom: auto; }
+.left_auto { left: auto; }
+.right_auto { right: auto; }
+
+/* COMMON STATES */
 
 
 [#FILE=@/src/candidate/Std/apis/views/dialogs/DialogView/DialogView.view.html]
-<div class="DialogView View" v-on:click="focusMe" :class="{
-        is_maximized: $locals.isMaximized,
-        is_minimized: $locals.isMinimized,
-    }">
+<div class="DialogView View" v-on:click="focusMe">
     <div class="flex_column flex_100">
-        <div class="flex_type_dialog_border flex_row">
-            <div class="flex_type_dialog_border">
+        <div class="flex_0 flex_row">
+            <div class="flex_0">
                 <div class="dialog_corner top_left_corner"><div
                     v-on:pointerdown="event => startResize(event, 'top+left')"
                     v-on:pointermove="event => moveResize(event, 'top+left')"
@@ -489,7 +525,7 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
                     v-on:pointerup="event => stopResize(event, 'top')"
                     v-on:pointercancel="event => stopResize(event, 'top')"></div></div>
             </div>
-            <div class="flex_type_dialog_border">
+            <div class="flex_0">
                 <div class="dialog_corner top_right_corner"><div
                     v-on:pointerdown="event => startResize(event, 'top+right')"
                     v-on:pointermove="event => moveResize(event, 'top+right')"
@@ -498,7 +534,7 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
             </div>
         </div>
         <div class="flex_100 flex_row">
-            <div class="flex_type_dialog_border">
+            <div class="flex_0">
                 <div class="dialog_border left_border"><div
                     v-on:pointerdown="event => startResize(event, 'left')"
                     v-on:pointermove="event => moveResize(event, 'left')"
@@ -509,18 +545,17 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
                 <div class="dialog_header">
                     <div class="dialog_topbar">
                         <div class="dialog_title"
+                            v-on:dblclick="toggleMaximize"
                             v-on:pointerdown="startDrag"
                             v-on:pointermove="moveDrag"
                             v-on:pointerup="stopDrag"
                             v-on:pointercancel="stopDrag">
                             <div class="dialog_title_text">{{ thread.threadId || "no id found"}}</div>
                         </div>
-                        <div class="dialog_top_buttons">
-                            <div class="dialog_top_button minimize_button" data-alt-text="▪️" v-on:click="minimize">➖​</div>
-                            <div class="dialog_top_button maximize_button" data-alt-text="◼️" v-on:click="toggleMaximize">
-                                {{ $locals.isMaximized ? "▪️​" : "◼️​" }}
-                            ​</div>
-                            <div class="dialog_top_button exit_button" v-on:click="close">✖️</div>
+                        <div class="dialog_topbar_buttons">
+                            <div class="dialog_topbar_button minimize_button" ref="minimize_button" v-on:click="minimize">➖​</div>
+                            <div class="dialog_topbar_button maximize_button" ref="maximize_button" v-on:click="toggleMaximize">​◼️</div>
+                            <div class="dialog_topbar_button exit_button" v-on:click="close">✖️</div>
                         </div>
                     </div>
                 </div>
@@ -535,7 +570,7 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
                     </div>
                 </div>
             </div>
-            <div class="flex_type_dialog_border">
+            <div class="flex_0">
                 <div class="dialog_border right_border"><div
                     v-on:pointerdown="event => startResize(event, 'right')"
                     v-on:pointermove="event => moveResize(event, 'right')"
@@ -543,8 +578,8 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
                     v-on:pointercancel="event => stopResize(event, 'right')"></div></div>
             </div>
         </div>
-        <div class="flex_type_dialog_border flex_row">
-            <div class="flex_type_dialog_border">
+        <div class="flex_0 flex_row">
+            <div class="flex_0">
                 <div class="dialog_corner bottom_left_corner"><div
                     v-on:pointerdown="event => startResize(event, 'bottom+left')"
                     v-on:pointermove="event => moveResize(event, 'bottom+left')"
@@ -558,7 +593,7 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
                     v-on:pointerup="event => stopResize(event, 'bottom')"
                     v-on:pointercancel="event => stopResize(event, 'bottom')"></div></div>
             </div>
-            <div class="flex_type_dialog_border">
+            <div class="flex_0">
                 <div class="dialog_corner bottom_right_corner"><div
                     v-on:pointerdown="event => startResize(event, 'bottom+right')"
                     v-on:pointermove="event => moveResize(event, 'bottom+right')"
@@ -611,6 +646,7 @@ Std.classes.ViewsRegistry.$.set("DialogsPort", {
       }
       const newSubthread = this.$locals.thread.newSubthread.config(config);
       this.refreshView();
+      this.setFocusToThread(newSubthread);
       return newSubthread;
     },
     synchronizeThreads(thread = this.$locals.thread, collectedBrute = null) {
@@ -637,7 +673,21 @@ Std.classes.ViewsRegistry.$.set("DialogsPort", {
     },
     setFocusToDialog(dialog) {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.methods.setFocusToDialog" });
-      dialog.$el.style.zIndex = ++this.$locals.nextZIndex;
+      console.log(dialog);
+      dialog.$el.style.zIndex = this.$locals.nextZIndex++;
+    },
+    setFocusToThread(thread) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.methods.setFocusToThread" });
+      const matches = this.$refs.currentDialogs.filter(dialog => dialog.thread === thread);
+      if(!matches.length) return -2;
+      return this.setFocusToDialog(matches[0]);
+    },
+    openTreeView() {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.methods.openTreeView" });
+      return this.open({
+        template: "<div>Tree view here.</div>",
+        uniqueActionId: "dialogs tree view",
+      });
     }
   },
   static: {
@@ -646,11 +696,14 @@ Std.classes.ViewsRegistry.$.set("DialogsPort", {
 })
 [#FILE=@/src/candidate/Std/apis/views/dialogs/DialogsPort/DialogsPort.view.html]
 <div class="View DialogsPort">
-    <div v-on:click="setFocusToDialog">Dialogs port:</div>
     <DialogView class="GlobalDialog"
         v-for="subthread, subthreadIndex in $locals.opened"
         v-bind:key="'global_dialog_' + subthread.threadId"
         ref="currentDialogs"
         :port="$locals.self"
         :thread="subthread" />
+    <div class="DialogsPortView position_fixed top_auto left_auto" style="bottom:4px;right:4px;"
+        v-on:click="openTreeView">
+        
+    </div>
 </div>
