@@ -1,10 +1,11 @@
-<div class="View DialogsTreeNode">
-    <div>🔷​ {{ thread.threadId }}</div>
-    <div class="tree_padding" v-if="thread.children">
-        <DialogsTreeNode
-            v-for="subthread, subid in thread.children"
-            v-bind:key="'subthread_' + subid"
-            :thread="subthread"
-        />
+<div class="View DialogsTreeNode" :class="$window.Std.objects.GlobalDialog.port.isLastFocusedThread(thread) ? 'is_focused' : ''">
+    <div class="flex_row centered dialog_tree_node_row">
+        <div class="flex_1">
+            <span style="min-width: 8px;" v-for="it in new Array(level)"></span>
+        </div>
+        <div class="normal_button flex_100 unfocusable" v-on:click="goToDialog">🧵​ {{ thread.title || thread.threadId }}</div>
+        <div class="flex_1">
+            <div class="square_button unfocusable" v-on:click="closeDialog"> ✖️ </div>
+        </div>
     </div>
 </div>

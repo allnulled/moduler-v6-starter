@@ -5,7 +5,7 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
     thread: {
       type: Object,
       required: true,
-    }
+    },
   },
   created() {
     $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.created" });
@@ -18,21 +18,39 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
       drag: null,
       isResizing: false,
       resize: null,
+      port: undefined,
       resolvable: ModulerV6.createResolvable(),
     };
   },
   mounted() {
     $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.mounted" });
-
+    this.$locals.port = this.getPort();
   },
   methods: {
+    focusMe(event) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.focusMe" });
+      if(this.$locals.port.isLastFocusedDialog(this)) return -1;
+      if(event?.target.classList.contains("unfocusable")) return -2;
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.focusMe" });
+      return this.$locals.port.setFocusToDialog(this);
+    },
+    getStatusBar(name) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.getStatusBar" });
+      const statusBars = this.$refs.statusBarItems.filter(dynamicView => dynamicView.getContent().statusBox.name === name);
+      $moduler.assert(statusBars.length !== 0, `Status bar with name «${name}» does not exist`);
+      return statusBars[0];
+    },
     getPort() {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.getPort" });
       return Std.views.DialogsPort.static.findDialogPortFrom(this.$el);
     },
-    focusMe() {
-      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.focusMe" });
-      this.getPort().setFocusToDialog(this);
+    getBody() {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.getBody" });
+      return this.$refs.body;
+    },
+    getContent() {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.getBody" });
+      return this.$refs.body.getContent();
     },
     startDrag(event) {
       if (event.button !== 0) return;
@@ -57,8 +75,8 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.moveDrag" });
       const drag = this.$locals.drag;
       const element = this.$el;
-      element.style.left = Std.all.Printer.log(`${Math.round(drag.left + event.clientX - drag.startX)}px`);
-      element.style.top = Std.all.Printer.log(`${Math.round(drag.top + event.clientY - drag.startY)}px`);
+      element.style.left = `${Math.round(drag.left + event.clientX - drag.startX)}px`;
+      element.style.top = `${Math.round(drag.top + event.clientY - drag.startY)}px`;
     },
     stopDrag(event) {
       if (!this.$locals.isDragging) return;
@@ -156,21 +174,7 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
     refreshPort() {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.refreshPort" });
       if(!this.$el.parentElement) return;
-      this.getPort().refreshView();
-    },
-    getStatusBar(name) {
-      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.getStatusBar" });
-      const statusBars = this.$refs.statusBarItems.filter(dynamicView => dynamicView.getContent().statusBox.name === name);
-      $moduler.assert(statusBars.length !== 0, `Status bar with name «${name}» does not exist`);
-      return statusBars[0];
-    },
-    getBody() {
-      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.getBody" });
-      return this.$refs.body;
-    },
-    getContent() {
-      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.getBody" });
-      return this.$refs.body.getContent();
+      this.port.refreshView();
     },
     adaptThreadButtons(buttons = this.thread.buttons || []) {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.adaptThreadButtons" });

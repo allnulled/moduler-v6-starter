@@ -1,4 +1,9 @@
 <div class="View DialogsTree" v-on:click="() => $forceUpdate(true)">
-    árbol de diálogos aquí con: {{ dialogsPort.$locals.opened.length }}
-    <DialogsTreeNode :thread="dialogsPort.$locals.thread" v-bind:key="$window.Std.classes.Randomizer.getRandomLetters(5)" />
+    <DialogsTreeNode
+        v-for="item in $locals.orderedThreads"
+        :thread="item.thread"
+        :level="item.level"
+        ref="currentNodes"
+        v-bind:key="$window.Std.classes.Randomizer.getRandomLetters(5)"
+    />
 </div>

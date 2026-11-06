@@ -1,4 +1,4 @@
-<div class="DialogView View" v-on:click="focusMe">
+<div class="DialogView View" v-on:pointerdown="focusMe">
     <div class="flex_column flex_100">
         <div class="flex_0 flex_row">
             <div class="flex_0">
@@ -43,9 +43,9 @@
                             <div class="dialog_title_text">{{ thread.title || thread.threadId || "no id found" }}</div>
                         </div>
                         <div class="dialog_topbar_buttons">
-                            <div class="dialog_topbar_button minimize_button" ref="minimize_button" v-on:click="minimize">➖​</div>
-                            <div class="dialog_topbar_button maximize_button" ref="maximize_button" v-on:click="toggleMaximize">​◼️</div>
-                            <div class="dialog_topbar_button exit_button" v-on:click="close">✖️</div>
+                            <div class="dialog_topbar_button normal_button minimize_button" ref="minimize_button" v-on:click="minimize">➖​</div>
+                            <div class="dialog_topbar_button normal_button maximize_button" ref="maximize_button" v-on:click="toggleMaximize">​◼️</div>
+                            <div class="dialog_topbar_button normal_button exit_button" v-on:click="close">✖️</div>
                         </div>
                     </div>
                 </div>
@@ -57,7 +57,7 @@
                         <div class="flex_100"></div>
                         <template v-for="button, buttonIndex in adaptThreadButtons()" v-if="thread.buttons">
                             <div class="flex_1 dialog_button_box" v-bind:key="'button_box_' + buttonIndex">
-                                <button class="dialog_button" v-on:click="e => button.click(e, $locals.self)">{{ button.text }}</button>
+                                <div class="dialog_button normal_button" v-on:click="e => button.click(e, $locals.self)">{{ button.text }}</div>
                             </div>
                         </template>
                     </div>

@@ -1,7 +1,7 @@
 
 # ~~Permitir la uniqueActionId~~
 
-- Que funcione con el openDialogsTree
+- ~~Que funcione con el openDialogsTree~~
 
 # ~~Mapear contenido de las barras de abajo~~
 
@@ -27,13 +27,14 @@ Std.classes.Dialogs.$.open({
 });
 ```
 
-# Mapear contenido de los botones de abajo del diálogo:
+# ~~Mapear contenido de los botones de abajo del diálogo:~~
 
-- Permitir que se puedan mapear fácil:
-   - Sin usar botones
-   - Con botones mediante array de objetos
-   - Con botones mediante 1 objeto
-   - Con botones mediante constantes de DialogView.static.buttons.ACCEPT|CANCEL|ACCEPT_OR_CANCEL
+- ~~Permitir que se puedan mapear fácil:~~
+   - ~~Sin usar botones~~
+   - ~~Con botones mediante array de objetos~~
+   - ~~Con botones mediante 1 objeto~~
+   - ~~Con botones mediante constantes de DialogView.static.buttons.ACCEPT|CANCEL|ACCEPT_OR_CANCEL~~
+
 
 # Permitir un size que contemple:
 

@@ -86,6 +86,7 @@
     Std.all.FunctionsList = Std.classes.FunctionsList = $compiler.inject.source("./apis/events/FunctionsList/FunctionsList.class.js");
   }
   Wave_4_Utility_interfaces: {
+    Std.all.EventsBox = Std.classes.EventsBox = $compiler.inject.source("./apis/events/EventsBox/EventsBox.class.js");
     Std.all.IntrospectorInterface = Std.interfaces.IntrospectorInterface = $compiler.inject.source("./apis/reflection/Introspector/IntrospectorInterface.interface.js");
     Std.all.IntrospectableInterfaceFactory = Std.functions.IntrospectableInterfaceFactory = $compiler.inject.source("./apis/reflection/Introspector/IntrospectableInterfaceFactory.interface.js");
     Std.all.RunnableInterface = Std.interfaces.RunnableInterface = $compiler.inject.source("./apis/patterns/RunnableInterface/RunnableInterface.interface.js");

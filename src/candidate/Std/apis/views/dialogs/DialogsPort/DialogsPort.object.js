@@ -11,11 +11,15 @@ Std.classes.ViewsRegistry.$.set("DialogsPort", {
     Initialize_in_globals: {
       Std.classes.Dialogs.globalInstance.initializePort(this);
       this.$locals = {
+        events: {
+          onChangeDialogFocus: new Std.classes.FunctionsList(),
+        },
         self: this,
         thread: Std.objects.GlobalThread,
         opened: [],
         order: [],
         nextZIndex: 500,
+        lastFocusedDialog: null,
       };
     }
   },
@@ -93,7 +97,37 @@ Std.classes.ViewsRegistry.$.set("DialogsPort", {
     setFocusToDialog(dialog) {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.methods.setFocusToDialog" });
       dialog.$el.style.zIndex = this.$locals.nextZIndex++;
+      if(this.$locals.lastFocusedDialog) {
+        this.$locals.lastFocusedDialog.$el.classList.remove("is_focused");
+      }
+      dialog.$el.classList.add("is_focused");
+      this.$locals.lastFocusedDialog = dialog;
+      this.$locals.events.onChangeDialogFocus.evaluateFunctionsSync([{
+        port: this,
+        newFocus: dialog,
+        oldFocus: this.$locals.lastFocusedDialog,
+      }]);
       return dialog;
+    },
+    forEachDialog(callback, parameters = {}) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.methods.forEachDialog" });
+      for(let index=0; index<this.$refs.currentDialogs.length; index++) {
+        const dialog = this.$refs.currentDialogs[index];
+        callback(dialog, parameters);
+      }
+      return parameters;
+    },
+    findDialogsWhere(filter) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.methods.findDialogsWhere" });
+      return this.forEachDialog((it, output) => {
+        if(filter(it)) {
+          output.push(it);
+        }
+      }, []);
+    },
+    getDialogFromThread(thread) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.methods.getDialogFromThread" });
+      return this.findDialogsWhere(it => it.thread === thread)[0];
     },
     setFocusToThread(thread) {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.methods.setFocusToThread" });
@@ -101,6 +135,14 @@ Std.classes.ViewsRegistry.$.set("DialogsPort", {
       const matches = this.$refs.currentDialogs.filter(dialog => dialog.thread === thread);
       if (!matches.length) return -2;
       return this.setFocusToDialog(matches[0]);
+    },
+    isLastFocusedDialog(dialog) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.methods.isLastFocusedDialog" });
+      return this.$locals.lastFocusedDialog === dialog;
+    },
+    isLastFocusedThread(thread) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.methods.isLastFocusedThread" });
+      return this.$locals.lastFocusedDialog.thread === thread;
     },
     openTreeView() {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.methods.openTreeView" });

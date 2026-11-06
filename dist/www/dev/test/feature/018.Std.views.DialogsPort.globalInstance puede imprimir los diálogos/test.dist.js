@@ -57,6 +57,7 @@ module.exports = async function ({ Tester }) {
       }],
     });
     dialog.getStatusBar("s2").setHtml("La barra se puede cambiar.")
+    Std.classes.Dialogs.$.port.openTreeView();
     const value = await promise;
     console.log(value);
     console.log(value);
