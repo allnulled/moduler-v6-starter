@@ -4,7 +4,8 @@
         v-bind:key="'global_dialog_' + subthread.threadId"
         ref="currentDialogs"
         :thread="subthread" />
-    <div class="DialogsPortView position_fixed top_auto left_auto"
-        style="bottom:4px;right:4px;"
-        v-on:click="openTreeView"></div>
+    <div class="DialogsPortViewButton position_fixed top_auto left_auto"
+        v-on:click="openTreeView">
+        <div style="padding-left:2px;padding-top:1px;padding-bottom:1px;">⭕️</div>
+    </div>
 </div>

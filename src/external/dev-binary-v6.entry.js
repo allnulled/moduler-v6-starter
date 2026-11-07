@@ -6742,6 +6742,14 @@ async touchFile(fileBrute, optionsInput = {}) {
             return event;
           }
         }
+        Caso_previo_9_view_html: {
+          if(rootPath.endsWith(".view.html")) {
+            const jsFile = file.replace(/\.view\.html$/g, ".object.js");
+            if (await this.devbin.compiler.files.hasFile(jsFile)) {
+              await this.devbin.utils.touchFile(jsFile);
+            }
+          }
+        }
         // @FLUJO PRINCIPAL AQUÍ: excepciones antes
         Caso_js_o_test_js: {
           Paso_0_descartar_si_no_es_entry_o_test: {

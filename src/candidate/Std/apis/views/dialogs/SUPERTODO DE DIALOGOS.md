@@ -64,3 +64,8 @@ Std.classes.Dialogs.$.open({
     }]
 });
 ```
+
+# Adaptar las vistas para móvil
+
+- Que se vean siempre maximizados los diálogos
+- Que el DialogsPortButton se ponga sobre del teclado en el móvil 

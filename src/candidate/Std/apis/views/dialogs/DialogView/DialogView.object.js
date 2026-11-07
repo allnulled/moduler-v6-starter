@@ -24,25 +24,28 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
   },
   mounted() {
     $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.mounted" });
-    this.$locals.port = this.getPort();
+    this.$locals.port = Std.views.DialogsPort.static.findDialogPortFrom(this.$el);
   },
   methods: {
+    openSubdialog(dialogData) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.openSubdialog" });
+      return this.$locals.port.open(dialogData, this.thread);
+    },
     focusMe(event) {
-      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.focusMe" });
       if(this.$locals.port.isLastFocusedDialog(this)) return -1;
       if(event?.target.classList.contains("unfocusable")) return -2;
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.focusMe" });
       return this.$locals.port.setFocusToDialog(this);
+    },
+    focusParent() {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.focusParent" });
+      return this.$locals.port.setFocusToThread(this.thread.parent);
     },
     getStatusBar(name) {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.getStatusBar" });
       const statusBars = this.$refs.statusBarItems.filter(dynamicView => dynamicView.getContent().statusBox.name === name);
       $moduler.assert(statusBars.length !== 0, `Status bar with name «${name}» does not exist`);
       return statusBars[0];
-    },
-    getPort() {
-      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.getPort" });
-      return Std.views.DialogsPort.static.findDialogPortFrom(this.$el);
     },
     getBody() {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.getBody" });
@@ -142,6 +145,33 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
       Update_state_flag: {
         this.$locals.isMinimized = true;
       }
+      Propagate_event: {
+        this.$locals.port.$locals.events.onChangeDialogBoundaries.evaluateFunctionsSync([{
+          port: this.$locals.port,
+          dialog: this,
+          operation: "minimize",
+        }]);
+      }
+    },
+    unminimize() {
+      if(!this.$locals.isMinimized) return -2;
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.unminimize" });
+      // @NOTA: se hace diferente de toggleMaximize (que solo tiene 1 método) por 1 razón real:
+      // El minimize no se ve, y maximize/unmaximize sí se ven.
+      // El minimize NO PERMITE esa ambigüedad, no tiene sentido.
+      Update_elements_class: {
+        this.$el.classList.remove("is_minimized");
+      }
+      Update_local_flag: {
+        this.$locals.isMinimized = false;
+      }
+      Propagate_event: {
+        this.$locals.port.$locals.events.onChangeDialogBoundaries.evaluateFunctionsSync([{
+          port: this.$locals.port,
+          dialog: this,
+          operation: "unminimize"
+        }]);
+      }
     },
     toggleMaximize(forceTo = undefined) {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.toggleMaximize" });
@@ -158,23 +188,30 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
       Update_blocker_for_resize_and_drag_events_by_state: {
         this.$locals.isMaximized = becomesMaximized;
       }
+      Propagate_event: {
+        this.$locals.port.$locals.events.onChangeDialogBoundaries.evaluateFunctionsSync([{
+          port: this.$locals.port,
+          dialog: this,
+          operation: becomesMaximized ? "maximize" : "unmaximize",
+        }]);
+      }
     },
     accept(...args) {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.close" });
       this.thread.close();
       this.$locals.resolvable.resolve(args.length !== 0 ? args[0] : true);
-      this.refreshPort();
+      // @DONT: this.refreshPort();
     },
     close() {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.close" });
       this.thread.close();
       this.$locals.resolvable.resolve(null);
-      this.refreshPort();
+      // @DONT: this.refreshPort();
     },
     refreshPort() {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.refreshPort" });
       if(!this.$el.parentElement) return;
-      this.port.refreshView();
+      this.$locals.port.refreshView();
     },
     adaptThreadButtons(buttons = this.thread.buttons || []) {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.adaptThreadButtons" });
@@ -201,18 +238,32 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
         return Std.views.DialogView.static.fromStringToDialogButtons(buttons);
       }
     },
+    getDialogBodyContainerClasses() {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.getDialogBodyContainerClasses" });
+      let css = "";
+      if(this.thread.layout) {
+        if(this.thread.layout === "scrollable") {
+          css += "is_scrollable";
+        } else if(this.thread.layout === "centered") {
+          css += "is_centered";
+        } else {
+          css += "is_scrollable";
+        }
+      }
+      return css;
+    },
   },
   static: {
     sizes: {
-      SMALL: 1,
-      MEDIUM: 2,
-      BIG: 3,
-      MAXIMIZED: 4,
-      MINIMIZED: 5,
+      SMALL: "small",
+      MEDIUM: "medium",
+      BIG: "big",
+      MAXIMIZED: "maximized",
+      MINIMIZED: "minimized",
     },
     layouts: {
-      SCROLLABLE: 1,
-      CENTER: 1,
+      SCROLLABLE: "scrollable",
+      CENTER: "center",
     },
     buttons: {
       ACCEPT: [{
@@ -260,7 +311,7 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
       if(viaDialogEvent.length > 1) {
         buttonObject = { text: viaDialogEvent[0], click: (e, dialog) => dialog[viaDialogEvent[1]]() };
       } else if(viaContentEvent.length > 1) {
-        buttonObject = { text: viaDialogEvent[0], click: (e, dialog) => dialog.accept(dialog.getContent()[viaDialogEvent[1]]()) };
+        buttonObject = { text: viaContentEvent[0], click: (e, dialog) => dialog.accept(dialog.getContent()[viaContentEvent[1]]()) };
       } else if(viaProperty.length > 1) {
         buttonObject = { text: viaProperty[0], click: (e, dialog) => dialog.accept(dialog.getContent()[viaProperty[1]]) };
       } else {

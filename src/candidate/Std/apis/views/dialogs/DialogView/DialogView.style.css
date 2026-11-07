@@ -1,6 +1,7 @@
 :root {
     --border_dark_concept_1: 1px solid var(--grey48);
     --border_dark_concept_2: 3px double var(--grey48);
+    --border_dark_concept_3: 1px solid var(--grey28);
     --border_light_concept_1: 1px solid #BBB;
     --border_light_concept_2: 1px solid #EEE;
     --shadow_concept_1: 0 0 5px var(--grey48);
@@ -8,6 +9,7 @@
     --spacing_size_0: 0px;
     --spacing_size_1: 2px;
     --spacing_size_2: 4px;
+    --grey_of_emojis_1: #424242;
     --grey0: #000000;
     --grey1: #040404;
     --grey2: #070707;
@@ -121,13 +123,24 @@
     z-index: 999999;
 }
 
-.DialogsPort .DialogsPortView {
+.DialogsPort .DialogsPortViewButton {
     z-index: 999999;
-    width: 40px;
-    height: 40px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
     border: var(--border_dark_concept_2);
     background-color: rgb(0, 0, 0, 0.2);
+    bottom:4px;
+    right:4px;
+    display:flex;
+    justify-items:center;
+    align-items:center;
+    background-color:rgb(2, 2, 56, 0.8);
+    cursor: pointer;
+}
+
+.DialogsPort .DialogsPortViewButton:hover {
+    background-color:rgb(2, 2, 56, 0.95);
 }
 
 .DialogView {
@@ -189,7 +202,12 @@
     align-items: center;
     justify-content: center;
     background-color: var(--grey95);
+    color: var(--grey_of_emojis_1);
+    border-radius: 0pt;
     cursor: pointer;
+}
+.DialogView.is_focused .dialog_topbar_button {
+    border: var(--border_dark_concept_3);
 }
 .DialogView .dialog_topbar_button:hover {
     box-shadow: var(--shadow_concept_1);
@@ -201,6 +219,15 @@
     min-width: 0;
     min-height: 0;
     overflow: auto;
+}
+.DialogView .dialog_body.is_scrollable {
+    overflow: scroll;
+}
+.DialogView .dialog_body.is_centered {
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 .DialogView .dialog_footer {
     
@@ -336,7 +363,8 @@
 }
 
 .DialogsTreeNode.is_focused .dialog_tree_node_row .normal_button {
-    background-color: var(--grey75);
+    background-color: var(--grey35);
+    color: white;
 }
 
 
@@ -463,6 +491,8 @@
 .text_align_center { text-align: center; }
 .text_align_right { text-align: right; }
 
+.nowrap { white-space: nowrap; }
+
 /* STYLOGRAPHY */
 
 .underline_light_1 {
@@ -479,3 +509,16 @@ input {
 
 /* COMMON STATES */
 
+/* ROTATION */
+
+.rotate1of4 { transform: rotate(90deg); }
+.rotate2of4 { transform: rotate(180deg); }
+.rotate3of4 { transform: rotate(270deg); }
+
+.rotate1of8 { transform: rotate(45deg); }
+.rotate2of8 { transform: rotate(90deg); }
+.rotate3of8 { transform: rotate(135deg); }
+.rotate4of8 { transform: rotate(180deg); }
+.rotate5of8 { transform: rotate(225deg); }
+.rotate6of8 { transform: rotate(270deg); }
+.rotate7of8 { transform: rotate(315deg); }

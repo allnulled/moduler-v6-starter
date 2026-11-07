@@ -12,7 +12,7 @@ Std.classes.ViewsRegistry.$.set("DialogsTree", {
     const component = this;
     Initialize_locals: {
       this.$locals = {
-        orderedThreads: this.planifyThreads(this.dialogsPort.$locals.thread),
+        orderedThreads: this.flatenizeThreads(this.dialogsPort.$locals.thread),
         onChangeThreadTree: this.$options.static.onChangeThreadTree.bind(this),
         onChangeDialogFocus: this.$options.static.onChangeDialogFocus.bind(this),
       };
@@ -34,23 +34,24 @@ Std.classes.ViewsRegistry.$.set("DialogsTree", {
     }
   },
   methods: {
-    planifyThreads(parentThread, level = 0, output = []) {
-      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsTree.methods.planifyThreads" });
+    flatenizeThreads(parentThread, level = 0, output = []) {
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsTree.methods.flatenizeThreads" });
       for(let index=0; index<parentThread.children.length; index++) {
         const thread = parentThread.children[index];
         output.push({ thread, level });
-        this.planifyThreads(thread, level + 1, output);
+        this.flatenizeThreads(thread, level + 1, output);
       }
       return output;
     },
     refreshThreads() {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsTree.methods.refreshThreads" });
-      this.$locals.orderedThreads = this.planifyThreads(this.dialogsPort.$locals.thread);
+      this.$locals.orderedThreads = this.flatenizeThreads(this.dialogsPort.$locals.thread);
     }
   },
   static: {
     onChangeThreadTree: function () {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsTree.static.onChangeThreadTree" });
+      this.refreshThreads();
       this.$forceUpdate(true);
     },
     onChangeDialogFocus: function({ port, newFocus, oldFocus }) {

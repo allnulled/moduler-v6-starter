@@ -12,6 +12,7 @@ Std.classes.ViewsRegistry.$.set("DialogsPort", {
       Std.classes.Dialogs.globalInstance.initializePort(this);
       this.$locals = {
         events: {
+          onChangeDialogBoundaries: new Std.classes.FunctionsList(),
           onChangeDialogFocus: new Std.classes.FunctionsList(),
         },
         self: this,
@@ -24,7 +25,7 @@ Std.classes.ViewsRegistry.$.set("DialogsPort", {
     }
   },
   methods: {
-    open(config) {
+    open(config, targetThread = this.$locals.thread) {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.methods.open" });
       Shortcut_by_unique_action: {
         if (!config.uniqueActionId) break Shortcut_by_unique_action;
@@ -41,7 +42,7 @@ Std.classes.ViewsRegistry.$.set("DialogsPort", {
         if (config.bottom) $moduler.assert(Array.isArray(config.bottom), `Required parameter «config.bottom» to be array on «DialogsPort.methods.open»`);
         if (config.footer) $moduler.assert(typeof config.footer === "string", `Required parameter «config.footer» to be string on «DialogsPort.methods.open»`);
         if (config.layout) $moduler.assert(typeof config.layout === "string", `Required parameter «config.layout» to be string on «DialogsPort.methods.open»`);
-        if (config.size) $moduler.assert(typeof config.size === "number", `Required parameter «config.size» to be number on «DialogsPort.methods.open»`);
+        if (config.size) $moduler.assert(typeof config.size === "string", `Required parameter «config.size» to be string on «DialogsPort.methods.open»`);
       }
       Validate_thread_properties: {
         $moduler.assert(typeof config.parent === "undefined", `Required parameter «config.parent» to be undefined on «DialogsPort.methods.open»`);
@@ -49,23 +50,101 @@ Std.classes.ViewsRegistry.$.set("DialogsPort", {
         $moduler.assert(typeof config.isClosed === "undefined", `Required parameter «config.isClosed» to be undefined on «DialogsPort.methods.open»`);
         $moduler.assert(typeof config.threadId === "undefined", `Required parameter «config.threadId» to be undefined on «DialogsPort.methods.open»`);
       }
-      const newSubthread = this.$locals.thread.newSubthread.config(config);
+      const newSubthread = targetThread.newSubthread.config(config);
       let newSubdialog = undefined;
       const openPromise = new Promise((resolve, reject) => {
         this.$nextTick(() => {
           newSubdialog = this.setFocusToThread(newSubthread);
-          return resolve({
+          if(!newSubdialog) {
+            return resolve(null);
+          }
+          const dialogMetadata = {
             dialog: newSubdialog,
             thread: newSubthread,
             promise: newSubdialog.$locals.resolvable.promise,
             accept: (...args) => newSubdialog.accept(...args),
             close: (...args) => newSubdialog.close(...args),
             config: config,
-          });
+          };
+          this.synchronizeDialogBoundaries(dialogMetadata);
+          return resolve(dialogMetadata);
         });
       });
       this.refreshView();
       return openPromise;
+    },
+    clamp(value, min, max) {
+      return Math.max(min, Math.min(value, max));
+    },
+    calculateDialogBoundaries(size) {
+      const viewport = {
+        width: window.innerWidth,
+        height: window.innerHeight
+      };
+      const margin = 24;
+      const definitions = {
+        small: {
+          width: 0.35,
+          minWidth: 320,
+          maxWidth: 440,
+          height: null,
+          maxHeight: 0.75,
+          minHeight: 0.2,
+        },
+        medium: {
+          width: 0.60,
+          minWidth: 480,
+          maxWidth: 820,
+          height: 0.78,
+          minHeight: 0.5,
+        },
+        big: {
+          width: 0.88,
+          minWidth: 640,
+          maxWidth: 1440,
+          height: 0.90,
+          minHeight: 0.7,
+        },
+      };
+      const definition = definitions[size];
+      $moduler.assert(definition, `Unknown dialog size: ${size}`);
+      const availableWidth = viewport.width - margin * 2;
+      const availableHeight = viewport.height - margin * 2;
+      let w = this.clamp(viewport.width * definition.width, Math.min(definition.minWidth, availableWidth), Math.min(definition.maxWidth, availableWidth));
+      let h = definition.height !== null ? Math.min(viewport.height * definition.height, availableHeight) : null;
+      let x = (viewport.width - w) / 2;
+      let y = (viewport.height - (h || 0)) / 2;
+      let maxHeight = definition.maxHeight ? viewport.height * definition.maxHeight : null;
+      let minHeight = definition.minHeight ? viewport.height * definition.minHeight : null;
+      const output = { x, y, width: w, height: h, maxHeight, minHeight };
+      console.log("calculated boundaries:", output);
+      return output;
+    },
+    synchronizeDialogBoundaries(dialogMetadata) {
+      // @DOING!!!
+      const dialogSize = dialogMetadata.config.size || "medium";
+      const dialogVisibility = dialogMetadata.config.visibility || "default";
+      const dialogElement = dialogMetadata.dialog.$el;
+      const dialogCoordinates = Object.assign({}, dialogMetadata.config.coordinates || {}, this.calculateDialogBoundaries(dialogSize));
+      Set_coordinates: {
+        if (dialogCoordinates.x) dialogElement.style.left = `${dialogCoordinates.x}px`;
+        if (dialogCoordinates.y) dialogElement.style.top = `${dialogCoordinates.y}px`;
+        if (dialogCoordinates.width) dialogElement.style.width = `${dialogCoordinates.width}px`;
+        if (dialogCoordinates.height) dialogElement.style.height = `${dialogCoordinates.height}px`;
+        if (dialogCoordinates.maxHeight) dialogElement.style.maxHeight = `${dialogCoordinates.maxHeight}px`;
+        if (dialogCoordinates.minHeight) dialogElement.style.minHeight = `${dialogCoordinates.minHeight}px`;
+        if (dialogCoordinates.maxWidth) dialogElement.style.maxWidth = `${dialogCoordinates.maxWidth}px`;
+        if (dialogCoordinates.minWidth) dialogElement.style.minWidth = `${dialogCoordinates.minWidth}px`;
+      }
+      Set_maximization_or_minization: {
+        if (dialogVisibility === "maximized") {
+          dialogElement.$el.classList.add("is_maximized");
+        } else if (dialogVisibility === "minimized") {
+          dialogElement.$el.classList.add("is_minimized");
+        } else if (dialogVisibility === "default") {
+          // @OK.
+        } else throw new Error(`Parameter «config.visibility» must be string with «default|maximized|minimized» but «${config.size}» was found instead on «DialogsPort.prototype.synchronizeDialogBoundaries»`);
+      }
     },
     async answer(config) {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.methods.answer" });
@@ -87,20 +166,23 @@ Std.classes.ViewsRegistry.$.set("DialogsPort", {
           this.$locals.opened = collected;
         }
       }
-      this.$forceUpdate(true);
       return collected;
     },
     refreshView() {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.methods.refreshView" });
       this.synchronizeThreads();
+      this.$forceUpdate(true);
     },
     setFocusToDialog(dialog) {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.methods.setFocusToDialog" });
       dialog.$el.style.zIndex = this.$locals.nextZIndex++;
-      if(this.$locals.lastFocusedDialog) {
+      if (this.$locals.lastFocusedDialog) {
         this.$locals.lastFocusedDialog.$el.classList.remove("is_focused");
       }
       dialog.$el.classList.add("is_focused");
+      Unminimize_too: {
+        dialog.unminimize();
+      }
       this.$locals.lastFocusedDialog = dialog;
       this.$locals.events.onChangeDialogFocus.evaluateFunctionsSync([{
         port: this,
@@ -111,7 +193,7 @@ Std.classes.ViewsRegistry.$.set("DialogsPort", {
     },
     forEachDialog(callback, parameters = {}) {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.methods.forEachDialog" });
-      for(let index=0; index<this.$refs.currentDialogs.length; index++) {
+      for (let index = 0; index < this.$refs.currentDialogs.length; index++) {
         const dialog = this.$refs.currentDialogs[index];
         callback(dialog, parameters);
       }
@@ -120,7 +202,7 @@ Std.classes.ViewsRegistry.$.set("DialogsPort", {
     findDialogsWhere(filter) {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.methods.findDialogsWhere" });
       return this.forEachDialog((it, output) => {
-        if(filter(it)) {
+        if (filter(it)) {
           output.push(it);
         }
       }, []);

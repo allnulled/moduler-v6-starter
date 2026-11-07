@@ -43,13 +43,16 @@
                             <div class="dialog_title_text">{{ thread.title || thread.threadId || "no id found" }}</div>
                         </div>
                         <div class="dialog_topbar_buttons">
-                            <div class="dialog_topbar_button normal_button minimize_button" ref="minimize_button" v-on:click="minimize">➖​</div>
-                            <div class="dialog_topbar_button normal_button maximize_button" ref="maximize_button" v-on:click="toggleMaximize">​◼️</div>
-                            <div class="dialog_topbar_button normal_button exit_button" v-on:click="close">✖️</div>
+                            <div v-if="thread.parent !== $window.Std.objects.GlobalThread" class="dialog_topbar_button square_button focus_parent_button" ref="focus_parent_button" v-on:click="focusParent">
+                                <span class="rotate5of8">➜</span>
+                            </div>
+                            <div class="dialog_topbar_button square_button minimize_button" ref="minimize_button" v-on:click="minimize">➖​</div>
+                            <div class="dialog_topbar_button square_button maximize_button" ref="maximize_button" v-on:click="toggleMaximize">​◼️</div>
+                            <div class="dialog_topbar_button square_button exit_button" v-on:click="close">✖️</div>
                         </div>
                     </div>
                 </div>
-                <div class="dialog_body">
+                <div class="dialog_body" :class="getDialogBodyContainerClasses()">
                     <DynamicView :view="thread" :args="{dialog:this}" ref="body" />
                 </div>
                 <div class="dialog_footer">

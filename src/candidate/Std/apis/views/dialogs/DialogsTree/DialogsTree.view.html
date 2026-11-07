@@ -3,7 +3,8 @@
         v-for="item in $locals.orderedThreads"
         :thread="item.thread"
         :level="item.level"
+        :port="dialogsPort"
         ref="currentNodes"
-        v-bind:key="$window.Std.classes.Randomizer.getRandomLetters(5)"
+        v-bind:key="item.thread.threadId"
     />
 </div>
