@@ -11,9 +11,9 @@ class ApplicationStarter {
   static start() {
     $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"Std.classes.ApplicationStarter.start"});
     $moduler.assert(typeof Std.objects.GlobalApplication === "undefined", "Method «ApplicationStarter.start» can only be called once in a runtime but object «Std.objects.GlobalApplication» is already set");
-    let promise, resolve;
+    let promise, resolve, reject;
     Prepare_started_promise: {
-      ({ promise, resolve } = $moduler.constructor.createResolvable());
+      ({ promise, resolve, reject } = $moduler.constructor.createResolvable());
     }
     Define_vue2_globals: {
       Object.assign(Std.externals.Vue2.prototype, {
@@ -33,9 +33,11 @@ class ApplicationStarter {
     }
     Register_application_events_for_onStarted: {
       this.events.onStarted.addTrigger(parameters => {
-        resolve(parameters);
       });
-      this.events.onStarted.addTrigger(async function () {
+      this.events.onStarted.addTrigger(async function (parameters) {
+        Resolve_method_promise: {
+          resolve(parameters);
+        }
         Execute_tests: {
           console.log("[*] Starting tests in browser");
           if(["dev","test"].includes($moduler.settings.data.env)) {

@@ -14069,6 +14069,8 @@ $moduler.toolkit.makeInterface([
   static: {
     isBrowser: typeof window !== "undefined",
     isNodejs: typeof global !== "undefined",
+    browser: {},
+    nodejs: {},
   },
 };
     Std.all.Environmenter = Std.classes.Environmenter = class Environmenter {
@@ -14086,6 +14088,18 @@ $moduler.toolkit.makeInterface([
     $moduler.toolkit.makeClass([
       Std.interfaces.EnvironmenterInterface,
     ], this);
+    Browser_environmentals: {
+      this.browser.isLocalhost = this.isBrowser && ["localhost", "127.0.0.1"].includes(window.location.hostname);
+      this.browser.isGithubPages = this.isBrowser && (/\.github\.io$/i).test(window.location.hostname);
+      this.browser.isMobile = undefined;
+      this.browser.isDesktop = undefined;
+      this.browser.isGoogleChrome = undefined;
+      this.browser.isFirefox = undefined;
+    }
+    Nodejs_environmentals: {
+      this.nodejs.isWindows = undefined;
+      this.nodejs.isLinux = undefined;
+    }
   }
 };
     Std.all.Printer = Std.classes.Printer = class Printer {
@@ -29874,8 +29888,8 @@ $moduler.toolkit.makeInterface([
       return this.$locals.port.open(dialogData, this.thread);
     },
     focusMe(event) {
-      if(this.$locals.port.isLastFocusedDialog(this)) return -1;
-      if(event?.target.classList.contains("unfocusable")) return -2;
+      if (this.$locals.port.isLastFocusedDialog(this)) return -1;
+      if (event?.target.classList.contains("unfocusable")) return -2;
       Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.focusMe", arguments || []);;
       return this.$locals.port.setFocusToDialog(this);
     },
@@ -29948,7 +29962,38 @@ $moduler.toolkit.makeInterface([
       this.$locals.isResizing = true;
       event.currentTarget.setPointerCapture(event.pointerId);
     },
-    moveResize(event, position) {
+    moveResize(event) {
+      if (!this.$locals.isResizing) return -1;
+      const resize = this.$locals.resize;
+      if (event.pointerId !== resize.pointerId) return -2;
+      Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.moveResize", arguments || []);;
+      const element = this.$el;
+      const deltaX = event.clientX - resize.startX;
+      const deltaY = event.clientY - resize.startY;
+      let width = resize.width;
+      let height = resize.height;
+      let left = resize.left;
+      let top = resize.top;
+      if (resize.position.includes("right")) {
+        width = Math.max(this.$options.static.limits.minWidth, resize.width + deltaX);
+      }
+      if (resize.position.includes("left")) {
+        width = Math.max(this.$options.static.limits.minWidth, resize.width - deltaX);
+        left = resize.left + resize.width - width;
+      }
+      if (resize.position.includes("bottom")) {
+        height = Math.max(this.$options.static.limits.minHeight, resize.height + deltaY);
+      }
+      if (resize.position.includes("top")) {
+        height = Math.max(this.$options.static.limits.minHeight, resize.height - deltaY);
+        top = resize.top + resize.height - height;
+      }
+      element.style.width = `${Math.round(width)}px`;
+      element.style.height = `${Math.round(height)}px`;
+      element.style.left = `${Math.round(left)}px`;
+      element.style.top = `${Math.round(top)}px`;
+    },
+    moveResize_previo(event, position) {
       if (!this.$locals.isResizing) return -1;
       const resize = this.$locals.resize;
       if (event.pointerId !== resize.pointerId) return -2;
@@ -29996,7 +30041,7 @@ $moduler.toolkit.makeInterface([
       }
     },
     unminimize() {
-      if(!this.$locals.isMinimized) return -2;
+      if (!this.$locals.isMinimized) return -2;
       Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.unminimize", arguments || []);;
       // @NOTA: se hace diferente de toggleMaximize (que solo tiene 1 método) por 1 razón real:
       // El minimize no se ve, y maximize/unmaximize sí se ven.
@@ -30052,30 +30097,30 @@ $moduler.toolkit.makeInterface([
     },
     refreshPort() {
       Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.refreshPort", arguments || []);;
-      if(!this.$el.parentElement) return;
+      if (!this.$el.parentElement) return;
       this.$locals.port.refreshView();
     },
     adaptThreadButtons(buttons = this.thread.buttons || []) {
       Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.adaptThreadButtons", arguments || []);;
-      if(Array.isArray(buttons)) {
+      if (Array.isArray(buttons)) {
         // Via 1: array de objetos
         const output = [];
-        for(let index=0; index<buttons.length; index++) {
+        for (let index = 0; index < buttons.length; index++) {
           const buttonInput = buttons[index];
-          if(typeof buttonInput === "string") {
+          if (typeof buttonInput === "string") {
             output.push(Std.views.DialogView.static.fromStringToDialogButton(buttonInput));
           } else {
             output.push(buttonInput);
           }
         }
         return output;
-      } else if(typeof buttons === "object") {
+      } else if (typeof buttons === "object") {
         // Via 2: objeto único con pares text-function
         return Object.keys(buttons).reduce((output, text) => {
           output.push({ text, click: buttons[text] });
           return output;
         }, []);
-      } else if(typeof buttons === "string") {
+      } else if (typeof buttons === "string") {
         // Via 3: texto que leerá los: "|" "@" "@@" y "="
         return Std.views.DialogView.static.fromStringToDialogButtons(buttons);
       }
@@ -30083,10 +30128,10 @@ $moduler.toolkit.makeInterface([
     getDialogBodyContainerClasses() {
       Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.getDialogBodyContainerClasses", arguments || []);;
       let css = "";
-      if(this.thread.layout) {
-        if(this.thread.layout === "scrollable") {
+      if (this.thread.layout) {
+        if (this.thread.layout === "scrollable") {
           css += "is_scrollable";
-        } else if(this.thread.layout === "centered") {
+        } else if (this.thread.layout === "centered") {
           css += "is_centered";
         } else {
           css += "is_scrollable";
@@ -30096,9 +30141,15 @@ $moduler.toolkit.makeInterface([
     },
   },
   static: {
+    limits: {
+      minWidth: 150,
+      minHeight: 110,
+    },
     sizes: {
       SMALL: "small",
+      MEDIUM_SMALL: "medium-small",
       MEDIUM: "medium",
+      MEDIUM_BIG: "medium-big",
       BIG: "big",
       MAXIMIZED: "maximized",
       MINIMIZED: "minimized",
@@ -30135,9 +30186,9 @@ $moduler.toolkit.makeInterface([
     findDialogFrom(elementOrComponent) {
       Std.all.Tracer?.globalInstance.log("Std.views.DialogView.static.findDialogFrom", arguments || []);;
       let element = undefined;
-      if(elementOrComponent instanceof HTMLElement) {
+      if (elementOrComponent instanceof HTMLElement) {
         element = elementOrComponent;
-      } else if(elementOrComponent instanceof Std.externals.Vue2) {
+      } else if (elementOrComponent instanceof Std.externals.Vue2) {
         element = elementOrComponent.$el;
       } else {
         $moduler.assert(element, `Parameter «element» must be instance of HTMLElement or Vue2 component but «${typeof element}» was found instead on «DialogView.static.findDialogFrom»`);
@@ -30150,25 +30201,25 @@ $moduler.toolkit.makeInterface([
       const viaDialogEvent = buttonContent.split("@@");
       const viaContentEvent = buttonContent.split("@");
       const viaProperty = buttonContent.split("=");
-      if(viaDialogEvent.length > 1) {
+      if (viaDialogEvent.length > 1) {
         buttonObject = { text: viaDialogEvent[0], click: (e, dialog) => dialog[viaDialogEvent[1]]() };
-      } else if(viaContentEvent.length > 1) {
+      } else if (viaContentEvent.length > 1) {
         buttonObject = { text: viaContentEvent[0], click: (e, dialog) => dialog.accept(dialog.getContent()[viaContentEvent[1]]()) };
-      } else if(viaProperty.length > 1) {
+      } else if (viaProperty.length > 1) {
         buttonObject = { text: viaProperty[0], click: (e, dialog) => dialog.accept(dialog.getContent()[viaProperty[1]]) };
       } else {
-        if(buttons.length === 3) {
-          if(false) {}
-          else if(indexButton === 0) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.accept(true) };
-          else if(indexButton === 1) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.accept(false) };
-          else if(indexButton === 2) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.close() };
-        } else if(buttons.length === 2) {
-          if(false) {}
-          else if(indexButton === 0) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.accept(true) };
-          else if(indexButton === 1) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.close() };
-        } else if(buttons.length === 1) {
-          if(false) {}
-          else if(indexButton === 0) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.close() };
+        if (buttons.length === 3) {
+          if (false) { }
+          else if (indexButton === 0) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.accept(true) };
+          else if (indexButton === 1) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.accept(false) };
+          else if (indexButton === 2) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.close() };
+        } else if (buttons.length === 2) {
+          if (false) { }
+          else if (indexButton === 0) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.accept(true) };
+          else if (indexButton === 1) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.close() };
+        } else if (buttons.length === 1) {
+          if (false) { }
+          else if (indexButton === 0) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.close() };
         }
       }
       return buttonObject;
@@ -30376,6 +30427,13 @@ $moduler.toolkit.makeInterface([
       };
     }
   },
+  computed: {
+    currentDialogs: {
+      get() {
+        return this.$refs.currentDialogs;
+      }
+    }
+  },
   methods: {
     open(config, targetThread = this.$locals.thread) {
       Std.all.Tracer?.globalInstance.log("Std.views.DialogsPort.methods.open", arguments || []);;
@@ -30407,9 +30465,7 @@ $moduler.toolkit.makeInterface([
       const openPromise = new Promise((resolve, reject) => {
         this.$nextTick(() => {
           newSubdialog = this.setFocusToThread(newSubthread);
-          if(!newSubdialog) {
-            return resolve(null);
-          }
+          // if(!newSubdialog) {return resolve(null);}
           const dialogMetadata = {
             dialog: newSubdialog,
             thread: newSubthread,
@@ -30435,7 +30491,7 @@ $moduler.toolkit.makeInterface([
       };
       const margin = 24;
       const definitions = {
-        small: {
+        "small": {
           width: 0.35,
           minWidth: 320,
           maxWidth: 440,
@@ -30443,14 +30499,28 @@ $moduler.toolkit.makeInterface([
           maxHeight: 0.75,
           minHeight: 0.2,
         },
-        medium: {
+        "medium-small": {
+          width: 0.475,
+          minWidth: 400,
+          maxWidth: 630,
+          height: 0.39,
+          minHeight: 0.35,
+        },
+        "medium": {
           width: 0.60,
           minWidth: 480,
           maxWidth: 820,
           height: 0.78,
           minHeight: 0.5,
         },
-        big: {
+        "medium-big": {
+          width: 0.74,
+          minWidth: 560,
+          maxWidth: 1130,
+          height: 0.84,
+          minHeight: 0.6
+        },
+        "big": {
           width: 0.88,
           minWidth: 640,
           maxWidth: 1440,
@@ -30458,24 +30528,23 @@ $moduler.toolkit.makeInterface([
           minHeight: 0.7,
         },
       };
+      definitions.maximized = definitions.medium;
       const definition = definitions[size];
-      $moduler.assert(definition, `Unknown dialog size: ${size}`);
+      $moduler.assert(definition, `Parameter «size» must be one out of «small|medium-small|medium|medium-big|big|maximized» but «${size}» was found instead on «calculateDialogBoundaries»`);
       const availableWidth = viewport.width - margin * 2;
       const availableHeight = viewport.height - margin * 2;
       let w = this.clamp(viewport.width * definition.width, Math.min(definition.minWidth, availableWidth), Math.min(definition.maxWidth, availableWidth));
-      let h = definition.height !== null ? Math.min(viewport.height * definition.height, availableHeight) : null;
+      let h = definition.height !== null ? Math.min(viewport.height * definition.height, availableHeight) : viewport.height * definition.minHeight;
       let x = (viewport.width - w) / 2;
-      let y = (viewport.height - (h || 0)) / 2;
-      let maxHeight = definition.maxHeight ? viewport.height * definition.maxHeight : null;
-      let minHeight = definition.minHeight ? viewport.height * definition.minHeight : null;
-      const output = { x, y, width: w, height: h, maxHeight, minHeight };
-      console.log("calculated boundaries:", output);
+      let y = (viewport.height - (h || (viewport.height / 2))) / 2;
+      const output = { x, y, width: w, height: h, };
       return output;
     },
     synchronizeDialogBoundaries(dialogMetadata) {
       // @DOING!!!
       const dialogSize = dialogMetadata.config.size || "medium";
-      const dialogVisibility = dialogMetadata.config.visibility || "default";
+      const dialogVisibility = dialogMetadata.config.visibility || dialogMetadata.config.size === "maximized" ? "maximized" : dialogMetadata.config.size === "minimized" ? "minimized" : "default";
+      const dialogComponent = dialogMetadata.dialog;
       const dialogElement = dialogMetadata.dialog.$el;
       const dialogCoordinates = Object.assign({}, dialogMetadata.config.coordinates || {}, this.calculateDialogBoundaries(dialogSize));
       Set_coordinates: {
@@ -30483,16 +30552,20 @@ $moduler.toolkit.makeInterface([
         if (dialogCoordinates.y) dialogElement.style.top = `${dialogCoordinates.y}px`;
         if (dialogCoordinates.width) dialogElement.style.width = `${dialogCoordinates.width}px`;
         if (dialogCoordinates.height) dialogElement.style.height = `${dialogCoordinates.height}px`;
+        /*
         if (dialogCoordinates.maxHeight) dialogElement.style.maxHeight = `${dialogCoordinates.maxHeight}px`;
         if (dialogCoordinates.minHeight) dialogElement.style.minHeight = `${dialogCoordinates.minHeight}px`;
         if (dialogCoordinates.maxWidth) dialogElement.style.maxWidth = `${dialogCoordinates.maxWidth}px`;
         if (dialogCoordinates.minWidth) dialogElement.style.minWidth = `${dialogCoordinates.minWidth}px`;
+        //*/
       }
       Set_maximization_or_minization: {
         if (dialogVisibility === "maximized") {
-          dialogElement.$el.classList.add("is_maximized");
+          dialogElement.classList.add("is_maximized");
+          dialogComponent.toggleMaximize(true);
         } else if (dialogVisibility === "minimized") {
-          dialogElement.$el.classList.add("is_minimized");
+          dialogElement.classList.add("is_minimized");
+          dialogComponent.minimize(true);
         } else if (dialogVisibility === "default") {
           // @OK.
         } else throw new Error(`Parameter «config.visibility» must be string with «default|maximized|minimized» but «${config.size}» was found instead on «DialogsPort.prototype.synchronizeDialogBoundaries»`);
@@ -30594,6 +30667,50 @@ $moduler.toolkit.makeInterface([
     },
   }
 });
+    Std.all.DialogsTester = Std.views.DialogsTester = Std.classes.ViewsRegistry.$.set("DialogsTester", {
+  name: "DialogsTester",
+  template: "<div class=\"DialogsTester\">" + '\n'
+ + "    <textarea v-model=\"code\" style=\"height: 280px;display: block; width: 100%; font-size: 11px;\" spellcheck=\"false\"></textarea>" + '\n'
+ + "    <div class=\"normal_button\" v-on:click=\"runDialog\">Run dialog</div>" + '\n'
+ + "    <div class=\"flex_row centered\">" + '\n'
+ + "        <div class=\"flex_1 normal_button\" v-on:click=\"() => openDialog('small')\">small</div>" + '\n'
+ + "        <div class=\"flex_1 normal_button\" v-on:click=\"() => openDialog('medium-small')\">medium-small</div>" + '\n'
+ + "        <div class=\"flex_1 normal_button\" v-on:click=\"() => openDialog('medium')\">medium</div>" + '\n'
+ + "        <div class=\"flex_1 normal_button\" v-on:click=\"() => openDialog('medium-big')\">medium-big</div>" + '\n'
+ + "        <div class=\"flex_1 normal_button\" v-on:click=\"() => openDialog('big')\">big</div>" + '\n'
+ + "        <div class=\"flex_1 normal_button\" v-on:click=\"() => openDialog('maximized')\">maximized</div>" + '\n'
+ + "    </div>" + '\n'
+ + "</div>",
+  data() {
+    return {
+      code: `{
+        template: \`<div>
+          <LoremIpsum :paragraphs="20" />
+        </div>\`,
+        size: 'small',
+        layout: 'scrollable',
+        buttons: 'Aceptar@@accept|Cancelar@@close',
+        statusBar: [{
+            text: "Estás contestando una pregunta suelta.",
+        }]
+      }`,
+      childOf: undefined,
+    };
+  },
+  computed: {
+    currentDialogs() {
+      return Std.objects.GlobalDialog.port.currentDialogs;
+    },
+  },
+  methods: {
+    runDialog() {
+      return (new Function("return Std.classes.Dialogs.$.open(" + this.code + ");")).call();
+    },
+    openDialog(size) {
+      return (new Function(`return Std.classes.Dialogs.$.open(Object.assign(${ this.code }, { size: "${size}" }))`)).call();
+    }
+  },
+});;
   }
 
   Wave_15_Calendar: {
@@ -30851,6 +30968,38 @@ $moduler.toolkit.makeInterface([
 };
   }
 
+  Wave_17_Development: {
+    Std.all.LoremIpsum = Std.views.LoremIpsum = Std.classes.ViewsRegistry.$.set("LoremIpsum", {
+  name: "LoremIpsum",
+  template: "<div class=\"LoremIpsum View\">" + '\n'
+ + "    <template v-for=\"paragraph, paragraphIndex in $locals.generatedParagraphs\">" + '\n'
+ + "        <p v-bind:key=\"'paragraph-' + paragraphIndex\">{{ paragraph }}</p>" + '\n'
+ + "    </template>" + '\n'
+ + "</div>",
+  props: {
+    paragraphs: {
+      type: Number,
+      default: 5,
+    },
+  },
+  created() {
+    let generatedParagraphs = [];
+    for(let index=0; index<this.paragraphs; index++) {
+      const paragraph = Std.classes.Randomizer.getRandomSentence(Std.classes.Randomizer.getRandomItemFrom([20,30,40,50,60,70,80,90,10,5]));
+      generatedParagraphs.push(paragraph);
+    }
+    this.$locals = {
+      generatedParagraphs,
+    }
+  },
+  data() {
+    return {};
+  },
+  computed: {},
+  methods: {},
+});;
+  }
+
   Wave_95_Application_starter: {
     Std.all.MainApplication = Std.views.MainApplication = Std.classes.ViewsRegistry.$.set("MainApplication", {
   name: "MainApplication",
@@ -30899,9 +31048,9 @@ $moduler.toolkit.makeInterface([
   static start() {
     Std.all.Tracer?.globalInstance.log("Std.classes.ApplicationStarter.start", arguments || []);;
     $moduler.assert(typeof Std.objects.GlobalApplication === "undefined", "Method «ApplicationStarter.start» can only be called once in a runtime but object «Std.objects.GlobalApplication» is already set");
-    let promise, resolve;
+    let promise, resolve, reject;
     Prepare_started_promise: {
-      ({ promise, resolve } = $moduler.constructor.createResolvable());
+      ({ promise, resolve, reject } = $moduler.constructor.createResolvable());
     }
     Define_vue2_globals: {
       Object.assign(Std.externals.Vue2.prototype, {
@@ -30921,9 +31070,11 @@ $moduler.toolkit.makeInterface([
     }
     Register_application_events_for_onStarted: {
       this.events.onStarted.addTrigger(parameters => {
-        resolve(parameters);
       });
-      this.events.onStarted.addTrigger(async function () {
+      this.events.onStarted.addTrigger(async function (parameters) {
+        Resolve_method_promise: {
+          resolve(parameters);
+        }
         Execute_tests: {
           console.log("[*] Starting tests in browser");
           if(["dev","test"].includes($moduler.settings.data.env)) {

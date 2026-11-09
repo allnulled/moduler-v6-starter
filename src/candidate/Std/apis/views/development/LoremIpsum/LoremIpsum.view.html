@@ -1,0 +1,5 @@
+<div class="LoremIpsum View">
+    <template v-for="paragraph, paragraphIndex in $locals.generatedParagraphs">
+        <p v-bind:key="'paragraph-' + paragraphIndex">{{ paragraph }}</p>
+    </template>
+</div>

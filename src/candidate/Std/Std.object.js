@@ -158,6 +158,7 @@
     Std.all.DialogsTree = Std.views.DialogsTree = $compiler.inject.source("./apis/views/dialogs/DialogsTree/DialogsTree.object.js");
     Std.all.DialogsTreeNode = Std.views.DialogsTreeNode = $compiler.inject.source("./apis/views/dialogs/DialogsTreeNode/DialogsTreeNode.object.js");
     Std.all.DialogsPort = Std.views.DialogsPort = $compiler.inject.source("./apis/views/dialogs/DialogsPort/DialogsPort.object.js");
+    Std.all.DialogsTester = Std.views.DialogsTester = $compiler.inject.source("./apis/views/dialogs/DialogsTester/DialogsTester.object.js");
   }
 
   Wave_15_Calendar: {
@@ -172,6 +173,10 @@
 
   Wave_16_Graphics: {
     Std.functions.CielabColorConverter = Std.objects.CielabColorConverter = $compiler.inject.source("./apis/graphics/colors/scale/CielabColorConverter/CielabColorConverter.class.js");
+  }
+
+  Wave_17_Development: {
+    Std.all.LoremIpsum = Std.views.LoremIpsum = $compiler.inject.source("./apis/views/development/LoremIpsum/LoremIpsum.object.js");
   }
 
   Wave_95_Application_starter: {

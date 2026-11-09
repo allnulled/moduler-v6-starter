@@ -226,6 +226,14 @@ html {
     overflow: auto;
 }
 .DialogView .dialog_body.is_scrollable {
+    position: relative;
+}
+.DialogView .dialog_body.is_scrollable > div {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     overflow: scroll;
 }
 .DialogView .dialog_body.is_centered {
@@ -293,6 +301,9 @@ html {
     left: 0px;
     right: 0px;
     /*background-color: blue;*/
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
 }
 .DialogView .dialog_border.top_border > div {
     height: 6px;
@@ -331,6 +342,9 @@ html {
     width: 10px;
     height: 10px;
     /*background-color: red;*/
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
 }
 .DialogView .dialog_corner.top_left_corner > div {
     top: -10px;
@@ -372,8 +386,82 @@ html {
     color: white;
 }
 
+/* REGLAS PARA LOS OVERFLOWS DE LOS DIÁLOGOS */
 
+.DialogView {
+  box-sizing: border-box;
+}
 
+.DialogView .flex_column,
+.DialogView .flex_row,
+.DialogView .dialog_box {
+  min-width: 0;
+  min-height: 0;
+}
+
+.dialog_box {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+.dialog_header,
+.dialog_footer {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.dialog_body {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+.dialog_topbar {
+  display: flex;
+  min-width: 0;
+}
+
+.dialog_title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.dialog_title_text {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.dialog_topbar_buttons {
+  flex: 0 0 auto;
+}
+
+.dialog_status_bar {
+  display: flex;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.dialog_status_item {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.dialog_buttons {
+  display: flex;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.dialog_button_box {
+  flex: 0 0 auto;
+}
 
 /* PADDINGS AND MARGINS */
 
@@ -462,6 +550,65 @@ html {
 .left_auto { left: auto; }
 .right_auto { right: auto; }
 
+/* SCROLLBARS */
+
+/* ------------------------------------------------------------
+   Scrollbars
+------------------------------------------------------------ */
+
+:root {
+  --scrollbar-size: 14px;
+  --scrollbar-track-color: white; /*var(--grey90);*/
+  --scrollbar-thumb-color: var(--grey60);
+  --scrollbar-thumb-color-hover: var(--grey55);
+  --scrollbar-thumb-color-active: var(--grey50);
+  --scrollbar-corner-color: var(--grey35);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: auto;
+  scrollbar-color: auto;
+}
+
+/* Chrome */
+::-webkit-scrollbar {
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track-color);
+  border-top: 1px solid var(--grey85);
+  border-left: 1px solid var(--grey85);
+  border: 1px solid var(--grey85);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb-color);
+  border: 1px solid var(--grey85);
+  border-radius: 2pt;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-color-hover);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: var(--scrollbar-thumb-color-active);
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--grey85);
+}
+
+@-moz-document url-prefix() {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color);
+  }
+}
+
 /* BUTTONS */
 
 .normal_button,
@@ -476,6 +623,9 @@ html {
     padding: 3px;
     border: var(--border_dark_concept_1);
     border-radius: 3pt; /*50%;*/
+    font-size: 11px;
+    white-space: nowrap;
+    text-align: center;
     cursor: pointer;
 }
 .square_button {
@@ -510,6 +660,10 @@ input {
     height: 12px;
     min-height: 12px;
     font-size: 10px;
+}
+
+input, textarea {
+    box-sizing: border-box;
 }
 
 /* COMMON STATES */

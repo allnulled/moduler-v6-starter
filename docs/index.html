@@ -8,17 +8,11 @@
     <title>Application</title>
     <link rel="stylesheet" href="./app.dist.css" />
 </head>
-    <h1>This is it, the entry point of your application</h1>
+    <h1>Redireccionando, un momento por favor...</h1>
+    <a href="./index.dist.html" id="link0" style="display:hidden;">go.</a>
 <body>
-    <div id="app"></div>
-    <script src="/socket.io-client.js"></script>
-    <script src="/client.js"></script>
-    <script src="./lib/moduler-v6.dist.js"></script>
     <script>
-        (async function() {
-            const app = await ModulerV6.globalInstance.import("@/dist/www/app.dist.js");
-            console.log(app);
-        })();
+        document.getElementById("link0").click();
     </script>
 </body>
 

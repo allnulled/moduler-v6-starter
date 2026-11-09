@@ -32,8 +32,8 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
       return this.$locals.port.open(dialogData, this.thread);
     },
     focusMe(event) {
-      if(this.$locals.port.isLastFocusedDialog(this)) return -1;
-      if(event?.target.classList.contains("unfocusable")) return -2;
+      if (this.$locals.port.isLastFocusedDialog(this)) return -1;
+      if (event?.target.classList.contains("unfocusable")) return -2;
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.focusMe" });
       return this.$locals.port.setFocusToDialog(this);
     },
@@ -106,7 +106,38 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
       this.$locals.isResizing = true;
       event.currentTarget.setPointerCapture(event.pointerId);
     },
-    moveResize(event, position) {
+    moveResize(event) {
+      if (!this.$locals.isResizing) return -1;
+      const resize = this.$locals.resize;
+      if (event.pointerId !== resize.pointerId) return -2;
+      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.moveResize" });
+      const element = this.$el;
+      const deltaX = event.clientX - resize.startX;
+      const deltaY = event.clientY - resize.startY;
+      let width = resize.width;
+      let height = resize.height;
+      let left = resize.left;
+      let top = resize.top;
+      if (resize.position.includes("right")) {
+        width = Math.max(this.$options.static.limits.minWidth, resize.width + deltaX);
+      }
+      if (resize.position.includes("left")) {
+        width = Math.max(this.$options.static.limits.minWidth, resize.width - deltaX);
+        left = resize.left + resize.width - width;
+      }
+      if (resize.position.includes("bottom")) {
+        height = Math.max(this.$options.static.limits.minHeight, resize.height + deltaY);
+      }
+      if (resize.position.includes("top")) {
+        height = Math.max(this.$options.static.limits.minHeight, resize.height - deltaY);
+        top = resize.top + resize.height - height;
+      }
+      element.style.width = `${Math.round(width)}px`;
+      element.style.height = `${Math.round(height)}px`;
+      element.style.left = `${Math.round(left)}px`;
+      element.style.top = `${Math.round(top)}px`;
+    },
+    moveResize_previo(event, position) {
       if (!this.$locals.isResizing) return -1;
       const resize = this.$locals.resize;
       if (event.pointerId !== resize.pointerId) return -2;
@@ -154,7 +185,7 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
       }
     },
     unminimize() {
-      if(!this.$locals.isMinimized) return -2;
+      if (!this.$locals.isMinimized) return -2;
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.unminimize" });
       // @NOTA: se hace diferente de toggleMaximize (que solo tiene 1 método) por 1 razón real:
       // El minimize no se ve, y maximize/unmaximize sí se ven.
@@ -210,30 +241,30 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
     },
     refreshPort() {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.refreshPort" });
-      if(!this.$el.parentElement) return;
+      if (!this.$el.parentElement) return;
       this.$locals.port.refreshView();
     },
     adaptThreadButtons(buttons = this.thread.buttons || []) {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.adaptThreadButtons" });
-      if(Array.isArray(buttons)) {
+      if (Array.isArray(buttons)) {
         // Via 1: array de objetos
         const output = [];
-        for(let index=0; index<buttons.length; index++) {
+        for (let index = 0; index < buttons.length; index++) {
           const buttonInput = buttons[index];
-          if(typeof buttonInput === "string") {
+          if (typeof buttonInput === "string") {
             output.push(Std.views.DialogView.static.fromStringToDialogButton(buttonInput));
           } else {
             output.push(buttonInput);
           }
         }
         return output;
-      } else if(typeof buttons === "object") {
+      } else if (typeof buttons === "object") {
         // Via 2: objeto único con pares text-function
         return Object.keys(buttons).reduce((output, text) => {
           output.push({ text, click: buttons[text] });
           return output;
         }, []);
-      } else if(typeof buttons === "string") {
+      } else if (typeof buttons === "string") {
         // Via 3: texto que leerá los: "|" "@" "@@" y "="
         return Std.views.DialogView.static.fromStringToDialogButtons(buttons);
       }
@@ -241,10 +272,10 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
     getDialogBodyContainerClasses() {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.getDialogBodyContainerClasses" });
       let css = "";
-      if(this.thread.layout) {
-        if(this.thread.layout === "scrollable") {
+      if (this.thread.layout) {
+        if (this.thread.layout === "scrollable") {
           css += "is_scrollable";
-        } else if(this.thread.layout === "centered") {
+        } else if (this.thread.layout === "centered") {
           css += "is_centered";
         } else {
           css += "is_scrollable";
@@ -254,9 +285,15 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
     },
   },
   static: {
+    limits: {
+      minWidth: 150,
+      minHeight: 110,
+    },
     sizes: {
       SMALL: "small",
+      MEDIUM_SMALL: "medium-small",
       MEDIUM: "medium",
+      MEDIUM_BIG: "medium-big",
       BIG: "big",
       MAXIMIZED: "maximized",
       MINIMIZED: "minimized",
@@ -293,9 +330,9 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
     findDialogFrom(elementOrComponent) {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogView.static.findDialogFrom" });
       let element = undefined;
-      if(elementOrComponent instanceof HTMLElement) {
+      if (elementOrComponent instanceof HTMLElement) {
         element = elementOrComponent;
-      } else if(elementOrComponent instanceof Std.externals.Vue2) {
+      } else if (elementOrComponent instanceof Std.externals.Vue2) {
         element = elementOrComponent.$el;
       } else {
         $moduler.assert(element, `Parameter «element» must be instance of HTMLElement or Vue2 component but «${typeof element}» was found instead on «DialogView.static.findDialogFrom»`);
@@ -308,25 +345,25 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
       const viaDialogEvent = buttonContent.split("@@");
       const viaContentEvent = buttonContent.split("@");
       const viaProperty = buttonContent.split("=");
-      if(viaDialogEvent.length > 1) {
+      if (viaDialogEvent.length > 1) {
         buttonObject = { text: viaDialogEvent[0], click: (e, dialog) => dialog[viaDialogEvent[1]]() };
-      } else if(viaContentEvent.length > 1) {
+      } else if (viaContentEvent.length > 1) {
         buttonObject = { text: viaContentEvent[0], click: (e, dialog) => dialog.accept(dialog.getContent()[viaContentEvent[1]]()) };
-      } else if(viaProperty.length > 1) {
+      } else if (viaProperty.length > 1) {
         buttonObject = { text: viaProperty[0], click: (e, dialog) => dialog.accept(dialog.getContent()[viaProperty[1]]) };
       } else {
-        if(buttons.length === 3) {
-          if(false) {}
-          else if(indexButton === 0) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.accept(true) };
-          else if(indexButton === 1) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.accept(false) };
-          else if(indexButton === 2) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.close() };
-        } else if(buttons.length === 2) {
-          if(false) {}
-          else if(indexButton === 0) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.accept(true) };
-          else if(indexButton === 1) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.close() };
-        } else if(buttons.length === 1) {
-          if(false) {}
-          else if(indexButton === 0) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.close() };
+        if (buttons.length === 3) {
+          if (false) { }
+          else if (indexButton === 0) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.accept(true) };
+          else if (indexButton === 1) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.accept(false) };
+          else if (indexButton === 2) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.close() };
+        } else if (buttons.length === 2) {
+          if (false) { }
+          else if (indexButton === 0) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.accept(true) };
+          else if (indexButton === 1) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.close() };
+        } else if (buttons.length === 1) {
+          if (false) { }
+          else if (indexButton === 0) buttonObject = { text: buttonContent, click: (e, dialog) => dialog.close() };
         }
       }
       return buttonObject;

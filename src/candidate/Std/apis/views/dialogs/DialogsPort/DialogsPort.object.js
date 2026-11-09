@@ -24,6 +24,13 @@ Std.classes.ViewsRegistry.$.set("DialogsPort", {
       };
     }
   },
+  computed: {
+    currentDialogs: {
+      get() {
+        return this.$refs.currentDialogs;
+      }
+    }
+  },
   methods: {
     open(config, targetThread = this.$locals.thread) {
       $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.methods.open" });
@@ -55,9 +62,7 @@ Std.classes.ViewsRegistry.$.set("DialogsPort", {
       const openPromise = new Promise((resolve, reject) => {
         this.$nextTick(() => {
           newSubdialog = this.setFocusToThread(newSubthread);
-          if(!newSubdialog) {
-            return resolve(null);
-          }
+          // if(!newSubdialog) {return resolve(null);}
           const dialogMetadata = {
             dialog: newSubdialog,
             thread: newSubthread,
@@ -83,7 +88,7 @@ Std.classes.ViewsRegistry.$.set("DialogsPort", {
       };
       const margin = 24;
       const definitions = {
-        small: {
+        "small": {
           width: 0.35,
           minWidth: 320,
           maxWidth: 440,
@@ -91,14 +96,28 @@ Std.classes.ViewsRegistry.$.set("DialogsPort", {
           maxHeight: 0.75,
           minHeight: 0.2,
         },
-        medium: {
+        "medium-small": {
+          width: 0.475,
+          minWidth: 400,
+          maxWidth: 630,
+          height: 0.39,
+          minHeight: 0.35,
+        },
+        "medium": {
           width: 0.60,
           minWidth: 480,
           maxWidth: 820,
           height: 0.78,
           minHeight: 0.5,
         },
-        big: {
+        "medium-big": {
+          width: 0.74,
+          minWidth: 560,
+          maxWidth: 1130,
+          height: 0.84,
+          minHeight: 0.6
+        },
+        "big": {
           width: 0.88,
           minWidth: 640,
           maxWidth: 1440,
@@ -106,24 +125,23 @@ Std.classes.ViewsRegistry.$.set("DialogsPort", {
           minHeight: 0.7,
         },
       };
+      definitions.maximized = definitions.medium;
       const definition = definitions[size];
-      $moduler.assert(definition, `Unknown dialog size: ${size}`);
+      $moduler.assert(definition, `Parameter «size» must be one out of «small|medium-small|medium|medium-big|big|maximized» but «${size}» was found instead on «calculateDialogBoundaries»`);
       const availableWidth = viewport.width - margin * 2;
       const availableHeight = viewport.height - margin * 2;
       let w = this.clamp(viewport.width * definition.width, Math.min(definition.minWidth, availableWidth), Math.min(definition.maxWidth, availableWidth));
-      let h = definition.height !== null ? Math.min(viewport.height * definition.height, availableHeight) : null;
+      let h = definition.height !== null ? Math.min(viewport.height * definition.height, availableHeight) : viewport.height * definition.minHeight;
       let x = (viewport.width - w) / 2;
-      let y = (viewport.height - (h || 0)) / 2;
-      let maxHeight = definition.maxHeight ? viewport.height * definition.maxHeight : null;
-      let minHeight = definition.minHeight ? viewport.height * definition.minHeight : null;
-      const output = { x, y, width: w, height: h, maxHeight, minHeight };
-      console.log("calculated boundaries:", output);
+      let y = (viewport.height - (h || (viewport.height / 2))) / 2;
+      const output = { x, y, width: w, height: h, };
       return output;
     },
     synchronizeDialogBoundaries(dialogMetadata) {
       // @DOING!!!
       const dialogSize = dialogMetadata.config.size || "medium";
-      const dialogVisibility = dialogMetadata.config.visibility || "default";
+      const dialogVisibility = dialogMetadata.config.visibility || dialogMetadata.config.size === "maximized" ? "maximized" : dialogMetadata.config.size === "minimized" ? "minimized" : "default";
+      const dialogComponent = dialogMetadata.dialog;
       const dialogElement = dialogMetadata.dialog.$el;
       const dialogCoordinates = Object.assign({}, dialogMetadata.config.coordinates || {}, this.calculateDialogBoundaries(dialogSize));
       Set_coordinates: {
@@ -131,16 +149,20 @@ Std.classes.ViewsRegistry.$.set("DialogsPort", {
         if (dialogCoordinates.y) dialogElement.style.top = `${dialogCoordinates.y}px`;
         if (dialogCoordinates.width) dialogElement.style.width = `${dialogCoordinates.width}px`;
         if (dialogCoordinates.height) dialogElement.style.height = `${dialogCoordinates.height}px`;
+        /*
         if (dialogCoordinates.maxHeight) dialogElement.style.maxHeight = `${dialogCoordinates.maxHeight}px`;
         if (dialogCoordinates.minHeight) dialogElement.style.minHeight = `${dialogCoordinates.minHeight}px`;
         if (dialogCoordinates.maxWidth) dialogElement.style.maxWidth = `${dialogCoordinates.maxWidth}px`;
         if (dialogCoordinates.minWidth) dialogElement.style.minWidth = `${dialogCoordinates.minWidth}px`;
+        //*/
       }
       Set_maximization_or_minization: {
         if (dialogVisibility === "maximized") {
-          dialogElement.$el.classList.add("is_maximized");
+          dialogElement.classList.add("is_maximized");
+          dialogComponent.toggleMaximize(true);
         } else if (dialogVisibility === "minimized") {
-          dialogElement.$el.classList.add("is_minimized");
+          dialogElement.classList.add("is_minimized");
+          dialogComponent.minimize(true);
         } else if (dialogVisibility === "default") {
           // @OK.
         } else throw new Error(`Parameter «config.visibility» must be string with «default|maximized|minimized» but «${config.size}» was found instead on «DialogsPort.prototype.synchronizeDialogBoundaries»`);
