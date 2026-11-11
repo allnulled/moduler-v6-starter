@@ -2,7 +2,7 @@ class Reactor {
   /**
    * # Reactor.class
    * - section: std.communication.WebsocketCommunication.Reactor.Reactor.class
-   * - file:    @/src/candidate/std/communication/WebsocketCommunication/Reactor/Reactor.class.js
+   * - file:    @/src/Std/communication/WebsocketCommunication/Reactor/Reactor.class.js
    */
   /*@injects:"./static.Action.js"*/
   /*@injects:"./prototype.assert.js"*/

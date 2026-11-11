@@ -1,0 +1,726 @@
+:root {
+    --border_dark_concept_1: 1px solid var(--grey48);
+    --border_dark_concept_2: 3px double var(--grey48);
+    --border_dark_concept_3: 1px solid var(--grey28);
+    --border_light_concept_1: 1px solid #BBB;
+    --border_light_concept_2: 1px solid #EEE;
+    --border_control_concept_1: 1px solid #424242;
+    --shadow_concept_1: 0 0 5px var(--grey48);
+    --font_size_small_1: 10px;
+    --spacing_size_0: 0px;
+    --spacing_size_1: 2px;
+    --spacing_size_2: 4px;
+    --grey_of_emojis_1: #424242;
+    --grey0: #000000;
+    --grey1: #040404;
+    --grey2: #070707;
+    --grey3: #0b0b0b;
+    --grey4: #0e0e0e;
+    --grey5: #111111;
+    --grey6: #131313;
+    --grey7: #151515;
+    --grey8: #181818;
+    --grey9: #191919;
+    --grey10: #1b1b1b;
+    --grey11: #1d1d1d;
+    --grey12: #1f1f1f;
+    --grey13: #222222;
+    --grey14: #242424;
+    --grey15: #262626;
+    --grey16: #282828;
+    --grey17: #2a2a2a;
+    --grey18: #2c2c2c;
+    --grey19: #2e2e2e;
+    --grey20: #303030;
+    --grey21: #323232;
+    --grey22: #353535;
+    --grey23: #373737;
+    --grey24: #393939;
+    --grey25: #3b3b3b;
+    --grey26: #3e3e3e;
+    --grey27: #404040;
+    --grey28: #424242;
+    --grey29: #444444;
+    --grey30: #474747;
+    --grey31: #494949;
+    --grey32: #4b4b4b;
+    --grey33: #4e4e4e;
+    --grey34: #505050;
+    --grey35: #525252;
+    --grey36: #555555;
+    --grey37: #575757;
+    --grey38: #595959;
+    --grey39: #5c5c5c;
+    --grey40: #5e5e5e;
+    --grey41: #616161;
+    --grey42: #636363;
+    --grey43: #666666;
+    --grey44: #686868;
+    --grey45: #6a6a6a;
+    --grey46: #6d6d6d;
+    --grey47: #6f6f6f;
+    --grey48: #727272;
+    --grey49: #747474;
+    --grey50: #777777;
+    --grey51: #797979;
+    --grey52: #7c7c7c;
+    --grey53: #7f7f7f;
+    --grey54: #818181;
+    --grey55: #848484;
+    --grey56: #868686;
+    --grey57: #898989;
+    --grey58: #8b8b8b;
+    --grey59: #8e8e8e;
+    --grey60: #919191;
+    --grey61: #939393;
+    --grey62: #969696;
+    --grey63: #989898;
+    --grey64: #9b9b9b;
+    --grey65: #9e9e9e;
+    --grey66: #a0a0a0;
+    --grey67: #a3a3a3;
+    --grey68: #a6a6a6;
+    --grey69: #a8a8a8;
+    --grey70: #ababab;
+    --grey71: #aeaeae;
+    --grey72: #b0b0b0;
+    --grey73: #b3b3b3;
+    --grey74: #b6b6b6;
+    --grey75: #b9b9b9;
+    --grey76: #bbbbbb;
+    --grey77: #bebebe;
+    --grey78: #c1c1c1;
+    --grey79: #c4c4c4;
+    --grey80: #c6c6c6;
+    --grey81: #c9c9c9;
+    --grey82: #cccccc;
+    --grey83: #cfcfcf;
+    --grey84: #d1d1d1;
+    --grey85: #d4d4d4;
+    --grey86: #d7d7d7;
+    --grey87: #dadada;
+    --grey88: #dddddd;
+    --grey89: #dfdfdf;
+    --grey90: #e2e2e2;
+    --grey91: #e5e5e5;
+    --grey92: #e8e8e8;
+    --grey93: #ebebeb;
+    --grey94: #eeeeee;
+    --grey95: #f1f1f1;
+    --grey96: #f3f3f3;
+    --grey97: #f6f6f6;
+    --grey98: #f9f9f9;
+    --grey99: #fcfcfc;
+    --grey100: #ffffff;
+    --dialog_border_width: 5px;
+}
+
+
+
+
+
+.DialogsPort {
+    position: relative;
+    z-index: 999999;
+}
+
+.DialogsPort .DialogsPortViewButton {
+    z-index: 999999;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: var(--border_dark_concept_2);
+    background-color: rgb(0, 0, 0, 0.2);
+    bottom:4px;
+    right:4px;
+    display:flex;
+    justify-items:center;
+    align-items:center;
+    background-color:rgb(2, 2, 56, 0.8);
+    cursor: pointer;
+}
+
+.DialogsPort .DialogsPortViewButton:hover {
+    background-color:rgb(2, 2, 56, 0.95);
+}
+
+.DialogView {
+    position: fixed;
+    border: var(--border_dark_concept_2);
+    margin: 2px;
+    border-radius: 3pt;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+}
+.DialogView.is_maximized {
+    position: fixed;
+    inset: 0 !important;
+    width: auto !important;
+    height: auto !important;
+}
+.DialogView.is_minimized {
+    display: none;
+}
+
+.DialogView .dialog_topbar {
+    display: flex;
+    flex-direction: row;
+    border-bottom: var(--border_dark_concept_1);
+    align-items: center;
+    background-color: var(--grey75);
+    color: black;
+    user-select: none;
+}
+.DialogView .dialog_title {
+    flex: 100;
+    cursor: default;
+    touch-action: none;
+    align-self: stretch;
+    overflow: hidden;
+    display: flex;
+}
+
+.DialogView .dialog_title:active {
+    cursor: grabbing;
+}
+.DialogView .dialog_title_text {
+    display: flex;
+    align-items: center;
+    padding-left: 4px;
+}
+.DialogView .dialog_topbar_buttons {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    padding: 4px;
+    gap: 5px;
+}
+
+.DialogView .dialog_topbar_button {
+    color: var(--grey_of_emojis_1);
+    cursor: pointer;
+}
+.DialogView.is_focused .dialog_topbar_button {
+    
+}
+.DialogView .dialog_topbar_button:hover {
+    
+}
+.DialogView .dialog_body {
+    padding: 2px;
+    background-color: var(--grey98);
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    overflow: auto;
+}
+.DialogView .dialog_body.is_scrollable {
+    position: relative;
+}
+.DialogView .dialog_body.is_scrollable > div {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: scroll;
+}
+.DialogView .dialog_body.is_centered {
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.DialogView .dialog_footer {
+    
+}
+.DialogView .dialog_buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+    padding: 4px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    border-top: var(--border_dark_concept_1);
+    background-color: var(--grey96);
+}
+.DialogView .dialog_button {
+    white-space: nowrap;
+}
+.DialogView .dialog_status_bar {
+    display: flex;
+    flex-direction: row;
+    border-top: var(--border_dark_concept_1);
+    font-size: var(--font_size_small_1);
+    background-color: var(--grey90);
+    color: black;
+}
+.DialogView .dialog_status_item {
+    flex: 1;
+    padding: var(--spacing_size_1);
+    white-space: nowrap;
+}
+
+.DialogView .dialog_status_bar > .dialog_status_item {
+    border-right: var(--border_dark_concept_1);
+}
+
+.DialogView .dialog_status_bar > .dialog_status_item:first-child {
+    border-left: none;
+}
+.DialogView .dialog_status_bar > .dialog_status_item:last-child {
+    border-right: none;
+}
+
+
+.DialogView .dialog_box {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+
+.DialogView .dialog_border {
+    position: relative;
+}
+.DialogView .dialog_border > div {
+    position: absolute;
+    top: 0px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    /*background-color: blue;*/
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.DialogView .dialog_border.top_border > div {
+    height: 6px;
+    top: -6px;
+    cursor: n-resize;
+}
+.DialogView .dialog_border.bottom_border > div {
+    height: 6px;
+    bottom: -6px;
+    cursor: s-resize;
+}
+.DialogView .dialog_border.left_border,
+.DialogView .dialog_border.right_border {
+    height: 100%;
+}
+.DialogView .dialog_border.left_border > div {
+    width: 6px;
+    left: -6px;
+    cursor: w-resize;
+}
+.DialogView .dialog_border.right_border > div {
+    width: 6px;
+    right: -6px;
+    cursor: e-resize;
+}
+
+.DialogView .dialog_corner {
+    position: relative;
+}
+.DialogView .dialog_corner > div {
+    position: absolute;
+    top: 0px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    width: 10px;
+    height: 10px;
+    /*background-color: red;*/
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.DialogView .dialog_corner.top_left_corner > div {
+    top: -10px;
+    left: -10px;
+    cursor: nw-resize;
+}
+.DialogView .dialog_corner.top_right_corner > div {
+    top: -10px;
+    right: -10px;
+    cursor: ne-resize;
+}
+.DialogView .dialog_corner.bottom_left_corner > div {
+    bottom: -10px;
+    left: -10px;
+    cursor: sw-resize;
+}
+.DialogView .dialog_corner.bottom_right_corner > div {
+    bottom: -10px;
+    right: -10px;
+    cursor: se-resize;
+}
+.DialogView.is_focused .dialog_topbar {
+    background-color: var(--grey35);
+    color: white;
+}
+
+.DialogsTreeNode .tree_padding {
+    padding-left: 12px;
+}
+
+.DialogsTreeNode .dialog_tree_node_row {
+    
+}
+
+.DialogsTreeNode.is_focused .dialog_tree_node_row .normal_button {
+    background-color: var(--grey35);
+    color: white;
+}
+
+/* REGLAS PARA LOS OVERFLOWS DE LOS DIÁLOGOS */
+
+.DialogView {
+  box-sizing: border-box;
+}
+
+.DialogView .flex_column,
+.DialogView .flex_row,
+.DialogView .dialog_box {
+  min-width: 0;
+  min-height: 0;
+}
+
+.DialogView .dialog_box {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+.DialogView .dialog_header,
+.DialogView .dialog_footer {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.DialogView .dialog_body {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+.DialogView .dialog_topbar {
+  display: flex;
+  min-width: 0;
+}
+
+.DialogView .dialog_title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.DialogView .dialog_title_text {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.DialogView .dialog_topbar_buttons {
+  flex: 0 0 auto;
+}
+
+.DialogView .dialog_status_bar {
+  display: flex;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* PADDINGS, MARGINS AND GAPS */
+
+.pad_0 { padding: 0px; }
+.pad_1 { padding: 1px; }
+.pad_2 { padding: 2px; }
+.pad_3 { padding: 3px; }
+.pad_4 { padding: 4px; }
+
+.pad_vertical_0 { padding-top: 0px; padding-bottom: 0px; }
+.pad_vertical_1 { padding-top: 1px; padding-bottom: 1px; }
+.pad_vertical_2 { padding-top: 2px; padding-bottom: 2px; }
+.pad_vertical_3 { padding-top: 3px; padding-bottom: 3px; }
+.pad_vertical_4 { padding-top: 4px; padding-bottom: 4px; }
+
+.pad_horizontal_0 { padding-left: 0px; padding-right: 0px; }
+.pad_horizontal_1 { padding-left: 1px; padding-right: 1px; }
+.pad_horizontal_2 { padding-left: 2px; padding-right: 2px; }
+.pad_horizontal_3 { padding-left: 3px; padding-right: 3px; }
+.pad_horizontal_4 { padding-left: 4px; padding-right: 4px; }
+
+.pad_top_0 { padding-top: 0px; }
+.pad_top_1 { padding-top: 1px; }
+.pad_top_2 { padding-top: 2px; }
+.pad_top_3 { padding-top: 3px; }
+.pad_top_4 { padding-top: 4px; }
+
+.pad_bottom_0 { padding-bottom: 0px; }
+.pad_bottom_1 { padding-bottom: 1px; }
+.pad_bottom_2 { padding-bottom: 2px; }
+.pad_bottom_3 { padding-bottom: 3px; }
+.pad_bottom_4 { padding-bottom: 4px; }
+
+.pad_left_0 { padding-left: 0px; }
+.pad_left_1 { padding-left: 1px; }
+.pad_left_2 { padding-left: 2px; }
+.pad_left_3 { padding-left: 3px; }
+.pad_left_4 { padding-left: 4px; }
+
+.pad_right_0 { padding-right: 0px; }
+.pad_right_1 { padding-right: 1px; }
+.pad_right_2 { padding-right: 2px; }
+.pad_right_3 { padding-right: 3px; }
+.pad_right_4 { padding-right: 4px; }
+
+.margin_0 { margin: 0px; }
+.margin_1 { margin: 1px; }
+.margin_2 { margin: 2px; }
+.margin_3 { margin: 3px; }
+.margin_4 { margin: 4px; }
+
+.margin_vertical_0 { margin-top: 0px; margin-bottom: 0px; }
+.margin_vertical_1 { margin-top: 1px; margin-bottom: 1px; }
+.margin_vertical_2 { margin-top: 2px; margin-bottom: 2px; }
+.margin_vertical_3 { margin-top: 3px; margin-bottom: 3px; }
+.margin_vertical_4 { margin-top: 4px; margin-bottom: 4px; }
+
+.margin_horizontal_0 { margin-left: 0px; margin-right: 0px; }
+.margin_horizontal_1 { margin-left: 1px; margin-right: 1px; }
+.margin_horizontal_2 { margin-left: 2px; margin-right: 2px; }
+.margin_horizontal_3 { margin-left: 3px; margin-right: 3px; }
+.margin_horizontal_4 { margin-left: 4px; margin-right: 4px; }
+
+.margin_top_0 { margin-top: 0px; }
+.margin_top_1 { margin-top: 1px; }
+.margin_top_2 { margin-top: 2px; }
+.margin_top_3 { margin-top: 3px; }
+.margin_top_4 { margin-top: 4px; }
+
+.margin_bottom_0 { margin-bottom: 0px; }
+.margin_bottom_1 { margin-bottom: 1px; }
+.margin_bottom_2 { margin-bottom: 2px; }
+.margin_bottom_3 { margin-bottom: 3px; }
+.margin_bottom_4 { margin-bottom: 4px; }
+
+.margin_left_0 { margin-left: 0px; }
+.margin_left_1 { margin-left: 1px; }
+.margin_left_2 { margin-left: 2px; }
+.margin_left_3 { margin-left: 3px; }
+.margin_left_4 { margin-left: 4px; }
+
+.margin_right_0 { margin-right: 0px; }
+.margin_right_1 { margin-right: 1px; }
+.margin_right_2 { margin-right: 2px; }
+.margin_right_3 { margin-right: 3px; }
+.margin_right_4 { margin-right: 4px; }
+
+.gap_1 { gap: 1px; }
+.gap_2 { gap: 2px; }
+.gap_3 { gap: 3px; }
+.gap_4 { gap: 4px; }
+
+/* FLEX LAYOUT */
+
+.flex_column { display: flex; flex-direction: column; }
+.flex_row { display: flex; flex-direction: row; }
+.flex_row.centered { align-items: center; }
+.flex_1 { flex: 1 !important; }
+.flex_100 { flex: 100 !important; }
+.flex_0 { flex: 0 0 0px; }
+
+/* RELATIVE, FIXED AND ABSOLUTE LAYOUTS */
+
+.position_relative { position: relative; }
+.position_absolute { position: absolute; }
+.position_fixed { position: fixed; }
+
+.top_0 { top: 0px; }
+.bottom_0 { bottom: 0px; }
+.left_0 { left: 0px; }
+.right_0 { right: 0px; }
+
+.top_auto { top: auto; }
+.bottom_auto { bottom: auto; }
+.left_auto { left: auto; }
+.right_auto { right: auto; }
+
+/* SCROLLBARS */
+
+/* ------------------------------------------------------------
+   Scrollbars
+------------------------------------------------------------ */
+
+:root {
+  --scrollbar-size: 14px;
+  --scrollbar-track-color: white; /*var(--grey90);*/
+  --scrollbar-thumb-color: var(--grey60);
+  --scrollbar-thumb-color-hover: var(--grey55);
+  --scrollbar-thumb-color-active: var(--grey50);
+  --scrollbar-corner-color: var(--grey35);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: auto;
+  scrollbar-color: auto;
+}
+
+/* Chrome */
+::-webkit-scrollbar {
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track-color);
+  border-top: 1px solid var(--grey85);
+  border-left: 1px solid var(--grey85);
+  border: 1px solid var(--grey85);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb-color);
+  border: 1px solid var(--grey85);
+  border-radius: 2pt;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-color-hover);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: var(--scrollbar-thumb-color-active);
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--grey85);
+}
+
+@-moz-document url-prefix() {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color);
+  }
+}
+
+/* BUTTONS */
+
+.normal_button,
+.rounded_button,
+.square_button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 12px;
+    min-height: 12px;
+    padding: 3px;
+    background-color: var(--grey78);
+    border: 1px solid var(--grey53);
+    border-radius: 2pt; /*50%;*/
+    color: #222;
+    text-align: center;
+    cursor: pointer;
+}
+
+.normal_button:hover,
+.rounded_button:hover,
+.square_button:hover {
+    background-color: var(--grey88);
+}
+
+.normal_button.activated,
+.rounded_button.activated,
+.square_button.activated {
+    background-color: var(--grey91);
+}
+
+.normal_button {
+    font-size: 11px;
+    white-space: nowrap;
+}
+.square_button {
+    width: 12px;
+    min-width: 12px;
+}
+.rounded_button {
+    width: 12px;
+    min-width: 12px;
+    border-radius: 50%;
+}
+
+/* BUTTON FLAVOURS */
+
+.normal_button.light,
+.rounded_button.light,
+.square_button.light {
+    border: 1px solid transparent;
+    background-color: var(--grey85);
+}
+.normal_button.light:hover,
+.rounded_button.light:hover,
+.square_button.light:hover {
+    background-color: var(--grey90);
+}
+.normal_button.light.activated,
+.rounded_button.light.activated,
+.square_button.light.activated {
+    background-color: var(--grey93);
+}
+
+/* TEXT */
+
+.text_align_left { text-align: left; }
+.text_align_center { text-align: center; }
+.text_align_right { text-align: right; }
+
+.nowrap { white-space: nowrap; }
+
+/* STYLOGRAPHY */
+
+.underline_light_1 {
+    border-bottom: var(--border_light_concept_1);
+}
+
+/* INPUTS & TEXTAREAS */
+
+input {
+    height: 26px;
+    min-height: 26px;
+}
+
+input, textarea {
+    font-size: 10px;
+    border-radius: 3pt;
+    border: var(--border_dark_concept_1);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+textarea {
+    resize: vertical;
+    min-height: 210px;
+}
+
+/* COMMON STATES */
+
+/* ROTATION */
+
+.rotate1of4 { transform: rotate(90deg); }
+.rotate2of4 { transform: rotate(180deg); }
+.rotate3of4 { transform: rotate(270deg); }
+
+.rotate1of8 { transform: rotate(45deg); }
+.rotate2of8 { transform: rotate(90deg); }
+.rotate3of8 { transform: rotate(135deg); }
+.rotate4of8 { transform: rotate(180deg); }
+.rotate5of8 { transform: rotate(225deg); }
+.rotate6of8 { transform: rotate(270deg); }
+.rotate7of8 { transform: rotate(315deg); }

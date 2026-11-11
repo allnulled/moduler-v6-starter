@@ -1,5 +1,5 @@
 const devbin = require(__dirname + "/../../../../../../../dev/bin.js");
-const target = require(__dirname + "/../../../../../../../dist/src/candidate/std/assertion/Asserter/Asserter.dist.js");
+const target = require(__dirname + "/../../../../../../../dist/src/Std/assertion/Asserter/Asserter.dist.js");
 
 module.exports = (async function () {
 

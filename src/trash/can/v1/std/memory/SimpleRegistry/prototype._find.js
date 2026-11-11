@@ -2,7 +2,7 @@ _find({ filter }) {
   /**
    * # prototype._find
    * - section: std.memory.Registry.prototype._find
-   * - file:    @/src/candidate/std/memory/Registry/prototype._find.js
+   * - file:    @/src/Std/memory/Registry/prototype._find.js
    */
   let matchedKeys = [], output = {};
   if (typeof filter === "undefined") {

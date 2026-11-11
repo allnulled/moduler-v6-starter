@@ -2,7 +2,7 @@ module.exports = async function ({ Std, devbin }) {
 
   const { NodejsFilesystem } = Std.all;
 
-  const muter = await devbin.utils.addTouchMutedirTo("@/test/unit/src/candidate/Std/v1/007.Std.classes.Filesystem puede usar el driver de nodejs");
+  const muter = await devbin.utils.addTouchMutedirTo("@/test/unit/src/Std/v1/007.Std.classes.Filesystem puede usar el driver de nodejs");
 
   try {
 
@@ -25,8 +25,8 @@ module.exports = async function ({ Std, devbin }) {
     }
 
     Write_has_y_delete_file: {
-      const input1 = "@/test/unit/src/candidate/Std/v1/007.Std.classes.Filesystem puede usar el driver de nodejs/asset1.txt";
-      const input2 = "@/test/unit/src/candidate/Std/v1/007.Std.classes.Filesystem puede usar el driver de nodejs/impossible/asset2.txt";
+      const input1 = "@/test/unit/src/Std/v1/007.Std.classes.Filesystem puede usar el driver de nodejs/asset1.txt";
+      const input2 = "@/test/unit/src/Std/v1/007.Std.classes.Filesystem puede usar el driver de nodejs/impossible/asset2.txt";
       await nfs.try.deleteFile(input1);
       const hasFile1Before = await nfs.hasFile(input1);
       const files1 = await nfs.writeFile(input1, "whatever");
@@ -41,7 +41,7 @@ module.exports = async function ({ Std, devbin }) {
     }
 
     Write_has_y_delete_directory: {
-      const dir1 = "@/test/unit/src/candidate/Std/v1/007.Std.classes.Filesystem puede usar el driver de nodejs/somedir";
+      const dir1 = "@/test/unit/src/Std/v1/007.Std.classes.Filesystem puede usar el driver de nodejs/somedir";
       await nfs.try.deleteDirectory(dir1);
       const hasDir1Before = await nfs.hasDirectory(dir1);
       const files1 = await nfs.writeDirectory(dir1);
@@ -55,7 +55,7 @@ module.exports = async function ({ Std, devbin }) {
       }
     }
 
-    const basedir1 = "@/test/unit/src/candidate/Std/v1/007.Std.classes.Filesystem puede usar el driver de nodejs";
+    const basedir1 = "@/test/unit/src/Std/v1/007.Std.classes.Filesystem puede usar el driver de nodejs";
 
     Copy_and_move_file: {
       await nfs.try.writeDirectory(`${basedir1}/src`);

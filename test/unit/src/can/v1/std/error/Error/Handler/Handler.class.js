@@ -2,6 +2,6 @@ class Handler {
   /**
    * # Handler.class
    * - section: @.test.unit.src.candidate.std.error.Error.Handler.Handler.class
-   * - file:    @/test/unit/src/candidate/std/error/Error/Handler/Handler.class.js
+   * - file:    @/test/unit/src/Std/error/Error/Handler/Handler.class.js
    */
 }

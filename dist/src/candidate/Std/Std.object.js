@@ -122,7 +122,7 @@
     Std.all.NodejsFilesystem = Std.classes.NodejsFilesystem = $compiler.inject.source("./apis/files/NodejsFilesystem/NodejsFilesystem.class.js");
     Std.all.IdbCrud = Std.classes.IdbCrud = $compiler.inject.source("./apis/indexeddb/IdbCrud/IdbCrud.class.js");
     Std.all.IdbFilesystem = Std.classes.IdbFilesystem = $compiler.inject.source("./apis/files/IdbFilesystem/IdbFilesystem.class.js");
-    Std.all.makeFunctionByProperties = Std.functions.makeFunctionByProperties = $compiler.inject.source("@/src/candidate/Std/apis/reflection/makeFunctionByProperties/makeFunctionByProperties.function.js");
+    Std.all.makeFunctionByProperties = Std.functions.makeFunctionByProperties = $compiler.inject.source("@/src/Std/apis/reflection/makeFunctionByProperties/makeFunctionByProperties.function.js");
   }
   Wave_8_Abstractions: {
     Std.all.AbstractionUtils = Std.classes.AbstractionUtils = $compiler.inject.source("./apis/abstraction/AbstractionUtils/AbstractionUtils.class.js");

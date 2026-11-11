@@ -2,6 +2,6 @@ constructor () {
   /**
    * # constructor
    * - section: std.communication.WebsocketCommunication.Reactor.Action.constructor
-   * - file:    @/src/candidate/std/communication/WebsocketCommunication/Reactor/Action/constructor.js
+   * - file:    @/src/Std/communication/WebsocketCommunication/Reactor/Action/constructor.js
    */
 }

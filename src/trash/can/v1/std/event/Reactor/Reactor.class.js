@@ -2,7 +2,7 @@ class Reactor {
   /**
    * # Reactor.class
    * - section: std.event.Reactor.Reactor.class
-   * - file:    @/src/candidate/std/event/Reactor/Reactor.class.js
+   * - file:    @/src/Std/event/Reactor/Reactor.class.js
    */
   /*@injects:"./static.create.js"*/
   /*@injects:"./constructor.js"*/

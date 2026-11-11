@@ -2,6 +2,6 @@ dontReactWith () {
   /**
    * # prototype.dontReactWith
    * - section: std.communication.WebsocketCommunication.Reactor.Reaction.prototype.dontReactWith
-   * - file:    @/src/candidate/std/communication/WebsocketCommunication/Reactor/Reaction/prototype.dontReactWith.js
+   * - file:    @/src/Std/communication/WebsocketCommunication/Reactor/Reaction/prototype.dontReactWith.js
    */
 }

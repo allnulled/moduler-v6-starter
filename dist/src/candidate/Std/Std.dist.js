@@ -15822,7 +15822,7 @@ $moduler.toolkit.makeInterface([
 };
   }
   Wave_6_Types_system: {
-    Std.all.TypesParser = Std.classes.TypesParser = Std.parsers.peggy.generate("{" + '\n'
+    Std.all.TypesParser = Std.objects.TypesParser = Std.parsers.typeslang = Std.parsers.peggy.generate("{" + '\n'
  + "" + '\n'
  + "}" + '\n'
  + "" + '\n'
@@ -16079,6 +16079,184 @@ $moduler.toolkit.makeInterface([
     ], this);
   }
 };
+    Std.all.TypesRegistry = Std.classes.TypesRegistry = class TypesRegistry {
+  static {
+    Compose_class: {
+      $moduler.toolkit.makeClass([
+        Std.interfaces.InstantiableInterface,
+        { prototype: { all: Std.types } },
+        Std.functions.IntrospectableInterfaceFactory(
+          "all",
+          "get",
+          "set",
+          "has",
+          "delete",
+          "initialize",
+          "list",
+          "onRegister",
+          "onUnregister"
+        ),
+      ], this);
+    }
+    Add_basic_primitives: {
+      Object.assign(this.prototype.all, {
+        "undefined": {
+  abstraction: {
+    onValidate(memory) {
+      return typeof memory.localData === "undefined";
+    },
+    views: {
+  default: {
+    name: "TypeUndefinedDefaultView",
+    template: "<div>" + '\n'
+ + "    Aqui el control para undefined." + '\n'
+ + "</div>",
+  }
+}
+  }
+},
+        "null": {
+  abstraction: {
+    onValidate(memory) {
+      return memory.localData === null;
+    },
+    views: {
+  default: {
+    name: "TypeNullDefaultView",
+    template: "<div>" + '\n'
+ + "    Aqui el control para null." + '\n'
+ + "</div>",
+  }
+}
+  }
+},
+        "string": {
+  abstraction: {
+    onValidate(memory) {
+      return typeof memory.localData === "string";
+    },
+    views: {
+  default: {
+    name: "TypeStringDefaultView",
+    template: "<div>" + '\n'
+ + "    Aqui el control para string." + '\n'
+ + "</div>",
+  }
+}
+  }
+},
+        "boolean": {
+  abstraction: {
+    onValidate(memory) {
+      return typeof memory.localData === "boolean";
+    },
+    views: {
+  default: {
+    name: "TypeBooleanDefaultView",
+    template: "<div>" + '\n'
+ + "    Aqui el control para booleans." + '\n'
+ + "</div>",
+  }
+}
+  }
+},
+        "number": {
+  abstraction: {
+    onValidate(memory) {
+      return typeof memory.localData === "number";
+    },
+    views: {
+  default: {
+    name: "TypeNumberDefaultView",
+    template: "<div>" + '\n'
+ + "    Aqui el control para numbers." + '\n'
+ + "</div>",
+  }
+}
+  }
+},
+        "function": {
+  abstraction: {
+    onValidate(memory) {
+      return typeof memory.localData === "function";
+    },
+    views: {
+  default: {
+    name: "TypeFunctionDefaultView",
+    template: "<div>" + '\n'
+ + "    Aqui el control para functions." + '\n'
+ + "</div>",
+  }
+}
+  }
+},
+        "integer": {
+  abstraction: {
+    onValidate(memory) {
+      return Number.isInteger(memory.localData);
+    },
+    views: {
+  default: {
+    name: "TypeIntegerDefaultView",
+    template: "<div>" + '\n'
+ + "    Aqui el control para integers." + '\n'
+ + "</div>",
+  }
+}
+  }
+},
+        "object": {
+  abstraction: {
+    onValidate(memory) {
+      return memory.localData !== null && typeof memory.localData === "object" && !Array.isArray(memory.localData);
+    },
+    views: {
+  default: {
+    name: "TypeObjectDefaultView",
+    template: "<div>" + '\n'
+ + "    Aqui el control para object." + '\n'
+ + "</div>",
+  }
+}
+  }
+},
+        "array": {
+  abstraction: {
+    onValidate(memory) {
+      return Array.isArray(memory.localData);
+    },
+    views: {
+  default: {
+    name: "TypeArrayDefaultView",
+    template: "<div>" + '\n'
+ + "    Aqui el control para arrays." + '\n'
+ + "</div>",
+  }
+}
+  }
+},
+        "date": {
+  abstraction: {
+    onValidate(memory) {
+      return memory.localData instanceof Date;
+    },
+    views: {
+  default: {
+    name: "TypeDateDefaultView",
+    template: "<div>" + '\n'
+ + "    Aqui el control para dates." + '\n'
+ + "</div>",
+  }
+}
+  }
+},
+      });
+    }
+    Set_global_instance: {
+      this.globalInstance = this.$ = TypesRegistry.new;
+    }
+  }
+};
     Std.all.TypesValidatorInterface = Std.interfaces.TypesValidatorInterface = // @interface:TypesValidatorInterface
 {
   prototype: {},
@@ -16088,7 +16266,7 @@ $moduler.toolkit.makeInterface([
     return;
   },
   validateData: async function (expression, data, skipValidations = false) {
-    const astRaw = typeof expression === "string" ? Std.classes.TypesParser.parse(expression) : expression;
+    const astRaw = typeof expression === "string" ? Std.objects.TypesParser.parse(expression) : expression;
     const astWithoutImports = await this._replaceImportsRecursively(astRaw);
     const validation = await this._validateDataRecursively({
       ast: astWithoutImports,
@@ -16140,81 +16318,6 @@ $moduler.toolkit.makeInterface([
     errorObject.memory.errors.addError(validationError);
     return validationError;
   },
-  PrimitiveTypes: Std.all.PrimitiveTypes = Std.objects.PrimitiveTypes = {
-    "undefined": {
-      abstraction: {
-        onValidate(memory) {
-          return typeof memory.localData === "undefined";
-        },
-      },
-    },
-    "null": {
-      abstraction: {
-        onValidate(memory) {
-          return memory.localData === null;
-        },
-      },
-    },
-    "string": {
-      abstraction: {
-        onValidate(memory) {
-          return typeof memory.localData === "string";
-        },
-      },
-    },
-    "boolean": {
-      abstraction: {
-        onValidate(memory) {
-          return typeof memory.localData === "boolean";
-        },
-      },
-    },
-    "object": {
-      abstraction: {
-        onValidate(memory) {
-          return memory.localData !== null && typeof memory.localData === "object" && !Array.isArray(memory.localData);
-        },
-      },
-    },
-    "number": {
-      abstraction: {
-        onValidate(memory) {
-          return typeof memory.localData === "number";
-        },
-      },
-    },
-    "integer": {
-      abstraction: {
-        onValidate(memory) {
-          return Number.isInteger(memory.localData);
-        },
-      },
-    },
-    "function": {
-      abstraction: {
-        onValidate(memory) {
-          return typeof memory.localData === "function";
-        },
-      },
-    },
-    "array": {
-      abstraction: {
-        onValidate(memory) {
-          return Array.isArray(memory.localData);
-        },
-      },
-    },
-    "date": {
-      abstraction: {
-        onValidate(memory) {
-          return memory.localData instanceof Date;
-        }
-      }
-    }
-  },
-  Registry: Std.all.TypesRegistry = Std.functions.TypesRegistry = (it = {}) => {
-    return Object.create(Std.objects.PrimitiveTypes, it);
-  },
   Memory: Std.all.ValidationMemory = Std.classes.ValidationMemory = class ValidationMemory {
     static {
       $moduler.toolkit.makeClass([
@@ -16246,7 +16349,7 @@ $moduler.toolkit.makeInterface([
           prototype: {
             onCreate: function () {
               this.labels = {};
-              this.registry = Std.functions.TypesRegistry();
+              this.registry = Std.classes.TypesRegistry.globalInstance;
               this.result = new Std.classes.ValidationResult(this);
               this.errors = new Std.classes.ValidationErrors(this);
             },
@@ -16618,8 +16721,8 @@ $moduler.toolkit.makeInterface([
       }
     }
     const { localAst, dataPointer, ast, astPointer } = memory;
-    const TypeClass = memory.registry[localAst.id];
     Caso_de_ser_tipo: {
+      const TypeClass = memory.registry.get(localAst.id);
       if (TypeClass?.abstraction?.onValidate) {
         let validation;
         try {
@@ -16709,7 +16812,7 @@ $moduler.toolkit.makeInterface([
         // 
         astPointer: [],
         dataPointer: [],
-        registry: Std.functions.TypesRegistry(),
+        registry: Std.classes.TypesRegistry.globalInstance,
         // 
         mode: mode,
         skipValidations: skipValidations,
@@ -16862,6 +16965,9 @@ $moduler.toolkit.makeInterface([
       Std.interfaces.InstantiableInterface,
       Std.interfaces.TypesValidatorInterface,
     ], this);
+  }
+  static {
+    this.globalInstance = this.$ = Std.objects.GlobalTypesValidator = this.new;
   }
 };
     Std.all.Domer = Std.classes.Domer = class Domer {
@@ -29326,9 +29432,10 @@ $moduler.toolkit.makeInterface([
     }
     Std.all.ViewsRegistry = Std.classes.ViewsRegistry = class ViewsRegistry {
 
-  static validateView(viewDefinition) {
-    $moduler.assert(typeof viewDefinition === "object", `Required parameter «viewDefinition» to be object but «${typeof viewDefinition}» was found instead on «ViewsRegistry.registerView»`);
-    $moduler.assert(typeof viewDefinition.name === "object", `Required parameter «viewDefinition.name» to be string but «${typeof viewDefinition}» was found instead on «ViewsRegistry.registerView»`);
+  static validateView({ key, value, output }) {
+    $moduler.assert(typeof value === "object", `Required parameter «view» to be object but «${typeof value}» was found instead on «ViewsRegistry.prototype.onRegister»`);
+    $moduler.assert(typeof value.name === "string", `Required parameter «view.name» to be string but «${typeof value.name}» was found instead on «ViewsRegistry.prototype.onRegister»`);
+    $moduler.assert((typeof value.template === "string") || (typeof value.render === "function"), `Required parameter «view.template» to be string or «view.render» to be function but «${typeof value.template}» was found instead on «ViewsRegistry.prototype.onRegister»`);
   }
 
   static {
@@ -29352,10 +29459,9 @@ $moduler.toolkit.makeInterface([
     this.views = {};
   }
 
-  onRegister({ key, value, output }) {
-    $moduler.assert(typeof value === "object", `Required parameter «view» to be object but «${typeof value}» was found instead on «ViewsRegistry.prototype.onRegister»`);
-    $moduler.assert(typeof value.name === "string", `Required parameter «view.name» to be string but «${typeof value.name}» was found instead on «ViewsRegistry.prototype.onRegister»`);
-    $moduler.assert(typeof value.template === "string", `Required parameter «view.template» to be string but «${typeof value.template}» was found instead on «ViewsRegistry.prototype.onRegister»`);
+  onRegister(input) {
+    this.constructor.validateView(input)
+    const { key, value, output } = input;
     if(Std.externals.Vue2) {
       Std.externals.Vue2.component(value.name, value);
     }
@@ -29374,6 +29480,53 @@ $moduler.toolkit.makeInterface([
   static {
     Conectamos_Std_views_con_las_views_del_global: {
       Std.views = this.globalInstance.views;
+    }
+  }
+
+};
+    Std.all.ViewTraitsRegistry = Std.classes.ViewTraitsRegistry = class ViewTraitsRegistry {
+  
+  static validateViewTrait(trait) {
+    $moduler.assert(typeof trait === "object", `Required parameter «trait» to be object but «${typeof trait}» was found instead on «ViewTraitsRegistry.prototype.onRegister»`);
+  }
+
+  static {
+    $moduler.toolkit.makeClass([
+      Std.functions.IntrospectableInterfaceFactory(
+        "viewTraits",
+        "get",
+        "set",
+        "has",
+        "delete",
+        "initialize",
+        "list",
+        "onRegister",
+        "onUnregister",
+        "|",
+      ),
+    ], this);
+  }
+
+  constructor() {
+    Std.all.Tracer?.globalInstance.log("Std.classes.ViewTraitsRegistry.constructor", arguments || []);;
+    this.viewTraits = {};
+  }
+
+  onRegister(input) {
+    Std.all.Tracer?.globalInstance.log("Std.classes.ViewTraitsRegistry.prototype.onRegister", arguments || []);;
+    this.constructor.validateViewTrait(input);
+  }
+
+  onUnregister({ key }) {
+    Std.all.Tracer?.globalInstance.log("Std.classes.ViewTraitsRegistry.prototype.onUnregister", arguments || []);;
+    // @OK.
+  }
+
+  static globalInstance = this.$ = new this();
+
+  static {
+    Conectamos_Std_objects_ViewTraits_con_las_view_traits_del_global: {
+      Std.objects.ViewTraits = this.globalInstance.viewTraits;
     }
   }
 
@@ -29441,7 +29594,23 @@ $moduler.toolkit.makeInterface([
     errorCaptured: this.mergeLifecycle,
     serverPrefetch: this.mergeLifecycle,
   };
-  const excluded = new Set(["name","data","parent","extends","provide","inject","template","render","renderError","staticRenderFns","functional","model","inheritAttrs"]);
+  const excluded = new Set([
+    /*
+    "name",
+    "data",
+    "parent",
+    "extends",
+    "provide",
+    "inject",
+    "template",
+    "render",
+    "renderError",
+    "staticRenderFns",
+    "functional",
+    "model",
+    "inheritAttrs"
+    //*/
+  ]);
   for (let indexView = 0; indexView < views.length; indexView++) {
     const input = views[indexView];
     let view, options = {};
@@ -29450,13 +29619,15 @@ $moduler.toolkit.makeInterface([
       [view, options] = input;
       $moduler.assert(typeof input === "object", `Required parameter «views[${indexView}][0]» to be object «${input.length}» elements on «DialogsPort.methods.open»`);
       $moduler.assert(typeof options === "object", `Required parameter «views[${indexView}][1]» to be object «${options.length}» elements on «DialogsPort.methods.open»`);
+    } else if(typeof input === "object") {
+      view = input;
     }
     $moduler.assert(typeof view === "object", `Required parameter «views[${indexView}]» to be object on «DialogsPort.methods.open»`);
     for (const key of Object.keys(view)) {
       const value = view[key];
       if (excluded.has(key)) continue;
       const strategy = strategies[key];
-      if (strategy) strategy(key, value, mergedView);
+      if (strategy) strategy(key, value, mergedView, options);
       else if (!Object.prototype.hasOwnProperty.call(mergedView, key)) mergedView[key] = value;
     }
   }
@@ -29541,6 +29712,7 @@ $moduler.toolkit.makeInterface([
         }
       }
       Hydrate_view: {
+        this.$locals = {};
         this.$locals.currentArgs = args;
         this.$locals.currentView = view;
         this.refreshView();
@@ -29674,7 +29846,26 @@ $moduler.toolkit.makeInterface([
 });
   }
 
-  Wave_14_Dialogs: {
+  Wave_14_View_traits: {
+    Std.objects.ViewTraits.InstallLocals = {
+  methods: {
+    installLocals() {
+      Std.all.Tracer?.globalInstance.log("Std.objects.ViewTraits.InstallLocals.methods.installLocals", arguments || []);;
+      this.$locals = {};
+    }
+  }
+};
+    Std.objects.ViewTraits.LoadControlResource = {
+  methods: {
+    async loadControlResource() {
+      Std.all.Tracer?.globalInstance.log("Std.objects.ViewTraits.ValidateControlParameters.methods.loadControlResource", arguments || []);;
+      await Std.classes.Timeout.of(1000);
+    }
+  }
+};
+  }
+
+  Wave_15_Dialogs: {
     Std.all.Dialogs = Std.classes.Dialogs = class Dialogs {
   constructor() {
     Std.all.Tracer?.globalInstance.log("Std.classes.Dialogs.constructor", arguments || []);;
@@ -29787,12 +29978,12 @@ $moduler.toolkit.makeInterface([
  + "                            <div class=\"dialog_title_text\">{{ thread.title || thread.threadId || \"no id found\" }}</div>" + '\n'
  + "                        </div>" + '\n'
  + "                        <div class=\"dialog_topbar_buttons\">" + '\n'
- + "                            <div v-if=\"thread.parent !== $window.Std.objects.GlobalThread\" class=\"dialog_topbar_button square_button focus_parent_button\" ref=\"focus_parent_button\" v-on:click=\"focusParent\">" + '\n'
+ + "                            <div v-if=\"thread.parent !== $window.Std.objects.GlobalThread\" class=\"dialog_topbar_button rounded_button light focus_parent_button\" ref=\"focus_parent_button\" v-on:click=\"focusParent\">" + '\n'
  + "                                <span class=\"rotate5of8\">➜</span>" + '\n'
  + "                            </div>" + '\n'
- + "                            <div class=\"dialog_topbar_button square_button minimize_button\" ref=\"minimize_button\" v-on:click=\"minimize\">➖​</div>" + '\n'
- + "                            <div class=\"dialog_topbar_button square_button maximize_button\" ref=\"maximize_button\" v-on:click=\"toggleMaximize\">​◼️</div>" + '\n'
- + "                            <div class=\"dialog_topbar_button square_button exit_button\" v-on:click=\"close\">✖️</div>" + '\n'
+ + "                            <div class=\"dialog_topbar_button rounded_button light minimize_button\" ref=\"minimize_button\" v-on:click=\"minimize\">➖​</div>" + '\n'
+ + "                            <div class=\"dialog_topbar_button rounded_button light maximize_button\" ref=\"maximize_button\" v-on:click=\"toggleMaximize\">​◼️</div>" + '\n'
+ + "                            <div class=\"dialog_topbar_button rounded_button light exit_button\" v-on:click=\"close\">✖️</div>" + '\n'
  + "                        </div>" + '\n'
  + "                    </div>" + '\n'
  + "                </div>" + '\n'
@@ -30319,8 +30510,8 @@ $moduler.toolkit.makeInterface([
     Std.all.DialogsTreeNode = Std.views.DialogsTreeNode = Std.classes.ViewsRegistry.$.set("DialogsTreeNode", {
   name: "DialogsTreeNode",
   template: "<div class=\"View DialogsTreeNode\" :class=\"$window.Std.objects.GlobalDialog.port.isLastFocusedThread(thread) ? 'is_focused' : ''\">" + '\n'
- + "    <div class=\"flex_row centered dialog_tree_node_row\">" + '\n'
- + "        <div class=\"flex_0 flex_row\">" + '\n'
+ + "    <div class=\"flex_row centered dialog_tree_node_row gap_2 pad_vertical_1\">" + '\n'
+ + "        <div class=\"flex_0 flex_row\" v-if=\"level\">" + '\n'
  + "            <div class=\"flex_0 nowrap\" style=\"min-width: 8px;\" v-for=\"it in new Array(level)\" v-bind:key=\"it\"></div>" + '\n'
  + "        </div>" + '\n'
  + "        <div class=\"normal_button flex_100 unfocusable\" v-on:click=\"goToDialog\">" + '\n'
@@ -30460,18 +30651,21 @@ $moduler.toolkit.makeInterface([
         $moduler.assert(typeof config.isClosed === "undefined", `Required parameter «config.isClosed» to be undefined on «DialogsPort.methods.open»`);
         $moduler.assert(typeof config.threadId === "undefined", `Required parameter «config.threadId» to be undefined on «DialogsPort.methods.open»`);
       }
-      const newSubthread = targetThread.newSubthread.config(config);
-      let newSubdialog = undefined;
+      let subthread = undefined;
+      Sobreescribimos_propiedades_del_thread_a_saco: {
+        subthread = targetThread.newSubthread.config(config);
+      }
+      let subdialog = undefined;
       const openPromise = new Promise((resolve, reject) => {
         this.$nextTick(() => {
-          newSubdialog = this.setFocusToThread(newSubthread);
-          // if(!newSubdialog) {return resolve(null);}
+          subdialog = this.setFocusToThread(subthread);
+          // if(!subdialog) {return resolve(null);}
           const dialogMetadata = {
-            dialog: newSubdialog,
-            thread: newSubthread,
-            promise: newSubdialog.$locals.resolvable.promise,
-            accept: (...args) => newSubdialog.accept(...args),
-            close: (...args) => newSubdialog.close(...args),
+            dialog: subdialog,
+            thread: subthread,
+            promise: subdialog.$locals.resolvable.promise,
+            accept: (...args) => subdialog.accept(...args),
+            close: (...args) => subdialog.close(...args),
             config: config,
           };
           this.synchronizeDialogBoundaries(dialogMetadata);
@@ -30485,51 +30679,9 @@ $moduler.toolkit.makeInterface([
       return Math.max(min, Math.min(value, max));
     },
     calculateDialogBoundaries(size) {
-      const viewport = {
-        width: window.innerWidth,
-        height: window.innerHeight
-      };
-      const margin = 24;
-      const definitions = {
-        "small": {
-          width: 0.35,
-          minWidth: 320,
-          maxWidth: 440,
-          height: null,
-          maxHeight: 0.75,
-          minHeight: 0.2,
-        },
-        "medium-small": {
-          width: 0.475,
-          minWidth: 400,
-          maxWidth: 630,
-          height: 0.39,
-          minHeight: 0.35,
-        },
-        "medium": {
-          width: 0.60,
-          minWidth: 480,
-          maxWidth: 820,
-          height: 0.78,
-          minHeight: 0.5,
-        },
-        "medium-big": {
-          width: 0.74,
-          minWidth: 560,
-          maxWidth: 1130,
-          height: 0.84,
-          minHeight: 0.6
-        },
-        "big": {
-          width: 0.88,
-          minWidth: 640,
-          maxWidth: 1440,
-          height: 0.90,
-          minHeight: 0.7,
-        },
-      };
-      definitions.maximized = definitions.medium;
-      const definition = definitions[size];
+      const viewport = this.$options.static.viewport;
+      const margin = this.$options.static.dialogs.margin;
+      const definition = this.$options.static.dialogs.sizes[size];
       $moduler.assert(definition, `Parameter «size» must be one out of «small|medium-small|medium|medium-big|big|maximized» but «${size}» was found instead on «calculateDialogBoundaries»`);
       const availableWidth = viewport.width - margin * 2;
       const availableHeight = viewport.height - margin * 2;
@@ -30661,6 +30813,58 @@ $moduler.toolkit.makeInterface([
     }
   },
   static: {
+    viewport: {
+      width: Std.classes.Environmenter.isBrowser ? window.innerWidth : false,
+      height: Std.classes.Environmenter.isBrowser ? window.innerHeight : false,
+    },
+    dialogs: {
+      margin: 24,
+      sizes: {
+        "small": {
+          width: 0.35,
+          minWidth: 320,
+          maxWidth: 440,
+          height: null,
+          maxHeight: 0.75,
+          minHeight: 0.2,
+        },
+        "medium-small": {
+          width: 0.475,
+          minWidth: 400,
+          maxWidth: 630,
+          height: 0.39,
+          minHeight: 0.35,
+        },
+        "medium": {
+          width: 0.60,
+          minWidth: 480,
+          maxWidth: 820,
+          height: 0.78,
+          minHeight: 0.5,
+        },
+        "medium-big": {
+          width: 0.74,
+          minWidth: 560,
+          maxWidth: 1130,
+          height: 0.84,
+          minHeight: 0.6
+        },
+        "big": {
+          width: 0.88,
+          minWidth: 640,
+          maxWidth: 1440,
+          height: 0.90,
+          minHeight: 0.7,
+        },
+        "maximized": {
+          width: 0.60,
+          minWidth: 480,
+          maxWidth: 820,
+          height: 0.78,
+          minHeight: 0.5,
+        },
+      },
+    },
     findDialogPortFrom(element) {
       Std.all.Tracer?.globalInstance.log("Std.views.DialogsPort.static.findDialogPortFrom", arguments || []);;
       return Std.classes.Domer.findFirstParentWhere(it => it.matches(".DialogsPort.View"), element).__vue__;
@@ -30671,8 +30875,10 @@ $moduler.toolkit.makeInterface([
   name: "DialogsTester",
   template: "<div class=\"DialogsTester\">" + '\n'
  + "    <textarea v-model=\"code\" style=\"height: 280px;display: block; width: 100%; font-size: 11px;\" spellcheck=\"false\"></textarea>" + '\n'
- + "    <div class=\"normal_button\" v-on:click=\"runDialog\">Run dialog</div>" + '\n'
- + "    <div class=\"flex_row centered\">" + '\n'
+ + "    <div class=\"pad_vertical_2\">" + '\n'
+ + "        <div class=\"normal_button\" v-on:click=\"runDialog\">Run dialog</div>" + '\n'
+ + "    </div>" + '\n'
+ + "    <div class=\"flex_row centered gap_4\">" + '\n'
  + "        <div class=\"flex_1 normal_button\" v-on:click=\"() => openDialog('small')\">small</div>" + '\n'
  + "        <div class=\"flex_1 normal_button\" v-on:click=\"() => openDialog('medium-small')\">medium-small</div>" + '\n'
  + "        <div class=\"flex_1 normal_button\" v-on:click=\"() => openDialog('medium')\">medium</div>" + '\n'
@@ -30713,7 +30919,80 @@ $moduler.toolkit.makeInterface([
 });;
   }
 
-  Wave_15_Calendar: {
+  Wave_16_Forms_and_controls: {
+    Std.all.DynamicControl = Std.views.DynamicControl = Std.classes.ViewsRegistry.$.set("DynamicControl",
+  Std.classes.ViewsStaticMerger.mergeViews(...[
+    {
+      name: "DynamicControl",
+      props: {
+        parameters: {
+          type: Object,
+          required: true
+        }
+      },
+      async created() {
+        Install_locals: {
+          this.$locals = {
+            isLoaded: false,
+            controlName: null,
+            controlParameters: {}
+          };
+        }
+        try {
+          Load_control_dynamically: {
+            this.$locals.controlName = this.parameters.controlOf;
+            this.$locals.controlParameters = this.parameters;
+            this.$locals.isLoaded = true;
+          }
+          Render_view: {
+            this.$forceUpdate(true);
+          }
+        } catch(error) {
+          this.$locals.error = error;
+        }
+      },
+      render(h) {
+        if(!this.$locals.isLoaded) return h();
+        if(this.$locals.error) return h("ErrorViewer", { props: { error: this.$locals.error } });
+        return h(this.$locals.controlName, { props: this.$locals.controlParameters });
+      }
+    }
+  ]),
+)
+
+/*
+Std.classes.ViewsRegistry.$.set("DynamicControl", Std.classes.ViewsStaticMerger.mergeViews(...[
+  Std.objects.ViewTraits.InstallLocals,
+  Std.objects.ViewTraits.LoadControlResource,
+  {
+    name: "DynamicControl",
+    template: "<component" + '\n'
+ + "    class=\"DynamicControl View FormControl\"" + '\n'
+ + "    v-bind:is=\"$locals.error ? 'ErrorViewer' : $locals.controlName\"" + '\n'
+ + "    v-bind=\"$locals.controlParameters\"" + '\n'
+ + "    ref=\"content\"" + '\n'
+ + "/>",
+    props: {
+      parameters: {
+        type: Object,
+        required: true
+      },
+    },
+    created() {
+      this.installLocals();
+      this.$locals.isLoaded = false;
+      (async () => {
+        await this.loadControlResource();
+        this.$locals.isLoaded = true;
+        this.$forceUpdate(true);
+      })();
+    },
+  }
+]))
+//*/;
+  }
+
+  Wave_17_Calendar: {
     En_entredicho_por_v2: {
       Std.all.CalendarParser = Std.objects.CalendarParser = Std.parsers.peggy.generate("Calendar_parser = Sentence" + '\n'
  + "" + '\n'
@@ -30920,7 +31199,7 @@ $moduler.toolkit.makeInterface([
 })();;
   }
 
-  Wave_16_Graphics: {
+  Wave_18_Graphics: {
     Std.functions.CielabColorConverter = Std.objects.CielabColorConverter = class CielabColorConverter {
 
   static convert(value, max = 10) {
@@ -30968,7 +31247,7 @@ $moduler.toolkit.makeInterface([
 };
   }
 
-  Wave_17_Development: {
+  Wave_19_Development: {
     Std.all.LoremIpsum = Std.views.LoremIpsum = Std.classes.ViewsRegistry.$.set("LoremIpsum", {
   name: "LoremIpsum",
   template: "<div class=\"LoremIpsum View\">" + '\n'

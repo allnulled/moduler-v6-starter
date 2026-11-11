@@ -3,5 +3,5 @@ html {
     font-family: Arial;
 }
 
-/*@injects:"@/src/candidate/Std/apis/views/containers/ContextualView/ContextualView.style.css"*/
-/*@injects:"@/src/candidate/Std/apis/views/dialogs/DialogView/DialogView.style.css"*/
+/*@injects:"@/src/Std/apis/views/containers/ContextualView/ContextualView.style.css"*/
+/*@injects:"@/src/Std/apis/views/dialogs/DialogView/DialogView.style.css"*/

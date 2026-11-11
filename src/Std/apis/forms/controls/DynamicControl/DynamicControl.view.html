@@ -1,0 +1,6 @@
+<component
+    class="DynamicControl View FormControl"
+    v-bind:is="$locals.error ? 'ErrorViewer' : $locals.controlName"
+    v-bind="$locals.controlParameters"
+    ref="content"
+/>

@@ -1,14 +1,14 @@
 {
   "tree": {
-    "@/test/unit/src/candidate/std/error/Error/Error.entry.js": {
+    "@/test/unit/src/Std/error/Error/Error.entry.js": {
       "310-368": {
         "syntax": "Inject Source",
         "inner": "\"./Prosecutor/Prosecutor.class.js\"",
         "referenceOf": {
           "type": "file",
           "entry": "./Prosecutor/Prosecutor.class.js",
-          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/test/unit/src/candidate/std/error/Error/Prosecutor/Prosecutor.class.js",
-          "rootpath": "@/test/unit/src/candidate/std/error/Error/Prosecutor/Prosecutor.class.js"
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/test/unit/src/Std/error/Error/Prosecutor/Prosecutor.class.js",
+          "rootpath": "@/test/unit/src/Std/error/Error/Prosecutor/Prosecutor.class.js"
         }
       },
       "227-283": {
@@ -17,8 +17,8 @@
         "referenceOf": {
           "type": "file",
           "entry": "./Dissector/Dissector.class.js",
-          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/test/unit/src/candidate/std/error/Error/Dissector/Dissector.class.js",
-          "rootpath": "@/test/unit/src/candidate/std/error/Error/Dissector/Dissector.class.js"
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/test/unit/src/Std/error/Error/Dissector/Dissector.class.js",
+          "rootpath": "@/test/unit/src/Std/error/Error/Dissector/Dissector.class.js"
         }
       },
       "149-201": {
@@ -27,8 +27,8 @@
         "referenceOf": {
           "type": "file",
           "entry": "./Handler/Handler.class.js",
-          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/test/unit/src/candidate/std/error/Error/Handler/Handler.class.js",
-          "rootpath": "@/test/unit/src/candidate/std/error/Error/Handler/Handler.class.js"
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/test/unit/src/Std/error/Error/Handler/Handler.class.js",
+          "rootpath": "@/test/unit/src/Std/error/Error/Handler/Handler.class.js"
         }
       },
       "73-125": {
@@ -37,14 +37,14 @@
         "referenceOf": {
           "type": "file",
           "entry": "./Factory/Factory.class.js",
-          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/test/unit/src/candidate/std/error/Error/Factory/Factory.class.js",
-          "rootpath": "@/test/unit/src/candidate/std/error/Error/Factory/Factory.class.js"
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/test/unit/src/Std/error/Error/Factory/Factory.class.js",
+          "rootpath": "@/test/unit/src/Std/error/Error/Factory/Factory.class.js"
         }
       }
     },
-    "@/test/unit/src/candidate/std/error/Error/Prosecutor/Prosecutor.class.js": {},
-    "@/test/unit/src/candidate/std/error/Error/Dissector/Dissector.class.js": {},
-    "@/test/unit/src/candidate/std/error/Error/Handler/Handler.class.js": {},
-    "@/test/unit/src/candidate/std/error/Error/Factory/Factory.class.js": {}
+    "@/test/unit/src/Std/error/Error/Prosecutor/Prosecutor.class.js": {},
+    "@/test/unit/src/Std/error/Error/Dissector/Dissector.class.js": {},
+    "@/test/unit/src/Std/error/Error/Handler/Handler.class.js": {},
+    "@/test/unit/src/Std/error/Error/Factory/Factory.class.js": {}
   }
 }

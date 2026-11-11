@@ -1,0 +1,202 @@
+(function () {
+
+  /**@:
+   * 
+   * # Std global object
+   * 
+   * - Type: object
+   * - Global: yes
+   * - Properties:
+   *    - all:Object
+   *    - objects:Object
+   *    - functions:Object
+   *    - traits:Object
+   *    - interfaces:Object
+   *    - classes:Object
+   *    - parsers:Object
+   *    - types:Object
+   * - Loads:
+   *    - Wave 0: native extensions
+   *    - Wave 1: elemental funcions, clases and interfaces
+   *    - Wave 2: utility interfaces
+   *    - Wave 3: utility classes
+   *    - Wave 4: core of types
+   *    - Wave 5: filesystem
+   *    - Wave 6: ...
+   * - ...
+   * 
+   */
+  
+  globalThis.Std = {};
+  
+  Object.assign(Std, {
+    all: {},
+    objects: {},
+    functions: {
+      noop: function() {},
+    },
+    traits: {},
+    interfaces: {},
+    classes: {},
+    parsers: {
+      peggy: peggyjs,
+      picomatch: picomatch
+    },
+    types: {},
+    externals: {
+      peggy: peggyjs,
+      picomatch: picomatch,
+    },
+    // @LATER: Este lo inicializa Std.classes.ViewsRegistry.globalInstance
+    views: null,
+  });
+
+  Wave_1_Lowest_interfaces_only: {
+    Std.all.CreableInterface = Std.interfaces.CreableInterface = $compiler.inject.source("./apis/patterns/CreableInterface/CreableInterface.interface.js");
+    Std.all.ClonableInterface = Std.interfaces.ClonableInterface = $compiler.inject.source("./apis/patterns/ClonableInterface/ClonableInterface.interface.js");
+    Std.all.ConfigurableInterface = Std.interfaces.ConfigurableInterface = $compiler.inject.source("./apis/patterns/ConfigurableInterface/ConfigurableInterface.interface.js");
+    Std.all.InstantiableInterface = Std.interfaces.InstantiableInterface = $compiler.inject.source("./apis/patterns/InstantiableInterface/InstantiableInterface.interface.js");
+  }
+  
+  Wave_2_Native_extensions_and_dependencies: {
+    $compiler.inject.source("./apis/errors/Error.extension/Error.extension.entry.js");
+  }
+  
+  Wave_3_Elemental_functions_classes_and_interfaces: {
+    Std.assert = Std.all.assert = Std.functions.assert = $compiler.inject.source("./assert.function.js");
+    Std.all.trify = Std.functions.trify = $compiler.inject.source("./apis/errors/trify/trify.function.js");
+    Std.all.extractSubstrings = Std.functions.extractSubstrings = $compiler.inject.source("./apis/string/extractSubstrings/extractSubstrings.function.js");
+    Std.all.capitalizeString = Std.functions.capitalizeString = $compiler.inject.source("./apis/string/capitalizeString.function.js");
+    Std.all.Timeout = Std.classes.Timeout = $compiler.inject.source("./apis/time/Timeout/Timeout.class.js");
+    Std.all.Performancer = Std.classes.Performancer = $compiler.inject.source("./apis/time/Performancer/Performancer.class.js");
+    Std.all.TryableProxy = Std.classes.TryableProxy = $compiler.inject.source("./apis/errors/TryableProxy/TryableProxy.class.js");
+    Std.all.TryableInterface = Std.interfaces.TryableInterface = $compiler.inject.source("./apis/patterns/TryableInterface/TryableInterface.interface.js");
+    Std.all.JsonStringifier = Std.classes.JsonStringifier = $compiler.inject.source("./apis/json/JsonStringifier/JsonStringifier.class.js");
+    Std.all.NativePrototypes = Std.objects.NativePrototypes = $compiler.inject.source("./apis/reflection/NativePrototypes/NativePrototypes.object.js");
+    Std.all.EnvironmenterInterface = Std.interfaces.EnvironmenterInterface = $compiler.inject.source("./apis/environment/Environmenter/EnvironmenterInterface.interface.js");
+    Std.all.Environmenter = Std.classes.Environmenter = $compiler.inject.source("./apis/environment/Environmenter/Environmenter.class.js");
+    Std.all.Printer = Std.classes.Printer = $compiler.inject.source("./apis/debug/Printer.class.js");
+    Std.all.triggerMethodIfExists = Std.functions.triggerMethodIfExists = $compiler.inject.source("./apis/hooks/triggerMethodIfExists.function.js");
+    Std.all.Ansi = Std.objects.Ansi = $compiler.inject.source("./apis/console/Ansi/Ansi.object.js");
+    Std.all.BooleanUtil = Std.classes.BooleanUtil = $compiler.inject.source("./apis/testing/BooleanUtil/BooleanUtil.class.js");
+    Std.all.ObjectUtils = Std.classes.ObjectUtils = $compiler.inject.source("./apis/reflection/ObjectUtils/ObjectUtils.class.js");
+    Std.all.ObjectReflector = Std.classes.ObjectReflector = $compiler.inject.source("./apis/reflection/ObjectReflector/ObjectReflector.class.js");
+    Std.all.FunctionReflector = Std.classes.FunctionReflector = $compiler.inject.source("./apis/reflection/FunctionReflector/FunctionReflector.class.js");
+    Std.all.ClassReflector = Std.classes.ClassReflector = $compiler.inject.source("./apis/reflection/ClassReflector/ClassReflector.class.js");
+    Std.all.UniqueEvent = Std.classes.UniqueEvent = $compiler.inject.source("./apis/events/UniqueEvent/UniqueEvent.class.js");
+    Std.all.FunctionsList = Std.classes.FunctionsList = $compiler.inject.source("./apis/events/FunctionsList/FunctionsList.class.js");
+  }
+  Wave_4_Utility_interfaces: {
+    Std.all.EventsBox = Std.classes.EventsBox = $compiler.inject.source("./apis/events/EventsBox/EventsBox.class.js");
+    Std.all.IntrospectorInterface = Std.interfaces.IntrospectorInterface = $compiler.inject.source("./apis/reflection/Introspector/IntrospectorInterface.interface.js");
+    Std.all.IntrospectableInterfaceFactory = Std.functions.IntrospectableInterfaceFactory = $compiler.inject.source("./apis/reflection/Introspector/IntrospectableInterfaceFactory.interface.js");
+    Std.all.RunnableInterface = Std.interfaces.RunnableInterface = $compiler.inject.source("./apis/patterns/RunnableInterface/RunnableInterface.interface.js");
+    Std.all.TracerInterface = Std.interfaces.TracerInterface = $compiler.inject.source("./apis/testing/Tracer/TracerInterface.interface.js");
+    Std.all.CheckerInterface = Std.interfaces.CheckerInterface = $compiler.inject.source("./apis/testing/Checker/CheckerInterface.interface.js");
+    Std.all.AsserterInterface = Std.interfaces.AsserterInterface = $compiler.inject.source("./apis/testing/Asserter/AsserterInterface.interface.js");
+    Std.all.TesterInterface = Std.interfaces.TesterInterface = $compiler.inject.source("./apis/testing/Tester/TesterInterface.interface.js");
+    Std.all.PropertiesMergerInterface = Std.interfaces.PropertiesMergerInterface = $compiler.inject.source("./apis/merge/PropertiesMerger/PropertiesMergerInterface.interface.js");
+    Std.all.UrlerInterface = Std.interfaces.UrlerInterface = $compiler.inject.source("./apis/urls/Urler/UrlerInterface.interface.js");
+    Std.all.ProgresserInterface = Std.interfaces.ProgresserInterface = $compiler.inject.source("./apis/debug/Progresser/ProgresserInterface.interface.js");
+    Std.all.BasedirInterface = Std.interfaces.BasedirInterface = $compiler.inject.source("./apis/files/Basedir/BasedirInterface.interface.js");
+  }
+  Wave_5_Utility_classes: {
+    Std.all.Basedir = Std.classes.Basedir = $compiler.inject.source("./apis/files/Basedir/Basedir.class.js");
+    Std.all.Introspector = Std.classes.Introspector = $compiler.inject.source("./apis/reflection/Introspector/Introspector.class.js");
+    Std.all.Urler = Std.classes.Urler = $compiler.inject.source("./apis/urls/Urler/Urler.class.js");
+    Std.all.Tracer = Std.classes.Tracer = $compiler.inject.source("./apis/testing/Tracer/Tracer.class.js");
+    Std.all.Checker = Std.classes.Checker = $compiler.inject.source("./apis/testing/Checker/Checker.class.js");
+    Std.all.Asserter = Std.classes.Asserter = $compiler.inject.source("./apis/testing/Asserter/Asserter.class.js");
+    Std.all.PropertiesMerger = Std.classes.PropertiesMerger = $compiler.inject.source("./apis/merge/PropertiesMerger/PropertiesMerger.class.js");
+    Std.all.AbstractionMerger = Std.classes.AbstractionMerger = $compiler.inject.source("./apis/merge/AbstractionMerger/AbstractionMerger.class.js");
+    Std.all.Tester = Std.classes.Tester = $compiler.inject.source("./apis/testing/Tester/Tester.class.js");
+    Std.all.Progresser = Std.classes.Progresser = $compiler.inject.source("./apis/debug/Progresser/Progresser.class.js");
+    Std.all.Randomizer = Std.classes.Randomizer = $compiler.inject.source("./apis/random/Randomizer/Randomizer.class.js");
+  }
+  Wave_6_Types_system: {
+    Std.all.TypesParser = Std.objects.TypesParser = Std.parsers.typeslang = $compiler.inject.source("./apis/types/TypesParser/TypesParser.object.js");
+    Std.all.ValidationMemoryInterface = Std.interfaces.ValidationMemoryInterface = $compiler.inject.source("./apis/types/TypesValidator/ValidationMemory/ValidationMemoryInterface.interface.js");
+    Std.all.ValidationMemory = Std.interfaces.ValidationMemory = $compiler.inject.source("./apis/types/TypesValidator/ValidationMemory/ValidationMemory.class.js");
+    Std.all.TypesRegistry = Std.classes.TypesRegistry = $compiler.inject.source("./apis/types/TypesRegistry/TypesRegistry.class.js");
+    Std.all.TypesValidatorInterface = Std.interfaces.TypesValidatorInterface = $compiler.inject.source("./apis/types/TypesValidator/TypesValidatorInterface.interface.js");
+    Std.all.TypesValidator = Std.classes.TypesValidator = $compiler.inject.source("./apis/types/TypesValidator/TypesValidator.class.js");
+    Std.all.Domer = Std.classes.Domer = $compiler.inject.source("./apis/dom/Domer/Domer.class.js");
+  }
+  Wave_7_Filesystem: {
+    Std.all.NodejsFilesystem = Std.classes.NodejsFilesystem = $compiler.inject.source("./apis/files/NodejsFilesystem/NodejsFilesystem.class.js");
+    Std.all.IdbCrud = Std.classes.IdbCrud = $compiler.inject.source("./apis/indexeddb/IdbCrud/IdbCrud.class.js");
+    Std.all.IdbFilesystem = Std.classes.IdbFilesystem = $compiler.inject.source("./apis/files/IdbFilesystem/IdbFilesystem.class.js");
+    Std.all.makeFunctionByProperties = Std.functions.makeFunctionByProperties = $compiler.inject.source("@/src/Std/apis/reflection/makeFunctionByProperties/makeFunctionByProperties.function.js");
+  }
+  Wave_8_Abstractions: {
+    Std.all.AbstractionUtils = Std.classes.AbstractionUtils = $compiler.inject.source("./apis/abstraction/AbstractionUtils/AbstractionUtils.class.js");
+  }
+  Wave_9_Database: {
+
+  }
+  Wave_10_Operative_system: {
+    Std.all.ProcessUtils = Std.classes.ProcessUtils = $compiler.inject.source("./apis/os/process/ProcessUtils.class.js");
+    Std.all.ThreadInterface = Std.interfaces.ThreadInterface = $compiler.inject.source("./apis/os/threads/ThreadInterface/ThreadInterface.interface.js");
+    Std.all.Thread = Std.classes.Thread = $compiler.inject.source("./apis/os/threads/Thread/Thread.class.js");
+  }
+  
+  Wave_12_Views_system: {
+    External_Vue2_js: {
+      if(typeof window === "undefined") break External_Vue2_js;
+      if(typeof Vue2 !== "undefined") break External_Vue2_js;
+      Std.externals.Vue2 = globalThis.Vue2 = $compiler.inject.plain("@/src/www/external/vue2/vue2.js");
+    }
+    Std.all.ViewsRegistry = Std.classes.ViewsRegistry = $compiler.inject.source("./apis/views/ViewsRegistry/ViewsRegistry.class.js");
+    Std.all.ViewTraitsRegistry = Std.classes.ViewTraitsRegistry = $compiler.inject.source("./apis/views/ViewTraitsRegistry/ViewTraitsRegistry.class.js");
+    Std.all.ViewsStaticMerger = Std.classes.ViewsStaticMerger = $compiler.inject.source("./apis/merge/ViewsStaticMerger/ViewsStaticMerger.class.js");
+    Std.all.DynamicView = Std.views.DynamicView = $compiler.inject.source("./apis/views/containers/DynamicView/DynamicView.object.js");
+    Std.all.ContextualView = Std.views.ContextualView = $compiler.inject.source("./apis/views/containers/ContextualView/ContextualView.object.js");
+  }
+
+  Wave_14_View_traits: {
+    Std.objects.ViewTraits.InstallLocals = $compiler.inject.source("./apis/views/traits/InstallLocals.object.js");
+    Std.objects.ViewTraits.LoadControlResource = $compiler.inject.source("./apis/views/traits/LoadControlResource.object.js");
+  }
+
+  Wave_15_Dialogs: {
+    Std.all.Dialogs = Std.classes.Dialogs = $compiler.inject.source("./apis/views/dialogs/Dialogs/Dialogs.class.js");
+    Std.all.DialogsFactory = Std.classes.DialogsFactory = $compiler.inject.source("./apis/views/dialogs/DialogsFactory/DialogsFactory.class.js");
+    Std.all.DialogView = Std.views.DialogView = $compiler.inject.source("./apis/views/dialogs/DialogView/DialogView.object.js");
+    Std.all.DialogsTree = Std.views.DialogsTree = $compiler.inject.source("./apis/views/dialogs/DialogsTree/DialogsTree.object.js");
+    Std.all.DialogsTreeNode = Std.views.DialogsTreeNode = $compiler.inject.source("./apis/views/dialogs/DialogsTreeNode/DialogsTreeNode.object.js");
+    Std.all.DialogsPort = Std.views.DialogsPort = $compiler.inject.source("./apis/views/dialogs/DialogsPort/DialogsPort.object.js");
+    Std.all.DialogsTester = Std.views.DialogsTester = $compiler.inject.source("./apis/views/dialogs/DialogsTester/DialogsTester.object.js");
+  }
+
+  Wave_16_Forms_and_controls: {
+    Std.all.DynamicControl = Std.views.DynamicControl = $compiler.inject.source("./apis/forms/controls/DynamicControl/DynamicControl.object.js");
+  }
+
+  Wave_17_Calendar: {
+    En_entredicho_por_v2: {
+      Std.all.CalendarParser = Std.objects.CalendarParser = $compiler.inject.source("./apis/calendar/CalendarParser/CalendarParser.object.js");
+      Std.all.CalendarClasses = Std.objects.CalendarClasses = $compiler.inject.source("./apis/calendar/Calendar/CalendarClasses.object.js");
+      Std.all.CalendarInterface = Std.interfaces.CalendarInterface = $compiler.inject.source("./apis/calendar/Calendar/CalendarInterface.interface.js");
+      Std.all.Calendar = Std.objects.Calendar = $compiler.inject.source("./apis/calendar/Calendar/Calendar.class.js");
+    }
+    Std.all.CalendarV2 = Std.classes.CalendarV2 = $compiler.inject.source("./apis/calendar/v2/CalendarV2/CalendarV2.class.js");
+  }
+
+  Wave_18_Graphics: {
+    Std.functions.CielabColorConverter = Std.objects.CielabColorConverter = $compiler.inject.source("./apis/graphics/colors/scale/CielabColorConverter/CielabColorConverter.class.js");
+  }
+
+  Wave_19_Development: {
+    Std.all.LoremIpsum = Std.views.LoremIpsum = $compiler.inject.source("./apis/views/development/LoremIpsum/LoremIpsum.object.js");
+  }
+
+  Wave_95_Application_starter: {
+    Std.all.MainApplication = Std.views.MainApplication = $compiler.inject.source("./apis/application/MainApplication/MainApplication.object.js");
+    Std.all.ApplicationStarter = Std.classes.ApplicationStarter = $compiler.inject.source("./apis/application/ApplicationStarter/ApplicationStarter.class.js");
+  }
+
+
+
+  return Std;
+
+})()

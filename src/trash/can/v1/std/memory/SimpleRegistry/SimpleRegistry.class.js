@@ -2,7 +2,7 @@ class SimpleRegistry {
   /**
    * # Class SimpleRegistry
    * - section: std.memory.SimpleRegistry
-   * - file:    @/src/candidate/std/memory/SimpleRegistry/SimpleRegistry.class.js
+   * - file:    @/src/Std/memory/SimpleRegistry/SimpleRegistry.class.js
    */
   /*@injects:"./static.create.js"*/
   /*@injects:"./prototype._define.js"*/

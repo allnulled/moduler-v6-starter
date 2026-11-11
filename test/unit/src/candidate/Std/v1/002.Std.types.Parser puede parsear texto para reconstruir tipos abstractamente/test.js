@@ -14,7 +14,7 @@ module.exports = async function ({ devbin, Std }) {
 
   const asserter = Asserter.new;
 
-  const currentDirectory = $moduler.normalizationOf("@/test/unit/src/candidate/Std/v1/002.Std.types.Parser puede parsear texto para reconstruir tipos abstractamente");
+  const currentDirectory = $moduler.normalizationOf("@/test/unit/src/Std/v1/002.Std.types.Parser puede parsear texto para reconstruir tipos abstractamente");
 
   const ensureFuncFile = async function(file, fileOut) {
     const exists = await require("fs").promises.access(file).then(() => true).catch(() => false);

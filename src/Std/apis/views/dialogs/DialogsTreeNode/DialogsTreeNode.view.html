@@ -1,0 +1,14 @@
+<div class="View DialogsTreeNode" :class="$window.Std.objects.GlobalDialog.port.isLastFocusedThread(thread) ? 'is_focused' : ''">
+    <div class="flex_row centered dialog_tree_node_row gap_2 pad_vertical_1">
+        <div class="flex_0 flex_row" v-if="level">
+            <div class="flex_0 nowrap" style="min-width: 8px;" v-for="it in new Array(level)" v-bind:key="it"></div>
+        </div>
+        <div class="normal_button flex_100 unfocusable" v-on:click="goToDialog">
+            <span ref="boundariesSignal">{{ port.getDialogFromThread(thread)?.$locals.isMinimized ? "🔹" : "🔷"}}</span>
+            <span>{{ thread.title || thread.threadId }}</span>
+        </div>
+        <div class="flex_1">
+            <div class="square_button unfocusable" v-on:click="closeDialog"> ✖️ </div>
+        </div>
+    </div>
+</div>

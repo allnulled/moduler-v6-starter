@@ -2,7 +2,7 @@ _pick (parameters) {
   /**
    * # prototype._pick
    * - section: std.memory.SimpleRegistry.prototype._pick
-   * - file:    @/src/candidate/std/memory/SimpleRegistry/prototype._pick.js
+   * - file:    @/src/Std/memory/SimpleRegistry/prototype._pick.js
    */
   const { id, default: _default } = $moduler.toolkit.normalizeParameters(parameters, {
     id: {

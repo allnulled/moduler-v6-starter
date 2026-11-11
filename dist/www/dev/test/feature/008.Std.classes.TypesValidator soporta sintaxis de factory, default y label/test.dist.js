@@ -1,7 +1,6 @@
 module.exports = async function ({ Tester }) {
 
   const {
-    TypesCatalog,
     TypesValidator,
     TypesParser,
     Asserter: { new: asserter },

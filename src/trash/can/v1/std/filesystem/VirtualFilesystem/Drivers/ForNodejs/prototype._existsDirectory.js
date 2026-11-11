@@ -2,7 +2,7 @@ async _existsDirectory (params, options) {
   /**
    * # prototype._existsDirectory
    * - section: std.filesystem.VirtualFilesystem.Drivers.ForNodejs.prototype._existsDirectory
-   * - file:    @/src/candidate/std/filesystem/VirtualFilesystem/Drivers/ForNodejs/prototype._existsDirectory.js
+   * - file:    @/src/Std/filesystem/VirtualFilesystem/Drivers/ForNodejs/prototype._existsDirectory.js
    */
   const { directory, contents } = $moduler.toolkit.normalizeParams(params);
   const { tracer } = $moduler.toolkit.normalizeOptions(options);

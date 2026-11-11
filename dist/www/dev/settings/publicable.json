@@ -36,7 +36,9 @@
             "@/dist/www/dev/test/feature/016.Std.views.DynamicView puede renderizar contenido variable eficientemente/test.dist.js",
             "@/dist/www/dev/test/feature/017.Std.views.ContextualView puede renderizar contenido contextualizado eficientemente/test.dist.js",
             "@/dist/www/dev/test/feature/018.Std.views.DialogsPort.globalInstance puede imprimir los diálogos/test.dist.js",
-            "@/dist/www/dev/test/feature/019.Std.classes.Performancer puede medir tiempos paralelos y obtener reportes conjuntos/test.dist.js"
+            "@/dist/www/dev/test/feature/019.Std.classes.Performancer puede medir tiempos paralelos y obtener reportes conjuntos/test.dist.js",
+            "@/dist/www/dev/test/feature/020.Std.views.DynamicControl puede funcionar asíncronamente/test.dist.js",
+            "@/dist/www/dev/test/feature/111.Last feature/test.dist.js"
           ]
         },
         "@/dist/www/dev/test/integrity": {

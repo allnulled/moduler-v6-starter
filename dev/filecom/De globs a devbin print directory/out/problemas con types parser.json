@@ -1,19 +1,19 @@
-[#FILE=@/src/candidate/Std/apis/patterns/ClonableInterface/ClonableInterface.interface.js]
+[#FILE=@/src/Std/apis/patterns/ClonableInterface/ClonableInterface.interface.js]
 // @interface:ClonableInterface
 {
   prototype: {
     get newClone() {
-      $compiler.inject.template("@/src/candidate/Std/snippets/methodLog.js", {name:"ClonableInterface.prototype.newClone"});
+      $compiler.inject.template("@/src/Std/snippets/methodLog.js", {name:"ClonableInterface.prototype.newClone"});
       return this.clone();
     },
     clone: function(config = {}) {
-      $compiler.inject.template("@/src/candidate/Std/snippets/methodIn.js", {name:"ClonableInterface.prototype.clone"});
+      $compiler.inject.template("@/src/Std/snippets/methodIn.js", {name:"ClonableInterface.prototype.clone"});
       Validate_unclonable_properties: {
         if (this.unclonableProperties) {
           for (let index = 0; index < this.unclonableProperties.length; index++) {
             const unclonableProperty = this.unclonableProperties[index];
             if (!(unclonableProperty in config)) {
-              $compiler.inject.template("@/src/candidate/Std/snippets/methodError.js", {name:"ClonableInterface.prototype.clone"});
+              $compiler.inject.template("@/src/Std/snippets/methodError.js", {name:"ClonableInterface.prototype.clone"});
               throw new Error(`Cannot clone without specifying property «${unclonableProperty}» on «ClonableInterface.prototype.clone»`);
             }
           }
@@ -28,7 +28,7 @@
           }
         }
       }
-      $compiler.inject.template("@/src/candidate/Std/snippets/methodOut.js", {name:"ClonableInterface.prototype.clone"});
+      $compiler.inject.template("@/src/Std/snippets/methodOut.js", {name:"ClonableInterface.prototype.clone"});
       return this.new.config(this).config(config);
     }
   },
@@ -36,7 +36,7 @@
 
   },
 }
-[#FILE=@/src/candidate/Std/apis/types/TypesParser/TypesParser.source.pegjs]
+[#FILE=@/src/Std/apis/types/TypesParser/TypesParser.source.pegjs]
 {
 
 }
@@ -267,13 +267,13 @@ json_false = "false" { return false }
 json_null = "null" { return null }
 js_variable_name = [A-Za-záéíóúàèìòù$_] [A-Za-z0-9áéíóúàèìòù$_]* { return text() }
 json_space = [ \t\n\r]*
-[#FILE=@/src/candidate/Std/apis/types/TypesValidator/traits.js]
+[#FILE=@/src/Std/apis/types/TypesValidator/traits.js]
   trace: function trace(...args) {
     // Std.all.Printer.json(args);
     return;
   },
   validateData: async function (expression, data, skipValidations = false) {
-    const astRaw = typeof expression === "string" ? Std.classes.TypesParser.parse(expression) : expression;
+    const astRaw = typeof expression === "string" ? Std.objects.TypesParser.parse(expression) : expression;
     const astWithoutImports = await this._replaceImportsRecursively(astRaw);
     const validation = await this._validateDataRecursively({
       ast: astWithoutImports,

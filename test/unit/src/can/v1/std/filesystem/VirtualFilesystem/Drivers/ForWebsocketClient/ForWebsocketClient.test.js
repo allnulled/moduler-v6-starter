@@ -1,5 +1,5 @@
 const devbin = require(__dirname + "/../../../../../../../../../dev/bin.js");
-const target = require(__dirname + "/../../../../../../../../../dist/src/candidate/std/filesystem/VirtualFilesystem/Drivers/ForWebsocketClient/ForWebsocketClient.dist.js");
+const target = require(__dirname + "/../../../../../../../../../dist/src/Std/filesystem/VirtualFilesystem/Drivers/ForWebsocketClient/ForWebsocketClient.dist.js");
 
 module.exports = (async function () {
 

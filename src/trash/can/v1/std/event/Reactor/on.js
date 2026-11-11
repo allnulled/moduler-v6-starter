@@ -2,6 +2,6 @@ on () {
   /**
    * # on
    * - section: std.event.Reactor.on
-   * - file:    @/src/candidate/std/event/Reactor/on.js
+   * - file:    @/src/Std/event/Reactor/on.js
    */
 }

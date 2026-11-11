@@ -1,5 +1,5 @@
 const devbin = require(__dirname + "/../../../../../../../dev/bin.js");
-const target = require(__dirname + "/../../../../../../../dist/src/candidate/std/parser/JsonParser/JsonParser.dist.js");
+const target = require(__dirname + "/../../../../../../../dist/src/Std/parser/JsonParser/JsonParser.dist.js");
 
 module.exports = (async function () {
       

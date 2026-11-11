@@ -1,8 +1,8 @@
-[#FILE=@/src/candidate/Std/apis/types/TypesParser/TypesParser.object.js]
+[#FILE=@/src/Std/apis/types/TypesParser/TypesParser.object.js]
 Std.parsers.peggy.generate($compiler.inject.string("./TypesParser.source.pegjs"), {
   output: "parser" // also: "source", "parser"
 })
-[#FILE=@/src/candidate/Std/apis/types/TypesParser/TypesParser.source.pegjs]
+[#FILE=@/src/Std/apis/types/TypesParser/TypesParser.source.pegjs]
 Types_script = ast:Evaluable { return ast }
 
 Evaluable = 
@@ -122,7 +122,7 @@ one_space = __ / ___ / Comments
 __ = "\t" / " "
 New_line = ___
 ___ = "\r\n" / "\r" / "\n"
-[#FILE=@/src/candidate/Std/apis/types/TypesValidator/function.validateData.js]
+[#FILE=@/src/Std/apis/types/TypesValidator/function.validateData.js]
 async function validateData(validator, data, pointers = {}, options = {}, validationResult = false) {
   Validate_input: {
     const state = $moduler.toolkit.normalizeObject({}, {
@@ -192,29 +192,29 @@ async function validateData(validator, data, pointers = {}, options = {}, valida
 
   //*/
 }
-[#FILE=@/src/candidate/Std/apis/types/TypesValidator/function.validateEvaluableType.js]
+[#FILE=@/src/Std/apis/types/TypesValidator/function.validateEvaluableType.js]
 function validateEvaluableType(validator, data, { pointers, options, result }) {
   Std.objects.Ansi.style("black,bgYellow").print("Evaluable type validator:");
   console.log(validator);
   Std.objects.Ansi.style("black,bgYellow").print("Evaluable type data:");
 }
-[#FILE=@/src/candidate/Std/apis/types/TypesValidator/function.validateTypeAppendix.js]
+[#FILE=@/src/Std/apis/types/TypesValidator/function.validateTypeAppendix.js]
 function validateTypeAppendix(validator, data, { pointers, options, result }) {
   
 }
-[#FILE=@/src/candidate/Std/apis/types/TypesValidator/function.validateTypeArray.js]
+[#FILE=@/src/Std/apis/types/TypesValidator/function.validateTypeArray.js]
 function validateTypeArray(validator, data, { pointers, options, result }) {
   
 }
-[#FILE=@/src/candidate/Std/apis/types/TypesValidator/function.validateTypeId.js]
+[#FILE=@/src/Std/apis/types/TypesValidator/function.validateTypeId.js]
 function validateTypeId(validator, data, { pointers, options, result }) {
   
 }
-[#FILE=@/src/candidate/Std/apis/types/TypesValidator/function.validateTypeObject.js]
+[#FILE=@/src/Std/apis/types/TypesValidator/function.validateTypeObject.js]
 function validateTypeObject(validator, data, { pointers, options, result }) {
   
 }
-[#FILE=@/test/unit/src/candidate/Std/v1/501.Std.types.Parser puede parsear texto para reconstruir tipos abstractamente/examples.func/Example-003.Genérico 1.js]
+[#FILE=@/test/unit/src/Std/v1/501.Std.types.Parser puede parsear texto para reconstruir tipos abstractamente/examples.func/Example-003.Genérico 1.js]
 module.exports = async function({ Asserter, TypesParser, TypesValidator, Std, devbin }) {
   const fs = require("fs");
   const path = require("path");
@@ -223,7 +223,7 @@ module.exports = async function({ Asserter, TypesParser, TypesValidator, Std, de
   const validation = await TypesValidator.validateData(content, {});
   console.log(validation);
 }
-[#FILE=@/test/unit/src/candidate/Std/v1/501.Std.types.Parser puede parsear texto para reconstruir tipos abstractamente/examples.in/Example-003.Genérico 1.tyla]
+[#FILE=@/test/unit/src/Std/v1/501.Std.types.Parser puede parsear texto para reconstruir tipos abstractamente/examples.in/Example-003.Genérico 1.tyla]
 {
     name?: string,
     password: string,
@@ -233,7 +233,7 @@ module.exports = async function({ Asserter, TypesParser, TypesValidator, Std, de
         frequency: option(["low","medium","high"])
     }]
 }
-[#FILE=@/test/unit/src/candidate/Std/v1/501.Std.types.Parser puede parsear texto para reconstruir tipos abstractamente/examples.out/Example-003.Genérico 1.json]
+[#FILE=@/test/unit/src/Std/v1/501.Std.types.Parser puede parsear texto para reconstruir tipos abstractamente/examples.out/Example-003.Genérico 1.json]
 {
   "grammar": "evaluable type",
   "core": {

@@ -409,7 +409,7 @@ Error_extension_v1_scope: {
       "Tester.evaluateCallback",
       "DevBinaryV6Utils.propagateUpTouchEventFrom",
       "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/external/dev-binary-v6.entry.js:1810:10",
-      "/home/carlos/Escritorio/Programas/moduler-v6-starter/test/unit/src/candidate/Std/Std.test.js:19:5",
+      "/home/carlos/Escritorio/Programas/moduler-v6-starter/test/unit/src/Std/Std.test.js:19:5",
       "ErrorListFormatter.format",
       "Tester.start",
     ];

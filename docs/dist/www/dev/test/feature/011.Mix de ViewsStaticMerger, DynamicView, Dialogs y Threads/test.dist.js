@@ -20,7 +20,7 @@ module.exports = async function ({ Tester }) {
     Threads,
   };
 
-  {
+  Test_de_mergeo_normal_de_ViewsStaticMerger: {
     const calls = [];
     const firstCreated = function () {
       calls.push("first");
@@ -100,7 +100,7 @@ module.exports = async function ({ Tester }) {
   // 3. Duplicidad incompatible
   // ------------------------------------------------------------
 
-  {
+  Test_de_validadores_preventores_de_ViewsStaticMerger: {
     const first = {
       methods: {
         save() {
@@ -129,11 +129,11 @@ module.exports = async function ({ Tester }) {
   // ------------------------------------------------------------
   // 4. Referencias originales
   // ------------------------------------------------------------
-  {
+  Test_de_referencias_encapsuladas: {
     const method = function () {
       return true;
     };
-    const first = {methods: {method,},};
+    const first = { methods: { method, }, };
     const merged = ViewsStaticMerger.mergeViews([first, {}]);
     $moduler.assert(method === merged.methods.method);
     $moduler.assert(merged.methods !== first.methods);

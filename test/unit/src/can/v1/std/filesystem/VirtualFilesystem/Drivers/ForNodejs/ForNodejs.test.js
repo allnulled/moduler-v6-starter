@@ -1,13 +1,13 @@
 const devbin = require(__dirname + "/../../../../../../../../../dev/bin.js");
-const target = require(__dirname + "/../../../../../../../../../dist/src/candidate/std/filesystem/VirtualFilesystem/Drivers/ForNodejs/ForNodejs.dist.js");
+const target = require(__dirname + "/../../../../../../../../../dist/src/Std/filesystem/VirtualFilesystem/Drivers/ForNodejs/ForNodejs.dist.js");
 
 module.exports = (async function () {
 
   console.log("2.REQUIRE", typeof require);
   const VfsForNodejs = await target;
   console.log("3.REQUIRE", VfsForNodejs);
-  const root2 = "test/unit/src/candidate/std/filesystem/VirtualFilesystem/Drivers/ForNodejs";
-  const vfs = VfsForNodejs.create({ basedir: devbin.moduler.normalizationOf("@/test/unit/src/candidate/std/filesystem/VirtualFilesystem/Drivers/ForNodejs/") });
+  const root2 = "test/unit/src/Std/filesystem/VirtualFilesystem/Drivers/ForNodejs";
+  const vfs = VfsForNodejs.create({ basedir: devbin.moduler.normalizationOf("@/test/unit/src/Std/filesystem/VirtualFilesystem/Drivers/ForNodejs/") });
   await vfs.deleteFile.onlyTry(`@/${root2}/things/step-1.txt`);
   await vfs.deleteDirectory.onlyTry(`@/${root2}/things`);
   devbin.assert(!await vfs.existsDirectory(`@/${root2}/things`), "Can use vfs driver for nodejs with makeDirectory (1)");

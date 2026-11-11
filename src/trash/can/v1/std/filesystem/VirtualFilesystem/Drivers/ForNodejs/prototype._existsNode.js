@@ -2,7 +2,7 @@ _existsNode (params, settings) {
   /**
    * # prototype._existsNode
    * - section: std.filesystem.VirtualFilesystem.Drivers.ForNodejs.prototype._existsNode
-   * - file:    @/src/candidate/std/filesystem/VirtualFilesystem/Drivers/ForNodejs/prototype._existsNode.js
+   * - file:    @/src/Std/filesystem/VirtualFilesystem/Drivers/ForNodejs/prototype._existsNode.js
    */
   const { file } = $moduler.toolkit.normalizeParams(params);
   const { tracer } = $moduler.toolkit.normalizeOptions(options);

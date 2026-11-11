@@ -3,7 +3,7 @@ module.exports = async function ({ Tester }) {
 
     return;
 
-    const readmePath = $moduler.normalizationOf("@/src/candidate/Std/apis/types/TypesParser/README.md");
+    const readmePath = $moduler.normalizationOf("@/src/Std/apis/types/TypesParser/README.md");
     const readmeContent = await require("fs").promises.readFile(readmePath, "utf8");
     const readmeExamples = Std.functions.extractSubstrings(readmeContent, "```tyla\n", "```");
 

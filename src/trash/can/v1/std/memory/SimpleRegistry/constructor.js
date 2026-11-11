@@ -2,7 +2,7 @@ constructor (parameters = {}, settings = {}) {
   /**
    * # constructor
    * - section: std.memory.Registry.constructor
-   * - file:    @/src/candidate/std/memory/Registry/constructor.js
+   * - file:    @/src/Std/memory/Registry/constructor.js
    */
   const { all } = $moduler.toolkit.normalizeParameters(parameters, {
     all: {

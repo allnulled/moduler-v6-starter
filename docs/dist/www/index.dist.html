@@ -19,6 +19,7 @@
     --border_dark_concept_3: 1px solid var(--grey28);
     --border_light_concept_1: 1px solid #BBB;
     --border_light_concept_2: 1px solid #EEE;
+    --border_control_concept_1: 1px solid #424242;
     --shadow_concept_1: 0 0 5px var(--grey48);
     --font_size_small_1: 10px;
     --spacing_size_0: 0px;
@@ -207,28 +208,22 @@
     flex: 1;
     display: flex;
     flex-direction: row;
-    padding: 2px;
-    gap: 2px;
+    padding: 4px;
+    gap: 5px;
 }
 
 .DialogView .dialog_topbar_button {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: var(--grey95);
     color: var(--grey_of_emojis_1);
-    border-radius: 0pt;
     cursor: pointer;
 }
 .DialogView.is_focused .dialog_topbar_button {
-    border: var(--border_dark_concept_3);
+    
 }
 .DialogView .dialog_topbar_button:hover {
-    box-shadow: var(--shadow_concept_1);
+    
 }
 .DialogView .dialog_body {
-    padding: var(--spacing_size_2);
+    padding: 2px;
     background-color: var(--grey98);
     flex: 1;
     min-width: 0;
@@ -258,8 +253,10 @@
 .DialogView .dialog_buttons {
     display: flex;
     flex-direction: row;
-    gap: 2px;
-    padding: 2px;
+    gap: 4px;
+    padding: 4px;
+    padding-top: 2px;
+    padding-bottom: 2px;
     border-top: var(--border_dark_concept_1);
     background-color: var(--grey96);
 }
@@ -386,9 +383,7 @@
 }
 
 .DialogsTreeNode .dialog_tree_node_row {
-    padding-top: 1px;
-    padding-bottom: 1px;
-    gap: 1px;
+    
 }
 
 .DialogsTreeNode.is_focused .dialog_tree_node_row .normal_button {
@@ -409,77 +404,72 @@
   min-height: 0;
 }
 
-.dialog_box {
+.DialogView .dialog_box {
   display: flex;
   flex-direction: column;
   flex: 1;
   overflow: hidden;
 }
 
-.dialog_header,
-.dialog_footer {
+.DialogView .dialog_header,
+.DialogView .dialog_footer {
   flex: 0 0 auto;
   min-width: 0;
 }
 
-.dialog_body {
+.DialogView .dialog_body {
   flex: 1 1 auto;
   min-width: 0;
   min-height: 0;
   overflow: auto;
 }
 
-.dialog_topbar {
+.DialogView .dialog_topbar {
   display: flex;
   min-width: 0;
 }
 
-.dialog_title {
+.DialogView .dialog_title {
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
 }
 
-.dialog_title_text {
+.DialogView .dialog_title_text {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
 
-.dialog_topbar_buttons {
+.DialogView .dialog_topbar_buttons {
   flex: 0 0 auto;
 }
 
-.dialog_status_bar {
+.DialogView .dialog_status_bar {
   display: flex;
   min-width: 0;
   overflow: hidden;
 }
 
-.dialog_status_item {
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.dialog_buttons {
-  display: flex;
-  flex: 0 0 auto;
-  min-width: 0;
-}
-
-.dialog_button_box {
-  flex: 0 0 auto;
-}
-
-/* PADDINGS AND MARGINS */
+/* PADDINGS, MARGINS AND GAPS */
 
 .pad_0 { padding: 0px; }
 .pad_1 { padding: 1px; }
 .pad_2 { padding: 2px; }
 .pad_3 { padding: 3px; }
 .pad_4 { padding: 4px; }
+
+.pad_vertical_0 { padding-top: 0px; padding-bottom: 0px; }
+.pad_vertical_1 { padding-top: 1px; padding-bottom: 1px; }
+.pad_vertical_2 { padding-top: 2px; padding-bottom: 2px; }
+.pad_vertical_3 { padding-top: 3px; padding-bottom: 3px; }
+.pad_vertical_4 { padding-top: 4px; padding-bottom: 4px; }
+
+.pad_horizontal_0 { padding-left: 0px; padding-right: 0px; }
+.pad_horizontal_1 { padding-left: 1px; padding-right: 1px; }
+.pad_horizontal_2 { padding-left: 2px; padding-right: 2px; }
+.pad_horizontal_3 { padding-left: 3px; padding-right: 3px; }
+.pad_horizontal_4 { padding-left: 4px; padding-right: 4px; }
 
 .pad_top_0 { padding-top: 0px; }
 .pad_top_1 { padding-top: 1px; }
@@ -511,6 +501,18 @@
 .margin_3 { margin: 3px; }
 .margin_4 { margin: 4px; }
 
+.margin_vertical_0 { margin-top: 0px; margin-bottom: 0px; }
+.margin_vertical_1 { margin-top: 1px; margin-bottom: 1px; }
+.margin_vertical_2 { margin-top: 2px; margin-bottom: 2px; }
+.margin_vertical_3 { margin-top: 3px; margin-bottom: 3px; }
+.margin_vertical_4 { margin-top: 4px; margin-bottom: 4px; }
+
+.margin_horizontal_0 { margin-left: 0px; margin-right: 0px; }
+.margin_horizontal_1 { margin-left: 1px; margin-right: 1px; }
+.margin_horizontal_2 { margin-left: 2px; margin-right: 2px; }
+.margin_horizontal_3 { margin-left: 3px; margin-right: 3px; }
+.margin_horizontal_4 { margin-left: 4px; margin-right: 4px; }
+
 .margin_top_0 { margin-top: 0px; }
 .margin_top_1 { margin-top: 1px; }
 .margin_top_2 { margin-top: 2px; }
@@ -534,6 +536,11 @@
 .margin_right_2 { margin-right: 2px; }
 .margin_right_3 { margin-right: 3px; }
 .margin_right_4 { margin-right: 4px; }
+
+.gap_1 { gap: 1px; }
+.gap_2 { gap: 2px; }
+.gap_3 { gap: 3px; }
+.gap_4 { gap: 4px; }
 
 /* FLEX LAYOUT */
 
@@ -622,32 +629,65 @@
 /* BUTTONS */
 
 .normal_button,
+.rounded_button,
 .square_button {
     display: flex;
     align-items: center;
-}
-
-.normal_button {
+    justify-content: center;
     height: 12px;
     min-height: 12px;
     padding: 3px;
-    border: var(--border_dark_concept_1);
-    border-radius: 3pt; /*50%;*/
-    font-size: 11px;
-    white-space: nowrap;
+    background-color: var(--grey78);
+    border: 1px solid var(--grey53);
+    border-radius: 2pt; /*50%;*/
+    color: #222;
     text-align: center;
     cursor: pointer;
 }
+
+.normal_button:hover,
+.rounded_button:hover,
+.square_button:hover {
+    background-color: var(--grey88);
+}
+
+.normal_button.activated,
+.rounded_button.activated,
+.square_button.activated {
+    background-color: var(--grey91);
+}
+
+.normal_button {
+    font-size: 11px;
+    white-space: nowrap;
+}
 .square_button {
-    justify-content: center;
     width: 12px;
-    height: 12px;
     min-width: 12px;
-    min-height: 12px;
-    padding: 3px;
-    border: var(--border_dark_concept_1);
-    border-radius: 3pt; /*50%;*/
-    cursor: pointer;
+}
+.rounded_button {
+    width: 12px;
+    min-width: 12px;
+    border-radius: 50%;
+}
+
+/* BUTTON FLAVOURS */
+
+.normal_button.light,
+.rounded_button.light,
+.square_button.light {
+    border: 1px solid transparent;
+    background-color: var(--grey85);
+}
+.normal_button.light:hover,
+.rounded_button.light:hover,
+.square_button.light:hover {
+    background-color: var(--grey90);
+}
+.normal_button.light.activated,
+.rounded_button.light.activated,
+.square_button.light.activated {
+    background-color: var(--grey93);
 }
 
 /* TEXT */
@@ -667,13 +707,21 @@
 /* INPUTS & TEXTAREAS */
 
 input {
-    height: 12px;
-    min-height: 12px;
-    font-size: 10px;
+    height: 26px;
+    min-height: 26px;
 }
 
 input, textarea {
+    font-size: 10px;
+    border-radius: 3pt;
+    border: var(--border_dark_concept_1);
+    width: 100%;
     box-sizing: border-box;
+}
+
+textarea {
+    resize: vertical;
+    min-height: 210px;
 }
 
 /* COMMON STATES */
@@ -2924,6 +2972,14 @@ lockFiles(list) {
       });
     }
   }
+}
+  /**
+ * @name ModulerV6.prototype.patchFile
+ * @type 
+ * @description 
+ */
+patchFile(file, value) {
+  return this.modules[this.normalizationOf(file)] = value;
 }
   
   /**

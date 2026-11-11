@@ -2,7 +2,7 @@ _modify (parameters) {
   /**
    * # prototype._modify
    * - section: std.memory.SimpleRegistry.prototype._modify
-   * - file:    @/src/candidate/std/memory/SimpleRegistry/prototype._modify.js
+   * - file:    @/src/Std/memory/SimpleRegistry/prototype._modify.js
    */
   const { filter, modifier } = $moduler.toolkit.normalizeParameters(parameters, {
     filter: {

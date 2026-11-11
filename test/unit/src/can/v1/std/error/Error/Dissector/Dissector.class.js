@@ -2,6 +2,6 @@ class Dissector {
   /**
    * # Dissector.class
    * - section: @.test.unit.src.candidate.std.error.Error.Dissector.Dissector.class
-   * - file:    @/test/unit/src/candidate/std/error/Error/Dissector/Dissector.class.js
+   * - file:    @/test/unit/src/Std/error/Error/Dissector/Dissector.class.js
    */
 }
