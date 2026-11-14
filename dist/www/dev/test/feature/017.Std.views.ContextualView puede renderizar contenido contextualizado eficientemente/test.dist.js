@@ -5,12 +5,8 @@ module.exports = async function ({ Tester }) {
   // await Timeout.of(10);
 
   const contextualElement = Domer.first(".ContextualView");
+  if(!contextualElement) return console.log("[!] Omitted test for ContextualView");
   const contextualView = contextualElement.getVueComponent();
-
-  if(!contextualView) {
-    console.log("[!] Se necesita un ContextualView en la página mínimo para completar el test de ContextualView.");
-    return;
-  }
 
   (globalThis.ctxview = contextualView).resetContext({ template: "<div>{{msg}}</div>", props: { msg:{ type: String } } }, { msg: "OKKKK, o no?" });
 

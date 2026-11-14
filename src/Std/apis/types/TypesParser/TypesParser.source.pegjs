@@ -1,5 +1,12 @@
 {
-
+  const ubication = function(text, location) {
+    return {
+      //code: text(),
+      location: (function(it) {
+        return [it.start.offset,it.end.offset];
+      })(location()),
+    };
+  };
 }
 
 Types_script= _ ast:Evaluables? _ {return { grammar: "script", ast: ast }; }
@@ -21,11 +28,11 @@ Labeled_evaluable=
   token2:_
   core:Or
     { return Object.assign(core, {label}); }
-Or= left:And right:Or_right* {return right.length? { grammar: "or operation", left, right }: left;}
+Or= left:And right:Or_right* {return right.length? { grammar: "or operation", left, right, ...ubication(text,location) }: left;}
 Or_right= _ "|" _ right:And {return right;}
-And= left:Unary right:And_right* {return right.length? { grammar: "and operation", left, right }: left;}
+And= left:Unary right:And_right* {return right.length? { grammar: "and operation", left, right, ...ubication(text,location) }: left;}
 And_right= _ "&" _ right:Unary {return right;}
-Unary= negation:Type_negation? value:Type_expression {return negation? { ...value, negation }: value;}
+Unary= negation:Type_negation? value:Type_expression {return negation? { ...value, negation, ...ubication(text,location) }: value;}
 
 // ------------------------------------------------------------
 // 2. TYPE EXPRESSION
@@ -42,7 +49,8 @@ Type_expression_as_labeled_name =
       return Object.assign(type, {
         label,
         parameters: parameters || undefined,
-        defaults: defaults !== null ? defaults : undefined
+        defaults: defaults !== null ? defaults : undefined,
+        ...ubication(text,location)
       });
     }
 
@@ -54,7 +62,8 @@ Type_expression_as_label =
       return Object.assign({ grammar: "type label" }, {
         label,
         parameters: parameters || undefined,
-        defaults: defaults !== null ? defaults : undefined
+        defaults: defaults !== null ? defaults : undefined,
+        ...ubication(text,location)
       });
     }
 
@@ -65,7 +74,8 @@ Type_expression_as_name =
     {
       return Object.assign(type, {
         parameters: parameters || undefined,
-        defaults: defaults !== null ? defaults : undefined
+        defaults: defaults !== null ? defaults : undefined,
+        ...ubication(text,location)
       });
     }
 
@@ -90,7 +100,17 @@ Type_factory = _
   token1:("function" _ "(" _)
   input:Type_array_items? ")" _
   throwables:Throwables? "=>" _
-  output:Evaluable { return { grammar: "factory type", input, output, throwables, synchrony: synchrony && synchrony.length ? synchrony[0] : true }; }
+  output:Evaluable
+    {
+      return {
+        grammar: "factory type",
+        input,
+        output,
+        throwables,
+        synchrony: synchrony && synchrony.length ? synchrony[0] : true,
+        ...ubication(text,location)
+      };
+    }
 
 Throwables = first:Throwable rest:Throwable* { return [first, ...rest]; }
 
@@ -101,9 +121,9 @@ Throwable = _ "~>" _ value:Evaluable { return value; }
 // 6. OBJECT
 // ------------------------------------------------------------
 
-Type_class = _ "class" _ content:Type_object { return Object.assign(content, {grammar:"class type"}) }
+Type_class = _ "class" _ content:Type_object { return Object.assign(content, {grammar:"class type", ...ubication(text,location)}) }
 
-Type_object = _ "{" _ properties:Type_object_properties? _ "}" { return { grammar: "object type", properties: properties || {} }; }
+Type_object = _ "{" _ properties:Type_object_properties? _ "}" { return { grammar: "object type", properties: properties || {}, ...ubication(text,location) }; }
 
 Type_object_properties = first:Type_object_property rest:Type_object_property_other* { return Object.fromEntries([first, ...rest]); }
 
@@ -118,14 +138,14 @@ Object_property_as_name =
 
 Object_property_as_label =
   label:Type_label
-  optional:Optional_sign? { return [ label, { grammar: "type label", label, optional: optional || undefined } ]; }
+  optional:Optional_sign? { return [ label, { grammar: "type label", label, optional: optional || undefined, ...ubication(text,location) } ]; }
 
 
 // ------------------------------------------------------------
 // 7. ARRAY
 // ------------------------------------------------------------
 
-Type_array = _ "[" _ items:Type_array_items? _ "]" { return { grammar: "array type", items: items || [] }; }
+Type_array = _ "[" _ items:Type_array_items? _ "]" { return { grammar: "array type", items: items || [], ...ubication(text,location) }; }
 
 Type_array_items = first:Type_array_item rest:Type_array_item_other* { return [first, ...rest]; }
 
@@ -136,7 +156,7 @@ Type_array_item = Spreaded_evaluable / Multiplicable
 Spreaded_evaluable = _ "..." _
   list:Spreadable
   multiplier:Multiplier_symbol?
-    { return { grammar: "spreaded list", list, multiplier }; }
+    { return { grammar: "spreaded list", list, multiplier, ...ubication(text,location) }; }
 
 Multiplier_symbol = "?" / "*" / "+"
 
@@ -151,7 +171,7 @@ Multiplicable =
 // 8. IDENTIFIERS
 // ------------------------------------------------------------
 
-Type_identifier = _ id:Variable_expression { return { grammar: "type id", id }; }
+Type_identifier = _ id:Variable_expression { return { grammar: "type id", id, ...ubication(text,location) }; }
 Type_negation = _ "!" _ { return "!"; }
 Type_label = _ "@" id:Variable_expression { return id;}
 
@@ -201,7 +221,7 @@ EOF = !.
 // ------------------------------------------------------------
 
 Type_import = "^" resource:("file:"/"url:"/"path:")? target:json_string
-  { return { grammar: "import", resource: resource ? resource.slice(0,-1) : resource, target } }
+  { return { grammar: "import", resource: resource ? resource.slice(0,-1) : resource, target, ...ubication(text,location) } }
 
 // ------------------------------------------------------------
 // 14. JSON

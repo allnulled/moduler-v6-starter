@@ -1,0 +1,117 @@
+.FixedPanels {
+    --panel-size: 26px;
+    --panel-gap: 2px;
+    position: absolute;
+    inset: 0px;
+    z-index: 999999;
+    pointer-events: none;
+}
+
+.FixedPanels > .panel_on_top,
+.FixedPanels > .panel_on_bottom,
+.FixedPanels > .panel_on_left,
+.FixedPanels > .panel_on_right {
+    position: absolute;
+    min-width: var(--panel-size);
+    min-height: var(--panel-size);
+}
+
+.FixedPanels > .panel_on_top,
+.FixedPanels > .panel_on_bottom {
+    left: var(--panel-gap);
+    right: var(--panel-gap);
+    height: var(--panel-size);
+    /*background-color: red;*/
+}
+
+.FixedPanels > .panel_on_top {
+    top: var(--panel-gap);
+}
+
+.FixedPanels > .panel_on_bottom {
+    bottom: var(--panel-gap);
+}
+
+.FixedPanels > .panel_on_left,
+.FixedPanels > .panel_on_right {
+    top: calc(var(--panel-size) + var(--panel-gap) * 2);
+    bottom: calc(var(--panel-size) + var(--panel-gap) * 2);
+    width: var(--panel-size);
+    /*background-color: blue;*/
+}
+
+.FixedPanels > .panel_on_left {
+    left: var(--panel-gap);
+}
+
+.FixedPanels > .panel_on_right {
+    right: var(--panel-gap);
+}
+
+.FixedPanels > .panel_on_top,
+.FixedPanels > .panel_on_bottom,
+.FixedPanels > .panel_on_left,
+.FixedPanels > .panel_on_right {
+    /*background-color: red;*/
+}
+
+/*
+
+*/
+
+/*
+.FixedPanels {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 999999;
+    pointer-events: none;
+}
+.FixedPanels {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.FixedPanels > .panel_on_top,
+.FixedPanels > .panel_on_bottom,
+.FixedPanels > .panel_on_left,
+.FixedPanels > .panel_on_right {
+    position: absolute;
+    inset: auto;
+    min-width: 40px;
+    min-height: 40px;
+}
+
+.FixedPanels > .panel_on_top {
+    top: 2px;
+    left: 2px;
+    width: calc(100% - 4px);
+    background-color: red;
+}
+.FixedPanels > .panel_on_bottom {
+    bottom: 2px;
+    left: 2px;
+    width: calc(100% - 4px);
+    background-color: red;
+}
+.FixedPanels > .panel_on_left {
+    top: 44px;
+    bottom: 44px;
+    left: 2px;
+    height: calc(100% - 88px);
+    background-color: blue;
+}
+.FixedPanels > .panel_on_right {
+    top: 44px;
+    bottom: 44px;
+    right: 2px;
+    height: calc(100% - 88px);
+    background-color: blue;
+}
+*/
+
+/*@injects:"@/src/Std/apis/application/FixedPanel/FixedPanel.styles.css"*/
+/*@injects:"@/src/Std/apis/application/FixedArea/FixedArea.styles.css"*/

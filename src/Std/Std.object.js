@@ -47,7 +47,7 @@
       peggy: peggyjs,
       picomatch: picomatch,
     },
-    // @LATER: Este lo inicializa Std.classes.ViewsRegistry.globalInstance
+    // @LATER: Este lo inicializa Std.classes.ViewsRegistry
     views: null,
   });
 
@@ -103,6 +103,7 @@
   Wave_5_Utility_classes: {
     Std.all.Basedir = Std.classes.Basedir = $compiler.inject.source("./apis/files/Basedir/Basedir.class.js");
     Std.all.Introspector = Std.classes.Introspector = $compiler.inject.source("./apis/reflection/Introspector/Introspector.class.js");
+    Std.all.DynamicProxy = Std.classes.DynamicProxy = $compiler.inject.source("./apis/reflection/proxy/DynamicProxy/DynamicProxy.class.js");
     Std.all.Urler = Std.classes.Urler = $compiler.inject.source("./apis/urls/Urler/Urler.class.js");
     Std.all.Tracer = Std.classes.Tracer = $compiler.inject.source("./apis/testing/Tracer/Tracer.class.js");
     Std.all.Checker = Std.classes.Checker = $compiler.inject.source("./apis/testing/Checker/Checker.class.js");
@@ -153,14 +154,18 @@
     Std.all.ContextualView = Std.views.ContextualView = $compiler.inject.source("./apis/views/containers/ContextualView/ContextualView.object.js");
   }
 
+  Wave_13_Errors: {
+    Std.all.ErrorViewer = Std.views.ErrorViewer = $compiler.inject.source("./apis/errors/ErrorViewer/ErrorViewer.object.js");
+  }
+
   Wave_14_View_traits: {
     Std.objects.ViewTraits.InstallLocals = $compiler.inject.source("./apis/views/traits/InstallLocals.object.js");
     Std.objects.ViewTraits.LoadControlResource = $compiler.inject.source("./apis/views/traits/LoadControlResource.object.js");
   }
 
   Wave_15_Dialogs: {
-    Std.all.Dialogs = Std.classes.Dialogs = $compiler.inject.source("./apis/views/dialogs/Dialogs/Dialogs.class.js");
     Std.all.DialogsFactory = Std.classes.DialogsFactory = $compiler.inject.source("./apis/views/dialogs/DialogsFactory/DialogsFactory.class.js");
+    Std.all.Dialogs = Std.classes.Dialogs = $compiler.inject.source("./apis/views/dialogs/Dialogs/Dialogs.class.js");
     Std.all.DialogView = Std.views.DialogView = $compiler.inject.source("./apis/views/dialogs/DialogView/DialogView.object.js");
     Std.all.DialogsTree = Std.views.DialogsTree = $compiler.inject.source("./apis/views/dialogs/DialogsTree/DialogsTree.object.js");
     Std.all.DialogsTreeNode = Std.views.DialogsTreeNode = $compiler.inject.source("./apis/views/dialogs/DialogsTreeNode/DialogsTreeNode.object.js");
@@ -168,11 +173,28 @@
     Std.all.DialogsTester = Std.views.DialogsTester = $compiler.inject.source("./apis/views/dialogs/DialogsTester/DialogsTester.object.js");
   }
 
-  Wave_16_Forms_and_controls: {
+  Wave_16_Controls: {
     Std.all.DynamicControl = Std.views.DynamicControl = $compiler.inject.source("./apis/forms/controls/DynamicControl/DynamicControl.object.js");
   }
 
-  Wave_17_Calendar: {
+  Wave_17_Forms_and_types: {
+    Std.all.TypesFormPrototype = Std.views.TypesFormPrototype = $compiler.inject.source("./apis/forms/types/mixins/TypesFormPrototype/TypesFormPrototype.object.js");
+    Std.all.TypesFormAndOperation = Std.views.TypesFormAndOperation = $compiler.inject.source("./apis/forms/types/TypesFormAndOperation/TypesFormAndOperation.object.js");
+    Std.all.TypesFormArrayType = Std.views.TypesFormArrayType = $compiler.inject.source("./apis/forms/types/TypesFormArrayType/TypesFormArrayType.object.js");
+    Std.all.TypesFormClassType = Std.views.TypesFormClassType = $compiler.inject.source("./apis/forms/types/TypesFormClassType/TypesFormClassType.object.js");
+    Std.all.TypesFormFactoryType = Std.views.TypesFormFactoryType = $compiler.inject.source("./apis/forms/types/TypesFormFactoryType/TypesFormFactoryType.object.js");
+    Std.all.TypesFormImport = Std.views.TypesFormImport = $compiler.inject.source("./apis/forms/types/TypesFormImport/TypesFormImport.object.js");
+    Std.all.TypesFormNode = Std.views.TypesFormNode = $compiler.inject.source("./apis/forms/types/TypesFormNode/TypesFormNode.object.js");
+    Std.all.TypesFormObjectType = Std.views.TypesFormObjectType = $compiler.inject.source("./apis/forms/types/TypesFormObjectType/TypesFormObjectType.object.js");
+    Std.all.TypesFormOrOperation = Std.views.TypesFormOrOperation = $compiler.inject.source("./apis/forms/types/TypesFormOrOperation/TypesFormOrOperation.object.js");
+    Std.all.TypesFormScript = Std.views.TypesFormScript = $compiler.inject.source("./apis/forms/types/TypesFormScript/TypesFormScript.object.js");
+    Std.all.TypesFormSpreadedList = Std.views.TypesFormSpreadedList = $compiler.inject.source("./apis/forms/types/TypesFormSpreadedList/TypesFormSpreadedList.object.js");
+    Std.all.TypesFormTypeId = Std.views.TypesFormTypeId = $compiler.inject.source("./apis/forms/types/TypesFormTypeId/TypesFormTypeId.object.js");
+    Std.all.TypesFormTypeLabel = Std.views.TypesFormTypeLabel = $compiler.inject.source("./apis/forms/types/TypesFormTypeLabel/TypesFormTypeLabel.object.js");
+    // Std.all.ControlForTypeExpression = Std.views.ControlForTypeExpression = $ compiler.inject.source("./apis/forms/controls/ControlForTypeExpression/ControlForTypeExpression.object.js");
+  }
+
+  Wave_18_Calendar: {
     En_entredicho_por_v2: {
       Std.all.CalendarParser = Std.objects.CalendarParser = $compiler.inject.source("./apis/calendar/CalendarParser/CalendarParser.object.js");
       Std.all.CalendarClasses = Std.objects.CalendarClasses = $compiler.inject.source("./apis/calendar/Calendar/CalendarClasses.object.js");
@@ -182,15 +204,25 @@
     Std.all.CalendarV2 = Std.classes.CalendarV2 = $compiler.inject.source("./apis/calendar/v2/CalendarV2/CalendarV2.class.js");
   }
 
-  Wave_18_Graphics: {
+  Wave_19_Graphics: {
     Std.functions.CielabColorConverter = Std.objects.CielabColorConverter = $compiler.inject.source("./apis/graphics/colors/scale/CielabColorConverter/CielabColorConverter.class.js");
+    Std.all.Icon = Std.views.Icon = $compiler.inject.source("./apis/views/images/Icon/Icon.object.js");
   }
 
-  Wave_19_Development: {
+  Wave_20_Development: {
     Std.all.LoremIpsum = Std.views.LoremIpsum = $compiler.inject.source("./apis/views/development/LoremIpsum/LoremIpsum.object.js");
   }
 
+  Wave_21_Background: {
+    Std.all.ApplicationBackgroundWidget = Std.views.ApplicationBackgroundWidget = $compiler.inject.source("./apis/views/background/ApplicationBackgroundWidget/ApplicationBackgroundWidget.object.js");
+    Std.all.ApplicationBackgroundConfigurer = Std.views.ApplicationBackgroundConfigurer = $compiler.inject.source("./apis/views/background/ApplicationBackgroundConfigurer/ApplicationBackgroundConfigurer.object.js");
+  }
+
   Wave_95_Application_starter: {
+    Std.all.Launcher = Std.classes.Launcher = $compiler.inject.source("./apis/application/Launcher/Launcher.class.js");
+    Std.all.FixedArea = Std.views.FixedArea = $compiler.inject.source("./apis/application/FixedArea/FixedArea.object.js");
+    Std.all.FixedPanel = Std.views.FixedPanel = $compiler.inject.source("./apis/application/FixedPanel/FixedPanel.object.js");
+    Std.all.FixedPanels = Std.views.FixedPanels = $compiler.inject.source("./apis/application/FixedPanels/FixedPanels.object.js");
     Std.all.MainApplication = Std.views.MainApplication = $compiler.inject.source("./apis/application/MainApplication/MainApplication.object.js");
     Std.all.ApplicationStarter = Std.classes.ApplicationStarter = $compiler.inject.source("./apis/application/ApplicationStarter/ApplicationStarter.class.js");
   }

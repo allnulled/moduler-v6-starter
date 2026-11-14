@@ -1,0 +1,13 @@
+.FixedArea {
+  flex: 1;
+  /*border: 1px solid white;*/
+  min-width: 10px;
+  min-height: 10px;
+}
+
+.FixedArea .button {
+  color: #333;
+  background-color: rgba(200,200,200,0.5);
+  border-radius: 4pt;
+  pointer-events: all;
+}

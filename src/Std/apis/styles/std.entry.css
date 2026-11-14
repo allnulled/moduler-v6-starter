@@ -1,0 +1,14 @@
+/*@injects:"@/src/Std/apis/styles/globals.css"*/
+
+/*@injects:"@/src/Std/apis/views/containers/ContextualView/ContextualView.style.css"*/
+/*@injects:"@/src/Std/apis/views/dialogs/DialogView/DialogView.style.css"*/
+/*@injects:"@/src/Std/apis/views/images/Icon/Icon.style.css"*/
+/*@injects:"@/src/Std/apis/views/development/LoremIpsum/LoremIpsum.styles.css"*/
+/*@injects:"@/src/Std/apis/views/dialogs/DialogsPort/DialogsPort.style.css"*/
+/*@injects:"@/src/Std/apis/application/FixedPanels/FixedPanels.styles.css"*/
+/*@injects:"@/src/Std/apis/views/background/ApplicationBackgroundWidget/ApplicationBackgroundWidget.styles.css"*/
+/*@injects:"@/src/Std/apis/views/background/ApplicationBackgroundConfigurer/ApplicationBackgroundConfigurer.styles.css"*/
+/*@injects:"@/src/Std/apis/views/dialogs/DialogView/DialogView.style.css"*/
+/*@injects:"@/src/Std/apis/forms/types/TypesForm.styles.css"*/
+
+/*@injects:"@/src/Std/apis/styles/toolkit.css"*/

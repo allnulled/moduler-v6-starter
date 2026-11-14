@@ -5,7 +5,6 @@ module.exports = async function ({ Tester }) {
     ViewsStaticMerger,
     DynamicView,
     Dialogs,
-    DialogsFactory,
     DialogsPort,
     Threads,
   } = Std.all;
@@ -15,7 +14,6 @@ module.exports = async function ({ Tester }) {
     ViewsStaticMerger,
     DynamicView,
     Dialogs,
-    DialogsFactory,
     DialogsPort,
     Threads,
   };

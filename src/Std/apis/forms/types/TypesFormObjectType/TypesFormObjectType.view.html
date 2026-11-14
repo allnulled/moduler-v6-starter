@@ -1,0 +1,15 @@
+<div class="TypesFormObjectType View">
+    <div>Object type:</div>
+    <div v-for="subnode, subnodeIndex in localAst.properties"
+        v-bind:key="'subnode_' + subnodeIndex">
+        <div>[{{ subnodeIndex }}]</div>
+        <TypesFormNode
+            :params="{
+                ast: params.ast,
+                data: params.data,
+                astIndex: params.astIndex.concat([ 'properties', subnodeIndex ]),
+                dataIndex: params.dataIndex.concat([ subnodeIndex ]),
+            }"
+        />
+    </div>
+</div>

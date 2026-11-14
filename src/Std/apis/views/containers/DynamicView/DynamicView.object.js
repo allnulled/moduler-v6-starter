@@ -1,4 +1,4 @@
-Std.classes.ViewsRegistry.$.set("DynamicView", {
+Std.classes.ViewsRegistry.set("DynamicView", {
   name: "DynamicView",
   template: $compiler.inject.string("@/src/Std/apis/views/containers/DynamicView/DynamicView.view.html"),
   props: {
@@ -43,8 +43,8 @@ Std.classes.ViewsRegistry.$.set("DynamicView", {
         $moduler.assert(typeof args === "object", `Required property «args» to be object but «${typeof args}» was found instead on «Std.objects.DynamicView.methods.setView»`);
       }
       Unregister_previous: {
-        if(this.$locals.currentView.name && ViewsRegistry.$.get(this.$locals.currentView.name)?.isVolatile) {
-          ViewsRegistry.$.delete(this.$locals.currentView.name);
+        if(this.$locals.currentView.name && ViewsRegistry.get(this.$locals.currentView.name)?.isVolatile) {
+          ViewsRegistry.delete(this.$locals.currentView.name);
         }
       }
       Sanitize_unwrapped_templates: {
@@ -62,12 +62,12 @@ Std.classes.ViewsRegistry.$.set("DynamicView", {
           view.name = `DynamicViewUnit${Std.classes.Randomizer.getRandomNumbers(10)}`;
         }
         if(!(view.name in Std.externals.Vue2.options.components)) {
-          ViewsRegistry.$.set(view.name, {
+          ViewsRegistry.set(view.name, {
             isVolatile: true,
             ...view,
           });
         } else {
-          view = { ...view, ...ViewsRegistry.$.get(view.name) };
+          view = { ...view, ...ViewsRegistry.get(view.name) };
         }
       }
       Hydrate_view: {

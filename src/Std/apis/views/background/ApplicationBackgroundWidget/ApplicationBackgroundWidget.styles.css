@@ -1,0 +1,15 @@
+.ApplicationBackgroundWidget {
+  width: 100%;
+  height: 100%;
+  background: var(--texture_light_2);
+  /*background: linear-gradient(0deg, rgb(77, 103, 1) 0%, rgb(77, 103, 1) 10%, rgb(77, 103, 1) 90%, rgb(77, 103, 1) 100%);*/
+}
+.ApplicationBackgroundWidget > .application_background {
+  position: absolute;
+  inset: 0;
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  filter: blur(1px);
+  transform: scale(1);
+}

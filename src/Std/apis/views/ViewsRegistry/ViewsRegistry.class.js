@@ -6,6 +6,8 @@ class ViewsRegistry {
     $moduler.assert((typeof value.template === "string") || (typeof value.render === "function"), `Required parameter «view.template» to be string or «view.render» to be function but «${typeof value.template}» was found instead on «ViewsRegistry.prototype.onRegister»`);
   }
 
+  static views = {};
+
   static {
     $moduler.toolkit.makeClass([
       Std.functions.IntrospectableInterfaceFactory(
@@ -19,23 +21,20 @@ class ViewsRegistry {
         "onRegister",
         "onUnregister",
         "|",
+        "static"
       ),
     ], this);
   }
 
-  constructor() {
-    this.views = {};
-  }
-
-  onRegister(input) {
-    this.constructor.validateView(input)
+  static onRegister(input) {
+    this.validateView(input)
     const { key, value, output } = input;
     if(Std.externals.Vue2) {
       Std.externals.Vue2.component(value.name, value);
     }
   }
 
-  onUnregister({ key }) {
+  static onUnregister({ key }) {
     const id = Array.isArray(key) ? key[key.length-1] : key;
     $moduler.assert(typeof id === "string", `Required parameter «name» to be string but «${typeof id}» was found instead on «ViewsRegistry.prototype.onRegister»`);
     if(Std.externals.Vue2) {
@@ -43,11 +42,9 @@ class ViewsRegistry {
     }
   }
 
-  static globalInstance = this.$ = new this();
-
   static {
-    Conectamos_Std_views_con_las_views_del_global: {
-      Std.views = this.globalInstance.views;
+    Conectamos_Std_views_con_las_views: {
+      Std.views = this.views;
     }
   }
 

@@ -1,4 +1,4 @@
-Std.classes.ViewsRegistry.$.set("ContextualView", {
+Std.classes.ViewsRegistry.set("ContextualView", {
   name: "ContextualView",
   template: $compiler.inject.string("@/src/Std/apis/views/containers/ContextualView/ContextualView.view.html"),
   props: {

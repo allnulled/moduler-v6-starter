@@ -1,0 +1,8 @@
+<div class="FixedArea View" :style="generateStyles()">
+    <div v-for="button, buttonIndex in $locals.buttons" v-bind:key="'button_' + buttonIndex"
+        class="button flexible"
+        v-on:click="button.click">
+        <Icon v-if="button.icon" :of="button.icon" size="18px" v-bind:key="'button_' + buttonIndex + '_icon_' + button.icon" />
+        <span v-else-if="button.text">{{ button.text }}</span>
+    </div>
+</div>

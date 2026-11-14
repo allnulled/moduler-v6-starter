@@ -1,0 +1,14 @@
+.TypesFormAndOperation,
+.TypesFormArrayType,
+.TypesFormClassType,
+.TypesFormFactoryType,
+.TypesFormImport,
+.TypesFormNode,
+.TypesFormObjectType,
+.TypesFormOrOperation,
+.TypesFormScript,
+.TypesFormSpreadedList,
+.TypesFormTypeId,
+.TypesFormTypeLabel {
+    padding-left: 8px;
+}

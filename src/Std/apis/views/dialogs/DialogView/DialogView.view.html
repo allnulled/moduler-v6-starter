@@ -43,12 +43,10 @@
                             <div class="dialog_title_text">{{ thread.title || thread.threadId || "no id found" }}</div>
                         </div>
                         <div class="dialog_topbar_buttons">
-                            <div v-if="thread.parent !== $window.Std.objects.GlobalThread" class="dialog_topbar_button rounded_button light focus_parent_button" ref="focus_parent_button" v-on:click="focusParent">
-                                <span class="rotate5of8">➜</span>
-                            </div>
-                            <div class="dialog_topbar_button rounded_button light minimize_button" ref="minimize_button" v-on:click="minimize">➖​</div>
-                            <div class="dialog_topbar_button rounded_button light maximize_button" ref="maximize_button" v-on:click="toggleMaximize">​◼️</div>
-                            <div class="dialog_topbar_button rounded_button light exit_button" v-on:click="close">✖️</div>
+                            <div v-if="thread.parent !== $window.Std.objects.GlobalThread"  class="dialog_topbar_button button flexible unbordered light focus_parent_button" v-on:click="focusParent"><Icon of="move-up-left" size="13px" ref="focus_parent_button" /></div>
+                            <div class="dialog_topbar_button button flexible unbordered light minimize_button" v-on:click="minimize"><Icon of="minus" size="13px" ref="minimize_button" /></div>
+                            <div class="dialog_topbar_button button flexible unbordered light maximize_button" v-on:click="toggleMaximize"><Icon of="maximize-2" size="13px" ref="maximize_button" /></div>
+                            <div class="dialog_topbar_button button flexible unbordered light exit_button" v-on:click="close"><Icon of="x" size="13px" ref="exit_button" /></div>
                         </div>
                     </div>
                 </div>
@@ -60,7 +58,7 @@
                         <div class="flex_100"></div>
                         <template v-for="button, buttonIndex in adaptThreadButtons()" v-if="thread.buttons">
                             <div class="flex_1 dialog_button_box" v-bind:key="'button_box_' + buttonIndex">
-                                <div class="dialog_button normal_button" v-on:click="e => button.click(e, $locals.self)">{{ button.text }}</div>
+                                <div class="dialog_button button normal" v-on:click="e => button.click(e, $locals.self)">{{ button.text }}</div>
                             </div>
                         </template>
                     </div>

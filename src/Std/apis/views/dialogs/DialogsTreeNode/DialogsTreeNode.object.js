@@ -1,4 +1,4 @@
-Std.classes.ViewsRegistry.$.set("DialogsTreeNode", {
+Std.classes.ViewsRegistry.set("DialogsTreeNode", {
   name: "DialogsTreeNode",
   template: $compiler.inject.string("@/src/Std/apis/views/dialogs/DialogsTreeNode/DialogsTreeNode.view.html"),
   props: {

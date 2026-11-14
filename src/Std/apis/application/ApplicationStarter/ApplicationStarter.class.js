@@ -24,12 +24,7 @@ class ApplicationStarter {
     }
     Define_vue2_application: {
       $moduler.assert(!Std.objects.GlobalApplication, "ApplicationStarter.start can only be called once in a runtime");
-      Std.objects.GlobalApplication = this.globalApplication = new Std.externals.Vue2({
-        render: h => {
-          console.log("[*] Rendering application");
-          return h(this.globalFactory);
-        },
-      });
+      Std.objects.GlobalApplication = this.globalApplication = new Std.externals.Vue2(this.globalFactory);
     }
     Register_application_events_for_onStarted: {
       this.events.onStarted.addTrigger(parameters => {

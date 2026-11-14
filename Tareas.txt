@@ -1,0 +1,8 @@
+[DONE] Tarea 1: que los métodos de Dialogs sean estáticos y globales
+[?] Tarea 2: widget de fondo de aplicación
+  - Con un configurador (el primer icono)
+  - El configurador permite cambiar el fondo de aplicación
+     - a imagen solamente de momento
+  - De momento ya está, nada de iconos personalizados aún
+[?] Tarea 3: adaptar diálogos para móvil
+[?] Tarea 4: el launcher de aplicaciones

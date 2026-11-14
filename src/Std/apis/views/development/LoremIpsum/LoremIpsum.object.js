@@ -1,4 +1,4 @@
-Std.classes.ViewsRegistry.$.set("LoremIpsum", {
+Std.classes.ViewsRegistry.set("LoremIpsum", {
   name: "LoremIpsum",
   template: $compiler.inject.string("@/src/Std/apis/views/development/LoremIpsum/LoremIpsum.view.html"),
   props: {

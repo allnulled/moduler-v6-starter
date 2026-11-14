@@ -13,6 +13,1196 @@
     font-family: Arial;
 }
 
+/* COMPONENTES DEL FRAMEWORK DE STD */
+
+
+
+
+/* PADDINGS, MARGINS AND GAPS */
+
+.pad_0 { padding: 0px; }
+.pad_1 { padding: 1px; }
+.pad_2 { padding: 2px; }
+.pad_3 { padding: 3px; }
+.pad_4 { padding: 4px; }
+
+.pad_vertical_0 { padding-top: 0px; padding-bottom: 0px; }
+.pad_vertical_1 { padding-top: 1px; padding-bottom: 1px; }
+.pad_vertical_2 { padding-top: 2px; padding-bottom: 2px; }
+.pad_vertical_3 { padding-top: 3px; padding-bottom: 3px; }
+.pad_vertical_4 { padding-top: 4px; padding-bottom: 4px; }
+
+.pad_horizontal_0 { padding-left: 0px; padding-right: 0px; }
+.pad_horizontal_1 { padding-left: 1px; padding-right: 1px; }
+.pad_horizontal_2 { padding-left: 2px; padding-right: 2px; }
+.pad_horizontal_3 { padding-left: 3px; padding-right: 3px; }
+.pad_horizontal_4 { padding-left: 4px; padding-right: 4px; }
+
+.pad_top_0 { padding-top: 0px; }
+.pad_top_1 { padding-top: 1px; }
+.pad_top_2 { padding-top: 2px; }
+.pad_top_3 { padding-top: 3px; }
+.pad_top_4 { padding-top: 4px; }
+
+.pad_bottom_0 { padding-bottom: 0px; }
+.pad_bottom_1 { padding-bottom: 1px; }
+.pad_bottom_2 { padding-bottom: 2px; }
+.pad_bottom_3 { padding-bottom: 3px; }
+.pad_bottom_4 { padding-bottom: 4px; }
+
+.pad_left_0 { padding-left: 0px; }
+.pad_left_1 { padding-left: 1px; }
+.pad_left_2 { padding-left: 2px; }
+.pad_left_3 { padding-left: 3px; }
+.pad_left_4 { padding-left: 4px; }
+
+.pad_right_0 { padding-right: 0px; }
+.pad_right_1 { padding-right: 1px; }
+.pad_right_2 { padding-right: 2px; }
+.pad_right_3 { padding-right: 3px; }
+.pad_right_4 { padding-right: 4px; }
+
+.margin_0 { margin: 0px; }
+.margin_1 { margin: 1px; }
+.margin_2 { margin: 2px; }
+.margin_3 { margin: 3px; }
+.margin_4 { margin: 4px; }
+
+.margin_vertical_0 { margin-top: 0px; margin-bottom: 0px; }
+.margin_vertical_1 { margin-top: 1px; margin-bottom: 1px; }
+.margin_vertical_2 { margin-top: 2px; margin-bottom: 2px; }
+.margin_vertical_3 { margin-top: 3px; margin-bottom: 3px; }
+.margin_vertical_4 { margin-top: 4px; margin-bottom: 4px; }
+
+.margin_horizontal_0 { margin-left: 0px; margin-right: 0px; }
+.margin_horizontal_1 { margin-left: 1px; margin-right: 1px; }
+.margin_horizontal_2 { margin-left: 2px; margin-right: 2px; }
+.margin_horizontal_3 { margin-left: 3px; margin-right: 3px; }
+.margin_horizontal_4 { margin-left: 4px; margin-right: 4px; }
+
+.margin_top_0 { margin-top: 0px; }
+.margin_top_1 { margin-top: 1px; }
+.margin_top_2 { margin-top: 2px; }
+.margin_top_3 { margin-top: 3px; }
+.margin_top_4 { margin-top: 4px; }
+
+.margin_bottom_0 { margin-bottom: 0px; }
+.margin_bottom_1 { margin-bottom: 1px; }
+.margin_bottom_2 { margin-bottom: 2px; }
+.margin_bottom_3 { margin-bottom: 3px; }
+.margin_bottom_4 { margin-bottom: 4px; }
+
+.margin_left_0 { margin-left: 0px; }
+.margin_left_1 { margin-left: 1px; }
+.margin_left_2 { margin-left: 2px; }
+.margin_left_3 { margin-left: 3px; }
+.margin_left_4 { margin-left: 4px; }
+
+.margin_right_0 { margin-right: 0px; }
+.margin_right_1 { margin-right: 1px; }
+.margin_right_2 { margin-right: 2px; }
+.margin_right_3 { margin-right: 3px; }
+.margin_right_4 { margin-right: 4px; }
+
+.gap_1 { gap: 1px; }
+.gap_2 { gap: 2px; }
+.gap_3 { gap: 3px; }
+.gap_4 { gap: 4px; }
+
+/* FLEX LAYOUT */
+
+.flex_column { display: flex; flex-direction: column; }
+.flex_row { display: flex; flex-direction: row; }
+.flex_row.centered { align-items: center; }
+.flex_1 { flex: 1; }
+.flex_100 { flex: 100; }
+.flex_0 { flex: 0 0 0px; }
+
+/* RELATIVE, FIXED AND ABSOLUTE LAYOUTS */
+
+.position_relative { position: relative; }
+.position_absolute { position: absolute; }
+.position_fixed { position: fixed; }
+
+.inset_0 { inset: 0px; }
+.inset_auto { inset: auto; }
+
+.top_0 { top: 0px; }
+.bottom_0 { bottom: 0px; }
+.left_0 { left: 0px; }
+.right_0 { right: 0px; }
+
+.top_auto { top: auto; }
+.bottom_auto { bottom: auto; }
+.left_auto { left: auto; }
+.right_auto { right: auto; }
+
+/* SCROLLBARS */
+
+/* ------------------------------------------------------------
+   Scrollbars
+------------------------------------------------------------ */
+
+:root {
+  --scrollbar-size: 14px;
+  --scrollbar-track-color:transparent; /*var(--grey90);*/
+  --scrollbar-thumb-color: rgba(0,0,0,0.4); /*var(--grey60);*/
+  --scrollbar-thumb-color-hover: rgba(0,0,0,0.6); /*var(--grey55);*/
+  --scrollbar-thumb-color-active: rgba(0,0,0,0.7); /*var(--grey50);*/
+  --scrollbar-corner-color: transparent; /*var(--grey85);*/
+}
+
+/* Firefox */
+* {
+  scrollbar-width: auto;
+  scrollbar-color: auto;
+}
+
+/* Chrome */
+::-webkit-scrollbar {
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track-color);
+  border-top: 1px solid var(--grey85);
+  border-left: 1px solid var(--grey85);
+  border: 1px solid var(--grey85);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb-color);
+  border: 1px solid var(--grey85);
+  border-radius: 2pt;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-color-hover);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: var(--scrollbar-thumb-color-active);
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--scrollbar-corner-color);
+}
+
+@-moz-document url-prefix() {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color);
+  }
+}
+
+/* BUTTONS */
+
+.button.normal,
+.button.rounded,
+.button.flexible,
+.button.square {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 12px;
+    min-height: 12px;
+    padding: 3px;
+    background-color: var(--grey78);
+    border: 1px solid transparent;
+    border: 1px solid var(--grey53);
+    border-radius: 2pt; /*50%;*/
+    color: #222;
+    text-align: center;
+    cursor: pointer;
+}
+
+.button.normal:hover,
+.button.rounded:hover,
+.button.flexible:hover,
+.button.square:hover {
+    background-color: var(--grey88);
+}
+
+.button.normal.activated,
+.button.rounded.activated,
+.button.flexible.activated,
+.button.square.activated {
+    background-color: var(--grey91);
+}
+
+.button.normal {
+    font-size: 11px;
+    white-space: nowrap;
+}
+.button.square {
+    width: 12px;
+    min-width: 12px;
+}
+.button.rounded {
+    width: 12px;
+    min-width: 12px;
+    border-radius: 50%;
+}
+.button.flexible {
+    height: auto;
+    width: auto;
+    min-height: auto;
+    min-width: auto;
+    max-height: auto;
+    max-width: auto;
+}
+
+/* BUTTON FLAVOURS */
+
+.button.normal.light,
+.button.rounded.light,
+.button.square.light {
+    border: 1px solid transparent;
+    background-color: var(--grey85);
+}
+.button.normal.light:hover,
+.button.rounded.light:hover,
+.button.square.light:hover {
+    background-color: var(--grey90);
+}
+.button.normal.light.activated,
+.button.rounded.light.activated,
+.button.square.light.activated {
+    background-color: var(--grey93);
+}
+
+/* BUTTON ASPECTS */
+
+.button.unbordered {
+    border: 1px solid transparent;
+}
+
+/* TEXT */
+
+.text_align_left { text-align: left; }
+.text_align_center { text-align: center; }
+.text_align_right { text-align: right; }
+
+.nowrap { white-space: nowrap; }
+
+/* FLEX ASPECTS */
+.flex_align_start { align-items: start; }
+.flex_align_center { align-items: center; }
+.flex_align_end { align-items: end; }
+.flex_justify_start { justify-content: start; }
+.flex_justify_center { justify-content: center; }
+.flex_justify_end { justify-content: end; }
+
+/* STYLOGRAPHY */
+
+.underline_light_1 {
+    border-bottom: var(--border_light_concept_1);
+}
+
+/* FONT ASPECTS */
+
+.monospace { font-family: monospace; }
+
+/* INPUTS & TEXTAREAS */
+
+input {
+    height: 26px;
+    min-height: 26px;
+}
+
+input, textarea {
+    font-size: 10px;
+    border-radius: 3pt;
+    border: var(--border_dark_concept_1);
+    width: 100%;
+    box-sizing: border-box;
+    background-color: rgba(255,255,255,0.4);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 210px;
+}
+
+/* COMMON STATES */
+
+/* ROTATION */
+
+.rotate1of4 { transform: rotate(90deg); }
+.rotate2of4 { transform: rotate(180deg); }
+.rotate3of4 { transform: rotate(270deg); }
+
+.rotate1of8 { transform: rotate(45deg); }
+.rotate2of8 { transform: rotate(90deg); }
+.rotate3of8 { transform: rotate(135deg); }
+.rotate4of8 { transform: rotate(180deg); }
+.rotate5of8 { transform: rotate(225deg); }
+.rotate6of8 { transform: rotate(270deg); }
+.rotate7of8 { transform: rotate(315deg); }
+.TypesFormAndOperation,
+.TypesFormArrayType,
+.TypesFormClassType,
+.TypesFormFactoryType,
+.TypesFormImport,
+.TypesFormNode,
+.TypesFormObjectType,
+.TypesFormOrOperation,
+.TypesFormScript,
+.TypesFormSpreadedList,
+.TypesFormTypeId,
+.TypesFormTypeLabel {
+    padding-left: 8px;
+}
+.DialogView {
+    position: fixed;
+    /*border: var(--border_dark_concept_2);*/
+    border: 1px solid #514c4c;
+    box-shadow: 0 0 2px black;
+    background-color: transparent;
+    background-color: rgba(255,255,255,0.4);
+    margin: 2px;
+    border-radius: 0pt;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    opacity: 0.6;
+}
+.DialogView.is_focused {
+    opacity: 1;
+}
+.DialogView.is_maximized {
+    position: fixed;
+    inset: 0 !important;
+    width: auto !important;
+    height: auto !important;
+}
+.DialogView.is_minimized {
+    display: none;
+}
+
+.DialogView .dialog_topbar {
+    display: flex;
+    flex-direction: row;
+    border-bottom: var(--border_dark_concept_1);
+    align-items: center;
+    background: transparent;
+    color: black;
+    user-select: none;
+}
+.DialogView .dialog_title {
+    flex: 100;
+    cursor: default;
+    touch-action: none;
+    align-self: stretch;
+    overflow: hidden;
+    display: flex;
+}
+
+.DialogView .dialog_title:active {
+    cursor: grabbing;
+}
+.DialogView .dialog_title_text {
+    display: flex;
+    align-items: center;
+    padding-left: 4px;
+}
+.DialogView .dialog_topbar_buttons {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    padding: 4px;
+    gap: 5px;
+}
+
+.DialogView .dialog_topbar_button {
+    color: var(--grey_of_emojis_1);
+    border: 1px solid transparent;
+    background-color: transparent;
+    border-radius: 50%;
+    cursor: pointer;
+}
+.DialogView.is_focused .dialog_topbar_button {
+    background-color: rgba(255,255,255,1);
+}
+.DialogView .dialog_topbar_button:hover {
+    
+}
+.DialogView .dialog_body {
+    padding: 2px;
+    background-color: var(--grey98);
+    background: transparent;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    overflow: auto;
+}
+.DialogView .dialog_body.is_scrollable {
+    position: relative;
+}
+.DialogView .dialog_body.is_scrollable > div {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: scroll;
+}
+.DialogView .dialog_body.is_centered {
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.DialogView .dialog_footer {
+    background: transparent;
+}
+.DialogView .dialog_buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+    padding: 4px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    border-top: var(--border_dark_concept_1);
+    background: transparent;
+}
+.DialogView .dialog_button {
+    white-space: nowrap;
+}
+.DialogView .dialog_status_bar {
+    display: flex;
+    flex-direction: row;
+    border-top: var(--border_dark_concept_1);
+    font-size: var(--font_size_small_1);
+    /*background-color: var(--grey90);*/
+    background: transparent;
+    color: black;
+}
+.DialogView .dialog_status_item {
+    flex: 1;
+    padding: var(--spacing_size_1);
+    white-space: nowrap;
+}
+
+.DialogView .dialog_status_bar > .dialog_status_item {
+    border-right: var(--border_dark_concept_1);
+}
+
+.DialogView .dialog_status_bar > .dialog_status_item:first-child {
+    border-left: none;
+}
+.DialogView .dialog_status_bar > .dialog_status_item:last-child {
+    border-right: none;
+}
+
+
+.DialogView .dialog_box {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+
+.DialogView .dialog_border {
+    position: relative;
+}
+.DialogView .dialog_border > div {
+    position: absolute;
+    top: 0px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    /*background-color: blue;*/
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.DialogView .dialog_border.top_border > div {
+    height: 6px;
+    top: -6px;
+    cursor: n-resize;
+}
+.DialogView .dialog_border.bottom_border > div {
+    height: 6px;
+    bottom: -6px;
+    cursor: s-resize;
+}
+.DialogView .dialog_border.left_border,
+.DialogView .dialog_border.right_border {
+    height: 100%;
+}
+.DialogView .dialog_border.left_border > div {
+    width: 6px;
+    left: -6px;
+    cursor: w-resize;
+}
+.DialogView .dialog_border.right_border > div {
+    width: 6px;
+    right: -6px;
+    cursor: e-resize;
+}
+
+.DialogView .dialog_corner {
+    position: relative;
+}
+.DialogView .dialog_corner > div {
+    position: absolute;
+    top: 0px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    width: 10px;
+    height: 10px;
+    /*background-color: red;*/
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.DialogView .dialog_corner.top_left_corner > div {
+    top: -10px;
+    left: -10px;
+    cursor: nw-resize;
+}
+.DialogView .dialog_corner.top_right_corner > div {
+    top: -10px;
+    right: -10px;
+    cursor: ne-resize;
+}
+.DialogView .dialog_corner.bottom_left_corner > div {
+    bottom: -10px;
+    left: -10px;
+    cursor: sw-resize;
+}
+.DialogView .dialog_corner.bottom_right_corner > div {
+    bottom: -10px;
+    right: -10px;
+    cursor: se-resize;
+}
+.DialogView.is_focused .dialog_topbar {
+    background: var(--texture_dark_1);
+    background: rgba(0,0,0,0.8);
+    color: white;
+    text-shadow: 0 0 1px white;
+}
+
+.DialogsTreeNode .tree_padding {
+    padding-left: 12px;
+}
+
+.DialogsTreeNode .dialog_tree_node_row {
+    
+}
+
+.DialogsTreeNode.is_focused .dialog_tree_node_row .button.normal {
+    background-color: var(--grey35);
+    color: white;
+}
+
+/* REGLAS PARA LOS OVERFLOWS DE LOS DIÁLOGOS */
+
+.DialogView {
+  box-sizing: border-box;
+}
+
+.DialogView .flex_column,
+.DialogView .flex_row,
+.DialogView .dialog_box {
+  min-width: 0;
+  min-height: 0;
+}
+
+.DialogView .dialog_box {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+.DialogView .dialog_header,
+.DialogView .dialog_footer {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.DialogView .dialog_body {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+.DialogView .dialog_topbar {
+  display: flex;
+  min-width: 0;
+}
+
+.DialogView .dialog_title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.DialogView .dialog_title_text {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.DialogView .dialog_topbar_buttons {
+  flex: 0 0 auto;
+}
+
+.DialogView .dialog_status_bar {
+  display: flex;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.ApplicationBackgroundConfigurer {
+  
+}
+.ApplicationBackgroundWidget {
+  width: 100%;
+  height: 100%;
+  background: var(--texture_light_2);
+  /*background: linear-gradient(0deg, rgb(77, 103, 1) 0%, rgb(77, 103, 1) 10%, rgb(77, 103, 1) 90%, rgb(77, 103, 1) 100%);*/
+}
+.ApplicationBackgroundWidget > .application_background {
+  position: absolute;
+  inset: 0;
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  filter: blur(1px);
+  transform: scale(1);
+}
+.FixedPanels {
+    --panel-size: 26px;
+    --panel-gap: 2px;
+    position: absolute;
+    inset: 0px;
+    z-index: 999999;
+    pointer-events: none;
+}
+
+.FixedPanels > .panel_on_top,
+.FixedPanels > .panel_on_bottom,
+.FixedPanels > .panel_on_left,
+.FixedPanels > .panel_on_right {
+    position: absolute;
+    min-width: var(--panel-size);
+    min-height: var(--panel-size);
+}
+
+.FixedPanels > .panel_on_top,
+.FixedPanels > .panel_on_bottom {
+    left: var(--panel-gap);
+    right: var(--panel-gap);
+    height: var(--panel-size);
+    /*background-color: red;*/
+}
+
+.FixedPanels > .panel_on_top {
+    top: var(--panel-gap);
+}
+
+.FixedPanels > .panel_on_bottom {
+    bottom: var(--panel-gap);
+}
+
+.FixedPanels > .panel_on_left,
+.FixedPanels > .panel_on_right {
+    top: calc(var(--panel-size) + var(--panel-gap) * 2);
+    bottom: calc(var(--panel-size) + var(--panel-gap) * 2);
+    width: var(--panel-size);
+    /*background-color: blue;*/
+}
+
+.FixedPanels > .panel_on_left {
+    left: var(--panel-gap);
+}
+
+.FixedPanels > .panel_on_right {
+    right: var(--panel-gap);
+}
+
+.FixedPanels > .panel_on_top,
+.FixedPanels > .panel_on_bottom,
+.FixedPanels > .panel_on_left,
+.FixedPanels > .panel_on_right {
+    /*background-color: red;*/
+}
+
+/*
+
+*/
+
+/*
+.FixedPanels {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 999999;
+    pointer-events: none;
+}
+.FixedPanels {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.FixedPanels > .panel_on_top,
+.FixedPanels > .panel_on_bottom,
+.FixedPanels > .panel_on_left,
+.FixedPanels > .panel_on_right {
+    position: absolute;
+    inset: auto;
+    min-width: 40px;
+    min-height: 40px;
+}
+
+.FixedPanels > .panel_on_top {
+    top: 2px;
+    left: 2px;
+    width: calc(100% - 4px);
+    background-color: red;
+}
+.FixedPanels > .panel_on_bottom {
+    bottom: 2px;
+    left: 2px;
+    width: calc(100% - 4px);
+    background-color: red;
+}
+.FixedPanels > .panel_on_left {
+    top: 44px;
+    bottom: 44px;
+    left: 2px;
+    height: calc(100% - 88px);
+    background-color: blue;
+}
+.FixedPanels > .panel_on_right {
+    top: 44px;
+    bottom: 44px;
+    right: 2px;
+    height: calc(100% - 88px);
+    background-color: blue;
+}
+*/
+
+
+.FixedArea {
+  flex: 1;
+  /*border: 1px solid white;*/
+  min-width: 10px;
+  min-height: 10px;
+}
+
+.FixedArea .button {
+  color: #333;
+  background-color: rgba(200,200,200,0.5);
+  border-radius: 4pt;
+  pointer-events: all;
+}
+.FixedPanel.direction_vertical {
+    display: flex;
+    flex-direction: column;
+}
+.FixedPanel.direction_horizontal {
+    display: flex;
+    flex-direction: row;
+}
+.FixedPanel .fixed_panel_area {
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.DialogsPort {
+    position: relative;
+    z-index: 999999;
+}
+
+/*
+.DialogsPort .DialogsPortViewButtons {
+    z-index: 999999;
+    width: auto;
+    height: auto;
+    border: none;
+    bottom: 4px;
+    right: 4px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.DialogsPort .DialogsPortViewButtons .button.flexible {
+    flex: 1;
+    border: 1px solid #444;
+    user-select: none;
+}
+
+.DialogsPort .DialogsPortViewButtons:hover {
+    
+}
+*/
+.LoremIpsum {
+    padding-left: 8px;
+    padding-right: 8px;
+    text-align: justify;
+}
+.icon {
+  width: 24px;
+  height: 24px;
+
+  background-color: currentColor;
+
+  mask-position: center;
+  mask-repeat: no-repeat;
+  mask-size: contain;
+
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+}
+.DialogView {
+    position: fixed;
+    /*border: var(--border_dark_concept_2);*/
+    border: 1px solid #514c4c;
+    box-shadow: 0 0 2px black;
+    background-color: transparent;
+    background-color: rgba(255,255,255,0.4);
+    margin: 2px;
+    border-radius: 0pt;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    opacity: 0.6;
+}
+.DialogView.is_focused {
+    opacity: 1;
+}
+.DialogView.is_maximized {
+    position: fixed;
+    inset: 0 !important;
+    width: auto !important;
+    height: auto !important;
+}
+.DialogView.is_minimized {
+    display: none;
+}
+
+.DialogView .dialog_topbar {
+    display: flex;
+    flex-direction: row;
+    border-bottom: var(--border_dark_concept_1);
+    align-items: center;
+    background: transparent;
+    color: black;
+    user-select: none;
+}
+.DialogView .dialog_title {
+    flex: 100;
+    cursor: default;
+    touch-action: none;
+    align-self: stretch;
+    overflow: hidden;
+    display: flex;
+}
+
+.DialogView .dialog_title:active {
+    cursor: grabbing;
+}
+.DialogView .dialog_title_text {
+    display: flex;
+    align-items: center;
+    padding-left: 4px;
+}
+.DialogView .dialog_topbar_buttons {
+    flex: 1;
+    display: flex;
+    flex-direction: row;
+    padding: 4px;
+    gap: 5px;
+}
+
+.DialogView .dialog_topbar_button {
+    color: var(--grey_of_emojis_1);
+    border: 1px solid transparent;
+    background-color: transparent;
+    border-radius: 50%;
+    cursor: pointer;
+}
+.DialogView.is_focused .dialog_topbar_button {
+    background-color: rgba(255,255,255,1);
+}
+.DialogView .dialog_topbar_button:hover {
+    
+}
+.DialogView .dialog_body {
+    padding: 2px;
+    background-color: var(--grey98);
+    background: transparent;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    overflow: auto;
+}
+.DialogView .dialog_body.is_scrollable {
+    position: relative;
+}
+.DialogView .dialog_body.is_scrollable > div {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: scroll;
+}
+.DialogView .dialog_body.is_centered {
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.DialogView .dialog_footer {
+    background: transparent;
+}
+.DialogView .dialog_buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+    padding: 4px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    border-top: var(--border_dark_concept_1);
+    background: transparent;
+}
+.DialogView .dialog_button {
+    white-space: nowrap;
+}
+.DialogView .dialog_status_bar {
+    display: flex;
+    flex-direction: row;
+    border-top: var(--border_dark_concept_1);
+    font-size: var(--font_size_small_1);
+    /*background-color: var(--grey90);*/
+    background: transparent;
+    color: black;
+}
+.DialogView .dialog_status_item {
+    flex: 1;
+    padding: var(--spacing_size_1);
+    white-space: nowrap;
+}
+
+.DialogView .dialog_status_bar > .dialog_status_item {
+    border-right: var(--border_dark_concept_1);
+}
+
+.DialogView .dialog_status_bar > .dialog_status_item:first-child {
+    border-left: none;
+}
+.DialogView .dialog_status_bar > .dialog_status_item:last-child {
+    border-right: none;
+}
+
+
+.DialogView .dialog_box {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+
+.DialogView .dialog_border {
+    position: relative;
+}
+.DialogView .dialog_border > div {
+    position: absolute;
+    top: 0px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    /*background-color: blue;*/
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.DialogView .dialog_border.top_border > div {
+    height: 6px;
+    top: -6px;
+    cursor: n-resize;
+}
+.DialogView .dialog_border.bottom_border > div {
+    height: 6px;
+    bottom: -6px;
+    cursor: s-resize;
+}
+.DialogView .dialog_border.left_border,
+.DialogView .dialog_border.right_border {
+    height: 100%;
+}
+.DialogView .dialog_border.left_border > div {
+    width: 6px;
+    left: -6px;
+    cursor: w-resize;
+}
+.DialogView .dialog_border.right_border > div {
+    width: 6px;
+    right: -6px;
+    cursor: e-resize;
+}
+
+.DialogView .dialog_corner {
+    position: relative;
+}
+.DialogView .dialog_corner > div {
+    position: absolute;
+    top: 0px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    width: 10px;
+    height: 10px;
+    /*background-color: red;*/
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.DialogView .dialog_corner.top_left_corner > div {
+    top: -10px;
+    left: -10px;
+    cursor: nw-resize;
+}
+.DialogView .dialog_corner.top_right_corner > div {
+    top: -10px;
+    right: -10px;
+    cursor: ne-resize;
+}
+.DialogView .dialog_corner.bottom_left_corner > div {
+    bottom: -10px;
+    left: -10px;
+    cursor: sw-resize;
+}
+.DialogView .dialog_corner.bottom_right_corner > div {
+    bottom: -10px;
+    right: -10px;
+    cursor: se-resize;
+}
+.DialogView.is_focused .dialog_topbar {
+    background: var(--texture_dark_1);
+    background: rgba(0,0,0,0.8);
+    color: white;
+    text-shadow: 0 0 1px white;
+}
+
+.DialogsTreeNode .tree_padding {
+    padding-left: 12px;
+}
+
+.DialogsTreeNode .dialog_tree_node_row {
+    
+}
+
+.DialogsTreeNode.is_focused .dialog_tree_node_row .button.normal {
+    background-color: var(--grey35);
+    color: white;
+}
+
+/* REGLAS PARA LOS OVERFLOWS DE LOS DIÁLOGOS */
+
+.DialogView {
+  box-sizing: border-box;
+}
+
+.DialogView .flex_column,
+.DialogView .flex_row,
+.DialogView .dialog_box {
+  min-width: 0;
+  min-height: 0;
+}
+
+.DialogView .dialog_box {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+.DialogView .dialog_header,
+.DialogView .dialog_footer {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.DialogView .dialog_body {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+.DialogView .dialog_topbar {
+  display: flex;
+  min-width: 0;
+}
+
+.DialogView .dialog_title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.DialogView .dialog_title_text {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.DialogView .dialog_topbar_buttons {
+  flex: 0 0 auto;
+}
+
+.DialogView .dialog_status_bar {
+  display: flex;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.inactive_context {
+    display: none;
+}
+
+.contextual_view_top_panel {
+    display: flex;
+    flex-direction: row;
+    padding: 2px;
+}
+
+.contextual_view_option {
+    flex: 1;
+    white-space: nowrap;
+    border: 1px solid gray;
+    margin-right: 2px;
+    padding: 4px;
+    cursor: pointer;
+}
+
+.contextual_view_option:hover {
+    background-color: #333;
+    color: white;
+}
+
+.contextual_view_option.activated {
+    background-color: #666;
+    color: white;
+}
 :root {
     --border_dark_concept_1: 1px solid var(--grey48);
     --border_dark_concept_2: 3px double var(--grey48);
@@ -20,6 +1210,18 @@
     --border_light_concept_1: 1px solid #BBB;
     --border_light_concept_2: 1px solid #EEE;
     --border_control_concept_1: 1px solid #424242;
+    --texture_light_1: repeating-conic-gradient(
+        #aaa 0% 25%,
+        #bbb 0% 50%
+    ) 0 0 / 6px 6px;
+    --texture_light_2: repeating-conic-gradient(
+        #ddd 0% 25%,
+        #eee 0% 50%
+    ) 0 0 / 6px 6px;
+    --texture_dark_1: repeating-conic-gradient(
+        #222 0% 25%,
+        #333 0% 50%
+    ) 0 0 / 6px 6px;
     --shadow_concept_1: 0 0 5px var(--grey48);
     --font_size_small_1: 10px;
     --spacing_size_0: 0px;
@@ -128,644 +1330,6 @@
     --grey99: #fcfcfc;
     --grey100: #ffffff;
     --dialog_border_width: 5px;
-}
-
-
-
-
-
-.DialogsPort {
-    position: relative;
-    z-index: 999999;
-}
-
-.DialogsPort .DialogsPortViewButton {
-    z-index: 999999;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    border: var(--border_dark_concept_2);
-    background-color: rgb(0, 0, 0, 0.2);
-    bottom:4px;
-    right:4px;
-    display:flex;
-    justify-items:center;
-    align-items:center;
-    background-color:rgb(2, 2, 56, 0.8);
-    cursor: pointer;
-}
-
-.DialogsPort .DialogsPortViewButton:hover {
-    background-color:rgb(2, 2, 56, 0.95);
-}
-
-.DialogView {
-    position: fixed;
-    border: var(--border_dark_concept_2);
-    margin: 2px;
-    border-radius: 3pt;
-    display: flex;
-    flex-direction: row;
-    align-items: stretch;
-}
-.DialogView.is_maximized {
-    position: fixed;
-    inset: 0 !important;
-    width: auto !important;
-    height: auto !important;
-}
-.DialogView.is_minimized {
-    display: none;
-}
-
-.DialogView .dialog_topbar {
-    display: flex;
-    flex-direction: row;
-    border-bottom: var(--border_dark_concept_1);
-    align-items: center;
-    background-color: var(--grey75);
-    color: black;
-    user-select: none;
-}
-.DialogView .dialog_title {
-    flex: 100;
-    cursor: default;
-    touch-action: none;
-    align-self: stretch;
-    overflow: hidden;
-    display: flex;
-}
-
-.DialogView .dialog_title:active {
-    cursor: grabbing;
-}
-.DialogView .dialog_title_text {
-    display: flex;
-    align-items: center;
-    padding-left: 4px;
-}
-.DialogView .dialog_topbar_buttons {
-    flex: 1;
-    display: flex;
-    flex-direction: row;
-    padding: 4px;
-    gap: 5px;
-}
-
-.DialogView .dialog_topbar_button {
-    color: var(--grey_of_emojis_1);
-    cursor: pointer;
-}
-.DialogView.is_focused .dialog_topbar_button {
-    
-}
-.DialogView .dialog_topbar_button:hover {
-    
-}
-.DialogView .dialog_body {
-    padding: 2px;
-    background-color: var(--grey98);
-    flex: 1;
-    min-width: 0;
-    min-height: 0;
-    overflow: auto;
-}
-.DialogView .dialog_body.is_scrollable {
-    position: relative;
-}
-.DialogView .dialog_body.is_scrollable > div {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    overflow: scroll;
-}
-.DialogView .dialog_body.is_centered {
-    overflow: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-.DialogView .dialog_footer {
-    
-}
-.DialogView .dialog_buttons {
-    display: flex;
-    flex-direction: row;
-    gap: 4px;
-    padding: 4px;
-    padding-top: 2px;
-    padding-bottom: 2px;
-    border-top: var(--border_dark_concept_1);
-    background-color: var(--grey96);
-}
-.DialogView .dialog_button {
-    white-space: nowrap;
-}
-.DialogView .dialog_status_bar {
-    display: flex;
-    flex-direction: row;
-    border-top: var(--border_dark_concept_1);
-    font-size: var(--font_size_small_1);
-    background-color: var(--grey90);
-    color: black;
-}
-.DialogView .dialog_status_item {
-    flex: 1;
-    padding: var(--spacing_size_1);
-    white-space: nowrap;
-}
-
-.DialogView .dialog_status_bar > .dialog_status_item {
-    border-right: var(--border_dark_concept_1);
-}
-
-.DialogView .dialog_status_bar > .dialog_status_item:first-child {
-    border-left: none;
-}
-.DialogView .dialog_status_bar > .dialog_status_item:last-child {
-    border-right: none;
-}
-
-
-.DialogView .dialog_box {
-    flex: 1;
-    min-width: 0;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-}
-
-
-.DialogView .dialog_border {
-    position: relative;
-}
-.DialogView .dialog_border > div {
-    position: absolute;
-    top: 0px;
-    bottom: 0px;
-    left: 0px;
-    right: 0px;
-    /*background-color: blue;*/
-    touch-action: none;
-    user-select: none;
-    -webkit-user-select: none;
-}
-.DialogView .dialog_border.top_border > div {
-    height: 6px;
-    top: -6px;
-    cursor: n-resize;
-}
-.DialogView .dialog_border.bottom_border > div {
-    height: 6px;
-    bottom: -6px;
-    cursor: s-resize;
-}
-.DialogView .dialog_border.left_border,
-.DialogView .dialog_border.right_border {
-    height: 100%;
-}
-.DialogView .dialog_border.left_border > div {
-    width: 6px;
-    left: -6px;
-    cursor: w-resize;
-}
-.DialogView .dialog_border.right_border > div {
-    width: 6px;
-    right: -6px;
-    cursor: e-resize;
-}
-
-.DialogView .dialog_corner {
-    position: relative;
-}
-.DialogView .dialog_corner > div {
-    position: absolute;
-    top: 0px;
-    bottom: 0px;
-    left: 0px;
-    right: 0px;
-    width: 10px;
-    height: 10px;
-    /*background-color: red;*/
-    touch-action: none;
-    user-select: none;
-    -webkit-user-select: none;
-}
-.DialogView .dialog_corner.top_left_corner > div {
-    top: -10px;
-    left: -10px;
-    cursor: nw-resize;
-}
-.DialogView .dialog_corner.top_right_corner > div {
-    top: -10px;
-    right: -10px;
-    cursor: ne-resize;
-}
-.DialogView .dialog_corner.bottom_left_corner > div {
-    bottom: -10px;
-    left: -10px;
-    cursor: sw-resize;
-}
-.DialogView .dialog_corner.bottom_right_corner > div {
-    bottom: -10px;
-    right: -10px;
-    cursor: se-resize;
-}
-.DialogView.is_focused .dialog_topbar {
-    background-color: var(--grey35);
-    color: white;
-}
-
-.DialogsTreeNode .tree_padding {
-    padding-left: 12px;
-}
-
-.DialogsTreeNode .dialog_tree_node_row {
-    
-}
-
-.DialogsTreeNode.is_focused .dialog_tree_node_row .normal_button {
-    background-color: var(--grey35);
-    color: white;
-}
-
-/* REGLAS PARA LOS OVERFLOWS DE LOS DIÁLOGOS */
-
-.DialogView {
-  box-sizing: border-box;
-}
-
-.DialogView .flex_column,
-.DialogView .flex_row,
-.DialogView .dialog_box {
-  min-width: 0;
-  min-height: 0;
-}
-
-.DialogView .dialog_box {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  overflow: hidden;
-}
-
-.DialogView .dialog_header,
-.DialogView .dialog_footer {
-  flex: 0 0 auto;
-  min-width: 0;
-}
-
-.DialogView .dialog_body {
-  flex: 1 1 auto;
-  min-width: 0;
-  min-height: 0;
-  overflow: auto;
-}
-
-.DialogView .dialog_topbar {
-  display: flex;
-  min-width: 0;
-}
-
-.DialogView .dialog_title {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.DialogView .dialog_title_text {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.DialogView .dialog_topbar_buttons {
-  flex: 0 0 auto;
-}
-
-.DialogView .dialog_status_bar {
-  display: flex;
-  min-width: 0;
-  overflow: hidden;
-}
-
-/* PADDINGS, MARGINS AND GAPS */
-
-.pad_0 { padding: 0px; }
-.pad_1 { padding: 1px; }
-.pad_2 { padding: 2px; }
-.pad_3 { padding: 3px; }
-.pad_4 { padding: 4px; }
-
-.pad_vertical_0 { padding-top: 0px; padding-bottom: 0px; }
-.pad_vertical_1 { padding-top: 1px; padding-bottom: 1px; }
-.pad_vertical_2 { padding-top: 2px; padding-bottom: 2px; }
-.pad_vertical_3 { padding-top: 3px; padding-bottom: 3px; }
-.pad_vertical_4 { padding-top: 4px; padding-bottom: 4px; }
-
-.pad_horizontal_0 { padding-left: 0px; padding-right: 0px; }
-.pad_horizontal_1 { padding-left: 1px; padding-right: 1px; }
-.pad_horizontal_2 { padding-left: 2px; padding-right: 2px; }
-.pad_horizontal_3 { padding-left: 3px; padding-right: 3px; }
-.pad_horizontal_4 { padding-left: 4px; padding-right: 4px; }
-
-.pad_top_0 { padding-top: 0px; }
-.pad_top_1 { padding-top: 1px; }
-.pad_top_2 { padding-top: 2px; }
-.pad_top_3 { padding-top: 3px; }
-.pad_top_4 { padding-top: 4px; }
-
-.pad_bottom_0 { padding-bottom: 0px; }
-.pad_bottom_1 { padding-bottom: 1px; }
-.pad_bottom_2 { padding-bottom: 2px; }
-.pad_bottom_3 { padding-bottom: 3px; }
-.pad_bottom_4 { padding-bottom: 4px; }
-
-.pad_left_0 { padding-left: 0px; }
-.pad_left_1 { padding-left: 1px; }
-.pad_left_2 { padding-left: 2px; }
-.pad_left_3 { padding-left: 3px; }
-.pad_left_4 { padding-left: 4px; }
-
-.pad_right_0 { padding-right: 0px; }
-.pad_right_1 { padding-right: 1px; }
-.pad_right_2 { padding-right: 2px; }
-.pad_right_3 { padding-right: 3px; }
-.pad_right_4 { padding-right: 4px; }
-
-.margin_0 { margin: 0px; }
-.margin_1 { margin: 1px; }
-.margin_2 { margin: 2px; }
-.margin_3 { margin: 3px; }
-.margin_4 { margin: 4px; }
-
-.margin_vertical_0 { margin-top: 0px; margin-bottom: 0px; }
-.margin_vertical_1 { margin-top: 1px; margin-bottom: 1px; }
-.margin_vertical_2 { margin-top: 2px; margin-bottom: 2px; }
-.margin_vertical_3 { margin-top: 3px; margin-bottom: 3px; }
-.margin_vertical_4 { margin-top: 4px; margin-bottom: 4px; }
-
-.margin_horizontal_0 { margin-left: 0px; margin-right: 0px; }
-.margin_horizontal_1 { margin-left: 1px; margin-right: 1px; }
-.margin_horizontal_2 { margin-left: 2px; margin-right: 2px; }
-.margin_horizontal_3 { margin-left: 3px; margin-right: 3px; }
-.margin_horizontal_4 { margin-left: 4px; margin-right: 4px; }
-
-.margin_top_0 { margin-top: 0px; }
-.margin_top_1 { margin-top: 1px; }
-.margin_top_2 { margin-top: 2px; }
-.margin_top_3 { margin-top: 3px; }
-.margin_top_4 { margin-top: 4px; }
-
-.margin_bottom_0 { margin-bottom: 0px; }
-.margin_bottom_1 { margin-bottom: 1px; }
-.margin_bottom_2 { margin-bottom: 2px; }
-.margin_bottom_3 { margin-bottom: 3px; }
-.margin_bottom_4 { margin-bottom: 4px; }
-
-.margin_left_0 { margin-left: 0px; }
-.margin_left_1 { margin-left: 1px; }
-.margin_left_2 { margin-left: 2px; }
-.margin_left_3 { margin-left: 3px; }
-.margin_left_4 { margin-left: 4px; }
-
-.margin_right_0 { margin-right: 0px; }
-.margin_right_1 { margin-right: 1px; }
-.margin_right_2 { margin-right: 2px; }
-.margin_right_3 { margin-right: 3px; }
-.margin_right_4 { margin-right: 4px; }
-
-.gap_1 { gap: 1px; }
-.gap_2 { gap: 2px; }
-.gap_3 { gap: 3px; }
-.gap_4 { gap: 4px; }
-
-/* FLEX LAYOUT */
-
-.flex_column { display: flex; flex-direction: column; }
-.flex_row { display: flex; flex-direction: row; }
-.flex_row.centered { align-items: center; }
-.flex_1 { flex: 1 !important; }
-.flex_100 { flex: 100 !important; }
-.flex_0 { flex: 0 0 0px; }
-
-/* RELATIVE, FIXED AND ABSOLUTE LAYOUTS */
-
-.position_relative { position: relative; }
-.position_absolute { position: absolute; }
-.position_fixed { position: fixed; }
-
-.top_0 { top: 0px; }
-.bottom_0 { bottom: 0px; }
-.left_0 { left: 0px; }
-.right_0 { right: 0px; }
-
-.top_auto { top: auto; }
-.bottom_auto { bottom: auto; }
-.left_auto { left: auto; }
-.right_auto { right: auto; }
-
-/* SCROLLBARS */
-
-/* ------------------------------------------------------------
-   Scrollbars
------------------------------------------------------------- */
-
-:root {
-  --scrollbar-size: 14px;
-  --scrollbar-track-color: white; /*var(--grey90);*/
-  --scrollbar-thumb-color: var(--grey60);
-  --scrollbar-thumb-color-hover: var(--grey55);
-  --scrollbar-thumb-color-active: var(--grey50);
-  --scrollbar-corner-color: var(--grey35);
-}
-
-/* Firefox */
-* {
-  scrollbar-width: auto;
-  scrollbar-color: auto;
-}
-
-/* Chrome */
-::-webkit-scrollbar {
-  width: var(--scrollbar-size);
-  height: var(--scrollbar-size);
-}
-
-::-webkit-scrollbar-track {
-  background: var(--scrollbar-track-color);
-  border-top: 1px solid var(--grey85);
-  border-left: 1px solid var(--grey85);
-  border: 1px solid var(--grey85);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--scrollbar-thumb-color);
-  border: 1px solid var(--grey85);
-  border-radius: 2pt;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--scrollbar-thumb-color-hover);
-}
-
-::-webkit-scrollbar-thumb:active {
-  background: var(--scrollbar-thumb-color-active);
-}
-
-::-webkit-scrollbar-corner {
-  background: var(--grey85);
-}
-
-@-moz-document url-prefix() {
-  * {
-    scrollbar-width: thin;
-    scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color);
-  }
-}
-
-/* BUTTONS */
-
-.normal_button,
-.rounded_button,
-.square_button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 12px;
-    min-height: 12px;
-    padding: 3px;
-    background-color: var(--grey78);
-    border: 1px solid var(--grey53);
-    border-radius: 2pt; /*50%;*/
-    color: #222;
-    text-align: center;
-    cursor: pointer;
-}
-
-.normal_button:hover,
-.rounded_button:hover,
-.square_button:hover {
-    background-color: var(--grey88);
-}
-
-.normal_button.activated,
-.rounded_button.activated,
-.square_button.activated {
-    background-color: var(--grey91);
-}
-
-.normal_button {
-    font-size: 11px;
-    white-space: nowrap;
-}
-.square_button {
-    width: 12px;
-    min-width: 12px;
-}
-.rounded_button {
-    width: 12px;
-    min-width: 12px;
-    border-radius: 50%;
-}
-
-/* BUTTON FLAVOURS */
-
-.normal_button.light,
-.rounded_button.light,
-.square_button.light {
-    border: 1px solid transparent;
-    background-color: var(--grey85);
-}
-.normal_button.light:hover,
-.rounded_button.light:hover,
-.square_button.light:hover {
-    background-color: var(--grey90);
-}
-.normal_button.light.activated,
-.rounded_button.light.activated,
-.square_button.light.activated {
-    background-color: var(--grey93);
-}
-
-/* TEXT */
-
-.text_align_left { text-align: left; }
-.text_align_center { text-align: center; }
-.text_align_right { text-align: right; }
-
-.nowrap { white-space: nowrap; }
-
-/* STYLOGRAPHY */
-
-.underline_light_1 {
-    border-bottom: var(--border_light_concept_1);
-}
-
-/* INPUTS & TEXTAREAS */
-
-input {
-    height: 26px;
-    min-height: 26px;
-}
-
-input, textarea {
-    font-size: 10px;
-    border-radius: 3pt;
-    border: var(--border_dark_concept_1);
-    width: 100%;
-    box-sizing: border-box;
-}
-
-textarea {
-    resize: vertical;
-    min-height: 210px;
-}
-
-/* COMMON STATES */
-
-/* ROTATION */
-
-.rotate1of4 { transform: rotate(90deg); }
-.rotate2of4 { transform: rotate(180deg); }
-.rotate3of4 { transform: rotate(270deg); }
-
-.rotate1of8 { transform: rotate(45deg); }
-.rotate2of8 { transform: rotate(90deg); }
-.rotate3of8 { transform: rotate(135deg); }
-.rotate4of8 { transform: rotate(180deg); }
-.rotate5of8 { transform: rotate(225deg); }
-.rotate6of8 { transform: rotate(270deg); }
-.rotate7of8 { transform: rotate(315deg); }
-.inactive_context {
-    display: none;
-}
-
-.contextual_view_top_panel {
-    display: flex;
-    flex-direction: row;
-    padding: 2px;
-}
-
-.contextual_view_option {
-    flex: 1;
-    white-space: nowrap;
-    border: 1px solid gray;
-    margin-right: 2px;
-    padding: 4px;
-    cursor: pointer;
-}
-
-.contextual_view_option:hover {
-    background-color: #333;
-    color: white;
-}
-
-.contextual_view_option.activated {
-    background-color: #666;
-    color: white;
 }</style>
     <div id="app"></div>
     <script>window.addEventListener("load", async function() {
@@ -1436,7 +2000,7 @@ this.moduler = moduler;
    */
   return this.normalizeObject(options, normalization);
 }
-  normalizeObject(parameters = {}, normalization = null) {
+  normalizeObject(parameters = {}, normalization = null, postnormalization = null) {
   /**
    * @name ModulerV6.Toolkit.prototype.normalizeObject
    * @type 
@@ -1461,7 +2025,7 @@ this.moduler = moduler;
           if (typeof result === "undefined") {
             // @OK
           } else if (result !== true) {
-            throw new Error(result || `Validation of property «${property}» should return true or undefined but «${typeof result}» was found instead on «ModulerV6.Toolkit.normalizeObject»`);
+            throw new Error(result || `Property «${property}» could not be validated because it returned «${result}» instead of «true» on «ModulerV6.Toolkit.normalizeObject»`);
           }
         } else if (typeof configuration.validate === "object") {
           output[property] = this.normalizeObject(output[property], configuration.validate);
@@ -1475,6 +2039,19 @@ this.moduler = moduler;
         const result = configuration.format(output[property], output, normalization);
         if(typeof result !== "undefined") output[property] = result;
       }
+    }
+  }
+  if(postnormalization) {
+    Apply_validation: {
+      if(postnormalization.validate) {
+        const result = postnormalization.validate(output);
+        if(result !== true) {
+          throw new Error(result || `Global normalization could not be validated because it returned «${result}» instead of «true» on «ModulerV6.Toolkit.prototype.normalizeObject»`);
+        }
+      }
+    }
+    Apply_format: {
+      if(postnormalization.format) output = postnormalization.format(output);
     }
   }
   return output;

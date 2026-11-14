@@ -3,7 +3,7 @@
 ## La global principal
 
 ```js
-assert(Std.classes.Dialogs.$ === Std.classes.Dialogs.globalInstance);
+assert(Std.classes.Dialogs === Std.classes.Dialogs);
 ```
 
 ## El funcionamiento típico
@@ -16,7 +16,7 @@ const {
     config, // Parámetros iniciales
     promise, // Promesa que devuelve el valor del diálogo
     thread, // Hilo correspondiente al diálogo
-} = await Std.classes.Dialogs.$.open({
+} = await Std.classes.Dialogs.open({
     title: "Título del diálogo",
     template: "Tu nombre: <input v-model='value' />",
     data: { value: "" },
@@ -50,7 +50,7 @@ const {
 La propiedad buttons del open de Dialogs tiene 3 opciones paramétricas, y la de String permite un pequeño lenguaje:
 
 ```js
-const output = await Std.classes.Dialogs.$.open({
+const output = await Std.classes.Dialogs.open({
     template: "un contenido",
     data: { value: 500 },
     methods: {

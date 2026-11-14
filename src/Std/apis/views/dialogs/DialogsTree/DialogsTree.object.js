@@ -1,10 +1,10 @@
-Std.classes.ViewsRegistry.$.set("DialogsTree", {
+Std.classes.ViewsRegistry.set("DialogsTree", {
   name: "DialogsTree",
   template: $compiler.inject.string("@/src/Std/apis/views/dialogs/DialogsTree/DialogsTree.view.html"),
   props: {
     dialogsPort: {
       type: Std.externals.Vue2,
-      default: () => Std.objects.GlobalDialog.port,
+      default: () => Std.classes.Dialogs.port,
     }
   },
   created() {

@@ -1,6 +1,6 @@
 class JsonStringifier {
 
-  static stringify(input, beautify = true, callback = false) {
+  static stringify(input, beautify = 2, callback = false) {
     /**@:
      * 
      * # JsonStringifier.stringify(input:any, beautify:boolean=true)
@@ -33,7 +33,7 @@ class JsonStringifier {
       }
       return value;
     };
-    return JSON.stringify(input, replacer, beautify ? 2 : 0);
+    return JSON.stringify(input, replacer, typeof beautify === "boolean" ? (beautify ? 2 : 0) : beautify);
   }
 
 }

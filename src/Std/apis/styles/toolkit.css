@@ -1,0 +1,322 @@
+/* PADDINGS, MARGINS AND GAPS */
+
+.pad_0 { padding: 0px; }
+.pad_1 { padding: 1px; }
+.pad_2 { padding: 2px; }
+.pad_3 { padding: 3px; }
+.pad_4 { padding: 4px; }
+
+.pad_vertical_0 { padding-top: 0px; padding-bottom: 0px; }
+.pad_vertical_1 { padding-top: 1px; padding-bottom: 1px; }
+.pad_vertical_2 { padding-top: 2px; padding-bottom: 2px; }
+.pad_vertical_3 { padding-top: 3px; padding-bottom: 3px; }
+.pad_vertical_4 { padding-top: 4px; padding-bottom: 4px; }
+
+.pad_horizontal_0 { padding-left: 0px; padding-right: 0px; }
+.pad_horizontal_1 { padding-left: 1px; padding-right: 1px; }
+.pad_horizontal_2 { padding-left: 2px; padding-right: 2px; }
+.pad_horizontal_3 { padding-left: 3px; padding-right: 3px; }
+.pad_horizontal_4 { padding-left: 4px; padding-right: 4px; }
+
+.pad_top_0 { padding-top: 0px; }
+.pad_top_1 { padding-top: 1px; }
+.pad_top_2 { padding-top: 2px; }
+.pad_top_3 { padding-top: 3px; }
+.pad_top_4 { padding-top: 4px; }
+
+.pad_bottom_0 { padding-bottom: 0px; }
+.pad_bottom_1 { padding-bottom: 1px; }
+.pad_bottom_2 { padding-bottom: 2px; }
+.pad_bottom_3 { padding-bottom: 3px; }
+.pad_bottom_4 { padding-bottom: 4px; }
+
+.pad_left_0 { padding-left: 0px; }
+.pad_left_1 { padding-left: 1px; }
+.pad_left_2 { padding-left: 2px; }
+.pad_left_3 { padding-left: 3px; }
+.pad_left_4 { padding-left: 4px; }
+
+.pad_right_0 { padding-right: 0px; }
+.pad_right_1 { padding-right: 1px; }
+.pad_right_2 { padding-right: 2px; }
+.pad_right_3 { padding-right: 3px; }
+.pad_right_4 { padding-right: 4px; }
+
+.margin_0 { margin: 0px; }
+.margin_1 { margin: 1px; }
+.margin_2 { margin: 2px; }
+.margin_3 { margin: 3px; }
+.margin_4 { margin: 4px; }
+
+.margin_vertical_0 { margin-top: 0px; margin-bottom: 0px; }
+.margin_vertical_1 { margin-top: 1px; margin-bottom: 1px; }
+.margin_vertical_2 { margin-top: 2px; margin-bottom: 2px; }
+.margin_vertical_3 { margin-top: 3px; margin-bottom: 3px; }
+.margin_vertical_4 { margin-top: 4px; margin-bottom: 4px; }
+
+.margin_horizontal_0 { margin-left: 0px; margin-right: 0px; }
+.margin_horizontal_1 { margin-left: 1px; margin-right: 1px; }
+.margin_horizontal_2 { margin-left: 2px; margin-right: 2px; }
+.margin_horizontal_3 { margin-left: 3px; margin-right: 3px; }
+.margin_horizontal_4 { margin-left: 4px; margin-right: 4px; }
+
+.margin_top_0 { margin-top: 0px; }
+.margin_top_1 { margin-top: 1px; }
+.margin_top_2 { margin-top: 2px; }
+.margin_top_3 { margin-top: 3px; }
+.margin_top_4 { margin-top: 4px; }
+
+.margin_bottom_0 { margin-bottom: 0px; }
+.margin_bottom_1 { margin-bottom: 1px; }
+.margin_bottom_2 { margin-bottom: 2px; }
+.margin_bottom_3 { margin-bottom: 3px; }
+.margin_bottom_4 { margin-bottom: 4px; }
+
+.margin_left_0 { margin-left: 0px; }
+.margin_left_1 { margin-left: 1px; }
+.margin_left_2 { margin-left: 2px; }
+.margin_left_3 { margin-left: 3px; }
+.margin_left_4 { margin-left: 4px; }
+
+.margin_right_0 { margin-right: 0px; }
+.margin_right_1 { margin-right: 1px; }
+.margin_right_2 { margin-right: 2px; }
+.margin_right_3 { margin-right: 3px; }
+.margin_right_4 { margin-right: 4px; }
+
+.gap_1 { gap: 1px; }
+.gap_2 { gap: 2px; }
+.gap_3 { gap: 3px; }
+.gap_4 { gap: 4px; }
+
+/* FLEX LAYOUT */
+
+.flex_column { display: flex; flex-direction: column; }
+.flex_row { display: flex; flex-direction: row; }
+.flex_row.centered { align-items: center; }
+.flex_1 { flex: 1; }
+.flex_100 { flex: 100; }
+.flex_0 { flex: 0 0 0px; }
+
+/* RELATIVE, FIXED AND ABSOLUTE LAYOUTS */
+
+.position_relative { position: relative; }
+.position_absolute { position: absolute; }
+.position_fixed { position: fixed; }
+
+.inset_0 { inset: 0px; }
+.inset_auto { inset: auto; }
+
+.top_0 { top: 0px; }
+.bottom_0 { bottom: 0px; }
+.left_0 { left: 0px; }
+.right_0 { right: 0px; }
+
+.top_auto { top: auto; }
+.bottom_auto { bottom: auto; }
+.left_auto { left: auto; }
+.right_auto { right: auto; }
+
+/* SCROLLBARS */
+
+/* ------------------------------------------------------------
+   Scrollbars
+------------------------------------------------------------ */
+
+:root {
+  --scrollbar-size: 14px;
+  --scrollbar-track-color:transparent; /*var(--grey90);*/
+  --scrollbar-thumb-color: rgba(0,0,0,0.4); /*var(--grey60);*/
+  --scrollbar-thumb-color-hover: rgba(0,0,0,0.6); /*var(--grey55);*/
+  --scrollbar-thumb-color-active: rgba(0,0,0,0.7); /*var(--grey50);*/
+  --scrollbar-corner-color: transparent; /*var(--grey85);*/
+}
+
+/* Firefox */
+* {
+  scrollbar-width: auto;
+  scrollbar-color: auto;
+}
+
+/* Chrome */
+::-webkit-scrollbar {
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track-color);
+  border-top: 1px solid var(--grey85);
+  border-left: 1px solid var(--grey85);
+  border: 1px solid var(--grey85);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb-color);
+  border: 1px solid var(--grey85);
+  border-radius: 2pt;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-color-hover);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: var(--scrollbar-thumb-color-active);
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--scrollbar-corner-color);
+}
+
+@-moz-document url-prefix() {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb-color) var(--scrollbar-track-color);
+  }
+}
+
+/* BUTTONS */
+
+.button.normal,
+.button.rounded,
+.button.flexible,
+.button.square {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 12px;
+    min-height: 12px;
+    padding: 3px;
+    background-color: var(--grey78);
+    border: 1px solid transparent;
+    border: 1px solid var(--grey53);
+    border-radius: 2pt; /*50%;*/
+    color: #222;
+    text-align: center;
+    cursor: pointer;
+}
+
+.button.normal:hover,
+.button.rounded:hover,
+.button.flexible:hover,
+.button.square:hover {
+    background-color: var(--grey88);
+}
+
+.button.normal.activated,
+.button.rounded.activated,
+.button.flexible.activated,
+.button.square.activated {
+    background-color: var(--grey91);
+}
+
+.button.normal {
+    font-size: 11px;
+    white-space: nowrap;
+}
+.button.square {
+    width: 12px;
+    min-width: 12px;
+}
+.button.rounded {
+    width: 12px;
+    min-width: 12px;
+    border-radius: 50%;
+}
+.button.flexible {
+    height: auto;
+    width: auto;
+    min-height: auto;
+    min-width: auto;
+    max-height: auto;
+    max-width: auto;
+}
+
+/* BUTTON FLAVOURS */
+
+.button.normal.light,
+.button.rounded.light,
+.button.square.light {
+    border: 1px solid transparent;
+    background-color: var(--grey85);
+}
+.button.normal.light:hover,
+.button.rounded.light:hover,
+.button.square.light:hover {
+    background-color: var(--grey90);
+}
+.button.normal.light.activated,
+.button.rounded.light.activated,
+.button.square.light.activated {
+    background-color: var(--grey93);
+}
+
+/* BUTTON ASPECTS */
+
+.button.unbordered {
+    border: 1px solid transparent;
+}
+
+/* TEXT */
+
+.text_align_left { text-align: left; }
+.text_align_center { text-align: center; }
+.text_align_right { text-align: right; }
+
+.nowrap { white-space: nowrap; }
+
+/* FLEX ASPECTS */
+.flex_align_start { align-items: start; }
+.flex_align_center { align-items: center; }
+.flex_align_end { align-items: end; }
+.flex_justify_start { justify-content: start; }
+.flex_justify_center { justify-content: center; }
+.flex_justify_end { justify-content: end; }
+
+/* STYLOGRAPHY */
+
+.underline_light_1 {
+    border-bottom: var(--border_light_concept_1);
+}
+
+/* FONT ASPECTS */
+
+.monospace { font-family: monospace; }
+
+/* INPUTS & TEXTAREAS */
+
+input {
+    height: 26px;
+    min-height: 26px;
+}
+
+input, textarea {
+    font-size: 10px;
+    border-radius: 3pt;
+    border: var(--border_dark_concept_1);
+    width: 100%;
+    box-sizing: border-box;
+    background-color: rgba(255,255,255,0.4);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 210px;
+}
+
+/* COMMON STATES */
+
+/* ROTATION */
+
+.rotate1of4 { transform: rotate(90deg); }
+.rotate2of4 { transform: rotate(180deg); }
+.rotate3of4 { transform: rotate(270deg); }
+
+.rotate1of8 { transform: rotate(45deg); }
+.rotate2of8 { transform: rotate(90deg); }
+.rotate3of8 { transform: rotate(135deg); }
+.rotate4of8 { transform: rotate(180deg); }
+.rotate5of8 { transform: rotate(225deg); }
+.rotate6of8 { transform: rotate(270deg); }
+.rotate7of8 { transform: rotate(315deg); }

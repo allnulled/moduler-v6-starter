@@ -28,7 +28,7 @@ module.exports = async function ({ Tester }) {
       config, // Parámetros iniciales
       promise, // Promesa que devuelve el valor del diálogo
       thread, // Hilo correspondiente al diálogo
-    } = await Std.classes.Dialogs.$.open({
+    } = await Std.classes.Dialogs.open({
       title: "Título del diálogo",
       template: "Tu nombre: <input v-model='identifier' /> Estás diciendo {{ identifier }}",
       data: { identifier: "algo" },

@@ -1,0 +1,11 @@
+<div class="TypesFormArrayType View">
+    <div>Array type:</div>
+    <div v-for="subnode, subnodeIndex in localAst.items" v-bind:key="'items_subnode_' + subnodeIndex">
+        <TypesFormNode :params="{
+            ast: params.ast,
+            astIndex: params.astIndex.concat(['items', subnodeIndex]),
+            data: params.data,
+            dataIndex: params.dataIndex,
+        }" />
+    </div>
+</div>

@@ -1,4 +1,4 @@
-Std.classes.ViewsRegistry.$.set("DialogsPort", {
+Std.classes.ViewsRegistry.set("DialogsPort", {
   name: "DialogsPort",
   template: $compiler.inject.string("@/src/Std/apis/views/dialogs/DialogsPort/DialogsPort.view.html"),
   props: {},
@@ -9,7 +9,7 @@ Std.classes.ViewsRegistry.$.set("DialogsPort", {
   created: function () {
     $compiler.inject.template("@/src/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.created" });
     Initialize_in_globals: {
-      Std.classes.Dialogs.globalInstance.initializePort(this);
+      Std.classes.Dialogs.initializePort(this);
       this.$locals = {
         events: {
           onChangeDialogBoundaries: new Std.classes.FunctionsList(),
@@ -85,7 +85,10 @@ Std.classes.ViewsRegistry.$.set("DialogsPort", {
       return Math.max(min, Math.min(value, max));
     },
     calculateDialogBoundaries(size) {
-      const viewport = this.$options.static.viewport;
+      const viewport = {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      };
       const margin = this.$options.static.dialogs.margin;
       const definition = this.$options.static.dialogs.sizes[size];
       $moduler.assert(definition, `Parameter «size» must be one out of «small|medium-small|medium|medium-big|big|maximized» but «${size}» was found instead on «calculateDialogBoundaries»`);
@@ -212,9 +215,9 @@ Std.classes.ViewsRegistry.$.set("DialogsPort", {
     openTreeView() {
       $compiler.inject.template("@/src/Std/snippets/methodLog.js", { name: "Std.views.DialogsPort.methods.openTreeView" });
       return this.open({
-        title: "Árbol de diálogos",
+        title: "Visor de hilos",
         template: "<DialogsTree />",
-        uniqueActionId: "Dialogs tree view",
+        uniqueActionId: "Threads viewer",
       });
     }
   },

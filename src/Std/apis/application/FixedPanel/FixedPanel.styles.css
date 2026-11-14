@@ -1,0 +1,14 @@
+.FixedPanel.direction_vertical {
+    display: flex;
+    flex-direction: column;
+}
+.FixedPanel.direction_horizontal {
+    display: flex;
+    flex-direction: row;
+}
+.FixedPanel .fixed_panel_area {
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

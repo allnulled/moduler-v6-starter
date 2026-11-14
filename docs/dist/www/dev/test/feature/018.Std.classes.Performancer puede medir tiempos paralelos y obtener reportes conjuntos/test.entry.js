@@ -14,11 +14,11 @@ module.exports = async function ({ Tester }) {
 
   console.log(Dialogs);
 
-  Dialogs.$.open({ template: "<div>Hola</div>"});
-  Dialogs.$.open({ template: "<div>Hola</div>"});
-  Dialogs.$.open({ template: "<div>Hola</div>"});
-  Dialogs.$.open({ template: "<div>Hola</div>"});
-  Dialogs.$.open({ template: "<div>Hola</div>"});
-  Dialogs.$.open({ template: "<div>Hola</div>"});
+  Dialogs.open({ template: "<div>Hola</div>"});
+  Dialogs.open({ template: "<div>Hola</div>"});
+  Dialogs.open({ template: "<div>Hola</div>"});
+  Dialogs.open({ template: "<div>Hola</div>"});
+  Dialogs.open({ template: "<div>Hola</div>"});
+  Dialogs.open({ template: "<div>Hola</div>"});
 
 };

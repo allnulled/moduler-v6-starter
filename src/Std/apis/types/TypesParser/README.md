@@ -6,6 +6,7 @@ Documentación oficial del parser de `typeslang`.
 
 - [TypesParser](#typesparser)
   - [Índice](#índice)
+  - [Gramáticas destacadas (por ChatGPT)](#gramáticas-destacadas-por-chatgpt)
   - [Features](#features)
     - [Feature 001: Primitivos básicos](#feature-001-primitivos-básicos)
     - [Feature 002: Negación, agrupación, conjunción y disyunción](#feature-002-negación-agrupación-conjunción-y-disyunción)
@@ -13,6 +14,22 @@ Documentación oficial del parser de `typeslang`.
     - [Feature 004: Multiplicadores en arrays y parámetros de función](#feature-004-multiplicadores-en-arrays-y-parámetros-de-función)
     - [Feature 005: Variables reusables](#feature-005-variables-reusables)
     - [Feature 006: Importación por fetch o fs](#feature-006-importación-por-fetch-o-fs)
+
+## Gramáticas destacadas (por ChatGPT)
+
+| Gramática | Componente gráfico | Uso |
+| --- | --- | --- |
+| script | TypesFormScript | Contenedor raíz del formulario |
+| object type | TypesFormObject | Grupo de propiedades |
+| class type | TypesFormClass | Grupo de propiedades con semántica de clase |
+| array type | TypesFormArray | Colección de elementos |
+| factory type | TypesFormFactory | Representación de una función/factory |
+| or operation | TypesFormOr | Alternativas de tipo |
+| and operation | TypesFormAnd | Composición de tipos |
+| type id | TypesFormIdentifier | Tipo identificado por nombre |
+| type label | TypesFormLabel | Etiqueta o referencia etiquetada |
+| spreaded list | TypesFormSpread | Elementos expandidos |
+| import | TypesFormImport | Referencia externa |
 
 ## Features
 

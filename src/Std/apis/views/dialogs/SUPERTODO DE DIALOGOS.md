@@ -13,7 +13,7 @@
 - ~~Permitir que el contenido de cada caja se pueda cambiar en runtime~~
 
 ```js
-Std.classes.Dialogs.$.open({
+Std.classes.Dialogs.open({
     template: "Are you ok?",
     statusBar: [{
         name: "General status box",
@@ -49,7 +49,7 @@ Std.classes.Dialogs.$.open({
 - Std.views.Dialogs.layouts.SCROLLABLE
 
 ```js
-Std.classes.Dialogs.$.open({
+Std.classes.Dialogs.open({
     template: "Are you ok?",
     buttons: ["ok"],
     buttons: ["accept", "cancel"]

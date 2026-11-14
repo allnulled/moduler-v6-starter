@@ -1,4 +1,4 @@
-Std.classes.ViewsRegistry.$.set("MainApplication", {
+Std.classes.ViewsRegistry.set("MainApplication", {
   name: "MainApplication",
   template: $compiler.inject.string("@/src/Std/apis/application/MainApplication/MainApplication.view.html"),
   created() {
@@ -12,5 +12,12 @@ Std.classes.ViewsRegistry.$.set("MainApplication", {
   data: function() {
     return {};
   },
-  methods: {},
+  methods: {
+    setPanels(panels) {
+      Object.defineProperty(this, "panels", {
+        writable: true,
+        value: panels,
+      });
+    }
+  },
 })

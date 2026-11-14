@@ -13172,7 +13172,7 @@ module.exports = $moduler.export("#Std", [], async function([]) {
       peggy: peggyjs,
       picomatch: picomatch,
     },
-    // @LATER: Este lo inicializa Std.classes.ViewsRegistry.globalInstance
+    // @LATER: Este lo inicializa Std.classes.ViewsRegistry
     views: null,
   });
 
@@ -14027,7 +14027,7 @@ $moduler.toolkit.makeInterface([
 };
     Std.all.JsonStringifier = Std.classes.JsonStringifier = class JsonStringifier {
 
-  static stringify(input, beautify = true, callback = false) {
+  static stringify(input, beautify = 2, callback = false) {
     /**@:
      * 
      * # JsonStringifier.stringify(input:any, beautify:boolean=true)
@@ -14060,7 +14060,7 @@ $moduler.toolkit.makeInterface([
       }
       return value;
     };
-    return JSON.stringify(input, replacer, beautify ? 2 : 0);
+    return JSON.stringify(input, replacer, typeof beautify === "boolean" ? (beautify ? 2 : 0) : beautify);
   }
 
 };
@@ -14130,8 +14130,9 @@ $moduler.toolkit.makeInterface([
     for (let index = 0; index < args.length; index++) {
       const arg = args[index];
       try {
-        console.log(index + ": " + typeof arg, Std.classes.JsonStringifier.stringify(arg, null, 2));
+        console.log(index + ": " + typeof arg, Std.classes.JsonStringifier.stringify(arg, 2));
       } catch (error) {
+        console.log(`[!] Could not stringify due to: ${error.name} ${error.message}`);
         console.log(index + ": " + typeof arg, arg);
       }
     }
@@ -14742,11 +14743,12 @@ $moduler.toolkit.makeInterface([
   onRegisterName = "onRegister",
   onUnregisterName = "onUnregister",
   splitterSymbol = "/",
+  targetLayer = "prototype",
 ) {
   // @factory:IntrospectableInterfaceFactory
   return {
     // @interface:IntrospectableInterface
-    prototype: {
+    [targetLayer]: {
       [getName]: function get(key) {
         return Std.all.Introspector.get(this[introspectableField], typeof key === "string" ? key.split(splitterSymbol) : key);
       },
@@ -14773,7 +14775,6 @@ $moduler.toolkit.makeInterface([
         return this[introspectableField];
       },
     },
-    static: {},
   }
 };
     Std.all.RunnableInterface = Std.interfaces.RunnableInterface = // @interface:RunnableInterface
@@ -15673,6 +15674,28 @@ $moduler.toolkit.makeInterface([
     ], this);
   }
 };
+    Std.all.DynamicProxy = Std.classes.DynamicProxy = class DynamicProxy {
+  static create(...args) {
+    return new this(...args);
+  }
+  constructor(options) {
+    $moduler.assert(typeof options === "object", `Required parameter «options» to be object on «DynamicProxy.constructor»`);
+    $moduler.assert(typeof options.get === "function" || typeof options.set === "function", `Required parameter «options.get» or «option.set» to be function on «DynamicProxy.constructor»`);
+    return new Proxy({}, {
+      get: (target, property, receiver) => {
+        if (typeof options.get === "function") {
+          return options.get(property, receiver);
+        }
+      },
+      set: (target, property, value, receiver) => {
+        if (typeof options.set === "function") {
+          return options.set(property, value, receiver);
+        }
+        return true;
+      }
+    });
+  }
+};
     Std.all.Urler = Std.classes.Urler = class Urler {
   static {
     $moduler.toolkit.makeClass([
@@ -15688,7 +15711,7 @@ $moduler.toolkit.makeInterface([
       Std.interfaces.TracerInterface,
     ], this);
   }
-  static globalInstance = this.$ = Std.objects.GlobalTracer = this.new.config({ id: "main", isTracing: true, });
+  static globalInstance = this.$ = Std.objects.GlobalTracer = this.new.config({ id: "main", isTracing: false, });
 };
     Std.all.Checker = Std.classes.Checker = class Checker {
   static {
@@ -15823,7 +15846,14 @@ $moduler.toolkit.makeInterface([
   }
   Wave_6_Types_system: {
     Std.all.TypesParser = Std.objects.TypesParser = Std.parsers.typeslang = Std.parsers.peggy.generate("{" + '\n'
- + "" + '\n'
+ + "  const ubication = function(text, location) {" + '\n'
+ + "    return {" + '\n'
+ + "      //code: text()," + '\n'
+ + "      location: (function(it) {" + '\n'
+ + "        return [it.start.offset,it.end.offset];" + '\n'
+ + "      })(location())," + '\n'
+ + "    };" + '\n'
+ + "  };" + '\n'
  + "}" + '\n'
  + "" + '\n'
  + "Types_script= _ ast:Evaluables? _ {return { grammar: \"script\", ast: ast }; }" + '\n'
@@ -15845,11 +15875,11 @@ $moduler.toolkit.makeInterface([
  + "  token2:_" + '\n'
  + "  core:Or" + '\n'
  + "    { return Object.assign(core, {label}); }" + '\n'
- + "Or= left:And right:Or_right* {return right.length? { grammar: \"or operation\", left, right }: left;}" + '\n'
+ + "Or= left:And right:Or_right* {return right.length? { grammar: \"or operation\", left, right, ...ubication(text,location) }: left;}" + '\n'
  + "Or_right= _ \"|\" _ right:And {return right;}" + '\n'
- + "And= left:Unary right:And_right* {return right.length? { grammar: \"and operation\", left, right }: left;}" + '\n'
+ + "And= left:Unary right:And_right* {return right.length? { grammar: \"and operation\", left, right, ...ubication(text,location) }: left;}" + '\n'
  + "And_right= _ \"&\" _ right:Unary {return right;}" + '\n'
- + "Unary= negation:Type_negation? value:Type_expression {return negation? { ...value, negation }: value;}" + '\n'
+ + "Unary= negation:Type_negation? value:Type_expression {return negation? { ...value, negation, ...ubication(text,location) }: value;}" + '\n'
  + "" + '\n'
  + "// ------------------------------------------------------------" + '\n'
  + "// 2. TYPE EXPRESSION" + '\n'
@@ -15866,7 +15896,8 @@ $moduler.toolkit.makeInterface([
  + "      return Object.assign(type, {" + '\n'
  + "        label," + '\n'
  + "        parameters: parameters || undefined," + '\n'
- + "        defaults: defaults !== null ? defaults : undefined" + '\n'
+ + "        defaults: defaults !== null ? defaults : undefined," + '\n'
+ + "        ...ubication(text,location)" + '\n'
  + "      });" + '\n'
  + "    }" + '\n'
  + "" + '\n'
@@ -15878,7 +15909,8 @@ $moduler.toolkit.makeInterface([
  + "      return Object.assign({ grammar: \"type label\" }, {" + '\n'
  + "        label," + '\n'
  + "        parameters: parameters || undefined," + '\n'
- + "        defaults: defaults !== null ? defaults : undefined" + '\n'
+ + "        defaults: defaults !== null ? defaults : undefined," + '\n'
+ + "        ...ubication(text,location)" + '\n'
  + "      });" + '\n'
  + "    }" + '\n'
  + "" + '\n'
@@ -15889,7 +15921,8 @@ $moduler.toolkit.makeInterface([
  + "    {" + '\n'
  + "      return Object.assign(type, {" + '\n'
  + "        parameters: parameters || undefined," + '\n'
- + "        defaults: defaults !== null ? defaults : undefined" + '\n'
+ + "        defaults: defaults !== null ? defaults : undefined," + '\n'
+ + "        ...ubication(text,location)" + '\n'
  + "      });" + '\n'
  + "    }" + '\n'
  + "" + '\n'
@@ -15914,7 +15947,17 @@ $moduler.toolkit.makeInterface([
  + "  token1:(\"function\" _ \"(\" _)" + '\n'
  + "  input:Type_array_items? \")\" _" + '\n'
  + "  throwables:Throwables? \"=>\" _" + '\n'
- + "  output:Evaluable { return { grammar: \"factory type\", input, output, throwables, synchrony: synchrony && synchrony.length ? synchrony[0] : true }; }" + '\n'
+ + "  output:Evaluable" + '\n'
+ + "    {" + '\n'
+ + "      return {" + '\n'
+ + "        grammar: \"factory type\"," + '\n'
+ + "        input," + '\n'
+ + "        output," + '\n'
+ + "        throwables," + '\n'
+ + "        synchrony: synchrony && synchrony.length ? synchrony[0] : true," + '\n'
+ + "        ...ubication(text,location)" + '\n'
+ + "      };" + '\n'
+ + "    }" + '\n'
  + "" + '\n'
  + "Throwables = first:Throwable rest:Throwable* { return [first, ...rest]; }" + '\n'
  + "" + '\n'
@@ -15925,9 +15968,9 @@ $moduler.toolkit.makeInterface([
  + "// 6. OBJECT" + '\n'
  + "// ------------------------------------------------------------" + '\n'
  + "" + '\n'
- + "Type_class = _ \"class\" _ content:Type_object { return Object.assign(content, {grammar:\"class type\"}) }" + '\n'
+ + "Type_class = _ \"class\" _ content:Type_object { return Object.assign(content, {grammar:\"class type\", ...ubication(text,location)}) }" + '\n'
  + "" + '\n'
- + "Type_object = _ \"{\" _ properties:Type_object_properties? _ \"}\" { return { grammar: \"object type\", properties: properties || {} }; }" + '\n'
+ + "Type_object = _ \"{\" _ properties:Type_object_properties? _ \"}\" { return { grammar: \"object type\", properties: properties || {}, ...ubication(text,location) }; }" + '\n'
  + "" + '\n'
  + "Type_object_properties = first:Type_object_property rest:Type_object_property_other* { return Object.fromEntries([first, ...rest]); }" + '\n'
  + "" + '\n'
@@ -15942,14 +15985,14 @@ $moduler.toolkit.makeInterface([
  + "" + '\n'
  + "Object_property_as_label =" + '\n'
  + "  label:Type_label" + '\n'
- + "  optional:Optional_sign? { return [ label, { grammar: \"type label\", label, optional: optional || undefined } ]; }" + '\n'
+ + "  optional:Optional_sign? { return [ label, { grammar: \"type label\", label, optional: optional || undefined, ...ubication(text,location) } ]; }" + '\n'
  + "" + '\n'
  + "" + '\n'
  + "// ------------------------------------------------------------" + '\n'
  + "// 7. ARRAY" + '\n'
  + "// ------------------------------------------------------------" + '\n'
  + "" + '\n'
- + "Type_array = _ \"[\" _ items:Type_array_items? _ \"]\" { return { grammar: \"array type\", items: items || [] }; }" + '\n'
+ + "Type_array = _ \"[\" _ items:Type_array_items? _ \"]\" { return { grammar: \"array type\", items: items || [], ...ubication(text,location) }; }" + '\n'
  + "" + '\n'
  + "Type_array_items = first:Type_array_item rest:Type_array_item_other* { return [first, ...rest]; }" + '\n'
  + "" + '\n'
@@ -15960,7 +16003,7 @@ $moduler.toolkit.makeInterface([
  + "Spreaded_evaluable = _ \"...\" _" + '\n'
  + "  list:Spreadable" + '\n'
  + "  multiplier:Multiplier_symbol?" + '\n'
- + "    { return { grammar: \"spreaded list\", list, multiplier }; }" + '\n'
+ + "    { return { grammar: \"spreaded list\", list, multiplier, ...ubication(text,location) }; }" + '\n'
  + "" + '\n'
  + "Multiplier_symbol = \"?\" / \"*\" / \"+\"" + '\n'
  + "" + '\n'
@@ -15975,7 +16018,7 @@ $moduler.toolkit.makeInterface([
  + "// 8. IDENTIFIERS" + '\n'
  + "// ------------------------------------------------------------" + '\n'
  + "" + '\n'
- + "Type_identifier = _ id:Variable_expression { return { grammar: \"type id\", id }; }" + '\n'
+ + "Type_identifier = _ id:Variable_expression { return { grammar: \"type id\", id, ...ubication(text,location) }; }" + '\n'
  + "Type_negation = _ \"!\" _ { return \"!\"; }" + '\n'
  + "Type_label = _ \"@\" id:Variable_expression { return id;}" + '\n'
  + "" + '\n'
@@ -16025,7 +16068,7 @@ $moduler.toolkit.makeInterface([
  + "// ------------------------------------------------------------" + '\n'
  + "" + '\n'
  + "Type_import = \"^\" resource:(\"file:\"/\"url:\"/\"path:\")? target:json_string" + '\n'
- + "  { return { grammar: \"import\", resource: resource ? resource.slice(0,-1) : resource, target } }" + '\n'
+ + "  { return { grammar: \"import\", resource: resource ? resource.slice(0,-1) : resource, target, ...ubication(text,location) } }" + '\n'
  + "" + '\n'
  + "// ------------------------------------------------------------" + '\n'
  + "// 14. JSON" + '\n'
@@ -17426,7 +17469,7 @@ $moduler.toolkit.makeInterface([
         }
       }
       Emit_dialogs_update: {
-        Std.objects.GlobalDialog?.port?.refreshView();
+        Std.classes.Dialogs?.port?.refreshView();
       }
     },
     get newSubthread() {
@@ -17462,7 +17505,7 @@ $moduler.toolkit.makeInterface([
         }
       }
       Emit_dialogs_update: {
-        Std.objects.GlobalDialog?.port?.refreshView();
+        Std.classes.Dialogs?.port?.refreshView();
       }
     }
   },
@@ -29438,6 +29481,8 @@ $moduler.toolkit.makeInterface([
     $moduler.assert((typeof value.template === "string") || (typeof value.render === "function"), `Required parameter «view.template» to be string or «view.render» to be function but «${typeof value.template}» was found instead on «ViewsRegistry.prototype.onRegister»`);
   }
 
+  static views = {};
+
   static {
     $moduler.toolkit.makeClass([
       Std.functions.IntrospectableInterfaceFactory(
@@ -29451,23 +29496,20 @@ $moduler.toolkit.makeInterface([
         "onRegister",
         "onUnregister",
         "|",
+        "static"
       ),
     ], this);
   }
 
-  constructor() {
-    this.views = {};
-  }
-
-  onRegister(input) {
-    this.constructor.validateView(input)
+  static onRegister(input) {
+    this.validateView(input)
     const { key, value, output } = input;
     if(Std.externals.Vue2) {
       Std.externals.Vue2.component(value.name, value);
     }
   }
 
-  onUnregister({ key }) {
+  static onUnregister({ key }) {
     const id = Array.isArray(key) ? key[key.length-1] : key;
     $moduler.assert(typeof id === "string", `Required parameter «name» to be string but «${typeof id}» was found instead on «ViewsRegistry.prototype.onRegister»`);
     if(Std.externals.Vue2) {
@@ -29475,11 +29517,9 @@ $moduler.toolkit.makeInterface([
     }
   }
 
-  static globalInstance = this.$ = new this();
-
   static {
-    Conectamos_Std_views_con_las_views_del_global: {
-      Std.views = this.globalInstance.views;
+    Conectamos_Std_views_con_las_views: {
+      Std.views = this.views;
     }
   }
 
@@ -29634,7 +29674,7 @@ $moduler.toolkit.makeInterface([
   return mergedView;
 }
 };
-    Std.all.DynamicView = Std.views.DynamicView = Std.classes.ViewsRegistry.$.set("DynamicView", {
+    Std.all.DynamicView = Std.views.DynamicView = Std.classes.ViewsRegistry.set("DynamicView", {
   name: "DynamicView",
   template: "<component" + '\n'
  + "    class=\"DynamicView View\"" + '\n'
@@ -29684,8 +29724,8 @@ $moduler.toolkit.makeInterface([
         $moduler.assert(typeof args === "object", `Required property «args» to be object but «${typeof args}» was found instead on «Std.objects.DynamicView.methods.setView»`);
       }
       Unregister_previous: {
-        if(this.$locals.currentView.name && ViewsRegistry.$.get(this.$locals.currentView.name)?.isVolatile) {
-          ViewsRegistry.$.delete(this.$locals.currentView.name);
+        if(this.$locals.currentView.name && ViewsRegistry.get(this.$locals.currentView.name)?.isVolatile) {
+          ViewsRegistry.delete(this.$locals.currentView.name);
         }
       }
       Sanitize_unwrapped_templates: {
@@ -29703,12 +29743,12 @@ $moduler.toolkit.makeInterface([
           view.name = `DynamicViewUnit${Std.classes.Randomizer.getRandomNumbers(10)}`;
         }
         if(!(view.name in Std.externals.Vue2.options.components)) {
-          ViewsRegistry.$.set(view.name, {
+          ViewsRegistry.set(view.name, {
             isVolatile: true,
             ...view,
           });
         } else {
-          view = { ...view, ...ViewsRegistry.$.get(view.name) };
+          view = { ...view, ...ViewsRegistry.get(view.name) };
         }
       }
       Hydrate_view: {
@@ -29730,7 +29770,7 @@ $moduler.toolkit.makeInterface([
     }
   }
 });
-    Std.all.ContextualView = Std.views.ContextualView = Std.classes.ViewsRegistry.$.set("ContextualView", {
+    Std.all.ContextualView = Std.views.ContextualView = Std.classes.ViewsRegistry.set("ContextualView", {
   name: "ContextualView",
   template: "<div class=\"View ContextualView\">" + '\n'
  + "    <div class=\"contextual_view_top_panel\" style=\"display:none;\">" + '\n'
@@ -29846,6 +29886,39 @@ $moduler.toolkit.makeInterface([
 });
   }
 
+  Wave_13_Errors: {
+    Std.all.ErrorViewer = Std.views.ErrorViewer = Std.classes.ViewsRegistry.set("ErrorViewer",
+  Std.classes.ViewsStaticMerger.mergeViews(...[
+    {
+      name: "ErrorViewer",
+      props: {
+        error: {
+          type: Error,
+          default: null
+        }
+      },
+      async created() {
+        Install_locals: {
+          this.$locals = {
+            error: this.error,
+          };
+        }
+      },
+      template: "<div class=\"ErrorViewer View\">" + '\n'
+ + "    <div class=\"flex_row centered\">" + '\n'
+ + "        <div class=\"flex_1 monospace\">" + '\n'
+ + "            ERROR:" + '\n'
+ + "            {{ error.name }}" + '\n'
+ + "            {{ error.message }}" + '\n'
+ + "            {{ error.stack }}" + '\n'
+ + "        </div>" + '\n'
+ + "    </div>" + '\n'
+ + "</div>",
+    }
+  ]),
+);
+  }
+
   Wave_14_View_traits: {
     Std.objects.ViewTraits.InstallLocals = {
   methods: {
@@ -29866,72 +29939,181 @@ $moduler.toolkit.makeInterface([
   }
 
   Wave_15_Dialogs: {
-    Std.all.Dialogs = Std.classes.Dialogs = class Dialogs {
-  constructor() {
-    Std.all.Tracer?.globalInstance.log("Std.classes.Dialogs.constructor", arguments || []);;
-    this.port = null;
-    this.thread = Std.classes.Thread.globalInstance;
+    Std.all.DialogsFactory = Std.classes.DialogsFactory = class DialogsFactory {
+
+  static utils = {
+    defaultOptions1: {
+      title: "Sin título",
+      size: "small",
+      layout: "centered",
+      yes: "Aceptar",
+      no: "Cancelar",
+      default: "",
+    },
+    cleanDefaultOptions1: function(it) {
+      const output = {
+        yes: it.yes,
+        no: it.no,
+        default: it.default,
+      };
+      delete it.yes;
+      delete it.no;
+      delete it.default;
+      return output;
+    }
+  };
+  
+  static register(id, callback) {
+    $moduler.assert(!(id in this), `Cannot register dialog factory «${id}» because it is already registered on «Std.classes.DialogsFactory.register»`);
+    $moduler.assert(typeof callback === "function", `Required parameter «callback» to be function but «${typeof callback}» was found instead on «Std.classes.DialogsFactory.register»`);
+    this[id] = callback;
   }
-  initializePort(port) {
-    Std.all.Tracer?.globalInstance.log("Std.classes.Dialogs.prototype.initializePort", arguments || []);;
-    $moduler.assert(port instanceof Std.externals.Vue2, `Required parameter «port» to be Vue2 component but «${typeof port}» was found instead on «Dialogs.prototype.initializePort»`);
+
+  static unregister(id) {
+    $moduler.assert(id in this, `Cannot unregister dialog factory «${id}» because it is not registered on «Std.classes.DialogsFactory.unregister»`);
+    delete this[id];
+  }
+
+  static confirm(text, optionsBrute = {}) {
+    const options = Object.assign({}, this.utils.defaultOptions1, {
+      size: "small",
+      layout: "centered",
+    }, optionsBrute);
+    const dialogConfig = {};
+    Set_dialog_config_for_confirm: {
+      const { yes: _yes, no: _no, default: _default } = this.utils.cleanDefaultOptions1(options);
+      dialogConfig.template = `<div class="pad_4">
+        <div>${text}</div>
+      </div>`;
+      dialogConfig.buttons = `${_yes}@@accept|${_no}@@close`;
+      Object.assign(dialogConfig, options);
+    }
+    return Std.classes.Dialogs.answer(dialogConfig);
+    
+  }
+
+  static input(text, optionsBrute = {}) {
+    const options = Object.assign({}, this.utils.defaultOptions1, {
+      layout: "centered",
+      size: "small",
+    }, optionsBrute);
+    const dialogConfig = {};
+    Set_dialog_config_for_input: {
+      const { yes: _yes, no: _no, default: _default } = this.utils.cleanDefaultOptions1(options);
+      dialogConfig.template = `<div class="pad_4">
+        <div>${text}</div>
+        <div>
+          <input type="text" v-model="value" />
+        </div>
+      </div>`;
+      dialogConfig.data = {value:options.default};
+      dialogConfig.buttons = `${_yes}=value|${_no}@@close`;
+      Object.assign(dialogConfig, options);
+    }
+    return Std.classes.Dialogs.answer(dialogConfig);
+
+  }
+
+  static textarea(text, optionsBrute = {}) {
+    const options = Object.assign({}, this.utils.defaultOptions1, {
+      layout: "scrollable",
+      size: "medium-small",
+    }, optionsBrute);
+    const dialogConfig = {};
+    Set_dialog_config_for_textarea: {
+      const { yes: _yes, no: _no, default: _default } = this.utils.cleanDefaultOptions1(options);
+      dialogConfig.template = `<div class="pad_4">
+        <div>${text}</div>
+        <div>
+          <textarea v-model="value"></textarea>
+        </div>
+      </div>`;
+      dialogConfig.data = {value:options.default};
+      dialogConfig.buttons = `${_yes}=value|${_no}@@close`;
+      Object.assign(dialogConfig, options);
+    }
+    console.log(dialogConfig);
+    return Std.classes.Dialogs.answer(dialogConfig);
+
+  }
+
+  static message(text, optionsBrute = {}) {
+    const options = Object.assign({}, this.utils.defaultOptions1, {
+      size: "small",
+      layout: "centered",
+    }, optionsBrute);
+    const dialogConfig = {};
+    Set_dialog_config_for_message: {
+      const { yes: _yes, no: _no, default: _default } = this.utils.cleanDefaultOptions1(options);
+      dialogConfig.template = `<div class="pad_4">
+        <div>${text}</div>
+      </div>`;
+      dialogConfig.buttons = `${_yes}@@accept`;
+      Object.assign(dialogConfig, options);
+    }
+    return Std.classes.Dialogs.answer(dialogConfig);
+  }
+
+  static type(expression, data = undefined, dialogOptions = {}) {
+    const options = Object.assign({}, this.utils.defaultOptions1, {
+      size: "medium",
+      layout: "scrollable",
+      formTypeParameters: {
+        ast: Std.objects.TypesParser.parse(expression),
+        astIndex: [],
+        data,
+        dataIndex: [],
+      },
+    }, dialogOptions);
+    const dialogConfig = {};
+    Set_dialog_config_for_type: {
+      const { yes: _yes, no: _no, default: _default } = this.utils.cleanDefaultOptions1(options);
+      dialogConfig.template = `<TypesFormNode :params="$options.formTypeParameters" />`;
+      dialogConfig.buttons = `${_yes}@@accept`;
+      Object.assign(dialogConfig, options);
+    }
+    return Std.classes.Dialogs.answer(dialogConfig);
+  }
+
+  
+
+};
+    Std.all.Dialogs = Std.classes.Dialogs = class Dialogs {
+  static factory = Std.classes.DialogsFactory;
+  static port = null;
+  static thread = Std.classes.Thread.globalInstance;
+  static initializePort(port) {
+    Std.all.Tracer?.globalInstance.log("Std.classes.Dialogs.initializePort", arguments || []);;
+    $moduler.assert(port instanceof Std.externals.Vue2, `Required parameter «port» to be Vue2 component but «${typeof port}» was found instead on «Dialogs.initializePort»`);
     if(!this.port) {
       this.port = port;
     }
     return this;
   }
-  open(...args) {
-    Std.all.Tracer?.globalInstance.log("Std.classes.Dialogs.prototype.open", arguments || []);;
-    $moduler.assert(this.port instanceof Std.externals.Vue2, "Required property «port» to be instance of Vue2 on «Dialogs.prototype.open»");
+  static open(...args) {
+    Std.all.Tracer?.globalInstance.log("Std.classes.Dialogs.open", arguments || []);;
+    $moduler.assert(this.port instanceof Std.externals.Vue2, "Required property «port» to be instance of Vue2 on «Dialogs.open»");
     return this.port.open(...args);
   }
-  answer(...args) {
-    Std.all.Tracer?.globalInstance.log("Std.classes.Dialogs.prototype.answer", arguments || []);;
-    $moduler.assert(this.port instanceof Std.externals.Vue2, "Required property «port» to be instance of Vue2 on «Dialogs.prototype.answer»");
+  static answer(...args) {
+    Std.all.Tracer?.globalInstance.log("Std.classes.Dialogs.answer", arguments || []);;
+    $moduler.assert(this.port instanceof Std.externals.Vue2, "Required property «port» to be instance of Vue2 on «Dialogs.answer»");
     return this.port.answer(...args);
   }
-  static globalInstance = this.$ = globalThis.StdDialogs = Std.objects.GlobalDialog = new this();
+  static find(filter) {
+    return this.port.findDialogsWhere(filter);
+  }
+  static findByTitle(title) {
+    return this.port.findDialogsWhere(it => it.thread.title === title);
+  }
+  static get focused() {
+    return this.port.findDialogsWhere(it => it === this.port.$locals.lastFocusedDialog)[0];
+  }
+  static type(...args) {
+    return this.factory.type(...args);
+  }
 };
-    Std.all.DialogsFactory = Std.classes.DialogsFactory = class DialogsFactory {
-  static {
-    $moduler.toolkit.makeClass([
-      Std.interfaces.InstantiableInterface,
-      Std.functions.IntrospectableInterfaceFactory(
-        "factories",
-        // getName:
-        "getFactory",
-        // setName:
-        "setFactory",
-        // hasName:
-        "hasFactory",
-        // deleteName:
-        "deleteFactory",
-        // initializeName:
-        "initializeFactory",
-        // listName:
-        "listFactories",
-        // onRegisterName:
-        "onRegisterFactory",
-        // onUnregisterName:
-        "onUnregisterFactory",
-        // splitterSymbol:
-        "/",
-      ),
-    ], this);
-  }
-  onCreate() {
-    this.factories = {};
-  }
-  make(id, callback) {
-    $moduler.assert(typeof id === "string", `Required parameter «id» to be string on «DialogsFactory.register»`);
-    $moduler.assert(typeof callback === "function", `Required parameter «callback» to be function on «DialogsFactory.register»`);
-    $moduler.assert(id in this.factories, `Cannot register «id=${id}» because it is already registered on «DialogsFactory.register»`);
-    this.factories[id] = callback;
-  }
-  static globalInstance = this.new;
-  static $ = this.globalInstance;
-};
-    Std.all.DialogView = Std.views.DialogView = Std.classes.ViewsRegistry.$.set("DialogView", {
+    Std.all.DialogView = Std.views.DialogView = Std.classes.ViewsRegistry.set("DialogView", {
   name: "DialogView",
   template: "<div class=\"DialogView View\" v-on:pointerdown=\"focusMe\">" + '\n'
  + "    <div class=\"flex_column flex_100\">" + '\n'
@@ -29978,12 +30160,10 @@ $moduler.toolkit.makeInterface([
  + "                            <div class=\"dialog_title_text\">{{ thread.title || thread.threadId || \"no id found\" }}</div>" + '\n'
  + "                        </div>" + '\n'
  + "                        <div class=\"dialog_topbar_buttons\">" + '\n'
- + "                            <div v-if=\"thread.parent !== $window.Std.objects.GlobalThread\" class=\"dialog_topbar_button rounded_button light focus_parent_button\" ref=\"focus_parent_button\" v-on:click=\"focusParent\">" + '\n'
- + "                                <span class=\"rotate5of8\">➜</span>" + '\n'
- + "                            </div>" + '\n'
- + "                            <div class=\"dialog_topbar_button rounded_button light minimize_button\" ref=\"minimize_button\" v-on:click=\"minimize\">➖​</div>" + '\n'
- + "                            <div class=\"dialog_topbar_button rounded_button light maximize_button\" ref=\"maximize_button\" v-on:click=\"toggleMaximize\">​◼️</div>" + '\n'
- + "                            <div class=\"dialog_topbar_button rounded_button light exit_button\" v-on:click=\"close\">✖️</div>" + '\n'
+ + "                            <div v-if=\"thread.parent !== $window.Std.objects.GlobalThread\"  class=\"dialog_topbar_button button flexible unbordered light focus_parent_button\" v-on:click=\"focusParent\"><Icon of=\"move-up-left\" size=\"13px\" ref=\"focus_parent_button\" /></div>" + '\n'
+ + "                            <div class=\"dialog_topbar_button button flexible unbordered light minimize_button\" v-on:click=\"minimize\"><Icon of=\"minus\" size=\"13px\" ref=\"minimize_button\" /></div>" + '\n'
+ + "                            <div class=\"dialog_topbar_button button flexible unbordered light maximize_button\" v-on:click=\"toggleMaximize\"><Icon of=\"maximize-2\" size=\"13px\" ref=\"maximize_button\" /></div>" + '\n'
+ + "                            <div class=\"dialog_topbar_button button flexible unbordered light exit_button\" v-on:click=\"close\"><Icon of=\"x\" size=\"13px\" ref=\"exit_button\" /></div>" + '\n'
  + "                        </div>" + '\n'
  + "                    </div>" + '\n'
  + "                </div>" + '\n'
@@ -29995,7 +30175,7 @@ $moduler.toolkit.makeInterface([
  + "                        <div class=\"flex_100\"></div>" + '\n'
  + "                        <template v-for=\"button, buttonIndex in adaptThreadButtons()\" v-if=\"thread.buttons\">" + '\n'
  + "                            <div class=\"flex_1 dialog_button_box\" v-bind:key=\"'button_box_' + buttonIndex\">" + '\n'
- + "                                <div class=\"dialog_button normal_button\" v-on:click=\"e => button.click(e, $locals.self)\">{{ button.text }}</div>" + '\n'
+ + "                                <div class=\"dialog_button button normal\" v-on:click=\"e => button.click(e, $locals.self)\">{{ button.text }}</div>" + '\n'
  + "                            </div>" + '\n'
  + "                        </template>" + '\n'
  + "                    </div>" + '\n'
@@ -30251,6 +30431,12 @@ $moduler.toolkit.makeInterface([
         }]);
       }
     },
+    maximize() {
+      return this.toggleMaximize(true);
+    },
+    unmaximize() {
+      return this.toggleMaximize(false);
+    },
     toggleMaximize(forceTo = undefined) {
       Std.all.Tracer?.globalInstance.log("Std.views.DialogView.methods.toggleMaximize", arguments || []);;
       const becomesMaximized = typeof forceTo === "boolean" ? forceTo : !this.$el.classList.contains("is_maximized");
@@ -30258,7 +30444,7 @@ $moduler.toolkit.makeInterface([
         this.$el.classList[becomesMaximized ? "add" : "remove"]("is_maximized");
       }
       Update_topbar_maximize_button_text: {
-        this.$refs.maximize_button.textContent = becomesMaximized ? "▪️​" : "◼️";
+        this.$refs.maximize_button.setIcon(becomesMaximized ? "minimize-2" : "maximize-2");
       }
       Update_state_boundaries: {
         this.$locals.unmaximizedBoundaries = becomesMaximized ? this.$el.getBoundingClientRect() : null;
@@ -30428,7 +30614,7 @@ $moduler.toolkit.makeInterface([
     }
   }
 });
-    Std.all.DialogsTree = Std.views.DialogsTree = Std.classes.ViewsRegistry.$.set("DialogsTree", {
+    Std.all.DialogsTree = Std.views.DialogsTree = Std.classes.ViewsRegistry.set("DialogsTree", {
   name: "DialogsTree",
   template: "<div class=\"View DialogsTree\" v-on:click=\"() => $forceUpdate(true)\">" + '\n'
  + "    <DialogsTreeNode" + '\n'
@@ -30443,7 +30629,7 @@ $moduler.toolkit.makeInterface([
   props: {
     dialogsPort: {
       type: Std.externals.Vue2,
-      default: () => Std.objects.GlobalDialog.port,
+      default: () => Std.classes.Dialogs.port,
     }
   },
   created() {
@@ -30507,19 +30693,19 @@ $moduler.toolkit.makeInterface([
     },
   }
 });
-    Std.all.DialogsTreeNode = Std.views.DialogsTreeNode = Std.classes.ViewsRegistry.$.set("DialogsTreeNode", {
+    Std.all.DialogsTreeNode = Std.views.DialogsTreeNode = Std.classes.ViewsRegistry.set("DialogsTreeNode", {
   name: "DialogsTreeNode",
-  template: "<div class=\"View DialogsTreeNode\" :class=\"$window.Std.objects.GlobalDialog.port.isLastFocusedThread(thread) ? 'is_focused' : ''\">" + '\n'
+  template: "<div class=\"View DialogsTreeNode\" :class=\"$window.Std.classes.Dialogs.port.isLastFocusedThread(thread) ? 'is_focused' : ''\">" + '\n'
  + "    <div class=\"flex_row centered dialog_tree_node_row gap_2 pad_vertical_1\">" + '\n'
- + "        <div class=\"flex_0 flex_row\" v-if=\"level\">" + '\n'
- + "            <div class=\"flex_0 nowrap\" style=\"min-width: 8px;\" v-for=\"it in new Array(level)\" v-bind:key=\"it\"></div>" + '\n'
- + "        </div>" + '\n'
- + "        <div class=\"normal_button flex_100 unfocusable\" v-on:click=\"goToDialog\">" + '\n'
+ + "        <template v-if=\"level\" v-for=\"it in new Array(level)\">" + '\n'
+ + "            <div class=\"flex_0 nowrap\" style=\"min-width: 8px;\" v-bind:key=\"it\"></div>" + '\n'
+ + "        </template>" + '\n'
+ + "        <div class=\"button normal flex_100 flex_justify_start unfocusable\" v-on:click=\"goToDialog\">" + '\n'
  + "            <span ref=\"boundariesSignal\">{{ port.getDialogFromThread(thread)?.$locals.isMinimized ? \"🔹\" : \"🔷\"}}</span>" + '\n'
  + "            <span>{{ thread.title || thread.threadId }}</span>" + '\n'
  + "        </div>" + '\n'
  + "        <div class=\"flex_1\">" + '\n'
- + "            <div class=\"square_button unfocusable\" v-on:click=\"closeDialog\"> ✖️ </div>" + '\n'
+ + "            <div class=\"button square unfocusable\" v-on:click=\"closeDialog\"> ✖️ </div>" + '\n'
  + "        </div>" + '\n'
  + "    </div>" + '\n'
  + "</div>",
@@ -30582,7 +30768,7 @@ $moduler.toolkit.makeInterface([
     
   }
 });
-    Std.all.DialogsPort = Std.views.DialogsPort = Std.classes.ViewsRegistry.$.set("DialogsPort", {
+    Std.all.DialogsPort = Std.views.DialogsPort = Std.classes.ViewsRegistry.set("DialogsPort", {
   name: "DialogsPort",
   template: "<div class=\"View DialogsPort\">" + '\n'
  + "    <DialogView class=\"GlobalDialog\"" + '\n'
@@ -30590,10 +30776,6 @@ $moduler.toolkit.makeInterface([
  + "        v-bind:key=\"'global_dialog_' + subthread.threadId\"" + '\n'
  + "        ref=\"currentDialogs\"" + '\n'
  + "        :thread=\"subthread\" />" + '\n'
- + "    <div class=\"DialogsPortViewButton position_fixed top_auto left_auto\"" + '\n'
- + "        v-on:click=\"openTreeView\">" + '\n'
- + "        <div style=\"padding-left:2px;padding-top:1px;padding-bottom:1px;\">⭕️</div>" + '\n'
- + "    </div>" + '\n'
  + "</div>",
   props: {},
   data: function () {
@@ -30603,7 +30785,7 @@ $moduler.toolkit.makeInterface([
   created: function () {
     Std.all.Tracer?.globalInstance.log("Std.views.DialogsPort.created", arguments || []);;
     Initialize_in_globals: {
-      Std.classes.Dialogs.globalInstance.initializePort(this);
+      Std.classes.Dialogs.initializePort(this);
       this.$locals = {
         events: {
           onChangeDialogBoundaries: new Std.classes.FunctionsList(),
@@ -30679,7 +30861,10 @@ $moduler.toolkit.makeInterface([
       return Math.max(min, Math.min(value, max));
     },
     calculateDialogBoundaries(size) {
-      const viewport = this.$options.static.viewport;
+      const viewport = {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      };
       const margin = this.$options.static.dialogs.margin;
       const definition = this.$options.static.dialogs.sizes[size];
       $moduler.assert(definition, `Parameter «size» must be one out of «small|medium-small|medium|medium-big|big|maximized» but «${size}» was found instead on «calculateDialogBoundaries»`);
@@ -30806,9 +30991,9 @@ $moduler.toolkit.makeInterface([
     openTreeView() {
       Std.all.Tracer?.globalInstance.log("Std.views.DialogsPort.methods.openTreeView", arguments || []);;
       return this.open({
-        title: "Árbol de diálogos",
+        title: "Visor de hilos",
         template: "<DialogsTree />",
-        uniqueActionId: "Dialogs tree view",
+        uniqueActionId: "Threads viewer",
       });
     }
   },
@@ -30871,20 +31056,20 @@ $moduler.toolkit.makeInterface([
     },
   }
 });
-    Std.all.DialogsTester = Std.views.DialogsTester = Std.classes.ViewsRegistry.$.set("DialogsTester", {
+    Std.all.DialogsTester = Std.views.DialogsTester = Std.classes.ViewsRegistry.set("DialogsTester", {
   name: "DialogsTester",
   template: "<div class=\"DialogsTester\">" + '\n'
  + "    <textarea v-model=\"code\" style=\"height: 280px;display: block; width: 100%; font-size: 11px;\" spellcheck=\"false\"></textarea>" + '\n'
  + "    <div class=\"pad_vertical_2\">" + '\n'
- + "        <div class=\"normal_button\" v-on:click=\"runDialog\">Run dialog</div>" + '\n'
+ + "        <div class=\"button normal\" v-on:click=\"runDialog\">Run dialog</div>" + '\n'
  + "    </div>" + '\n'
  + "    <div class=\"flex_row centered gap_4\">" + '\n'
- + "        <div class=\"flex_1 normal_button\" v-on:click=\"() => openDialog('small')\">small</div>" + '\n'
- + "        <div class=\"flex_1 normal_button\" v-on:click=\"() => openDialog('medium-small')\">medium-small</div>" + '\n'
- + "        <div class=\"flex_1 normal_button\" v-on:click=\"() => openDialog('medium')\">medium</div>" + '\n'
- + "        <div class=\"flex_1 normal_button\" v-on:click=\"() => openDialog('medium-big')\">medium-big</div>" + '\n'
- + "        <div class=\"flex_1 normal_button\" v-on:click=\"() => openDialog('big')\">big</div>" + '\n'
- + "        <div class=\"flex_1 normal_button\" v-on:click=\"() => openDialog('maximized')\">maximized</div>" + '\n'
+ + "        <div class=\"flex_1 button normal\" v-on:click=\"() => openDialog('small')\">small</div>" + '\n'
+ + "        <div class=\"flex_1 button normal\" v-on:click=\"() => openDialog('medium-small')\">medium-small</div>" + '\n'
+ + "        <div class=\"flex_1 button normal\" v-on:click=\"() => openDialog('medium')\">medium</div>" + '\n'
+ + "        <div class=\"flex_1 button normal\" v-on:click=\"() => openDialog('medium-big')\">medium-big</div>" + '\n'
+ + "        <div class=\"flex_1 button normal\" v-on:click=\"() => openDialog('big')\">big</div>" + '\n'
+ + "        <div class=\"flex_1 button normal\" v-on:click=\"() => openDialog('maximized')\">maximized</div>" + '\n'
  + "    </div>" + '\n'
  + "</div>",
   data() {
@@ -30905,22 +31090,22 @@ $moduler.toolkit.makeInterface([
   },
   computed: {
     currentDialogs() {
-      return Std.objects.GlobalDialog.port.currentDialogs;
+      return Std.classes.Dialogs.port.currentDialogs;
     },
   },
   methods: {
     runDialog() {
-      return (new Function("return Std.classes.Dialogs.$.open(" + this.code + ");")).call();
+      return (new Function("return Std.classes.Dialogs.open(" + this.code + ");")).call();
     },
     openDialog(size) {
-      return (new Function(`return Std.classes.Dialogs.$.open(Object.assign(${ this.code }, { size: "${size}" }))`)).call();
+      return (new Function(`return Std.classes.Dialogs.open(Object.assign(${ this.code }, { size: "${size}" }))`)).call();
     }
   },
 });;
   }
 
-  Wave_16_Forms_and_controls: {
-    Std.all.DynamicControl = Std.views.DynamicControl = Std.classes.ViewsRegistry.$.set("DynamicControl",
+  Wave_16_Controls: {
+    Std.all.DynamicControl = Std.views.DynamicControl = Std.classes.ViewsRegistry.set("DynamicControl",
   Std.classes.ViewsStaticMerger.mergeViews(...[
     {
       name: "DynamicControl",
@@ -30931,6 +31116,7 @@ $moduler.toolkit.makeInterface([
         }
       },
       async created() {
+        throw new Error("Este componente en principio si podemos evitarlo mejor");
         Install_locals: {
           this.$locals = {
             isLoaded: false,
@@ -30952,16 +31138,309 @@ $moduler.toolkit.makeInterface([
         }
       },
       render(h) {
-        if(!this.$locals.isLoaded) return h();
-        if(this.$locals.error) return h("ErrorViewer", { props: { error: this.$locals.error } });
-        return h(this.$locals.controlName, { props: this.$locals.controlParameters });
+        if(!this.$locals.isLoaded) {
+          return h();
+        }
+        if(this.$locals.error) {
+          return h("ErrorViewer", {
+            props: {
+              error: this.$locals.error
+            }
+          });
+        }
+        return h(this.$locals.controlName, {
+          props: this.$locals.controlParameters,
+        });
       }
     }
   ]),
 );
   }
 
-  Wave_17_Calendar: {
+  Wave_17_Forms_and_types: {
+    Std.all.TypesFormPrototype = Std.views.TypesFormPrototype = {
+  props: {
+    params: {
+      type: Object,
+      required: true,
+    }
+  },
+  created() {
+    const params = $moduler.toolkit.normalizeObject(this.params, ...Std.views.TypesFormNode.static.paramsNormalization);
+    this.$locals = { params };
+  },
+  computed: {
+    localAst: {
+      get() {
+        return Std.classes.Introspector.get(this.$locals.params.ast, this.$locals.params.astIndex);
+      }
+    },
+    localData: {
+      get() {
+        return Std.classes.Introspector.get(this.$locals.params.data, this.$locals.params.dataIndex);
+      }
+    }
+  }
+};
+    Std.all.TypesFormAndOperation = Std.views.TypesFormAndOperation = Std.classes.ViewsRegistry.set("TypesFormAndOperation", {
+  name: "TypesFormAndOperation",
+  props: {},
+  mixins: [Std.views.TypesFormPrototype],
+  template: "<div class=\"TypesFormAndOperation View\">" + '\n'
+ + "    And operation (left):" + '\n'
+ + "    <TypesFormNode :params=\"{" + '\n'
+ + "        ast: params.ast," + '\n'
+ + "        astIndex: params.astIndex.concat(['left'])," + '\n'
+ + "        data: params.data," + '\n'
+ + "        dataIndex: params.dataIndex," + '\n'
+ + "    }\" />" + '\n'
+ + "    And operation (right):" + '\n'
+ + "    <div v-for=\"subnode, subnodeIndex in localAst.right\" v-bind:key=\"'subnode_right_' + subnodeIndex\">" + '\n'
+ + "        <TypesFormNode :params=\"{" + '\n'
+ + "            ast: params.ast," + '\n'
+ + "            astIndex: params.astIndex.concat(['right', subnodeIndex])," + '\n'
+ + "            data: params.data," + '\n'
+ + "            dataIndex: params.dataIndex," + '\n'
+ + "        }\" />" + '\n'
+ + "    </div>" + '\n'
+ + "</div>",
+});
+    Std.all.TypesFormArrayType = Std.views.TypesFormArrayType = Std.classes.ViewsRegistry.set("TypesFormArrayType", {
+  name: "TypesFormArrayType",
+  props: {},
+  mixins: [Std.views.TypesFormPrototype],
+  template: "<div class=\"TypesFormArrayType View\">" + '\n'
+ + "    <div>Array type:</div>" + '\n'
+ + "    <div v-for=\"subnode, subnodeIndex in localAst.items\" v-bind:key=\"'items_subnode_' + subnodeIndex\">" + '\n'
+ + "        <TypesFormNode :params=\"{" + '\n'
+ + "            ast: params.ast," + '\n'
+ + "            astIndex: params.astIndex.concat(['items', subnodeIndex])," + '\n'
+ + "            data: params.data," + '\n'
+ + "            dataIndex: params.dataIndex," + '\n'
+ + "        }\" />" + '\n'
+ + "    </div>" + '\n'
+ + "</div>",
+});
+    Std.all.TypesFormClassType = Std.views.TypesFormClassType = Std.classes.ViewsRegistry.set("TypesFormClassType", {
+  name: "TypesFormClassType",
+  props: {},
+  mixins: [Std.views.TypesFormPrototype],
+  template: "<div class=\"TypesFormClassType View\">" + '\n'
+ + "    <div>Class type:</div>" + '\n'
+ + "    <div v-for=\"subnode, subnodeIndex in localAst.properties\"" + '\n'
+ + "        v-bind:key=\"'subnode_' + subnodeIndex\">" + '\n'
+ + "        <div>[{{ subnodeIndex }}]</div>" + '\n'
+ + "        <TypesFormNode" + '\n'
+ + "            :params=\"{" + '\n'
+ + "                ast: params.ast," + '\n'
+ + "                data: params.data," + '\n'
+ + "                astIndex: params.astIndex.concat([ 'properties', subnodeIndex ])," + '\n'
+ + "                dataIndex: params.dataIndex.concat([ subnodeIndex ])," + '\n'
+ + "            }\"" + '\n'
+ + "        />" + '\n'
+ + "    </div>" + '\n'
+ + "</div>",
+});
+    Std.all.TypesFormFactoryType = Std.views.TypesFormFactoryType = Std.classes.ViewsRegistry.set("TypesFormFactoryType", {
+  name: "TypesFormFactoryType",
+  props: {},
+  mixins: [Std.views.TypesFormPrototype],
+  template: "<div class=\"TypesFormFactoryType View\">" + '\n'
+ + "    Factory (input):" + '\n'
+ + "    <div v-for=\"subitem, subitemIndex in localAst.input\" v-bind:key=\"'subitem_right_' + subitemIndex\">" + '\n'
+ + "        <TypesFormNode :params=\"{" + '\n'
+ + "            ast: params.ast," + '\n'
+ + "            astIndex: params.astIndex.concat(['input', subitemIndex])," + '\n'
+ + "            data: params.data," + '\n'
+ + "            dataIndex: params.dataIndex," + '\n'
+ + "        }\" />" + '\n'
+ + "    </div>" + '\n'
+ + "    Factory (output):" + '\n'
+ + "    <template v-if=\"localAst.output\">" + '\n'
+ + "        <TypesFormNode :params=\"{" + '\n'
+ + "            ast: params.ast," + '\n'
+ + "            astIndex: params.astIndex.concat(['output'])," + '\n'
+ + "            data: params.data," + '\n'
+ + "            dataIndex: params.dataIndex," + '\n'
+ + "        }\" />" + '\n'
+ + "    </template>" + '\n'
+ + "</div>",
+});
+    Std.all.TypesFormImport = Std.views.TypesFormImport = Std.classes.ViewsRegistry.set("TypesFormImport", {
+  name: "TypesFormImport",
+  props: {},
+  template: "<div class=\"TypesFormImport View\">" + '\n'
+ + "    Import" + '\n'
+ + "</div>",
+});
+    Std.all.TypesFormNode = Std.views.TypesFormNode = Std.classes.ViewsRegistry.set("TypesFormNode", {
+  name: "TypesFormNode",
+  functional: true,
+  props: {
+    params: {
+      type: Object,
+      required: true,
+    }
+  },
+  render(h, context) {
+    const params = $moduler.toolkit.normalizeObject(context.props.params, ...Std.views.TypesFormNode.static.paramsNormalization);
+    const { astIndex } = params;
+    const ast = params.expression ? Std.objects.TypesParser.parse(params.expression) : params.ast;
+    $moduler.assert((typeof ast === "object") && (ast !== null), `Required parameter «params.ast» to be object or «params.expression» to be string at ast index «${astIndex.join("/")}» but «${ast}» was found instead on «TypesFormNode.render»`);
+    const node = astIndex.reduce((value, index) => value[index], ast);
+    $moduler.assert((typeof ast === "object") && (ast !== null), `Required product «node» to result object at ast index «${astIndex.join("/")}» but «${ast}» was found instead on «TypesFormNode.render»`);
+    const definitions = Std.views.TypesFormNode.static.definitions;
+    $moduler.assert(node.grammar in definitions, `Grammar not identified «${node.grammar}» at ast tree index «${astIndex.join("/")}» while rendering ast form`);
+    const definition = definitions[node.grammar];
+    return h(definition, {
+      class: "types-form-node",
+      props: { params },
+    });
+  },
+  static: {
+    definitions: {
+      "script": "TypesFormScript",
+      "object type": "TypesFormObjectType",
+      "class type": "TypesFormClassType",
+      "array type": "TypesFormArrayType",
+      "factory type": "TypesFormFactoryType",
+      "or operation": "TypesFormOrOperation",
+      "and operation": "TypesFormAndOperation",
+      "type id": "TypesFormTypeId",
+      "type label": "TypesFormTypeLabel",
+      "spreaded list": "TypesFormSpreadedList",
+      "import": "TypesFormImport",
+    },
+    symbols: {
+      NO_DATA: {},
+    },
+    paramsNormalization: [{
+      ast: {
+        validate(value) {
+          $moduler.assert(typeof value === "object", `Required property «ast» to be object but «${typeof value}» was found instead on «TypesFormNode.render»`);
+          $moduler.assert(value !== null, `Required property «ast» to be object but «null» was found instead on «TypesFormNode.render»`);
+          $moduler.assert(typeof value.grammar === "string", `Required property «ast.grammar» to be string but «${typeof value.grammar}» was found instead on «TypesFormNode.render»`);
+          return true;
+        },
+      },
+      astIndex: {
+        validate(value) {
+          $moduler.assert(Array.isArray(value), `Required property «astIndex» to be array but «${typeof value}» was found instead on «TypesFormNode.render»`);
+          return true;
+        },
+      },
+      data: {
+        validate() {
+          return true;
+        },
+        default() {
+          return Std.views.TypesFormNode.static.symbols.NO_DATA;
+        },
+      },
+      dataIndex: {
+        validate(value) {
+          $moduler.assert(Array.isArray(value), `Required property «dataIndex» to be array but «${typeof value}» was found instead on «TypesFormNode.render»`);
+          return true;
+        },
+      }
+    }, {
+      validate(params) {
+        if (!params.ast) {
+          $moduler.assert(typeof params.expression === "string", `Required on «context.props.params» property «expression» to be string or «ast» to be object but none where truthy values on «Std.views.TypesFormNode.render»`);
+          params.ast = Std.objects.TypesParser.parse(params.expression);
+        }
+        return true;
+      }
+    }]
+  }
+});;
+    Std.all.TypesFormObjectType = Std.views.TypesFormObjectType = Std.classes.ViewsRegistry.set("TypesFormObjectType", {
+  name: "TypesFormObjectType",
+  props: {},
+  mixins: [Std.views.TypesFormPrototype],
+  template: "<div class=\"TypesFormObjectType View\">" + '\n'
+ + "    <div>Object type:</div>" + '\n'
+ + "    <div v-for=\"subnode, subnodeIndex in localAst.properties\"" + '\n'
+ + "        v-bind:key=\"'subnode_' + subnodeIndex\">" + '\n'
+ + "        <div>[{{ subnodeIndex }}]</div>" + '\n'
+ + "        <TypesFormNode" + '\n'
+ + "            :params=\"{" + '\n'
+ + "                ast: params.ast," + '\n'
+ + "                data: params.data," + '\n'
+ + "                astIndex: params.astIndex.concat([ 'properties', subnodeIndex ])," + '\n'
+ + "                dataIndex: params.dataIndex.concat([ subnodeIndex ])," + '\n'
+ + "            }\"" + '\n'
+ + "        />" + '\n'
+ + "    </div>" + '\n'
+ + "</div>",
+});
+    Std.all.TypesFormOrOperation = Std.views.TypesFormOrOperation = Std.classes.ViewsRegistry.set("TypesFormOrOperation", {
+  name: "TypesFormOrOperation",
+  props: {},
+  mixins: [Std.views.TypesFormPrototype],
+  template: "<div class=\"TypesFormOrOperation View\">" + '\n'
+ + "    Or operation (left):" + '\n'
+ + "    <TypesFormNode :params=\"{" + '\n'
+ + "        ast: params.ast," + '\n'
+ + "        astIndex: params.astIndex.concat(['left'])," + '\n'
+ + "        data: params.data," + '\n'
+ + "        dataIndex: params.dataIndex," + '\n'
+ + "    }\" />" + '\n'
+ + "    Or operation (right):" + '\n'
+ + "    <div v-for=\"subnode, subnodeIndex in localAst.right\" v-bind:key=\"'subnode_right_' + subnodeIndex\">" + '\n'
+ + "        <TypesFormNode :params=\"{" + '\n'
+ + "            ast: params.ast," + '\n'
+ + "            astIndex: params.astIndex.concat(['right', subnodeIndex])," + '\n'
+ + "            data: params.data," + '\n'
+ + "            dataIndex: params.dataIndex," + '\n'
+ + "        }\" />" + '\n'
+ + "    </div>" + '\n'
+ + "</div>",
+});
+    Std.all.TypesFormScript = Std.views.TypesFormScript = Std.classes.ViewsRegistry.set("TypesFormScript", {
+  name: "TypesFormScript",
+  props: {},
+  mixins: [Std.views.TypesFormPrototype],
+  template: "<div class=\"TypesFormScript View\">" + '\n'
+ + "    <div>Script:</div>" + '\n'
+ + "    <TypesFormNode" + '\n'
+ + "        v-for=\"subnode, subnodeIndex in localAst.ast\"" + '\n'
+ + "        v-bind:key=\"'subnode_' + subnodeIndex\"" + '\n'
+ + "        :params=\"{" + '\n'
+ + "            ast: params.ast," + '\n'
+ + "            data: params.data," + '\n'
+ + "            astIndex: params.astIndex.concat([ 'ast', subnodeIndex ])," + '\n'
+ + "            dataIndex: params.dataIndex.concat([ ])," + '\n'
+ + "        }\"" + '\n'
+ + "    />" + '\n'
+ + "</div>",
+});
+    Std.all.TypesFormSpreadedList = Std.views.TypesFormSpreadedList = Std.classes.ViewsRegistry.set("TypesFormSpreadedList", {
+  name: "TypesFormSpreadedList",
+  props: {},
+  template: "<div class=\"TypesFormSpreadedList View\">" + '\n'
+ + "    Spreaded list" + '\n'
+ + "</div>",
+});
+    Std.all.TypesFormTypeId = Std.views.TypesFormTypeId = Std.classes.ViewsRegistry.set("TypesFormTypeId", {
+  name: "TypesFormTypeId",
+  props: {},
+  mixins: [Std.views.TypesFormPrototype],
+  template: "<div class=\"TypesFormTypeId View\">" + '\n'
+ + "    Type id: {{ localAst.id }} (para DynamicControl+functional)" + '\n'
+ + "</div>",
+});
+    Std.all.TypesFormTypeLabel = Std.views.TypesFormTypeLabel = Std.classes.ViewsRegistry.set("TypesFormTypeLabel", {
+  name: "TypesFormTypeLabel",
+  props: {},
+  template: "<div class=\"TypesFormTypeLabel View\">" + '\n'
+ + "    Type label" + '\n'
+ + "</div>",
+});
+    // Std.all.ControlForTypeExpression = Std.views.ControlForTypeExpression = $ compiler.inject.source("./apis/forms/controls/ControlForTypeExpression/ControlForTypeExpression.object.js");
+  }
+
+  Wave_18_Calendar: {
     En_entredicho_por_v2: {
       Std.all.CalendarParser = Std.objects.CalendarParser = Std.parsers.peggy.generate("Calendar_parser = Sentence" + '\n'
  + "" + '\n'
@@ -31168,7 +31647,7 @@ $moduler.toolkit.makeInterface([
 })();;
   }
 
-  Wave_18_Graphics: {
+  Wave_19_Graphics: {
     Std.functions.CielabColorConverter = Std.objects.CielabColorConverter = class CielabColorConverter {
 
   static convert(value, max = 10) {
@@ -31214,10 +31693,55 @@ $moduler.toolkit.makeInterface([
   }
 
 };
+    Std.all.Icon = Std.views.Icon = Std.classes.ViewsRegistry.set("Icon", {
+  name: "Icon",
+  template: "<div" + '\n'
+ + "  class=\"icon\"" + '\n'
+ + "  :style=\"{" + '\n'
+ + "    color: color," + '\n'
+ + "    width: size," + '\n'
+ + "    height: size," + '\n'
+ + "    maskImage: `url('${$locals.target}')`," + '\n'
+ + "    WebkitMaskImage: `url('${$locals.target}')`" + '\n'
+ + "  }\"" + '\n'
+ + "></div>",
+  props: {
+    of: {
+      type: String,
+      required: true,
+    },
+    vendor: {
+      type: String,
+      default: "lucide",
+    },
+    extension: {
+      type: String,
+      default: "svg",
+    },
+    color: {
+      type: String,
+      default: "inherit",
+    },
+    size: {
+      type: String,
+      default: "24px"
+    }
+  },
+  created() {
+    this.$locals = { selected: this.of };
+    this.$locals.target = $moduler.normalizationOf(`@/dist/www/assets/icons/${this.vendor}/${this.$locals.selected}.${this.extension}`)
+  },
+  methods: {
+    setIcon(icon) {
+      this.$locals.target = $moduler.normalizationOf(`@/dist/www/assets/icons/${this.vendor}/${icon}.${this.extension}`);
+      this.$forceUpdate(true);
+    }
+  }
+});
   }
 
-  Wave_19_Development: {
-    Std.all.LoremIpsum = Std.views.LoremIpsum = Std.classes.ViewsRegistry.$.set("LoremIpsum", {
+  Wave_20_Development: {
+    Std.all.LoremIpsum = Std.views.LoremIpsum = Std.classes.ViewsRegistry.set("LoremIpsum", {
   name: "LoremIpsum",
   template: "<div class=\"LoremIpsum View\">" + '\n'
  + "    <template v-for=\"paragraph, paragraphIndex in $locals.generatedParagraphs\">" + '\n'
@@ -31248,27 +31772,260 @@ $moduler.toolkit.makeInterface([
 });;
   }
 
+  Wave_21_Background: {
+    Std.all.ApplicationBackgroundWidget = Std.views.ApplicationBackgroundWidget = Std.classes.ViewsRegistry.set("ApplicationBackgroundWidget", {
+  name: "ApplicationBackgroundWidget",
+  template: "<div class=\"ApplicationBackgroundWidget View\">" + '\n'
+ + "    <div class=\"application_background\"></div>" + '\n'
+ + "</div>",
+  created() {
+    Std.all.Tracer?.globalInstance.log("Std.views.ApplicationBackgroundWidget.created", arguments || []);;
+    Std.objects.GlobalBackground = this;
+  },
+  mounted() {
+    Std.all.Tracer?.globalInstance.log("Std.views.ApplicationBackgroundWidget.mounted", arguments || []);;
+  },
+  data: function() {
+    return {};
+  },
+  methods: {
+    setBackgroundImage(url = "none") {
+      if(url === "none") this.$el.children[0].style.backgroundImage = "none";
+      else this.$el.children[0].style.backgroundImage = `url(${url})`;
+    }
+  },
+});
+    Std.all.ApplicationBackgroundConfigurer = Std.views.ApplicationBackgroundConfigurer = Std.classes.ViewsRegistry.set("ApplicationBackgroundConfigurer", {
+  name: "ApplicationBackgroundConfigurer",
+  template: "<div class=\"ApplicationBackgroundConfigurer\">" + '\n'
+ + "    Background configurer." + '\n'
+ + "</div>",
+  created() {
+    Std.all.Tracer?.globalInstance.log("Std.views.ApplicationBackgroundConfigurer.created", arguments || []);;
+  },
+  mounted() {
+    Std.all.Tracer?.globalInstance.log("Std.views.ApplicationBackgroundConfigurer.mounted", arguments || []);;
+  },
+  data: function() {
+    return {};
+  },
+  methods: {},
+});
+  }
+
   Wave_95_Application_starter: {
-    Std.all.MainApplication = Std.views.MainApplication = Std.classes.ViewsRegistry.$.set("MainApplication", {
+    Std.all.Launcher = Std.classes.Launcher = class Launcher {
+  static {
+    $moduler.toolkit.makeClass([
+      { static: { launchables: {} } },
+      Std.functions.IntrospectableInterfaceFactory(
+        "launchables",
+        "get",
+        "set",
+        "has",
+        "delete",
+        "initialize",
+        "list",
+        "onRegister",
+        "onUnregister",
+        "|",
+        "static"
+      ),
+    ], this);
+  }
+  static register(id, input) {
+    $moduler.assert(!(id in this.launchables), `Launchable «${id}» cannot be registered because it is already registered on «Std.classes.Launcher.register»`);
+    if(typeof input === "function") {
+      this.set(id, {
+        callback: input,
+      });
+    } else if(typeof input === "object") {
+      $moduler.assert(typeof input.callback === "function", `Required property «callback» to be function on «Std.classes.Launcher.register»`);
+      this.set(id, input);
+    } else throw Error.normalize(`Parameter «input» must be function or object on «Std.classes.Launcher.register»`);
+  }
+  static unregister(id) {
+    $moduler.assert(id in this.launchables, `Launchable «${id}» cannot be unregistered because it is not registered on «Std.classes.Launcher.unregister»`);
+    this.delete(id);
+  }
+  static launch(id, immediateParams = {}) {
+    $moduler.assert(id in this.launchables, `Launchable «${id}» cannot be launched because it is not registered on «Std.classes.Launcher.launch»`);
+    const launchable = this.launchables[id];
+    return launchable.callback(immediateParams, launchable);
+  } 
+  static {
+    Launcher.register("Threads viewer", function(options) {
+      return Std.classes.Dialogs.open({
+        title: "Visor de hilos",
+        template: "<DialogsTree />",
+        uniqueActionId: "Threads viewer",
+        ...options,
+      });
+    });
+  }
+};
+    Std.all.FixedArea = Std.views.FixedArea = Std.classes.ViewsRegistry.set("FixedArea", {
+  name: "FixedArea",
+  template: "<div class=\"FixedArea View\" :style=\"generateStyles()\">" + '\n'
+ + "    <div v-for=\"button, buttonIndex in $locals.buttons\" v-bind:key=\"'button_' + buttonIndex\"" + '\n'
+ + "        class=\"button flexible\"" + '\n'
+ + "        v-on:click=\"button.click\">" + '\n'
+ + "        <Icon v-if=\"button.icon\" :of=\"button.icon\" size=\"18px\" v-bind:key=\"'button_' + buttonIndex + '_icon_' + button.icon\" />" + '\n'
+ + "        <span v-else-if=\"button.text\">{{ button.text }}</span>" + '\n'
+ + "    </div>" + '\n'
+ + "</div>",
+  props: {
+    position: {
+      type: String,
+      required: true,
+    },
+  },
+  created() {
+    Std.all.Tracer?.globalInstance.log("Std.views.FixedArea.created", arguments || []);;
+    this.$locals = {
+      buttons: []
+    };
+  },
+  mounted() {
+    Std.all.Tracer?.globalInstance.log("Std.views.FixedArea.mounted", arguments || []);;
+  },
+  data: function() {
+    return {};
+  },
+  methods: {
+    validateButton(button) {
+      $moduler.assert(typeof button === "object", "Required parameter «button» to be object on «FixedArea.methods.validateButton»");
+      $moduler.assert(typeof button.click === "function", "Required parameter «button.click» to be function on «FixedArea.methods.validateButton»");
+      $moduler.assert((typeof button.text === "string") || (typeof button.icon === "string"), "Required parameter «button.text» or «button.icon» to be string on «FixedArea.methods.validateButton»");
+    },
+    addButton(button) {
+      Std.all.Tracer?.globalInstance.log("Std.views.FixedArea.methods.addButton", arguments || []);;
+      this.validateButton(button);
+      this.$locals.buttons.push(button);
+      this.$forceUpdate(true);
+    },
+    prependButton(button) {
+      Std.all.Tracer?.globalInstance.log("Std.views.FixedArea.methods.prependButton", arguments || []);;
+      this.validateButton(button);
+      this.$locals.buttons.unshift(button);
+      this.$forceUpdate(true);
+    },
+    findPositionOfFirstButtonWhere(filter) {
+      Std.all.Tracer?.globalInstance.log("Std.views.FixedArea.methods.findPositionOfFirstButtonWhere", arguments || []);;
+      $moduler.assert(typeof filter === "function", "Required parameter «filter» to be function on «FixedArea.methods.addButton»");
+      return this.$locals.buttons.filterIndex(f);
+    },
+    removeButton(input) {
+      Std.all.Tracer?.globalInstance.log("Std.views.FixedArea.methods.removeButton", arguments || []);;
+      const pos = typeof input === "function" ? this.findPositionOfFirstButtonWhere(input) : input;
+      this.$locals.buttons.splice(pos, 1);
+      this.$forceUpdate(true);
+    },
+    generateStyles() {
+      let out = "";
+      out += `align-items: ${this.position};\n`;
+      out += `justify-content: ${this.position};\n`;
+      out += `display: flex;\n`;
+      out += `flex-direction: ${this.$parent.direction === "horizontal" ? "row" : "column"};\n`;
+      return out;
+    }
+  },
+});
+    Std.all.FixedPanel = Std.views.FixedPanel = Std.classes.ViewsRegistry.set("FixedPanel", {
+  name: "FixedPanel",
+  template: "<div class=\"FixedPanel View\"" + '\n'
+ + "    :class=\"'panel_on_' + name + ' direction_' + direction\"" + '\n'
+ + "    style=\"align-items:center;\">" + '\n'
+ + "    <FixedArea ref=\"area1\" position=\"start\" />" + '\n'
+ + "    <FixedArea ref=\"area2\" position=\"center\" />" + '\n'
+ + "    <FixedArea ref=\"area3\" position=\"end\" />" + '\n'
+ + "</div>",
+  props: {
+    name: {
+      type: String,
+      required: true,
+    },
+    direction: {
+      type: String,
+      required: true,
+    }
+  },
+  created() {
+    Std.all.Tracer?.globalInstance.log("Std.views.FixedPanel.created", arguments || []);;
+    Object.defineProperty(this, this.direction === "horizontal" ? "left" : "top", {
+      configurable: true,
+      enumerable: true,
+      get() {
+        return this.$refs.area1;
+      }
+    });
+    Object.defineProperty(this, "center", {
+      configurable: true,
+      enumerable: true,
+      get() {
+        return this.$refs.area2;
+      }
+    });
+    Object.defineProperty(this, this.direction === "horizontal" ? "right" : "bottom", {
+      configurable: true,
+      enumerable: true,
+      get() {
+        return this.$refs.area3;
+      }
+    });
+  },
+  mounted() {
+    Std.all.Tracer?.globalInstance.log("Std.views.FixedPanel.mounted", arguments || []);;
+  },
+  data: function() {
+    return {};
+  },
+  methods: {},
+});
+    Std.all.FixedPanels = Std.views.FixedPanels = Std.classes.ViewsRegistry.set("FixedPanels", {
+  name: "FixedPanels",
+  template: "<div class=\"FixedPanels View\">" + '\n'
+ + "    <FixedPanel ref=\"left\" direction=\"vertical\" name=\"left\" />" + '\n'
+ + "    <FixedPanel ref=\"right\" direction=\"vertical\" name=\"right\" />" + '\n'
+ + "    <FixedPanel ref=\"top\" direction=\"horizontal\" name=\"top\" />" + '\n'
+ + "    <FixedPanel ref=\"bottom\" direction=\"horizontal\" name=\"bottom\" />" + '\n'
+ + "</div>",
+  props: {
+    application: {
+      type: Std.externals.Vue2,
+      required: true,
+    },
+  },
+  created() {
+    Std.all.Tracer?.globalInstance.log("Std.views.FixedPanels.created", arguments || []);;
+  },
+  mounted() {
+    Std.all.Tracer?.globalInstance.log("Std.views.FixedPanels.mounted", arguments || []);;
+    this.application.setPanels(this);
+    this.application.panels.bottom.right.addButton({
+      click: () => Std.classes.Launcher.launch("Threads viewer"),
+      icon: "menu"
+    });
+  },
+  computed: {
+    left: {get() { return this.$refs.left }},
+    right: {get() { return this.$refs.right }},
+    top: {get() { return this.$refs.top }},
+    bottom: {get() { return this.$refs.bottom }},
+  },
+  data: function() {
+    return {};
+  },
+  methods: {},
+});
+    Std.all.MainApplication = Std.views.MainApplication = Std.classes.ViewsRegistry.set("MainApplication", {
   name: "MainApplication",
   template: "<div>" + '\n'
- + "    <DialogsPort" + '\n'
- + "        :application=\"this\"" + '\n'
- + "    />" + '\n'
- + "    <DynamicView" + '\n'
- + "        :view=\"{template:'<div>{{msg}}</div>', props: {msg:String}}\"" + '\n'
- + "        :args=\"{msg:'This is the base of dynamic view'}\"" + '\n'
- + "    />" + '\n'
- + "    <ContextualView" + '\n'
- + "        :view=\"{" + '\n'
- + "            template: `<div>{{msg}}: <textarea v-model='filecontent' spellcheck='false'/></div>`," + '\n'
- + "            props: {msg:String}," + '\n'
- + "            data() {" + '\n'
- + "                return { filecontent:'' }" + '\n'
- + "            }" + '\n'
- + "        }\"" + '\n'
- + "        :args=\"{msg:'This is the base of contextual view'}\"" + '\n'
- + "    />" + '\n'
+ + "    <div class=\"StaticApplicationLayer position_fixed inset_0\">" + '\n'
+ + "        <ApplicationBackgroundWidget />" + '\n'
+ + "        <DialogsPort :application=\"this\" />" + '\n'
+ + "        <FixedPanels :application=\"this\" />" + '\n'
+ + "    </div>" + '\n'
  + "</div>",
   created() {
     Std.all.Tracer?.globalInstance.log("Std.views.MainApplication.created", arguments || []);;
@@ -31281,7 +32038,14 @@ $moduler.toolkit.makeInterface([
   data: function() {
     return {};
   },
-  methods: {},
+  methods: {
+    setPanels(panels) {
+      Object.defineProperty(this, "panels", {
+        writable: true,
+        value: panels,
+      });
+    }
+  },
 });
     Std.all.ApplicationStarter = Std.classes.ApplicationStarter = class ApplicationStarter {
   
@@ -31309,12 +32073,7 @@ $moduler.toolkit.makeInterface([
     }
     Define_vue2_application: {
       $moduler.assert(!Std.objects.GlobalApplication, "ApplicationStarter.start can only be called once in a runtime");
-      Std.objects.GlobalApplication = this.globalApplication = new Std.externals.Vue2({
-        render: h => {
-          console.log("[*] Rendering application");
-          return h(this.globalFactory);
-        },
-      });
+      Std.objects.GlobalApplication = this.globalApplication = new Std.externals.Vue2(this.globalFactory);
     }
     Register_application_events_for_onStarted: {
       this.events.onStarted.addTrigger(parameters => {

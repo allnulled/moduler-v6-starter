@@ -5,6 +5,7 @@ module.exports = async function ({ Tester }) {
   // await Timeout.of(10);
 
   const dynamicElement = Domer.first(".DynamicView");
+  if(!dynamicElement) return console.log("[!] Omitted test for DynamicView");
   const dynamicView = dynamicElement.getVueComponent();
   
   return;

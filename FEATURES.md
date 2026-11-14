@@ -8,7 +8,7 @@
    - [x] acepta onRegisterName y onUnregisterName
    - [x] acepta deleteName
    - [x] usa Std.functions.triggerMethodIfExists para registrar (set y initialiaze) y desregistrar (delete)
-- [x] Std.classes.ViewsRegistry.globalInstance
+- [x] Std.classes.ViewsRegistry
    - [x] que hookea los onRegister/onUnregister para meter y sacar de Vue2
 
 ## Proceso

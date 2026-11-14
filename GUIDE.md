@@ -32,7 +32,7 @@
 Tienes:
 
 ```js
-const output = await Std.classes.Dialogs.$.open({
+const output = await Std.classes.Dialogs.open({
    name: "NombreDelComponenteReusable",
    template: "Puede ir texto directo también: <input v-model='message' />",
    data: { message: "acepta objeto en lugar de factory" },

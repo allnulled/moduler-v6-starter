@@ -47,7 +47,7 @@
         }
       }
       Emit_dialogs_update: {
-        Std.objects.GlobalDialog?.port?.refreshView();
+        Std.classes.Dialogs?.port?.refreshView();
       }
     },
     get newSubthread() {
@@ -83,7 +83,7 @@
         }
       }
       Emit_dialogs_update: {
-        Std.objects.GlobalDialog?.port?.refreshView();
+        Std.classes.Dialogs?.port?.refreshView();
       }
     }
   },

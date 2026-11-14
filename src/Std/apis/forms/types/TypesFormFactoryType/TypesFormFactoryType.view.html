@@ -1,0 +1,20 @@
+<div class="TypesFormFactoryType View">
+    Factory (input):
+    <div v-for="subitem, subitemIndex in localAst.input" v-bind:key="'subitem_right_' + subitemIndex">
+        <TypesFormNode :params="{
+            ast: params.ast,
+            astIndex: params.astIndex.concat(['input', subitemIndex]),
+            data: params.data,
+            dataIndex: params.dataIndex,
+        }" />
+    </div>
+    Factory (output):
+    <template v-if="localAst.output">
+        <TypesFormNode :params="{
+            ast: params.ast,
+            astIndex: params.astIndex.concat(['output']),
+            data: params.data,
+            dataIndex: params.dataIndex,
+        }" />
+    </template>
+</div>

@@ -47,7 +47,7 @@
       peggy: peggyjs,
       picomatch: picomatch,
     },
-    // @LATER: Este lo inicializa Std.classes.ViewsRegistry.globalInstance
+    // @LATER: Este lo inicializa Std.classes.ViewsRegistry
     views: null,
   });
 

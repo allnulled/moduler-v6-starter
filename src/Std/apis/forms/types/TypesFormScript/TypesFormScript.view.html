@@ -1,0 +1,13 @@
+<div class="TypesFormScript View">
+    <div>Script:</div>
+    <TypesFormNode
+        v-for="subnode, subnodeIndex in localAst.ast"
+        v-bind:key="'subnode_' + subnodeIndex"
+        :params="{
+            ast: params.ast,
+            data: params.data,
+            astIndex: params.astIndex.concat([ 'ast', subnodeIndex ]),
+            dataIndex: params.dataIndex.concat([ ]),
+        }"
+    />
+</div>

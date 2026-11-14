@@ -1,4 +1,4 @@
-Std.classes.ViewsRegistry.$.set("DialogView", {
+Std.classes.ViewsRegistry.set("DialogView", {
   name: "DialogView",
   template: $compiler.inject.string("@/src/Std/apis/views/dialogs/DialogView/DialogView.view.html"),
   props: {
@@ -204,6 +204,12 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
         }]);
       }
     },
+    maximize() {
+      return this.toggleMaximize(true);
+    },
+    unmaximize() {
+      return this.toggleMaximize(false);
+    },
     toggleMaximize(forceTo = undefined) {
       $compiler.inject.template("@/src/Std/snippets/methodLog.js", { name: "Std.views.DialogView.methods.toggleMaximize" });
       const becomesMaximized = typeof forceTo === "boolean" ? forceTo : !this.$el.classList.contains("is_maximized");
@@ -211,7 +217,7 @@ Std.classes.ViewsRegistry.$.set("DialogView", {
         this.$el.classList[becomesMaximized ? "add" : "remove"]("is_maximized");
       }
       Update_topbar_maximize_button_text: {
-        this.$refs.maximize_button.textContent = becomesMaximized ? "▪️​" : "◼️";
+        this.$refs.maximize_button.setIcon(becomesMaximized ? "minimize-2" : "maximize-2");
       }
       Update_state_boundaries: {
         this.$locals.unmaximizedBoundaries = becomesMaximized ? this.$el.getBoundingClientRect() : null;

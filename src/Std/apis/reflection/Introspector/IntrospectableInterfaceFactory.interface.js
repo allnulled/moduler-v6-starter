@@ -9,11 +9,12 @@ function IntrospectableInterfaceFactory (
   onRegisterName = "onRegister",
   onUnregisterName = "onUnregister",
   splitterSymbol = "/",
+  targetLayer = "prototype",
 ) {
   // @factory:IntrospectableInterfaceFactory
   return {
     // @interface:IntrospectableInterface
-    prototype: {
+    [targetLayer]: {
       [getName]: function get(key) {
         return Std.all.Introspector.get(this[introspectableField], typeof key === "string" ? key.split(splitterSymbol) : key);
       },
@@ -40,6 +41,5 @@ function IntrospectableInterfaceFactory (
         return this[introspectableField];
       },
     },
-    static: {},
   }
 }

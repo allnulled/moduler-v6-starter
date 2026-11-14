@@ -1,4 +1,4 @@
-Std.classes.ViewsRegistry.$.set("DialogsTester", {
+Std.classes.ViewsRegistry.set("DialogsTester", {
   name: "DialogsTester",
   template: $compiler.inject.string("@/src/Std/apis/views/dialogs/DialogsTester/DialogsTester.view.html"),
   data() {
@@ -19,15 +19,15 @@ Std.classes.ViewsRegistry.$.set("DialogsTester", {
   },
   computed: {
     currentDialogs() {
-      return Std.objects.GlobalDialog.port.currentDialogs;
+      return Std.classes.Dialogs.port.currentDialogs;
     },
   },
   methods: {
     runDialog() {
-      return (new Function("return Std.classes.Dialogs.$.open(" + this.code + ");")).call();
+      return (new Function("return Std.classes.Dialogs.open(" + this.code + ");")).call();
     },
     openDialog(size) {
-      return (new Function(`return Std.classes.Dialogs.$.open(Object.assign(${ this.code }, { size: "${size}" }))`)).call();
+      return (new Function(`return Std.classes.Dialogs.open(Object.assign(${ this.code }, { size: "${size}" }))`)).call();
     }
   },
 });

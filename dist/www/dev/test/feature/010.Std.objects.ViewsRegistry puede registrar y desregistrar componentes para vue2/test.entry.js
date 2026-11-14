@@ -4,9 +4,9 @@ module.exports = async function ({ Tester }) {
     ViewsRegistry,
   } = Std.all;
 
-  const allViewNames = Object.keys(ViewsRegistry.globalInstance.list());
+  const allViewNames = Object.keys(ViewsRegistry.list());
 
-  $moduler.assert(allViewNames.length !== 0, "ViewsRegistry.globalInstance should not be empty");
+  $moduler.assert(allViewNames.length !== 0, "ViewsRegistry should not be empty");
 
   for(let index=0; index<allViewNames.length; index++) {
     const viewName = allViewNames[index];
