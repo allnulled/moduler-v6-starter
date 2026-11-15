@@ -16126,8 +16126,11 @@ $moduler.toolkit.makeInterface([
   static {
     Compose_class: {
       $moduler.toolkit.makeClass([
-        Std.interfaces.InstantiableInterface,
-        { prototype: { all: Std.types } },
+        {
+          static: {
+            all: Std.types
+          }
+        },
         Std.functions.IntrospectableInterfaceFactory(
           "all",
           "get",
@@ -16137,13 +16140,29 @@ $moduler.toolkit.makeInterface([
           "initialize",
           "list",
           "onRegister",
-          "onUnregister"
+          "onUnregister",
+          "/",
+          "static",
         ),
+        {
+          static: {
+            // @ATENCIÓN: usar siempre con await si quieres evitar ambigüedades de contexto.
+            find(...args) {
+              if(this.has(args[0])) return this.get(args[0]);
+              return this.fetch(...args);
+            },
+            fetch(id) {
+              return $moduler.import(`@/dist/www/types/${id}/${id}.dist.js`).then(TypeDefinition => {
+                return this.set(id, TypeDefinition);
+              });
+            }
+          }
+        }
       ], this);
     }
     Add_basic_primitives: {
-      Object.assign(this.prototype.all, {
-        "undefined": {
+      Object.assign(this.all, {
+        "undefined": $moduler.patchFile("@/dist/www/types/undefined/undefined.dist.js", {
   abstraction: {
     onValidate(memory) {
       return typeof memory.localData === "undefined";
@@ -16157,8 +16176,8 @@ $moduler.toolkit.makeInterface([
   }
 }
   }
-},
-        "null": {
+}),
+        "null": $moduler.patchFile("@/dist/www/types/null/null.dist.js", {
   abstraction: {
     onValidate(memory) {
       return memory.localData === null;
@@ -16172,8 +16191,8 @@ $moduler.toolkit.makeInterface([
   }
 }
   }
-},
-        "string": {
+}),
+        "string": $moduler.patchFile("@/dist/www/types/string/string.dist.js", {
   abstraction: {
     onValidate(memory) {
       return typeof memory.localData === "string";
@@ -16187,8 +16206,8 @@ $moduler.toolkit.makeInterface([
   }
 }
   }
-},
-        "boolean": {
+}),
+        "boolean": $moduler.patchFile("@/dist/www/types/boolean/boolean.dist.js", {
   abstraction: {
     onValidate(memory) {
       return typeof memory.localData === "boolean";
@@ -16202,8 +16221,8 @@ $moduler.toolkit.makeInterface([
   }
 }
   }
-},
-        "number": {
+}),
+        "number": $moduler.patchFile("@/dist/www/types/number/number.dist.js", {
   abstraction: {
     onValidate(memory) {
       return typeof memory.localData === "number";
@@ -16217,8 +16236,8 @@ $moduler.toolkit.makeInterface([
   }
 }
   }
-},
-        "function": {
+}),
+        "function": $moduler.patchFile("@/dist/www/types/function/function.dist.js", {
   abstraction: {
     onValidate(memory) {
       return typeof memory.localData === "function";
@@ -16232,8 +16251,8 @@ $moduler.toolkit.makeInterface([
   }
 }
   }
-},
-        "integer": {
+}),
+        "integer": $moduler.patchFile("@/dist/www/types/integer/integer.dist.js", {
   abstraction: {
     onValidate(memory) {
       return Number.isInteger(memory.localData);
@@ -16247,8 +16266,8 @@ $moduler.toolkit.makeInterface([
   }
 }
   }
-},
-        "object": {
+}),
+        "object": $moduler.patchFile("@/dist/www/types/object/object.dist.js", {
   abstraction: {
     onValidate(memory) {
       return memory.localData !== null && typeof memory.localData === "object" && !Array.isArray(memory.localData);
@@ -16262,8 +16281,8 @@ $moduler.toolkit.makeInterface([
   }
 }
   }
-},
-        "array": {
+}),
+        "array": $moduler.patchFile("@/dist/www/types/array/array.dist.js", {
   abstraction: {
     onValidate(memory) {
       return Array.isArray(memory.localData);
@@ -16277,8 +16296,8 @@ $moduler.toolkit.makeInterface([
   }
 }
   }
-},
-        "date": {
+}),
+        "date": $moduler.patchFile("@/dist/www/types/date/date.dist.js", {
   abstraction: {
     onValidate(memory) {
       return memory.localData instanceof Date;
@@ -16292,11 +16311,8 @@ $moduler.toolkit.makeInterface([
   }
 }
   }
-},
+}),
       });
-    }
-    Set_global_instance: {
-      this.globalInstance = this.$ = TypesRegistry.new;
     }
   }
 };
@@ -16392,7 +16408,7 @@ $moduler.toolkit.makeInterface([
           prototype: {
             onCreate: function () {
               this.labels = {};
-              this.registry = Std.classes.TypesRegistry.globalInstance;
+              this.registry = Std.classes.TypesRegistry;
               this.result = new Std.classes.ValidationResult(this);
               this.errors = new Std.classes.ValidationErrors(this);
             },
@@ -16855,7 +16871,7 @@ $moduler.toolkit.makeInterface([
         // 
         astPointer: [],
         dataPointer: [],
-        registry: Std.classes.TypesRegistry.globalInstance,
+        registry: Std.classes.TypesRegistry,
         // 
         mode: mode,
         skipValidations: skipValidations,
@@ -31427,7 +31443,7 @@ $moduler.toolkit.makeInterface([
   props: {},
   mixins: [Std.views.TypesFormPrototype],
   template: "<div class=\"TypesFormTypeId View\">" + '\n'
- + "    Type id: {{ localAst.id }} (para DynamicControl+functional)" + '\n'
+ + "    Type id: <b>{{ localAst.id }}</b>" + '\n'
  + "</div>",
 });
     Std.all.TypesFormTypeLabel = Std.views.TypesFormTypeLabel = Std.classes.ViewsRegistry.set("TypesFormTypeLabel", {

@@ -2,8 +2,11 @@ class TypesRegistry {
   static {
     Compose_class: {
       $moduler.toolkit.makeClass([
-        Std.interfaces.InstantiableInterface,
-        { prototype: { all: Std.types } },
+        {
+          static: {
+            all: Std.types
+          }
+        },
         Std.functions.IntrospectableInterfaceFactory(
           "all",
           "get",
@@ -13,26 +16,39 @@ class TypesRegistry {
           "initialize",
           "list",
           "onRegister",
-          "onUnregister"
+          "onUnregister",
+          "/",
+          "static",
         ),
+        {
+          static: {
+            // @ATENCIÓN: usar siempre con await si quieres evitar ambigüedades de contexto.
+            find(...args) {
+              if(this.has(args[0])) return this.get(args[0]);
+              return this.fetch(...args);
+            },
+            fetch(id) {
+              return $moduler.import(`@/dist/www/types/${id}/${id}.dist.js`).then(TypeDefinition => {
+                return this.set(id, TypeDefinition);
+              });
+            }
+          }
+        }
       ], this);
     }
     Add_basic_primitives: {
-      Object.assign(this.prototype.all, {
-        "undefined": $compiler.inject.source("@/src/Std/types/undefined/undefined.type.js"),
-        "null": $compiler.inject.source("@/src/Std/types/null/null.type.js"),
-        "string": $compiler.inject.source("@/src/Std/types/string/string.type.js"),
-        "boolean": $compiler.inject.source("@/src/Std/types/boolean/boolean.type.js"),
-        "number": $compiler.inject.source("@/src/Std/types/number/number.type.js"),
-        "function": $compiler.inject.source("@/src/Std/types/function/function.type.js"),
-        "integer": $compiler.inject.source("@/src/Std/types/integer/integer.type.js"),
-        "object": $compiler.inject.source("@/src/Std/types/object/object.type.js"),
-        "array": $compiler.inject.source("@/src/Std/types/array/array.type.js"),
-        "date": $compiler.inject.source("@/src/Std/types/date/date.type.js"),
+      Object.assign(this.all, {
+        "undefined": $moduler.patchFile("@/dist/www/types/undefined/undefined.dist.js", $compiler.inject.source("@/src/www/types/undefined/undefined.type.js")),
+        "null": $moduler.patchFile("@/dist/www/types/null/null.dist.js", $compiler.inject.source("@/src/www/types/null/null.type.js")),
+        "string": $moduler.patchFile("@/dist/www/types/string/string.dist.js", $compiler.inject.source("@/src/www/types/string/string.type.js")),
+        "boolean": $moduler.patchFile("@/dist/www/types/boolean/boolean.dist.js", $compiler.inject.source("@/src/www/types/boolean/boolean.type.js")),
+        "number": $moduler.patchFile("@/dist/www/types/number/number.dist.js", $compiler.inject.source("@/src/www/types/number/number.type.js")),
+        "function": $moduler.patchFile("@/dist/www/types/function/function.dist.js", $compiler.inject.source("@/src/www/types/function/function.type.js")),
+        "integer": $moduler.patchFile("@/dist/www/types/integer/integer.dist.js", $compiler.inject.source("@/src/www/types/integer/integer.type.js")),
+        "object": $moduler.patchFile("@/dist/www/types/object/object.dist.js", $compiler.inject.source("@/src/www/types/object/object.type.js")),
+        "array": $moduler.patchFile("@/dist/www/types/array/array.dist.js", $compiler.inject.source("@/src/www/types/array/array.type.js")),
+        "date": $moduler.patchFile("@/dist/www/types/date/date.dist.js", $compiler.inject.source("@/src/www/types/date/date.type.js")),
       });
-    }
-    Set_global_instance: {
-      this.globalInstance = this.$ = TypesRegistry.new;
     }
   }
 }

@@ -86,7 +86,7 @@
           prototype: {
             onCreate: function () {
               this.labels = {};
-              this.registry = Std.classes.TypesRegistry.globalInstance;
+              this.registry = Std.classes.TypesRegistry;
               this.result = new Std.classes.ValidationResult(this);
               this.errors = new Std.classes.ValidationErrors(this);
             },
@@ -549,7 +549,7 @@
         // 
         astPointer: [],
         dataPointer: [],
-        registry: Std.classes.TypesRegistry.globalInstance,
+        registry: Std.classes.TypesRegistry,
         // 
         mode: mode,
         skipValidations: skipValidations,
