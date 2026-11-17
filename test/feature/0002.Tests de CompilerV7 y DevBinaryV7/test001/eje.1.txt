@@ -1,0 +1,3 @@
+Cualquierdddd
+
+$compiler.inject.to.js.code("what.js")

@@ -124,7 +124,7 @@
 ------------------------------------------------------------ */
 
 :root {
-  --scrollbar-size: 14px;
+  --scrollbar-size: 9px;
   --scrollbar-track-color:transparent; /*var(--grey90);*/
   --scrollbar-thumb-color: rgba(0,0,0,0.4); /*var(--grey60);*/
   --scrollbar-thumb-color-hover: rgba(0,0,0,0.6); /*var(--grey55);*/
@@ -320,3 +320,5 @@ textarea {
 .rotate5of8 { transform: rotate(225deg); }
 .rotate6of8 { transform: rotate(270deg); }
 .rotate7of8 { transform: rotate(315deg); }
+
+/*@injects:"./toolkit/controls.css"*/

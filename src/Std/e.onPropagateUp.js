@@ -8,4 +8,7 @@ module.exports = async function ({ file, devbin }) {
       await devbin.utils.touchFile("@/src/www/app.entry.css");
     }
   }
+  Recompilar_index: {
+    await devbin.utils.touchFile("@/src/www/app.entry.js");
+  }
 };

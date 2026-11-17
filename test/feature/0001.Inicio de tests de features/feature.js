@@ -1,3 +1,3 @@
 module.exports = async function(args) {
-  // @OK.
+  Std.classes.AnsiProfiles.as("info").print("HEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEO");
 };

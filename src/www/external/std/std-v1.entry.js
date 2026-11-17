@@ -1,4 +1,4 @@
-module.exports = $moduler.export("#Std", [], async function([]) {
+module.exports = globalThis.Std || $moduler.export("#Std", [], async function([]) {
   /**@:
    * 
    * ## Tabla de contenidos
@@ -15,7 +15,8 @@ module.exports = $moduler.export("#Std", [], async function([]) {
    *    - ./Std.object.js
    * 
    */
-  const peggyjs = await (function({ module, exports, $localModuler }) {
+  const [peggyjs, picomatch] = await Promise.all([
+    (function({ module, exports, $localModuler }) {
   return $moduler.releaseFile("@/src/www/external/pegjs/peggyjs.object.js", arguments[0], (function() {
     (function(factory) {
   // peggy 5.1.0
@@ -11339,8 +11340,8 @@ module.exports = $moduler.export("#Std", [], async function([]) {
 
 })
   }).call(this));
-}).call(this, $moduler.reserveFile("@/src/www/external/pegjs/peggyjs.object.js"));
-  const picomatch = await (function({ module, exports, $localModuler }) {
+}).call(this, $moduler.reserveFile("@/src/www/external/pegjs/peggyjs.object.js")),
+    (function({ module, exports, $localModuler }) {
   return $moduler.releaseFile("@/dist/src/external/picomatch/picomatch.dist.js", arguments[0], (function() {
     "use strict";
 (() => {
@@ -13122,8 +13123,9 @@ module.exports = $moduler.export("#Std", [], async function([]) {
 })();
 
   }).call(this));
-}).call(this, $moduler.reserveFile("@/dist/src/external/picomatch/picomatch.dist.js"));
-  return await (function () {
+}).call(this, $moduler.reserveFile("@/dist/src/external/picomatch/picomatch.dist.js")),
+  ]);
+  return (function () {
 
   /**@:
    * 
@@ -14569,6 +14571,21 @@ $moduler.toolkit.makeInterface([
     ], this);
   }
 };
+    Std.all.ComputedProperties = Std.classes.ComputedProperties = class ComputedProperties {
+  
+  static create(definitions, instance = {}) {
+    for (const [name, definition] of Object.entries(definitions)) {
+      Object.defineProperty(instance, name, {
+        enumerable: true,
+        configurable: true,
+        get: definition.get,
+        set: definition.set
+      });
+    }
+    return instance;
+  }
+
+};
     Std.all.UniqueEvent = Std.classes.UniqueEvent = class UniqueEvent extends Array {
 
   constructor(name) {
@@ -14728,7 +14745,7 @@ $moduler.toolkit.makeInterface([
   const lastKey = key[key.length - 1];
   if(lastKey in output) return wasInitializedValue;
   output[lastKey] = value;
-  return data;
+  return value;
 },
   },
 };
@@ -15711,7 +15728,10 @@ $moduler.toolkit.makeInterface([
       Std.interfaces.TracerInterface,
     ], this);
   }
-  static globalInstance = this.$ = Std.objects.GlobalTracer = this.new.config({ id: "main", isTracing: false, });
+  static globalInstance = this.$ = Std.objects.GlobalTracer = this.new.config({
+    id: "main",
+    isTracing: true,
+  });
 };
     Std.all.Checker = Std.classes.Checker = class Checker {
   static {
@@ -15843,1706 +15863,54 @@ $moduler.toolkit.makeInterface([
   return list[Math.floor(Math.random() * list.length)];
 }
 };
-  }
-  Wave_6_Types_system: {
-    Std.all.TypesParser = Std.objects.TypesParser = Std.parsers.typeslang = Std.parsers.peggy.generate("{" + '\n'
- + "  const ubication = function(text, location) {" + '\n'
- + "    return {" + '\n'
- + "      //code: text()," + '\n'
- + "      location: (function(it) {" + '\n'
- + "        return [it.start.offset,it.end.offset];" + '\n'
- + "      })(location())," + '\n'
- + "    };" + '\n'
- + "  };" + '\n'
- + "}" + '\n'
- + "" + '\n'
- + "Types_script= _ ast:Evaluables? _ {return { grammar: \"script\", ast: ast }; }" + '\n'
- + "" + '\n'
- + "Evaluables= first:Evaluable rest:Evaluable_other* \";\"? {return [first, ...rest].filter(it => it !== null);}" + '\n'
- + "" + '\n'
- + "Evaluable_other= _ \";\" _ value:Evaluable {return value;}" + '\n'
- + "" + '\n'
- + "" + '\n'
- + "// ------------------------------------------------------------" + '\n'
- + "// 1. EXPRESIONES" + '\n'
- + "// ------------------------------------------------------------" + '\n'
- + "" + '\n'
- + "Evaluable=Labeled_evaluable/Or" + '\n'
- + "" + '\n'
- + "Labeled_evaluable= " + '\n'
- + "  token1:_" + '\n'
- + "  label:Type_label" + '\n'
- + "  token2:_" + '\n'
- + "  core:Or" + '\n'
- + "    { return Object.assign(core, {label}); }" + '\n'
- + "Or= left:And right:Or_right* {return right.length? { grammar: \"or operation\", left, right, ...ubication(text,location) }: left;}" + '\n'
- + "Or_right= _ \"|\" _ right:And {return right;}" + '\n'
- + "And= left:Unary right:And_right* {return right.length? { grammar: \"and operation\", left, right, ...ubication(text,location) }: left;}" + '\n'
- + "And_right= _ \"&\" _ right:Unary {return right;}" + '\n'
- + "Unary= negation:Type_negation? value:Type_expression {return negation? { ...value, negation, ...ubication(text,location) }: value;}" + '\n'
- + "" + '\n'
- + "// ------------------------------------------------------------" + '\n'
- + "// 2. TYPE EXPRESSION" + '\n'
- + "// ------------------------------------------------------------" + '\n'
- + "" + '\n'
- + "Type_expression= Type_expression_as_labeled_name / Type_expression_as_label / Type_expression_as_name" + '\n'
- + "" + '\n'
- + "Type_expression_as_labeled_name = " + '\n'
- + "  label:Type_label _" + '\n'
- + "  type:Primary _" + '\n'
- + "  parameters:Type_parameters?" + '\n'
- + "  defaults:Type_defaults? " + '\n'
- + "    {" + '\n'
- + "      return Object.assign(type, {" + '\n'
- + "        label," + '\n'
- + "        parameters: parameters || undefined," + '\n'
- + "        defaults: defaults !== null ? defaults : undefined," + '\n'
- + "        ...ubication(text,location)" + '\n'
- + "      });" + '\n'
- + "    }" + '\n'
- + "" + '\n'
- + "Type_expression_as_label = " + '\n'
- + "  label:Type_label _" + '\n'
- + "  parameters:Type_parameters?" + '\n'
- + "  defaults:Type_defaults?" + '\n'
- + "    {" + '\n'
- + "      return Object.assign({ grammar: \"type label\" }, {" + '\n'
- + "        label," + '\n'
- + "        parameters: parameters || undefined," + '\n'
- + "        defaults: defaults !== null ? defaults : undefined," + '\n'
- + "        ...ubication(text,location)" + '\n'
- + "      });" + '\n'
- + "    }" + '\n'
- + "" + '\n'
- + "Type_expression_as_name =" + '\n'
- + "  type:Primary" + '\n'
- + "  parameters:Type_parameters?" + '\n'
- + "  defaults:Type_defaults?" + '\n'
- + "    {" + '\n'
- + "      return Object.assign(type, {" + '\n'
- + "        parameters: parameters || undefined," + '\n'
- + "        defaults: defaults !== null ? defaults : undefined," + '\n'
- + "        ...ubication(text,location)" + '\n'
- + "      });" + '\n'
- + "    }" + '\n'
- + "" + '\n'
- + "// ------------------------------------------------------------" + '\n'
- + "// 3. PRIMARY" + '\n'
- + "// ------------------------------------------------------------" + '\n'
- + "" + '\n'
- + "Primary = Type_group / Type_factory / Type_object / Type_class / Type_array / Type_import / Type_identifier" + '\n'
- + "" + '\n'
- + "// ------------------------------------------------------------" + '\n'
- + "// 4. GROUP" + '\n'
- + "// ------------------------------------------------------------" + '\n'
- + "" + '\n'
- + "Type_group = _ \"(\" _ value:Evaluable _ \")\" _ { return value; }" + '\n'
- + "" + '\n'
- + "// ------------------------------------------------------------" + '\n'
- + "// 5. FACTORY" + '\n'
- + "// ------------------------------------------------------------" + '\n'
- + "" + '\n'
- + "Type_factory = _" + '\n'
- + "  synchrony:((\"async\" / \"sync\") _)?" + '\n'
- + "  token1:(\"function\" _ \"(\" _)" + '\n'
- + "  input:Type_array_items? \")\" _" + '\n'
- + "  throwables:Throwables? \"=>\" _" + '\n'
- + "  output:Evaluable" + '\n'
- + "    {" + '\n'
- + "      return {" + '\n'
- + "        grammar: \"factory type\"," + '\n'
- + "        input," + '\n'
- + "        output," + '\n'
- + "        throwables," + '\n'
- + "        synchrony: synchrony && synchrony.length ? synchrony[0] : true," + '\n'
- + "        ...ubication(text,location)" + '\n'
- + "      };" + '\n'
- + "    }" + '\n'
- + "" + '\n'
- + "Throwables = first:Throwable rest:Throwable* { return [first, ...rest]; }" + '\n'
- + "" + '\n'
- + "Throwable = _ \"~>\" _ value:Evaluable { return value; }" + '\n'
- + "" + '\n'
- + "" + '\n'
- + "// ------------------------------------------------------------" + '\n'
- + "// 6. OBJECT" + '\n'
- + "// ------------------------------------------------------------" + '\n'
- + "" + '\n'
- + "Type_class = _ \"class\" _ content:Type_object { return Object.assign(content, {grammar:\"class type\", ...ubication(text,location)}) }" + '\n'
- + "" + '\n'
- + "Type_object = _ \"{\" _ properties:Type_object_properties? _ \"}\" { return { grammar: \"object type\", properties: properties || {}, ...ubication(text,location) }; }" + '\n'
- + "" + '\n'
- + "Type_object_properties = first:Type_object_property rest:Type_object_property_other* { return Object.fromEntries([first, ...rest]); }" + '\n'
- + "" + '\n'
- + "Type_object_property_other = _ \",\" _ property:Type_object_property { return property; }" + '\n'
- + "" + '\n'
- + "Type_object_property = Object_property_as_name / Object_property_as_label" + '\n'
- + "  " + '\n'
- + "Object_property_as_name =" + '\n'
- + "  name:Property_name" + '\n'
- + "  optional:Optional_sign? _ \":\" _" + '\n'
- + "  value:Evaluable { return [ name, { ...value, optional: optional || undefined } ]; }" + '\n'
- + "" + '\n'
- + "Object_property_as_label =" + '\n'
- + "  label:Type_label" + '\n'
- + "  optional:Optional_sign? { return [ label, { grammar: \"type label\", label, optional: optional || undefined, ...ubication(text,location) } ]; }" + '\n'
- + "" + '\n'
- + "" + '\n'
- + "// ------------------------------------------------------------" + '\n'
- + "// 7. ARRAY" + '\n'
- + "// ------------------------------------------------------------" + '\n'
- + "" + '\n'
- + "Type_array = _ \"[\" _ items:Type_array_items? _ \"]\" { return { grammar: \"array type\", items: items || [], ...ubication(text,location) }; }" + '\n'
- + "" + '\n'
- + "Type_array_items = first:Type_array_item rest:Type_array_item_other* { return [first, ...rest]; }" + '\n'
- + "" + '\n'
- + "Type_array_item_other = _ \",\" _ item:Type_array_item { return item; }" + '\n'
- + "" + '\n'
- + "Type_array_item = Spreaded_evaluable / Multiplicable" + '\n'
- + "" + '\n'
- + "Spreaded_evaluable = _ \"...\" _" + '\n'
- + "  list:Spreadable" + '\n'
- + "  multiplier:Multiplier_symbol?" + '\n'
- + "    { return { grammar: \"spreaded list\", list, multiplier, ...ubication(text,location) }; }" + '\n'
- + "" + '\n'
- + "Multiplier_symbol = \"?\" / \"*\" / \"+\"" + '\n'
- + "" + '\n'
- + "Spreadable = Type_array / Type_label" + '\n'
- + "" + '\n'
- + "Multiplicable =" + '\n'
- + "  e:Evaluable _" + '\n'
- + "  multiplier:Multiplier_symbol?" + '\n'
- + "    { return { ...e, multiplier: multiplier || undefined } }" + '\n'
- + "" + '\n'
- + "// ------------------------------------------------------------" + '\n'
- + "// 8. IDENTIFIERS" + '\n'
- + "// ------------------------------------------------------------" + '\n'
- + "" + '\n'
- + "Type_identifier = _ id:Variable_expression { return { grammar: \"type id\", id, ...ubication(text,location) }; }" + '\n'
- + "Type_negation = _ \"!\" _ { return \"!\"; }" + '\n'
- + "Type_label = _ \"@\" id:Variable_expression { return id;}" + '\n'
- + "" + '\n'
- + "// ------------------------------------------------------------" + '\n'
- + "// 9. PARAMETERS / DEFAULTS" + '\n'
- + "// ------------------------------------------------------------" + '\n'
- + "" + '\n'
- + "Type_parameters = _ \"(\" _ parameters:Type_array_items? _ \")\" { return parameters; }" + '\n'
- + "Type_defaults = _ \"=\" _ value:Default_value { return value; }" + '\n'
- + "Default_value = Hardcoded_value / Type_identifier" + '\n'
- + "" + '\n'
- + "// ------------------------------------------------------------" + '\n'
- + "// 10. VARIABLES" + '\n'
- + "// ------------------------------------------------------------" + '\n'
- + "" + '\n'
- + "Property_name = Property_chars / json_string" + '\n'
- + "Property_chars = [A-Za-z_$] [A-Za-z0-9_$]* { return text(); }" + '\n'
- + "Variable_expression = Variable_name Variable_accessor_by_dot* { return text(); }" + '\n'
- + "Variable_name = Property_chars / Singlequoted_expression" + '\n'
- + "Variable_accessor_by_dot = \".\" Variable_name" + '\n'
- + "" + '\n'
- + "// ------------------------------------------------------------" + '\n'
- + "// 11. OPTIONAL / STRINGS" + '\n'
- + "// ------------------------------------------------------------" + '\n'
- + "" + '\n'
- + "Optional_sign = _ \"?\" { return true; }" + '\n'
- + "Singlequoted_expression = \"'\" chars:Singlequoted_token* \"'\" { return chars.join(\"\"); }" + '\n'
- + "Singlequoted_token = Singlequoted_char / Singlequoted_escaped_char" + '\n'
- + "Singlequoted_escaped_char = \"\\\\\" char:. { return char; }" + '\n'
- + "Singlequoted_char = [^'\\\\\\n\\r]" + '\n'
- + "" + '\n'
- + "// ------------------------------------------------------------" + '\n'
- + "// 12. WHITESPACE / COMMENTS" + '\n'
- + "// ------------------------------------------------------------" + '\n'
- + "" + '\n'
- + "_ = (one_space)*" + '\n'
- + "one_space = __ / ___ / Comment" + '\n'
- + "__ = \"\\t\" / \" \"" + '\n'
- + "___ = \"\\r\\n\" / \"\\r\" / \"\\n\"" + '\n'
- + "Comment = Comment_oneline / Comment_multiline" + '\n'
- + "Comment_oneline = \"//\" (!(___ / EOF) .)*" + '\n'
- + "Comment_multiline = \"/*\" (!\"*/\" .)* \"*/\"" + '\n'
- + "EOF = !." + '\n'
- + "" + '\n'
- + "// ------------------------------------------------------------" + '\n'
- + "// 13. IMPORT" + '\n'
- + "// ------------------------------------------------------------" + '\n'
- + "" + '\n'
- + "Type_import = \"^\" resource:(\"file:\"/\"url:\"/\"path:\")? target:json_string" + '\n'
- + "  { return { grammar: \"import\", resource: resource ? resource.slice(0,-1) : resource, target, ...ubication(text,location) } }" + '\n'
- + "" + '\n'
- + "// ------------------------------------------------------------" + '\n'
- + "// 14. JSON" + '\n'
- + "// ------------------------------------------------------------" + '\n'
- + "" + '\n'
- + "Hardcoded_value = json_value" + '\n'
- + "json_value = json_object / json_array / json_string / json_number / json_true / json_false / json_null " + '\n'
- + "json_object = \"{\" json_space m:json_members? json_space \"}\" { return m }" + '\n'
- + "json_members = m1:json_member mN:json_coma_member* { return {...m1, ...Object.assign({},...mN) } }" + '\n'
- + "json_coma_member = json_space \",\" json_space m:json_member { return m }" + '\n'
- + "json_member = key:(json_string/js_variable_name) json_space \":\" json_space value:json_value { return {[key]: value}}" + '\n'
- + "json_array = \"[\" json_space e:json_elements? json_space \"]\" { return e || [] }" + '\n'
- + "json_elements = e1:json_value eN:json_coma_value* { return [e1, ...eN || []] }" + '\n'
- + "json_coma_value = json_space \",\" json_space v:json_value { return v }" + '\n'
- + "json_string = '\"' t:json_string_char* '\"'  { return t.join(\"\") }" + '\n'
- + "json_string_char = json_escape / [^\"\\\\\\u0000-\\u001F]" + '\n'
- + "json_escape = \"\\\\\" ( '\"' / \"\\\\\" / \"/\" / \"b\" / \"f\" / \"n\" / \"r\" / \"t\" / \"u\" [0-9a-fA-F]{4})" + '\n'
- + "json_number = \"-\"? json_integer json_fraction? json_exponent? { return parseFloat(text()) }" + '\n'
- + "json_integer = \"0\" / [1-9] [0-9]* { return parseInt(text()) }" + '\n'
- + "json_fraction = \".\" [0-9]+" + '\n'
- + "json_exponent = [eE] [+-]? [0-9]+" + '\n'
- + "json_true = \"true\" { return true }" + '\n'
- + "json_false = \"false\" { return false }" + '\n'
- + "json_null = \"null\" { return null }" + '\n'
- + "js_variable_name = [A-Za-záéíóúàèìòù$_] [A-Za-z0-9áéíóúàèìòù$_]* { return text() }" + '\n'
- + "json_space = [ \\t\\n\\r]*", {
-  output: "parser" // also: "source", "parser"
-});
-    Std.all.ValidationMemoryInterface = Std.interfaces.ValidationMemoryInterface = // @interface:ValidationMemoryInterface
-{
-  prototype: {},
-  static: {},
-};
-    Std.all.ValidationMemory = Std.interfaces.ValidationMemory = class ValidationMemory {
+    Std.all.AnsiProfiles = Std.classes.AnsiProfiles = class AnsiProfiles {
   static {
     $moduler.toolkit.makeClass([
-      Std.interfaces.InstantiableInterface,
-      // @interface:ValidationMemoryInterface
-      {
-        prototype: {
-          get labels() {
-            return this._labels = this._labels || {};
-          },
-          set labels(label) {
-            return this._labels = this._labels;
-          },
-          unclonableProperties: ["ast", "data", "astPointer", "dataPointer"],
-        },
-        static: {},
-      },
+      { static: { all: {} } },
+      Std.functions.IntrospectableInterfaceFactory(
+        "all",
+        "get",
+        "set",
+        "has",
+        "delete",
+        "initialize",
+        "list",
+        "onRegister",
+        "onUnregister",
+        "/",
+        "static",
+      ),
     ], this);
   }
-};
-    Std.all.TypesRegistry = Std.classes.TypesRegistry = class TypesRegistry {
-  static {
-    Compose_class: {
-      $moduler.toolkit.makeClass([
-        {
-          static: {
-            all: Std.types
-          }
-        },
-        Std.functions.IntrospectableInterfaceFactory(
-          "all",
-          "get",
-          "set",
-          "has",
-          "delete",
-          "initialize",
-          "list",
-          "onRegister",
-          "onUnregister",
-          "/",
-          "static",
-        ),
-        {
-          static: {
-            // @ATENCIÓN: usar siempre con await si quieres evitar ambigüedades de contexto.
-            find(...args) {
-              if(this.has(args[0])) return this.get(args[0]);
-              return this.fetch(...args);
-            },
-            fetch(id) {
-              return $moduler.import(`@/dist/www/types/${id}/${id}.dist.js`).then(TypeDefinition => {
-                return this.set(id, TypeDefinition);
-              });
-            }
-          }
-        }
-      ], this);
-    }
-    Add_basic_primitives: {
-      Object.assign(this.all, {
-        "undefined": $moduler.patchFile("@/dist/www/types/undefined/undefined.dist.js", {
-  abstraction: {
-    onValidate(memory) {
-      return typeof memory.localData === "undefined";
-    },
-    views: {
-  default: {
-    name: "TypeUndefinedDefaultView",
-    template: "<div>" + '\n'
- + "    Aqui el control para undefined." + '\n'
- + "</div>",
+  static as(id) {
+    if(Array.isArray(id)) return this.asList(id);
+    $moduler.assert(id in AnsiProfiles.all, `Profile for ansi colors with name «${id}» is not registered on «AnsiProfiles.as»`);
+    return Std.objects.Ansi.style(AnsiProfiles.all[id]);
   }
-}
-  }
-}),
-        "null": $moduler.patchFile("@/dist/www/types/null/null.dist.js", {
-  abstraction: {
-    onValidate(memory) {
-      return memory.localData === null;
-    },
-    views: {
-  default: {
-    name: "TypeNullDefaultView",
-    template: "<div>" + '\n'
- + "    Aqui el control para null." + '\n'
- + "</div>",
-  }
-}
-  }
-}),
-        "string": $moduler.patchFile("@/dist/www/types/string/string.dist.js", {
-  abstraction: {
-    onValidate(memory) {
-      return typeof memory.localData === "string";
-    },
-    views: {
-  default: {
-    name: "TypeStringDefaultView",
-    template: "<div>" + '\n'
- + "    Aqui el control para string." + '\n'
- + "</div>",
-  }
-}
-  }
-}),
-        "boolean": $moduler.patchFile("@/dist/www/types/boolean/boolean.dist.js", {
-  abstraction: {
-    onValidate(memory) {
-      return typeof memory.localData === "boolean";
-    },
-    views: {
-  default: {
-    name: "TypeBooleanDefaultView",
-    template: "<div>" + '\n'
- + "    Aqui el control para booleans." + '\n'
- + "</div>",
-  }
-}
-  }
-}),
-        "number": $moduler.patchFile("@/dist/www/types/number/number.dist.js", {
-  abstraction: {
-    onValidate(memory) {
-      return typeof memory.localData === "number";
-    },
-    views: {
-  default: {
-    name: "TypeNumberDefaultView",
-    template: "<div>" + '\n'
- + "    Aqui el control para numbers." + '\n'
- + "</div>",
-  }
-}
-  }
-}),
-        "function": $moduler.patchFile("@/dist/www/types/function/function.dist.js", {
-  abstraction: {
-    onValidate(memory) {
-      return typeof memory.localData === "function";
-    },
-    views: {
-  default: {
-    name: "TypeFunctionDefaultView",
-    template: "<div>" + '\n'
- + "    Aqui el control para functions." + '\n'
- + "</div>",
-  }
-}
-  }
-}),
-        "integer": $moduler.patchFile("@/dist/www/types/integer/integer.dist.js", {
-  abstraction: {
-    onValidate(memory) {
-      return Number.isInteger(memory.localData);
-    },
-    views: {
-  default: {
-    name: "TypeIntegerDefaultView",
-    template: "<div>" + '\n'
- + "    Aqui el control para integers." + '\n'
- + "</div>",
-  }
-}
-  }
-}),
-        "object": $moduler.patchFile("@/dist/www/types/object/object.dist.js", {
-  abstraction: {
-    onValidate(memory) {
-      return memory.localData !== null && typeof memory.localData === "object" && !Array.isArray(memory.localData);
-    },
-    views: {
-  default: {
-    name: "TypeObjectDefaultView",
-    template: "<div>" + '\n'
- + "    Aqui el control para object." + '\n'
- + "</div>",
-  }
-}
-  }
-}),
-        "array": $moduler.patchFile("@/dist/www/types/array/array.dist.js", {
-  abstraction: {
-    onValidate(memory) {
-      return Array.isArray(memory.localData);
-    },
-    views: {
-  default: {
-    name: "TypeArrayDefaultView",
-    template: "<div>" + '\n'
- + "    Aqui el control para arrays." + '\n'
- + "</div>",
-  }
-}
-  }
-}),
-        "date": $moduler.patchFile("@/dist/www/types/date/date.dist.js", {
-  abstraction: {
-    onValidate(memory) {
-      return memory.localData instanceof Date;
-    },
-    views: {
-  default: {
-    name: "TypeDateDefaultView",
-    template: "<div>" + '\n'
- + "    Aqui el control para dates." + '\n'
- + "</div>",
-  }
-}
-  }
-}),
-      });
+  static asList(list) {
+    const out = [];
+    for(let index=0; index<list.length; index++) {
+      const item = list[index];
+      out.push(this.as(item));
     }
-  }
-};
-    Std.all.TypesValidatorInterface = Std.interfaces.TypesValidatorInterface = // @interface:TypesValidatorInterface
-{
-  prototype: {},
-  static: {
-      trace: function trace(...args) {
-    // Std.all.Printer.json(args);
-    return;
-  },
-  validateData: async function (expression, data, skipValidations = false) {
-    const astRaw = typeof expression === "string" ? Std.objects.TypesParser.parse(expression) : expression;
-    const astWithoutImports = await this._replaceImportsRecursively(astRaw);
-    const validation = await this._validateDataRecursively({
-      ast: astWithoutImports,
-      data: data,
-    }, {
-      isRoot: true,
-      skipValidations: skipValidations,
-    });
-    return validation;
-  },
-  composeErrorMessage: function (submessages = []) {
-    let message = "";
-    for (let index = 0; index < submessages.length; index++) {
-      const part = submessages[index];
-      const submessage = Array.isArray(part) ? part.length === 2 ? `${part[0]} «${part[1]}»` : part.join(" ") : part;
-      message += `${index === 0 ? '' : ' '}${submessage}`;
-    }
-    return message;
-  },
-  composeValidationErrorMessage: function (memory, header = false, footer = false) {
-    const message = [
-      header || "Validation error arised",
-      ...(memory.localAst?.id ? [["because validator type", memory.localAst.id]] : []),
-      ["found data type", typeof memory.localData],
-      ["at data index", memory.dataPointer.join("/") || "~"],
-      // ["and validator index", memory.astPointer.join("/") || "~"],
-      // ["on grammar", memory.localAst.grammar],
-      footer ? footer : ["on method", "validateData"],
-    ];
-    return this.composeErrorMessage(message);
-  },
-  composeValidationErrorMetadata: function(memory, header, footer) {
-    return {
-      grammar:(memory.localAst.grammar === "type id" ? `${memory.localAst.grammar} (${memory.localAst.id})` : memory.localAst.grammar),
-      astPointer: memory.astPointer,
-      dataPointer: memory.dataPointer,
-      foundType: typeof memory.localData,
-    };
-  },
-  createValidationError: function ({ name, memory, header, footer }) {
-    return Error.normalize({
-      name: name,
-      message: this.composeValidationErrorMessage(memory, header, footer),
-      metadata: this.composeValidationErrorMetadata(memory, header, footer),
-    });
-  },
-  addValidationError: function(errorObject) {
-    const validationError = this.createValidationError(errorObject);
-    errorObject.memory.errors.addError(validationError);
-    return validationError;
-  },
-  Memory: Std.all.ValidationMemory = Std.classes.ValidationMemory = class ValidationMemory {
-    static {
-      $moduler.toolkit.makeClass([
-        Std.interfaces.InstantiableInterface,
-        // @interface:ValidationMemoryInterface
-        Std.functions.IntrospectableInterfaceFactory(
-          "data",
-          "getDataProperty",
-          "setDataProperty",
-          "hasDataProperty",
-          "deleteDataProperty",
-          "initializeDataProperty",
-          "listDataProperties",
-          "onRegisterDataProperty",
-          "onUnregisterDataProperty"
-        ),
-        Std.functions.IntrospectableInterfaceFactory(
-          "ast",
-          "getAstProperty",
-          "setAstProperty",
-          "hasAstProperty",
-          "deleteAstProperty",
-          "initializeAstProperty",
-          "listAstProperties",
-          "onRegisterAstProperty",
-          "onUnregisterAstProperty"
-        ),
-        {
-          prototype: {
-            onCreate: function () {
-              this.labels = {};
-              this.registry = Std.classes.TypesRegistry;
-              this.result = new Std.classes.ValidationResult(this);
-              this.errors = new Std.classes.ValidationErrors(this);
-            },
-            clonedProperties: ["labels", "registry", "result", "errors"],
-            unclonableProperties: ["data", "ast", "dataPointer", "astPointer"],
-            get localData() {
-              return this.dataPointer?.length ? this.getDataProperty(this.dataPointer.join("/")) : this.data;
-            },
-            get localAst() {
-              return this.astPointer?.length ? this.getAstProperty(this.astPointer.join("/")) : this.ast;
-            },
-          },
-          static: {},
-        },
-      ], this);
-    }
-  },
-  Result: Std.all.ValidationResult = Std.classes.ValidationResult = class ValidationResult extends Array {
-    constructor(memory) {
-      super();
-      this.memory = memory;
-    }
-    addCheckpoint(memory, method) {
-      $moduler.assert(memory instanceof Std.classes.ValidationMemory, `Parameter «memory» must be instance of «ValidationMemory» on «ValidatorResult.prototype.add»`);
-      this.push({
-        grammar: method,
-        order: this.length,
-        astPointer: memory.astPointer,
-        dataPointer: memory.dataPointer,
-      });
-    }
-  },
-  Errors: Std.all.ValidationErrors = Std.classes.ValidationErrors = class ValidationErrors extends Array {
-    constructor(memory) {
-      super();
-      this.memory = memory;
-    }
-    addError(error) {
-      this.push(error);
-    }
-  },
-  _validateAndOperation: function _validateAndOperation(memory) {
-    this.trace("TypesValidator._validateAndOperation", memory);
-    Return_unless_checking: {
-      if (memory.skipValidations || !memory.isLastInstruction) {
-        return true;
-      }
-    }
-    const { localAst } = memory;
-    Validate_first: {
-      const submemory = memory.clone({
-        data: memory.data,
-        dataPointer: memory.dataPointer.concat([]),
-        ast: memory.ast,
-        astPointer: memory.astPointer.concat(["left"]),
-      });
-      const output = this._validateDataRecursively(submemory);
-      if (output instanceof Error) {
-        return output;
-      } else {
-        memory.result.addCheckpoint(submemory, `and operation (1)`);
-      }
-    }
-    Validate_others: {
-      for (let index = 0; index < localAst.right.length; index++) {
-        const submemory = memory.clone({
-          data: memory.data,
-          dataPointer: memory.dataPointer.concat([]),
-          ast: memory.ast,
-          astPointer: memory.astPointer.concat(["right", index]),
-        });
-        const output = this._validateDataRecursively(submemory);
-        if (output instanceof Error) {
-          return output;
-        } else {
-          memory.result.addCheckpoint(submemory, `and operation (${index+2})`);
-        }
-      }
-    }
-    memory.result.addCheckpoint(memory, "and operation");
-    return true;
-  },
-  _validateOrOperation: function _validateOrOperation(memory) {
-    this.trace("TypesValidator._validateOrOperation", memory);
-    Return_unless_checking: {
-      if (memory.skipValidations || !memory.isLastInstruction) {
-        return true;
-      }
-    }
-    const { localAst } = memory;
-    let lastError;
-    Validate_first: {
-      const submemory = memory.clone({
-        data: memory.data,
-        dataPointer: memory.dataPointer.concat([]),
-        ast: memory.ast,
-        astPointer: memory.astPointer.concat(["left"]),
-      });
-      const output = this._validateDataRecursively(submemory);
-      if (output instanceof Error) {
-        // @OK, maybe next.
-      } else {
-        memory.result.addCheckpoint(submemory, `or operation (1)`);
-        return true;
-      }
-      lastError = output;
-    }
-    Validate_others: {
-      for (let index = 0; index < localAst.right.length; index++) {
-        const submemory = memory.clone({
-          data: memory.data,
-          dataPointer: memory.dataPointer.concat([]),
-          ast: memory.ast,
-          astPointer: memory.astPointer.concat(["right", index]),
-        });
-        const output = this._validateDataRecursively(submemory);
-        if (output instanceof Error) {
-          // @OK, maybe next.
-        } else {
-          memory.result.addCheckpoint(submemory, `or operation (${index+2})`);
-          return true;
-        }
-        lastError = output;
-      }
-    }
-    return this.addValidationError({
-      name: "LogicalOrNotSatisfied",
-      memory: memory,
-      header: `Logical «OR» was not satisfied`,
-      footer: "on method «TypesValidator._validateTypeLabel»",
-    });
-  },
-  _validateTypeLabel: function _validateTypeLabel(memory) {
-    this.trace("TypesValidator._validateTypeLabel", memory);
-    Return_unless_checking: {
-      if (memory.skipValidations || !memory.isLastInstruction) {
-        return true;
-      }
-    }
-    const { localAst } = memory;
-    Validating_by_label: {
-      if (!(localAst.label in memory.labels)) {
-        return this.addValidationError({
-          name: "TypeLabelNotIdentified",
-          memory: memory,
-          header: `Label «${localAst.label}» was not previously set`,
-          footer: "on method «TypesValidator._validateTypeLabel»",
-        });
-      }
-    }
-    const submemory = memory.clone({
-      data: memory.localData,
-      dataPointer: [],
-      ast: memory.labels[localAst.label],
-      astPointer: [],
-    });
-    return this._validateDataRecursively(submemory);
-  },
-  _validateFactoryType: function _validateFactoryType(memory) {
-    this.trace("TypesValidator._validateFactoryType", memory);
-    Return_unless_checking: {
-      if (memory.skipValidations || !memory.isLastInstruction) {
-        return true;
-      }
-    }
-    Validating_by_type: {
-      if (typeof memory.localData !== "function") {
-        return this.addValidationError({
-          name: "FactoryTypeValidationNotAccomplished",
-          memory: memory,
-          header: "Factory type validation was not accomplished",
-          footer: "on method «TypesValidator._validateFactoryType»",
-        });
-      }
-    }
-    memory.result.addCheckpoint(memory);
-    return true;
-  },
-  _validateClassType: function _validateClassType(memory) {
-    this.trace("TypesValidator._validateClassType", memory);
-    Return_unless_checking: {
-      if (memory.skipValidations || !memory.isLastInstruction) {
-        return true;
-      }
-    }
-    Validating_by_type: {
-      if (typeof memory.localData !== "function") {
-        return this.addValidationError({
-          name: "ClassTypeNotAccomplished",
-          memory: memory,
-          header: "Class type validation was not accomplished",
-          footer: "on method «TypesValidator._validateClassType» while validating class type",
-        });
-      }
-    }
-    return this._validateProperties(memory, "class");
-  },
-  _validateProperties: function _validateProperties(memory, mode = "object") {
-    const output = {};
-    Validating_properties:
-    for (let prop in memory.localAst.properties) {
-      const hasProperty = (typeof memory.localData[prop] !== "undefined") || (prop in memory.localData);
-      const propAst = memory.localAst.properties[prop];
-      if((!hasProperty) && propAst.optional) {
-        continue Validating_properties;
-      }
-      const submemory = memory.clone({
-        data: memory.data,
-        dataPointer: memory.dataPointer.concat([prop]),
-        ast: memory.ast,
-        astPointer: memory.astPointer.concat(["properties", prop]),
-      });
-      const result = this._validateDataRecursively(submemory);
-      if(result instanceof Error) {
-        return this.addValidationError({
-          name: "PropertyTypeNotAccomplished",
-          memory: submemory,
-          header: `Property type validation of ${mode} at «${prop}» was not accomplished`,
-          footer: `on method «TypesValidator._validateProperties» while validating class type`,
-        });
-      }
-      output[prop] = result;
-    }
-    return output;
-  },
-  _validateObjectType: function _validateObjectType(memory) {
-    this.trace("TypesValidator._validateObjectType", memory);
-    Return_unless_checking: {
-      if (memory.skipValidations || !memory.isLastInstruction) {
-        return true;
-      }
-    }
-    if ((typeof memory.localData !== "object") || (memory.localData === null)) {
-      return this.addValidationError({
-        name: "ObjectTypeNotAccomplished",
-        memory: memory,
-        header: "Object type validation was not accomplished",
-        footer: "on method «TypesValidator._validateObjectType» while validating object type",
-      });
-    }
-    return this._validateProperties(memory, "object");
-  },
-  _validateArrayType: function _validateArrayType(memory, arrayContext = null) {
-    this.trace("TypesValidator._validateArrayType", memory);
-    Return_unless_checking: {
-      if (memory.skipValidations || !memory.isLastInstruction) {
-        return true;
-      }
-    }
-    if (!Array.isArray(memory.localData)) {
-      return this.addValidationError({
-        name: "ArrayTypeNotAccomplished",
-        memory: memory,
-        header: `Array type validation was not accomplished`,
-        footer: "on method «TypesValidator._validateArrayType» while validating array type",
-      });
-    }
-    const hasArrayContextOwner = typeof arrayContext === "object" && arrayContext !== null;
-    arrayContext ||= { dataIndex: 0 };
-    Validating_items:
-    for(let index=0; index<memory.localAst.items.length; index++) {
-      const submemory = memory.clone({
-        data: memory.data,
-        dataPointer: memory.dataPointer.concat([arrayContext.dataIndex]),
-        ast: memory.ast,
-        astPointer: memory.astPointer.concat(["items", index]),
-      });
-      const output = this._validateSpreadableType(submemory, arrayContext);
-      if(output instanceof Error) {
-        return output;
-      }
-    }
-    if ((!hasArrayContextOwner) && (arrayContext.dataIndex !== memory.localData.length)) {
-      return this.addValidationError({
-        name: "ArrayValidationNotFullyAccomplished",
-        memory: memory,
-        header: `Array schema validation with ${arrayContext.dataIndex} items did not completely match the data structure with ${memory.localData.length} items`,
-        footer: `on method «TypesValidator._validateArrayType» while validating array type`,
-      });
-    }
-    return true;
-  },
-  _validateSpreadedList: function _validateSpreadedList(memory, arrayContext) {
-    this.trace("TypesValidator._validateSpreadedList", memory);
-    const { list } = memory.localAst;
-    const config = {
-      data: memory.data,
-      dataPointer: memory.dataPointer.slice(0, -1),
-    };
-    if(typeof list === "string") {
-      config.ast = memory.labels[list];
-      config.astPointer = [];
-    } else {
-      config.ast = memory.ast;
-      config.astPointer = memory.astPointer.concat(["list"]);
-    }
-    return this._validateArrayType(memory.clone(config), arrayContext);
-  },
-  _validateSpreadableType: function _validateSpreadableType(memory, arrayContext) {
-    this.trace("TypesValidator._validateSpreadableType", memory);
-    let output;
-    let hasMultiplier, isSpreadedList, multiplierMin, multiplierMax;
-    Initialize_spreadable_context: {
-      hasMultiplier = typeof memory.localAst.multiplier !== "undefined";
-      isSpreadedList = memory.localAst.grammar === "spreaded list";
-      if(hasMultiplier) {
-        if(memory.localAst.multiplier === "?") {
-          multiplierMin = 0;
-          multiplierMax = 1;
-        } else if(memory.localAst.multiplier === "+") {
-          multiplierMin = 1;
-          multiplierMax = Infinity;
-        } else if(memory.localAst.multiplier === "*") {
-          multiplierMin = 0;
-          multiplierMax = Infinity;
-        } else {
-          multiplierMin = 1;
-          multiplierMax = 1;
-        }
-      } else {
-        multiplierMin = 1;
-        multiplierMax = 1;
-      }
-    }
-    let multiplierCounter = 0;
-    Iterating_as_much_as_possible:
-    while(multiplierCounter < multiplierMax) {
-      const submemory = memory.clone({
-        data: memory.data,
-        dataPointer: memory.dataPointer.slice(0,-1).concat([arrayContext.dataIndex]),
-        ast: memory.ast,
-        astPointer: memory.astPointer,
-      });
-      if(isSpreadedList) {
-        output = this._validateSpreadedList(submemory, arrayContext);
-      } else {
-        output = this._validateDataRecursively(submemory);
-      }
-      Si_error_o_no_error:
-      if(output instanceof Error) {
-        if(multiplierMin > multiplierCounter) {
-          Y_menos_del_minimo: {
-            return output;
-          }
-        } else if(multiplierMax < multiplierCounter) {
-          Y_mas_del_maximo: {
-            return output;
-          }
-        } else {
-          En_rango_aceptable: {
-            return true;
-          }
-        }
-      } else {
-        if(!isSpreadedList) {
-          memory.result.addCheckpoint(memory, `list item (${arrayContext.dataIndex+1}/${memory.localData.length})`);
-          arrayContext.dataIndex++;
-        }
-      }
-      multiplierCounter++;
-    }
-    return true;
-  },
-  _validateIdType: function _validateIdType(memory) {
-    this.trace("TypesValidator._validateIdType", memory);
-    Return_unless_checking: {
-      if (memory.skipValidations || !memory.isLastInstruction) {
-        return true;
-      }
-    }
-    const { localAst, dataPointer, ast, astPointer } = memory;
-    Caso_de_ser_tipo: {
-      const TypeClass = memory.registry.get(localAst.id);
-      if (TypeClass?.abstraction?.onValidate) {
-        let validation;
-        try {
-          validation = TypeClass.abstraction.onValidate(memory);
-        } catch (error) {
-          validation = error;
-        }
-        if ((typeof validation === "undefined") || (validation === false)) {
-          validation = this.addValidationError({
-            name: "IdentifiedTypeNotAccomplished",
-            memory: memory,
-            header: `Type «${localAst.id}» validation was not accomplished`,
-            footer: `on method «TypesValidator._validateIdType»`,
-          });
-        }
-        if (!(validation instanceof Error)) {
-          memory.result.addCheckpoint(memory, `type id (${localAst.id})`);
-        }
-        return validation;
-      }
-    }
-    Caso_de_ser_label: {
-      if (memory.labels[localAst.id]) {
-        const submemory = memory.clone({
-          data: memory.data,
-          dataPointer: memory.dataPointer.concat([]),
-          ast: memory.labels[localAst.id],
-          astPointer: memory.astPointer.concat(["labels", localAst.id]),
-        });
-        const validation = this._validateDataRecursively(submemory);
-        if (!(validation instanceof Error) && localAst.label) {
-          memory.labels[localAst.label] = {
-            ...ast,
-            label: undefined,
-          };
-        }
-        memory.result.addCheckpoint(submemory, `type id (${localAst.id}) + label`);
-        return validation;
-      }
-    }
-    return this.addValidationError({
-      name: "UnidentifiedType",
-      memory: memory,
-      header: `Unidentified type by id «${localAst.id}» was found`,
-      footer: `on method «TypesValidator._validateIdType»`,
-    });
-  },
-  _validateScript: function _validateScript(memory) {
-    this.trace("TypesValidator._validateScript", memory);
-    let validation = undefined;
-    Validating_instructions:
-    for (let indexLine = 0; indexLine < memory.ast.ast.length; indexLine++) {
-      const isLastInstruction = indexLine === memory.ast.ast.length - 1;
-      const submemory = memory.clone({
-        ast: memory.ast,
-        data: memory.data,
-        astPointer: memory.astPointer.concat(["ast", indexLine]),
-        dataPointer: memory.dataPointer.concat([]),
-        isLastInstruction: isLastInstruction,
-      });
-      validation = this._validateDataRecursively(submemory);
-      if (validation instanceof Error) {
-        return validation;
-      }
-      if (isLastInstruction) {
-        memory.exportedAst = this._materializeAst(submemory, submemory.localAst);
-        memory.hasPassed = true;
-      }
-    }
-    memory.result.addCheckpoint(memory, "script");
-    // console.log(memory);
-    return memory;
-  },
-  _defaultOptionsForValidateDataRecursively: {
-    mode: "object",
-    isRoot: false,
-    skipValidations: false,
-  },
-  _validateDataRecursively: function _validateDataRecursively(memory = null, optionsBrute = {}) {
-    // this.trace("_validateDataRecursively", memory);
-    const options = Object.assign({}, this._defaultOptionsForValidateDataRecursively, optionsBrute || {});
-    const { mode, skipValidations } = options;
-    Initialize_memory: {
-      memory = memory instanceof Std.classes.ValidationMemory ? memory : Std.classes.ValidationMemory.new.config({
-        // Las propiedades de memory:
-        ...memory,
-        // 
-        astPointer: [],
-        dataPointer: [],
-        registry: Std.classes.TypesRegistry,
-        // 
-        mode: mode,
-        skipValidations: skipValidations,
-      });
-    }
-    let output = undefined;
-    const { localAst } = memory;
-    Export_label_if_any: {
-      if (localAst.label && localAst.grammar !== "type label") {
-        memory.labels[localAst.label] = { ...localAst };
-      }
-    }
-    Validate_grammar: {
-      const { grammar } = localAst;
-      if (grammar === "and operation") {
-        output = this._validateAndOperation(memory);
-      } else if (grammar === "or operation") {
-        output = this._validateOrOperation(memory);
-      } else if (grammar === "type label") {
-        output = this._validateTypeLabel(memory);
-      } else if (grammar === "factory type") {
-        output = this._validateFactoryType(memory);
-      } else if (grammar === "object type") {
-        output = this._validateObjectType(memory);
-      } else if (grammar === "class type") {
-        output = this._validateClassType(memory);
-      } else if (grammar === "array type") {
-        output = this._validateArrayType(memory);
-      } else if (grammar === "type id") {
-        output = this._validateIdType(memory);
-      } else if (grammar === "spreaded list") {
-        output = this._validateSpreadedList(memory);
-      } else if (grammar === "script") {
-        output = this._validateScript(memory);
-      } else {
-        console.log(memory);
-        throw Error.normalize({
-          name: "ValidationGrammarNotIdentified",
-          message: `Grammar «${grammar}» is not recognized on «TypesValidator._validateDataRecursively»`,
-        });
-      }
-    }
-    Validate_negation: {
-      if (localAst.negation) {
-        if (output instanceof Error) {
-          output = true;
-        } else {
-          output = this.addValidationError({
-            name: "NegationNotAccomplished",
-            memory: memory,
-            header: "Negated expression was not accomplished",
-            footer: "on method «TypesValidator._validateDataRecursively»",
-          });
-        }
-      }
-    }
-    return output;
-  },
-  _replaceImportsRecursively: async function _replaceImportsRecursively(ast) {
-    this.trace("TypesValidator._replaceImportsRecursively", ast);
-    if(typeof ast !== "object") return ast;
-    if(ast === null) return ast;
-    if(Array.isArray(ast)) {
-      const outputAst = [];
-      for(let index=0; index<ast.length; index++) {
-        const row = ast[index];
-        outputAst[index] = await this._replaceImportsRecursively(row);
-      }
-      return outputAst;
-    } else if(ast.grammar === "import") {
-      return await this._replaceSpecificImport(ast);
-    } else {
-      const outputAst = {};
-      for(let prop in ast) {
-        outputAst[prop] = await this._replaceImportsRecursively(ast[prop]);
-      }
-      return outputAst;
-    }
-  },
-  typesModuler: ModulerV6.globalInstance.cloneForFile("@/dist/www/types/any.tyla"),
-  _replaceSpecificImport: async function (ast) {
-    this.trace("TypesValidator._replaceSpecificImport", ast);
-    const readMethod = (function(it) {
-      if(it === "file") return "_readFile";
-      if(it === "url") return "_readUrl";
-      if(it === "path") return "_readPath";
-      if(it === null) return "_readPath";
-      throw new Error(`Resource type «${it}» is not identified`);
-    })(ast.resource);
-    const text = await this.typesModuler[readMethod](ast.target);
-    // @CHATGPT: aquí estoy. Tengo que hacer un validateData sin data.
-    Aqui_el_conflicto_ChatGPT: {
-      const validation = await this.validateData(text, null, true);
-      return validation.exportedAst;
-    }
-  },
-  _materializeAst: function _materializeAst(memory, localAst, resolvingLabels = new Set()) {
-    this.trace("TypesValidator._materializeAst");
-    Handle_null_non_objects_and_arrays: {
-      if (localAst === null || typeof localAst !== "object") {
-        return localAst;
-      } else if (Array.isArray(localAst)) {
-        return localAst.map(value => this._materializeAst(memory, value, resolvingLabels));
-      }
-    }
-    Handle_labels: {
-      if (localAst.grammar !== "type label") {
-        break Handle_labels;
-      }
-      const label = localAst.label;
-      Resolve_by_label: {
-        if (!(label in memory.labels)) {
-          return { ...localAst };
-        }
-      }
-      Throw_error_by_label: {
-        if (resolvingLabels.has(label)) {
-          throw Error.normalize({
-            name: "MissingTypeLabelDeclaration",
-            message: `Missing label «${label}» used as type on «TypesValidator._materializeAst» was found`,
-          });
-        }
-      }
-      Materialize_label: {
-        const nextResolvingLabels = new Set(resolvingLabels);
-        nextResolvingLabels.add(label);
-        return this._materializeAst(
-          memory,
-          memory.labels[label],
-          nextResolvingLabels
-        );
-      }
-    }
-    Inner_copy: {
-      const output = {};
-      for (const key of Object.keys(localAst)) {
-        output[key] = this._materializeAst(memory, localAst[key], resolvingLabels);
-      }
-      return output;
-    }
-  },
-  _readPath: ModulerV6.globalInstance._readPath,
-  _readFile: ModulerV6.globalInstance._readFile,
-  _readUrl: ModulerV6.globalInstance._readUrl,
-  },
-};
-    Std.all.TypesValidator = Std.classes.TypesValidator = class TypesValidator {
-  static {
-    $moduler.toolkit.makeClass([
-      Std.interfaces.InstantiableInterface,
-      Std.interfaces.TypesValidatorInterface,
-    ], this);
+    return out;
   }
   static {
-    this.globalInstance = this.$ = Std.objects.GlobalTypesValidator = this.new;
-  }
-};
-    Std.all.Domer = Std.classes.Domer = class Domer {
-  static {
-    $moduler.toolkit.makeClass([
-      Std.interfaces.InstantiableInterface,
-    ], this);
-  }
-  static insertElementById(id) {
-    return document.querySelector(`#${id}`) || (function() {
-      const elem = document.createElement("div");
-      elem.setAttribute("id", id);
-      document.body.appendChild(elem);
-      return elem;
-    })();
-  }
-  static find(selector = "*", base = document) {
-    let output = undefined;
-    if(typeof selector === "string") {
-      output = [...base.querySelectorAll(selector)];
-    } else if(typeof selector === "function") {
-      output = [...base.querySelectorAll("*")].filter(el => selector(el));
-    }
-    return output;
-  }
-  static first(select, base = document) {
-    return this.find(select, base)[0];
-  }
-  static findFirstParentWhere(filter, base) {
-    let pivot = base;
-    while(pivot !== null) {
-      if(filter(pivot)) {
-        return pivot;
-      }
-      pivot = pivot.parentElement;
-    }
-    throw new Error("No parent found passing the specified filter");
-  }
-  static {
-    Native_HTMLElement_extensions: {
-      if(Std.classes.Environmenter.isBrowser) {
-        HTMLElement.prototype.getVueComponent = function() {
-          return this.__vue__;
-        };
-      }
-    }
+    this.set("error", "red");
+    this.set("error:1", "red,underline");
+    this.set("error:2", "red,underline,bgYellow");
+    this.set("success", "green");
+    this.set("success:1", "green,underline");
+    this.set("success:2", "green,underline,bgWhite");
+    this.set("info", "cyan");
+    this.set("info:1", "cyan,underline");
+    this.set("info:2", "cyan,underline,bgYellow");
+    this.set("silent", "blackBright");
+    this.set("silent:1", "blackBright,underline");
   }
 };
   }
-  Wave_7_Filesystem: {
-    Std.all.NodejsFilesystem = Std.classes.NodejsFilesystem = class NodejsFilesystem {
-
-  static {
-    $moduler.toolkit.makeClass([
-      Std.interfaces.InstantiableInterface,
-      Std.interfaces.TryableInterface,
-    ], this);
-  }
-
-  static async mount() {
-    // @ASYNC: to polyfill
-    return new this();
-  }
-
-  constructor() {
-    // @EMPTY: just to polyfill
-  }
-
-  async mount() {
-    // @EMPTY: just to polyfill
-  }
-
-  async unmount() {
-    // @EMPTY: just to polyfill
-  }
-
-  readFile(fileBrute) {
-    const file = $moduler.normalizationOf(fileBrute);
-    return require("fs").promises.readFile(file, "utf8");
-  }
-
-  writeFile(fileBrute, content) {
-    const file = $moduler.normalizationOf(fileBrute);
-    return require("fs").promises.writeFile(file, content, "utf8");
-  }
-
-  deleteFile(fileBrute) {
-    const file = $moduler.normalizationOf(fileBrute);
-    return require("fs").promises.unlink(file);
-  }
-
-  hasFile(fileBrute) {
-    const file = $moduler.normalizationOf(fileBrute);
-    return require("fs").promises.lstat(file).then(stat => stat.isFile()).catch(error => false);
-  }
-
-  readDirectory(dirBrute) {
-    const dir = $moduler.normalizationOf(dirBrute);
-    return require("fs").promises.readdir(dir);
-  }
-
-  writeDirectory(dirBrute) {
-    const dir = $moduler.normalizationOf(dirBrute);
-    return require("fs").promises.mkdir(dir);
-  }
-
-  deleteDirectory(dirBrute) {
-    const dir = $moduler.normalizationOf(dirBrute);
-    return require("fs").promises.rm(dir, { recursive: true });
-  }
-
-  hasDirectory(dirBrute) {
-    const dir = $moduler.normalizationOf(dirBrute);
-    return require("fs").promises.lstat(dir).then(stat => stat.isDirectory()).catch(error => false);
-  }
-
-  async assertParentDirectory(nodeBrute, appendix = false) {
-    const node = $moduler.normalizationOf(nodeBrute);
-    const parts = node.split(require("path").sep);
-    if (parts.length === 1) return true;
-    parts.pop();
-    const parent = parts.join(require("path").sep);
-    if (await this.hasDirectory(parent)) return true;
-    throw new Error(
-      `Required «${node}» to have an existing directory${appendix ? " " + appendix : ""}`
-    );
-  }
-
-  async copyFile(srcBrute, dstBrute) {
-    const src = $moduler.normalizationOf(srcBrute);
-    const dst = $moduler.normalizationOf(dstBrute);
-    await this.assertParentDirectory(dst, "on «NodejsFilesystem.prototype.copyFile»");
-    await require("fs").promises.copyFile(src, dst);
-    return true;
-  }
-
-  async copyDirectory(srcBrute, dstBrute) {
-    const src = $moduler.normalizationOf(srcBrute);
-    const dst = $moduler.normalizationOf(dstBrute);
-    await this.assertParentDirectory(dst, "on «NodejsFilesystem.prototype.copyDirectory»");
-    await require("fs").promises.cp(src, dst, {
-      recursive: true,
-    });
-    return true;
-  }
-
-  async moveFile(srcBrute, dstBrute) {
-    const src = $moduler.normalizationOf(srcBrute);
-    const dst = $moduler.normalizationOf(dstBrute);
-    await this.assertParentDirectory(dst, "on «NodejsFilesystem.prototype.moveFile»");
-    await require("fs").promises.rename(src, dst);
-    return true;
-  }
-
-  async moveDirectory(srcBrute, dstBrute) {
-    const src = $moduler.normalizationOf(srcBrute);
-    const dst = $moduler.normalizationOf(dstBrute);
-    await this.assertParentDirectory(dst, "on «NodejsFilesystem.prototype.moveDirectory»");
-    await require("fs").promises.rename(src, dst);
-    return true;
-  }
-
-};
-    Std.all.IdbCrud = Std.classes.IdbCrud = class IdbCrud {
-
-  constructor(db) {
-    this.db = db;
-  }
-
-  get(storeName, key) {
-    return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction(storeName, "readonly");
-      const store = transaction.objectStore(storeName);
-      const request = store.get(key);
-
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-  }
-
-  getAll(storeName) {
-    return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction(storeName, "readonly");
-      const store = transaction.objectStore(storeName);
-      const request = store.getAll();
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-  }
-
-  put(storeName, value) {
-    return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction(storeName, "readwrite");
-      const store = transaction.objectStore(storeName);
-      const request = store.put(value);
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-  }
-
-  delete(storeName, key) {
-    return new Promise((resolve, reject) => {
-      const transaction = this.db.transaction(storeName, "readwrite");
-      const store = transaction.objectStore(storeName);
-      const request = store.delete(key);
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-    });
-  }
-
-}
-;
-    Std.all.IdbFilesystem = Std.classes.IdbFilesystem = class IdbFilesystem {
-
-  static {
-    $moduler.toolkit.makeClass([
-      Std.interfaces.InstantiableInterface,
-      Std.interfaces.TryableInterface,
-    ], this);
-  }
-
-  static async mount() {
-    const fs = new this();
-    await fs.mount();
-    return fs;
-  }
-
-  constructor() {
-    this.db = null;
-    this.crud = null;
-  }
-
-  basenameOf(path) {
-    return path.split("/").filter(it => !!it).pop();
-  }
-
-  async mount() {
-    this.db = await new Promise((resolve, reject) => {
-      const request = indexedDB.open("StdIdbFilesystem", 1);
-      request.onupgradeneeded = () => {
-        const db = request.result;
-        if (!db.objectStoreNames.contains("files")) {
-          db.createObjectStore("files", {
-            keyPath: "path",
-          });
-        }
-      };
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-    this.crud = new Std.classes.IdbCrud(this.db);
-  }
-
-  async unmount() {
-    if (this.db) {
-      this.db.close();
-      this.db = null;
-      this.crud = null;
-    }
-  }
-
-  async readFile(file) {
-    const entry = await this.crud.get("files", file);
-    if (!entry || entry.type !== "file") {
-      throw new Error(`File not found: ${file}`);
-    }
-    return entry.content;
-  }
-
-  async writeFile(file, content) {
-    await this.assertParentDirectory(file, "on «IdbFilesystem.prototype.writeFile»");
-    await this.crud.put("files", {
-      path: file,
-      type: "file",
-      content,
-    });
-  }
-
-  async deleteFile(file) {
-    const entry = await this.crud.get("files", file);
-    if (!entry || entry.type !== "file") {
-      throw new Error(`File not found: ${file}`);
-    }
-    await this.crud.delete("files", file);
-  }
-
-  async hasFile(file) {
-    const entry = await this.crud.get("files", file);
-    return !!entry && entry.type === "file";
-  }
-
-  async readDirectory(dir) {
-    const entries = await this.crud.getAll("files");
-    const nodes = entries.filter((entry) => {
-      const isSubdir = entry.path.startsWith(dir + "/");
-      if (!isSubdir) return false;
-      const extraPath = entry.path.replace(dir + "/", "");
-      const isImmediate = extraPath.match(/\//g) === null;
-      if (!isImmediate) return false;
-      const isItself = extraPath.length === 0;
-      if (isItself) return false;
-      return isSubdir && isImmediate && !isItself;
-    }).map(entry => this.basenameOf(entry.path));
-    if ((nodes.length === 0) && (!await this.hasDirectory(dir))) {
-      throw new Error(`IdbFilesystem.prototype.readDirectory cannot read directory because does not exist: ${dir}`);
-    }
-    return nodes;
-  }
-
-  async writeDirectory(dir) {
-    await this.assertParentDirectory(dir, "on «IdbFilesystem.prototype.writeDirectory»");
-    await this.crud.put("files", {
-      path: dir,
-      type: "directory",
-    });
-  }
-
-  async deleteDirectory(dir) {
-    const entries = await this.crud.getAll("files");
-    const children = entries.filter((entry) => {
-      return entry.path === dir || entry.path.startsWith(dir + "/");
-    });
-    for (const entry of children) {
-      await this.crud.delete("files", entry.path);
-    }
-  }
-
-  async hasDirectory(dir) {
-    const entry = await this.crud.get("files", dir);
-    return !!entry && entry.type === "directory";
-  }
-
-  async hasParentDirectory(node, rootsOk = true) {
-    const parts = node.split("/");
-    if (parts.length === 1 && rootsOk) return true;
-    parts.pop();
-    const supernode = parts.join("/");
-    if (supernode === node) return rootsOk;
-    return await this.hasDirectory(supernode);
-  }
-
-  async assertParentDirectory(node, appendix = false) {
-    const has = await this.hasParentDirectory(node);
-    if (has) return true;
-    throw new Error(`Required «${node}» to have an existing directory${appendix ? ' ' + appendix : ''}`);
-  }
-
-  async copyFile(src, dst) {
-    await this.assertParentDirectory(dst, "on «IdbFilesystem.prototype.copyFile»");
-    const contents = await this.readFile(src);
-    await this.writeFile(dst, contents);
-    return true;
-  }
-
-  async moveFile(src, dst) {
-    await this.assertParentDirectory(dst, "on «IdbFilesystem.prototype.copyFile»");
-    const contents = await this.readFile(src);
-    await this.writeFile(dst, contents);
-    await this.deleteFile(src);
-    return true;
-  }
-
-  async copyDirectory(src, dst) {
-    await this.assertParentDirectory(dst, "on «IdbFilesystem.prototype.copyDirectory»");
-    if (!await this.hasDirectory(src)) {
-      throw new Error(`Directory not found: ${src}`);
-    }
-    const entries = await this.crud.getAll("files");
-    const children = entries.filter((entry) => {
-      return entry.path === src || entry.path.startsWith(src + "/");
-    });
-    for (const entry of children) {
-      const path = dst + entry.path.slice(src.length);
-      await this.crud.put("files", {
-        ...entry,
-        path,
-      });
-    }
-    return true;
-  }
-
-  async moveDirectory(src, dst) {
-    await this.assertParentDirectory(dst, "on «IdbFilesystem.prototype.moveDirectory»");
-    await this.copyDirectory(src, dst);
-    await this.deleteDirectory(src);
-    return true;
-  }
-
-};
-    Std.all.makeFunctionByProperties = Std.functions.makeFunctionByProperties = function makeFunctionByProperties(callback, props = {}) {
-  return Object.assign(callback, props);
-};
-  }
-  Wave_8_Abstractions: {
-    Std.all.AbstractionUtils = Std.classes.AbstractionUtils = class AbstractionUtils {
-  static mergeAbstractions = Std.classes.AbstractionMerger.mergeAbstractions;
-};
-  }
-  Wave_9_Database: {
-
-  }
-  Wave_10_Operative_system: {
-    Std.all.ProcessUtils = Std.classes.ProcessUtils = class ProcessUtils{
-  static {
-    $moduler.toolkit.makeClass([
-      Std.interfaces.InstantiableInterface,
-    ], this);
-  }
-};
-    Std.all.ThreadInterface = Std.interfaces.ThreadInterface = // @interface:ThreadInterface
-{
-  static: {},
-  prototype: {
-    onCreate: function (parameters) {
-      Std.all.Tracer?.globalInstance.log("Std.interfaces.ThreadInterface.prototype.onCreate", arguments || []);;
-      Pre_validation: {
-        $moduler.assert(typeof parameters === "object", `Required «parameters» to be object on «ThreadInterface.prototype.onCreate»`);
-      }
-      Initialization: {
-        this.threadId = Std.classes.Randomizer.getRandomLetters(10);
-        this.parent = null;
-        this.children = [];
-        this.isClosed = false;
-      }
-      Polyfillment: {
-        // @SIP: aquí se están juntando las APIs de Dialogs y Thread, intencionalmente, por cierto:
-        Object.assign(this, parameters);
-      }
-      Corrections: {
-        if(this.parent === null) {
-          this.parent = Std.classes.Thread.globalInstance;
-        }
-        this.onChange = new Std.classes.FunctionsList();
-        this.onChange.push(...(parameters.onChange || []));
-        this.onClose = new Std.classes.FunctionsList();
-        this.onClose.push(...(parameters.onClose || []));
-      }
-      Post_validation: {
-        if(this.parent !== false) {
-          $moduler.assert(typeof this.parent === "object", `Required «this.parent» to be object on «ThreadInterface.prototype.onCreate»`);
-          $moduler.assert(this.parent instanceof Std.classes.Thread, `Required «this.parent» to be instance of «Std.classes.Thread» on «ThreadInterface.prototype.onCreate»`);
-          $moduler.assert(Array.isArray(this.parent.children), `Required «this.parent.children» to be array on «ThreadInterface.prototype.onCreate»`);
-        }
-      }
-      Self_push_into_parent: {
-        if (this.parent === false) {
-          break Self_push_into_parent;
-        }
-        this.parent.children.push(this);
-      }
-      Emit_related_events: {
-        let pivot = this;
-        while(pivot) {
-          pivot.onChange.evaluateFunctionsSync([{ thread: this }]);
-          pivot = pivot.parent;
-        }
-      }
-      Emit_dialogs_update: {
-        Std.classes.Dialogs?.port?.refreshView();
-      }
-    },
-    get newSubthread() {
-      Std.all.Tracer?.globalInstance.log("Std.interfaces.ThreadInterface.prototype.newSubthread", arguments || []);;
-      return this.createSubthread();
-    },
-    createSubthread(config = {}) {
-      Std.all.Tracer?.globalInstance.log("Std.interfaces.ThreadInterface.prototype.createSubthread", arguments || []);;
-      return Std.classes.Thread.create({ ...config, parent: this });
-    },
-    close: function () {
-      Std.all.Tracer?.globalInstance.log("Std.interfaces.ThreadInterface.prototype.close", arguments || []);;
-      Close_children: {
-        for (let index = this.children.length - 1; index >= 0; index--) {
-          this.children[index].close();
-        }
-      }
-      Self_close: {
-        this.isClosed = true;
-      }
-      Self_remove_from_parent: {
-        if (!this.parent) break Self_remove_from_parent;
-        const pos = this.parent.children.indexOf(this);
-        if (pos === -1) break Self_remove_from_parent;
-        this.parent.children.splice(pos, 1);
-      }
-      Emit_related_events: {
-        this.onClose.evaluateFunctionsSync([{ thread: this }]);
-        let pivot = this;
-        while(pivot) {
-          pivot.onChange.evaluateFunctionsSync([{ thread: this }]);
-          pivot = pivot.parent;
-        }
-      }
-      Emit_dialogs_update: {
-        Std.classes.Dialogs?.port?.refreshView();
-      }
-    }
-  },
-};
-    Std.all.Thread = Std.classes.Thread = class Thread {
-  static {
-    $moduler.toolkit.makeClass([
-      Std.interfaces.InstantiableInterface,
-      Std.interfaces.ThreadInterface,
-    ], this);
-    this.globalInstance = this.$ = Std.objects.GlobalThread = Thread.create({
-      threadId: "Std.objects.GlobalThread",
-      parent: false,
-      children: [],
-      isClosed: false,
-    });
-  }
-};
-  }
-  
-  Wave_12_Views_system: {
+  Wave_6_Views_system: {
     External_Vue2_js: {
       if(typeof window === "undefined") break External_Vue2_js;
       if(typeof Vue2 !== "undefined") break External_Vue2_js;
@@ -29491,7 +27859,7 @@ $moduler.toolkit.makeInterface([
     }
     Std.all.ViewsRegistry = Std.classes.ViewsRegistry = class ViewsRegistry {
 
-  static validateView({ key, value, output }) {
+  static validateView(value) {
     $moduler.assert(typeof value === "object", `Required parameter «view» to be object but «${typeof value}» was found instead on «ViewsRegistry.prototype.onRegister»`);
     $moduler.assert(typeof value.name === "string", `Required parameter «view.name» to be string but «${typeof value.name}» was found instead on «ViewsRegistry.prototype.onRegister»`);
     $moduler.assert((typeof value.template === "string") || (typeof value.render === "function"), `Required parameter «view.template» to be string or «view.render» to be function but «${typeof value.template}» was found instead on «ViewsRegistry.prototype.onRegister»`);
@@ -29518,8 +27886,8 @@ $moduler.toolkit.makeInterface([
   }
 
   static onRegister(input) {
-    this.validateView(input)
     const { key, value, output } = input;
+    this.validateView(value);
     if(Std.externals.Vue2) {
       Std.externals.Vue2.component(value.name, value);
     }
@@ -29901,6 +28269,1806 @@ $moduler.toolkit.makeInterface([
   }
 });
   }
+  Wave_7_Types_system: {
+    Std.all.TypesParser = Std.objects.TypesParser = Std.parsers.typeslang = Std.parsers.peggy.generate("{" + '\n'
+ + "  const ubication = function(text, location) {" + '\n'
+ + "    return {" + '\n'
+ + "      //code: text()," + '\n'
+ + "      location: (function(it) {" + '\n'
+ + "        return [it.start.offset,it.end.offset];" + '\n'
+ + "      })(location())," + '\n'
+ + "    };" + '\n'
+ + "  };" + '\n'
+ + "}" + '\n'
+ + "" + '\n'
+ + "Types_script= _ ast:Evaluables? _ {return { grammar: \"script\", ast: ast }; }" + '\n'
+ + "" + '\n'
+ + "Evaluables= first:Evaluable rest:Evaluable_other* \";\"? {return [first, ...rest].filter(it => it !== null);}" + '\n'
+ + "" + '\n'
+ + "Evaluable_other= _ \";\" _ value:Evaluable {return value;}" + '\n'
+ + "" + '\n'
+ + "" + '\n'
+ + "// ------------------------------------------------------------" + '\n'
+ + "// 1. EXPRESIONES" + '\n'
+ + "// ------------------------------------------------------------" + '\n'
+ + "" + '\n'
+ + "Evaluable=Labeled_evaluable/Or" + '\n'
+ + "" + '\n'
+ + "Labeled_evaluable= " + '\n'
+ + "  token1:_" + '\n'
+ + "  label:Type_label" + '\n'
+ + "  token2:_" + '\n'
+ + "  core:Or" + '\n'
+ + "    { return Object.assign(core, {label}); }" + '\n'
+ + "Or= left:And right:Or_right* {return right.length? { grammar: \"or operation\", left, right, ...ubication(text,location) }: left;}" + '\n'
+ + "Or_right= _ \"|\" _ right:And {return right;}" + '\n'
+ + "And= left:Unary right:And_right* {return right.length? { grammar: \"and operation\", left, right, ...ubication(text,location) }: left;}" + '\n'
+ + "And_right= _ \"&\" _ right:Unary {return right;}" + '\n'
+ + "Unary= negation:Type_negation? value:Type_expression {return negation? { ...value, negation, ...ubication(text,location) }: value;}" + '\n'
+ + "" + '\n'
+ + "// ------------------------------------------------------------" + '\n'
+ + "// 2. TYPE EXPRESSION" + '\n'
+ + "// ------------------------------------------------------------" + '\n'
+ + "" + '\n'
+ + "Type_expression= Type_expression_as_labeled_name / Type_expression_as_label / Type_expression_as_name" + '\n'
+ + "" + '\n'
+ + "Type_expression_as_labeled_name = " + '\n'
+ + "  label:Type_label _" + '\n'
+ + "  type:Primary _" + '\n'
+ + "  parameters:Type_parameters?" + '\n'
+ + "  defaults:Type_defaults? " + '\n'
+ + "    {" + '\n'
+ + "      return Object.assign(type, {" + '\n'
+ + "        label," + '\n'
+ + "        parameters: parameters || undefined," + '\n'
+ + "        defaults: defaults !== null ? defaults : undefined," + '\n'
+ + "        ...ubication(text,location)" + '\n'
+ + "      });" + '\n'
+ + "    }" + '\n'
+ + "" + '\n'
+ + "Type_expression_as_label = " + '\n'
+ + "  label:Type_label _" + '\n'
+ + "  parameters:Type_parameters?" + '\n'
+ + "  defaults:Type_defaults?" + '\n'
+ + "    {" + '\n'
+ + "      return Object.assign({ grammar: \"type label\" }, {" + '\n'
+ + "        label," + '\n'
+ + "        parameters: parameters || undefined," + '\n'
+ + "        defaults: defaults !== null ? defaults : undefined," + '\n'
+ + "        ...ubication(text,location)" + '\n'
+ + "      });" + '\n'
+ + "    }" + '\n'
+ + "" + '\n'
+ + "Type_expression_as_name =" + '\n'
+ + "  type:Primary" + '\n'
+ + "  parameters:Type_parameters?" + '\n'
+ + "  defaults:Type_defaults?" + '\n'
+ + "    {" + '\n'
+ + "      return Object.assign(type, {" + '\n'
+ + "        parameters: parameters || undefined," + '\n'
+ + "        defaults: defaults !== null ? defaults : undefined," + '\n'
+ + "        ...ubication(text,location)" + '\n'
+ + "      });" + '\n'
+ + "    }" + '\n'
+ + "" + '\n'
+ + "// ------------------------------------------------------------" + '\n'
+ + "// 3. PRIMARY" + '\n'
+ + "// ------------------------------------------------------------" + '\n'
+ + "" + '\n'
+ + "Primary = Type_group / Type_factory / Type_object / Type_class / Type_array / Type_import / Type_identifier" + '\n'
+ + "" + '\n'
+ + "// ------------------------------------------------------------" + '\n'
+ + "// 4. GROUP" + '\n'
+ + "// ------------------------------------------------------------" + '\n'
+ + "" + '\n'
+ + "Type_group = _ \"(\" _ value:Evaluable _ \")\" _ { return value; }" + '\n'
+ + "" + '\n'
+ + "// ------------------------------------------------------------" + '\n'
+ + "// 5. FACTORY" + '\n'
+ + "// ------------------------------------------------------------" + '\n'
+ + "" + '\n'
+ + "Type_factory = _" + '\n'
+ + "  synchrony:((\"async\" / \"sync\") _)?" + '\n'
+ + "  token1:(\"function\" _ \"(\" _)" + '\n'
+ + "  input:Type_array_items? \")\" _" + '\n'
+ + "  throwables:Throwables? \"=>\" _" + '\n'
+ + "  output:Evaluable" + '\n'
+ + "    {" + '\n'
+ + "      return {" + '\n'
+ + "        grammar: \"factory type\"," + '\n'
+ + "        input," + '\n'
+ + "        output," + '\n'
+ + "        throwables," + '\n'
+ + "        synchrony: synchrony && synchrony.length ? synchrony[0] : true," + '\n'
+ + "        ...ubication(text,location)" + '\n'
+ + "      };" + '\n'
+ + "    }" + '\n'
+ + "" + '\n'
+ + "Throwables = first:Throwable rest:Throwable* { return [first, ...rest]; }" + '\n'
+ + "" + '\n'
+ + "Throwable = _ \"~>\" _ value:Evaluable { return value; }" + '\n'
+ + "" + '\n'
+ + "" + '\n'
+ + "// ------------------------------------------------------------" + '\n'
+ + "// 6. OBJECT" + '\n'
+ + "// ------------------------------------------------------------" + '\n'
+ + "" + '\n'
+ + "Type_class = _ \"class\" _ content:Type_object { return Object.assign(content, {grammar:\"class type\", ...ubication(text,location)}) }" + '\n'
+ + "" + '\n'
+ + "Type_object = _ \"{\" _ properties:Type_object_properties? _ \"}\" { return { grammar: \"object type\", properties: properties || {}, ...ubication(text,location) }; }" + '\n'
+ + "" + '\n'
+ + "Type_object_properties = first:Type_object_property rest:Type_object_property_other* { return Object.fromEntries([first, ...rest]); }" + '\n'
+ + "" + '\n'
+ + "Type_object_property_other = _ \",\" _ property:Type_object_property { return property; }" + '\n'
+ + "" + '\n'
+ + "Type_object_property = Object_property_as_name / Object_property_as_label" + '\n'
+ + "  " + '\n'
+ + "Object_property_as_name =" + '\n'
+ + "  name:Property_name" + '\n'
+ + "  optional:Optional_sign? _ \":\" _" + '\n'
+ + "  value:Evaluable { return [ name, { ...value, optional: optional || undefined } ]; }" + '\n'
+ + "" + '\n'
+ + "Object_property_as_label =" + '\n'
+ + "  label:Type_label" + '\n'
+ + "  optional:Optional_sign? { return [ label, { grammar: \"type label\", label, optional: optional || undefined, ...ubication(text,location) } ]; }" + '\n'
+ + "" + '\n'
+ + "" + '\n'
+ + "// ------------------------------------------------------------" + '\n'
+ + "// 7. ARRAY" + '\n'
+ + "// ------------------------------------------------------------" + '\n'
+ + "" + '\n'
+ + "Type_array = _ \"[\" _ items:Type_array_items? _ \"]\" { return { grammar: \"array type\", items: items || [], ...ubication(text,location) }; }" + '\n'
+ + "" + '\n'
+ + "Type_array_items = first:Type_array_item rest:Type_array_item_other* { return [first, ...rest]; }" + '\n'
+ + "" + '\n'
+ + "Type_array_item_other = _ \",\" _ item:Type_array_item { return item; }" + '\n'
+ + "" + '\n'
+ + "Type_array_item = Spreaded_evaluable / Multiplicable" + '\n'
+ + "" + '\n'
+ + "Spreaded_evaluable = _ \"...\" _" + '\n'
+ + "  list:Spreadable" + '\n'
+ + "  multiplier:Multiplier_symbol?" + '\n'
+ + "    { return { grammar: \"spreaded list\", list, multiplier, ...ubication(text,location) }; }" + '\n'
+ + "" + '\n'
+ + "Multiplier_symbol = \"?\" / \"*\" / \"+\"" + '\n'
+ + "" + '\n'
+ + "Spreadable = Type_array / Type_label" + '\n'
+ + "" + '\n'
+ + "Multiplicable =" + '\n'
+ + "  e:Evaluable _" + '\n'
+ + "  multiplier:Multiplier_symbol?" + '\n'
+ + "    { return { ...e, multiplier: multiplier || undefined } }" + '\n'
+ + "" + '\n'
+ + "// ------------------------------------------------------------" + '\n'
+ + "// 8. IDENTIFIERS" + '\n'
+ + "// ------------------------------------------------------------" + '\n'
+ + "" + '\n'
+ + "Type_identifier = _ id:Variable_expression { return { grammar: \"type id\", id, ...ubication(text,location) }; }" + '\n'
+ + "Type_negation = _ \"!\" _ { return \"!\"; }" + '\n'
+ + "Type_label = _ \"@\" id:Variable_expression { return id;}" + '\n'
+ + "" + '\n'
+ + "// ------------------------------------------------------------" + '\n'
+ + "// 9. PARAMETERS / DEFAULTS" + '\n'
+ + "// ------------------------------------------------------------" + '\n'
+ + "" + '\n'
+ + "Type_parameters = _ \"(\" _ parameters:Type_array_items? _ \")\" { return parameters; }" + '\n'
+ + "Type_defaults = _ \"=\" _ value:Default_value { return value; }" + '\n'
+ + "Default_value = Hardcoded_value / Type_identifier" + '\n'
+ + "" + '\n'
+ + "// ------------------------------------------------------------" + '\n'
+ + "// 10. VARIABLES" + '\n'
+ + "// ------------------------------------------------------------" + '\n'
+ + "" + '\n'
+ + "Property_name = Property_chars / json_string" + '\n'
+ + "Property_chars = [A-Za-z_$] [A-Za-z0-9_$]* { return text(); }" + '\n'
+ + "Variable_expression = Variable_name Variable_accessor_by_dot* { return text(); }" + '\n'
+ + "Variable_name = Property_chars / Singlequoted_expression" + '\n'
+ + "Variable_accessor_by_dot = \".\" Variable_name" + '\n'
+ + "" + '\n'
+ + "// ------------------------------------------------------------" + '\n'
+ + "// 11. OPTIONAL / STRINGS" + '\n'
+ + "// ------------------------------------------------------------" + '\n'
+ + "" + '\n'
+ + "Optional_sign = _ \"?\" { return true; }" + '\n'
+ + "Singlequoted_expression = \"'\" chars:Singlequoted_token* \"'\" { return chars.join(\"\"); }" + '\n'
+ + "Singlequoted_token = Singlequoted_char / Singlequoted_escaped_char" + '\n'
+ + "Singlequoted_escaped_char = \"\\\\\" char:. { return char; }" + '\n'
+ + "Singlequoted_char = [^'\\\\\\n\\r]" + '\n'
+ + "" + '\n'
+ + "// ------------------------------------------------------------" + '\n'
+ + "// 12. WHITESPACE / COMMENTS" + '\n'
+ + "// ------------------------------------------------------------" + '\n'
+ + "" + '\n'
+ + "_ = (one_space)*" + '\n'
+ + "one_space = __ / ___ / Comment" + '\n'
+ + "__ = \"\\t\" / \" \"" + '\n'
+ + "___ = \"\\r\\n\" / \"\\r\" / \"\\n\"" + '\n'
+ + "Comment = Comment_oneline / Comment_multiline" + '\n'
+ + "Comment_oneline = \"//\" (!(___ / EOF) .)*" + '\n'
+ + "Comment_multiline = \"/*\" (!\"*/\" .)* \"*/\"" + '\n'
+ + "EOF = !." + '\n'
+ + "" + '\n'
+ + "// ------------------------------------------------------------" + '\n'
+ + "// 13. IMPORT" + '\n'
+ + "// ------------------------------------------------------------" + '\n'
+ + "" + '\n'
+ + "Type_import = \"^\" resource:(\"file:\"/\"url:\"/\"path:\")? target:json_string" + '\n'
+ + "  { return { grammar: \"import\", resource: resource ? resource.slice(0,-1) : resource, target, ...ubication(text,location) } }" + '\n'
+ + "" + '\n'
+ + "// ------------------------------------------------------------" + '\n'
+ + "// 14. JSON" + '\n'
+ + "// ------------------------------------------------------------" + '\n'
+ + "" + '\n'
+ + "Hardcoded_value = json_value" + '\n'
+ + "json_value = json_object / json_array / json_string / json_number / json_true / json_false / json_null " + '\n'
+ + "json_object = \"{\" json_space m:json_members? json_space \"}\" { return m }" + '\n'
+ + "json_members = m1:json_member mN:json_coma_member* { return {...m1, ...Object.assign({},...mN) } }" + '\n'
+ + "json_coma_member = json_space \",\" json_space m:json_member { return m }" + '\n'
+ + "json_member = key:(json_string/js_variable_name) json_space \":\" json_space value:json_value { return {[key]: value}}" + '\n'
+ + "json_array = \"[\" json_space e:json_elements? json_space \"]\" { return e || [] }" + '\n'
+ + "json_elements = e1:json_value eN:json_coma_value* { return [e1, ...eN || []] }" + '\n'
+ + "json_coma_value = json_space \",\" json_space v:json_value { return v }" + '\n'
+ + "json_string = '\"' t:json_string_char* '\"'  { return t.join(\"\") }" + '\n'
+ + "json_string_char = json_escape / [^\"\\\\\\u0000-\\u001F]" + '\n'
+ + "json_escape = \"\\\\\" ( '\"' / \"\\\\\" / \"/\" / \"b\" / \"f\" / \"n\" / \"r\" / \"t\" / \"u\" [0-9a-fA-F]{4})" + '\n'
+ + "json_number = \"-\"? json_integer json_fraction? json_exponent? { return parseFloat(text()) }" + '\n'
+ + "json_integer = \"0\" / [1-9] [0-9]* { return parseInt(text()) }" + '\n'
+ + "json_fraction = \".\" [0-9]+" + '\n'
+ + "json_exponent = [eE] [+-]? [0-9]+" + '\n'
+ + "json_true = \"true\" { return true }" + '\n'
+ + "json_false = \"false\" { return false }" + '\n'
+ + "json_null = \"null\" { return null }" + '\n'
+ + "js_variable_name = [A-Za-záéíóúàèìòù$_] [A-Za-z0-9áéíóúàèìòù$_]* { return text() }" + '\n'
+ + "json_space = [ \\t\\n\\r]*", {
+  output: "parser" // also: "source", "parser"
+});
+    Std.all.ValidationMemoryInterface = Std.interfaces.ValidationMemoryInterface = // @interface:ValidationMemoryInterface
+{
+  prototype: {},
+  static: {},
+};
+    Std.all.ValidationMemory = Std.interfaces.ValidationMemory = class ValidationMemory {
+  static {
+    $moduler.toolkit.makeClass([
+      Std.interfaces.InstantiableInterface,
+      // @interface:ValidationMemoryInterface
+      {
+        prototype: {
+          get labels() {
+            return this._labels = this._labels || {};
+          },
+          set labels(label) {
+            return this._labels = this._labels;
+          },
+          unclonableProperties: ["ast", "data", "astPointer", "dataPointer"],
+        },
+        static: {},
+      },
+    ], this);
+  }
+};
+    Componente_base_para_los_forms_tiene_prioridad: {
+      Std.all.TypesFormPrototype = Std.views.TypesFormPrototype = Std.classes.ViewsStaticMerger.mergeViews({
+  props: {
+    params: {
+      type: Object,
+      required: true,
+    }
+  },
+  created() {
+    const params = $moduler.toolkit.normalizeObject(this.params, ...Std.views.TypesFormNode.static.paramsNormalization);
+    this.$locals = { params };
+  },
+  computed: {
+    localAst: {
+      get() {
+        return Std.classes.Introspector.get(this.$locals.params.ast, this.$locals.params.astIndex);
+      }
+    },
+    localData: {
+      get() {
+        return Std.classes.Introspector.get(this.$locals.params.data, this.$locals.params.dataIndex);
+      }
+    }
+  }
+}, {
+  // BasicControlViewTrait.object.js
+  created() {
+    Inicia_locals: {
+      if(!this.$locals) this.$locals = {};
+    }
+    Valor_local: {
+      this.$locals.value = "";
+      this.$locals.seniuelo = "88888";
+    }
+    Propiedades_computadas: {
+      this.$locals.computed = new Std.classes.ComputedProperties({
+        statement: {
+          get: () => {
+            return this.seniuelo;
+          }
+        },
+        placeholder: {
+          get: () => {
+            return "yeeeeeeeeep" || this.seniuelo;
+          }
+        }
+      });
+    }
+  },
+  methods: {
+    getValueFromDom() {
+      return this.getValueFromDom ? this.onGetValueFromDom : this.$refs.domValueOrigin.value;
+    },
+    updateValueFromDom() {
+      const value = this.getValueFromDom();
+      this.$locals.value = value;
+    }
+  }
+});
+      Std.all.TypesRegistry = Std.classes.TypesRegistry = class TypesRegistry {
+  static {
+    Compose_class: {
+      $moduler.toolkit.makeClass([
+        {
+          static: {
+            all: Std.types
+          }
+        },
+        Std.functions.IntrospectableInterfaceFactory(
+          "all",
+          "get",
+          "set",
+          "has",
+          "delete",
+          "initialize",
+          "list",
+          "onRegister",
+          "onUnregister",
+          "/",
+          "static",
+        ),
+        {
+          static: {
+            registerViewsOfType(TypeDefinition, id) {
+              $moduler.assert(typeof TypeDefinition === "object", `Definition of type «${id}» should be object but «${typeof TypeDefinition}» was found instead on «Std.classes.TypesRegistry.registerViewsOfType»`);
+              $moduler.assert(typeof TypeDefinition.abstraction === "object", `Property «abstraction» of type «${id}» should be object but «${typeof TypeDefinition.abstraction}» was found instead on «Std.classes.TypesRegistry.registerViewsOfType»`);
+              $moduler.assert(typeof TypeDefinition.abstraction.views === "object", `Property «abstraction.views» of type «${id}» should be object but «${typeof TypeDefinition.abstraction.views}» was found instead on «Std.classes.TypesRegistry.registerViewsOfType»`);
+              const allViews = TypeDefinition.abstraction.views;
+              for(const name in allViews) {
+                const view = allViews[name];
+                $moduler.assert(typeof view === "object", `View «${name}» of type «${id}» should be object but «${typeof view}» was found instead on «Std.classes.TypesRegistry.registerViewsOfType»`);
+                $moduler.assert(typeof view.name === "string", `Property «name» of view «${name}» of type «${id}» should be string but «${typeof view.name}» was found instead on «Std.classes.TypesRegistry.registerViewsOfType»`);
+                Std.classes.ViewsRegistry.initialize(view.name, view);
+              }
+              return TypeDefinition;
+            },
+            // @ATENCIÓN: usar siempre con await si quieres evitar ambigüedades de contexto.
+            find(...args) {
+              const [ name ] = args;
+              if(this.has(name)) {
+                const TypeDefinition = this.get(name);
+                this.registerViewsOfType(TypeDefinition, name);
+                return TypeDefinition;
+              }
+              return this.fetch(...args);
+            },
+            async fetch(id) {
+              const TypeDefinition = await $moduler.import(`@/dist/www/types/${id}/${id}.dist.js`);
+              this.registerViewsOfType(TypeDefinition, id);
+              return this.set(id, TypeDefinition);
+            }
+          }
+        }
+      ], this);
+    }
+    Add_basic_primitives: {
+      Object.assign(this.all, {
+        "undefined": $moduler.patchFile("@/dist/www/types/undefined/undefined.dist.js", {
+  abstraction: {
+    onValidate(memory) {
+      return typeof memory.localData === "undefined";
+    },
+    views: {
+  default: Std.classes.ViewsRegistry.initialize("TypeUndefinedDefaultView", {
+    name: "TypeUndefinedDefaultView",
+    mixins: [Std.views.TypesFormPrototype],
+    template: "<div>" + '\n'
+ + "    Aqui el control para undefined." + '\n'
+ + "    <input type=\"text\" />" + '\n'
+ + "</div>",
+  })
+}
+  }
+}),
+        "null": $moduler.patchFile("@/dist/www/types/null/null.dist.js", {
+  abstraction: {
+    onValidate(memory) {
+      return memory.localData === null;
+    },
+    views: {
+  default: Std.classes.ViewsRegistry.initialize("TypeNullDefaultView", {
+    name: "TypeNullDefaultView",
+    mixins: [Std.views.TypesFormPrototype],
+    template: "<div>" + '\n'
+ + "    Aqui el control para null." + '\n'
+ + "</div>",
+  })
+}
+  }
+}),
+        "string": $moduler.patchFile("@/dist/www/types/string/string.dist.js", {
+  abstraction: {
+    onValidate(memory) {
+      return typeof memory.localData === "string";
+    },
+    views: {
+  default: Std.classes.ViewsRegistry.initialize("TypeStringDefaultView", {
+    name: "TypeStringDefaultView",
+    mixins: [Std.views.TypesFormPrototype],
+    template: "<div class=\"View Type Type_string TypeStringDefaultView control_component\">" + '\n'
+ + "    <div class=\"control_statement\" v-if=\"$locals.computed.statement\">{{ $locals.computed.statement }}</div>" + '\n'
+ + "    {{ $locals.computed }}" + '\n'
+ + "    <input" + '\n'
+ + "        class=\"control_element\"" + '\n'
+ + "        :value=\"$locals.value\"" + '\n'
+ + "        ref=\"domValueOrigin\"" + '\n'
+ + "        v-on:input=\"updateValueFromDom\"" + '\n'
+ + "        type=\"text\"" + '\n'
+ + "        spellcheck=\"false\"" + '\n'
+ + "        :placeholder=\"$locals.computed.placeholder || ''\"" + '\n'
+ + "    />" + '\n'
+ + "</div>",
+  })
+}
+  }
+}),
+        "boolean": $moduler.patchFile("@/dist/www/types/boolean/boolean.dist.js", {
+  abstraction: {
+    onValidate(memory) {
+      return typeof memory.localData === "boolean";
+    },
+    views: {
+  default: Std.classes.ViewsRegistry.initialize("TypeBooleanDefaultView", {
+    name: "TypeBooleanDefaultView",
+    mixins: [Std.views.TypesFormPrototype],
+    template: "<div>" + '\n'
+ + "    Aqui el control para booleans." + '\n'
+ + "</div>",
+  })
+}
+  }
+}),
+        "number": $moduler.patchFile("@/dist/www/types/number/number.dist.js", {
+  abstraction: {
+    onValidate(memory) {
+      return typeof memory.localData === "number";
+    },
+    views: {
+  default: Std.classes.ViewsRegistry.initialize("TypeNumberDefaultView", {
+    name: "TypeNumberDefaultView",
+    mixins: [Std.views.TypesFormPrototype],
+    template: "<div>" + '\n'
+ + "    <input type=\"text\" class=\"\" />" + '\n'
+ + "</div>",
+  })
+}
+  }
+}),
+        "function": $moduler.patchFile("@/dist/www/types/function/function.dist.js", {
+  abstraction: {
+    onValidate(memory) {
+      return typeof memory.localData === "function";
+    },
+    views: {
+  default: Std.classes.ViewsRegistry.initialize("TypeFunctionDefaultView", {
+    name: "TypeFunctionDefaultView",
+    mixins: [Std.views.TypesFormPrototype],
+    template: "<div>" + '\n'
+ + "    Aqui el control para functions." + '\n'
+ + "</div>",
+  })
+}
+  }
+}),
+        "integer": $moduler.patchFile("@/dist/www/types/integer/integer.dist.js", {
+  abstraction: {
+    onValidate(memory) {
+      return Number.isInteger(memory.localData);
+    },
+    views: {
+  default: Std.classes.ViewsRegistry.initialize("TypeIntegerDefaultView", {
+    name: "TypeIntegerDefaultView",
+    mixins: [Std.views.TypesFormPrototype],
+    template: "<div>" + '\n'
+ + "    Aqui el control para integers." + '\n'
+ + "</div>",
+  })
+}
+  }
+}),
+        "object": $moduler.patchFile("@/dist/www/types/object/object.dist.js", {
+  abstraction: {
+    onValidate(memory) {
+      return memory.localData !== null && typeof memory.localData === "object" && !Array.isArray(memory.localData);
+    },
+    views: {
+  default: Std.classes.ViewsRegistry.initialize("TypeObjectDefaultView", {
+    name: "TypeObjectDefaultView",
+    mixins: [Std.views.TypesFormPrototype],
+    template: "<div>" + '\n'
+ + "    Aqui el control para object." + '\n'
+ + "</div>",
+  })
+}
+  }
+}),
+        "array": $moduler.patchFile("@/dist/www/types/array/array.dist.js", {
+  abstraction: {
+    onValidate(memory) {
+      return Array.isArray(memory.localData);
+    },
+    views: {
+  default: Std.classes.ViewsRegistry.initialize("TypeArrayDefaultView", {
+    name: "TypeArrayDefaultView",
+    mixins: [Std.views.TypesFormPrototype],
+    template: "<div>" + '\n'
+ + "    Aqui el control para arrays." + '\n'
+ + "</div>",
+  })
+}
+  }
+}),
+        "date": $moduler.patchFile("@/dist/www/types/date/date.dist.js", {
+  abstraction: {
+    onValidate(memory) {
+      return memory.localData instanceof Date;
+    },
+    views: {
+  default: Std.classes.ViewsRegistry.initialize("TypeDateDefaultView", {
+    name: "TypeDateDefaultView",
+    mixins: [Std.views.TypesFormPrototype],
+    template: "<div>" + '\n'
+ + "    Aqui el control para dates." + '\n'
+ + "</div>",
+  })
+}
+  }
+}),
+      });
+    }
+  }
+};
+    }
+    Std.all.TypesValidatorInterface = Std.interfaces.TypesValidatorInterface = // @interface:TypesValidatorInterface
+{
+  prototype: {},
+  static: {
+      trace: function trace(...args) {
+    // Std.all.Printer.json(args);
+    return;
+  },
+  validateData: async function (expression, data, skipValidations = false) {
+    const astRaw = typeof expression === "string" ? Std.objects.TypesParser.parse(expression) : expression;
+    const astWithoutImports = await this._replaceImportsRecursively(astRaw);
+    const validation = await this._validateDataRecursively({
+      ast: astWithoutImports,
+      data: data,
+    }, {
+      isRoot: true,
+      skipValidations: skipValidations,
+    });
+    return validation;
+  },
+  composeErrorMessage: function (submessages = []) {
+    let message = "";
+    for (let index = 0; index < submessages.length; index++) {
+      const part = submessages[index];
+      const submessage = Array.isArray(part) ? part.length === 2 ? `${part[0]} «${part[1]}»` : part.join(" ") : part;
+      message += `${index === 0 ? '' : ' '}${submessage}`;
+    }
+    return message;
+  },
+  composeValidationErrorMessage: function (memory, header = false, footer = false) {
+    const message = [
+      header || "Validation error arised",
+      ...(memory.localAst?.id ? [["because validator type", memory.localAst.id]] : []),
+      ["found data type", typeof memory.localData],
+      ["at data index", memory.dataPointer.join("/") || "~"],
+      // ["and validator index", memory.astPointer.join("/") || "~"],
+      // ["on grammar", memory.localAst.grammar],
+      footer ? footer : ["on method", "validateData"],
+    ];
+    return this.composeErrorMessage(message);
+  },
+  composeValidationErrorMetadata: function(memory, header, footer) {
+    return {
+      grammar:(memory.localAst.grammar === "type id" ? `${memory.localAst.grammar} (${memory.localAst.id})` : memory.localAst.grammar),
+      astPointer: memory.astPointer,
+      dataPointer: memory.dataPointer,
+      foundType: typeof memory.localData,
+    };
+  },
+  createValidationError: function ({ name, memory, header, footer }) {
+    return Error.normalize({
+      name: name,
+      message: this.composeValidationErrorMessage(memory, header, footer),
+      metadata: this.composeValidationErrorMetadata(memory, header, footer),
+    });
+  },
+  addValidationError: function(errorObject) {
+    const validationError = this.createValidationError(errorObject);
+    errorObject.memory.errors.addError(validationError);
+    return validationError;
+  },
+  Memory: Std.all.ValidationMemory = Std.classes.ValidationMemory = class ValidationMemory {
+    static {
+      $moduler.toolkit.makeClass([
+        Std.interfaces.InstantiableInterface,
+        // @interface:ValidationMemoryInterface
+        Std.functions.IntrospectableInterfaceFactory(
+          "data",
+          "getDataProperty",
+          "setDataProperty",
+          "hasDataProperty",
+          "deleteDataProperty",
+          "initializeDataProperty",
+          "listDataProperties",
+          "onRegisterDataProperty",
+          "onUnregisterDataProperty"
+        ),
+        Std.functions.IntrospectableInterfaceFactory(
+          "ast",
+          "getAstProperty",
+          "setAstProperty",
+          "hasAstProperty",
+          "deleteAstProperty",
+          "initializeAstProperty",
+          "listAstProperties",
+          "onRegisterAstProperty",
+          "onUnregisterAstProperty"
+        ),
+        {
+          prototype: {
+            onCreate: function () {
+              this.labels = {};
+              this.registry = Std.classes.TypesRegistry;
+              this.result = new Std.classes.ValidationResult(this);
+              this.errors = new Std.classes.ValidationErrors(this);
+            },
+            clonedProperties: ["labels", "registry", "result", "errors"],
+            unclonableProperties: ["data", "ast", "dataPointer", "astPointer"],
+            get localData() {
+              return this.dataPointer?.length ? this.getDataProperty(this.dataPointer.join("/")) : this.data;
+            },
+            get localAst() {
+              return this.astPointer?.length ? this.getAstProperty(this.astPointer.join("/")) : this.ast;
+            },
+          },
+          static: {},
+        },
+      ], this);
+    }
+  },
+  Result: Std.all.ValidationResult = Std.classes.ValidationResult = class ValidationResult extends Array {
+    constructor(memory) {
+      super();
+      this.memory = memory;
+    }
+    addCheckpoint(memory, method) {
+      $moduler.assert(memory instanceof Std.classes.ValidationMemory, `Parameter «memory» must be instance of «ValidationMemory» on «ValidatorResult.prototype.add»`);
+      this.push({
+        grammar: method,
+        order: this.length,
+        astPointer: memory.astPointer,
+        dataPointer: memory.dataPointer,
+      });
+    }
+  },
+  Errors: Std.all.ValidationErrors = Std.classes.ValidationErrors = class ValidationErrors extends Array {
+    constructor(memory) {
+      super();
+      this.memory = memory;
+    }
+    addError(error) {
+      this.push(error);
+    }
+  },
+  _validateAndOperation: function _validateAndOperation(memory) {
+    this.trace("TypesValidator._validateAndOperation", memory);
+    Return_unless_checking: {
+      if (memory.skipValidations || !memory.isLastInstruction) {
+        return true;
+      }
+    }
+    const { localAst } = memory;
+    Validate_first: {
+      const submemory = memory.clone({
+        data: memory.data,
+        dataPointer: memory.dataPointer.concat([]),
+        ast: memory.ast,
+        astPointer: memory.astPointer.concat(["left"]),
+      });
+      const output = this._validateDataRecursively(submemory);
+      if (output instanceof Error) {
+        return output;
+      } else {
+        memory.result.addCheckpoint(submemory, `and operation (1)`);
+      }
+    }
+    Validate_others: {
+      for (let index = 0; index < localAst.right.length; index++) {
+        const submemory = memory.clone({
+          data: memory.data,
+          dataPointer: memory.dataPointer.concat([]),
+          ast: memory.ast,
+          astPointer: memory.astPointer.concat(["right", index]),
+        });
+        const output = this._validateDataRecursively(submemory);
+        if (output instanceof Error) {
+          return output;
+        } else {
+          memory.result.addCheckpoint(submemory, `and operation (${index+2})`);
+        }
+      }
+    }
+    memory.result.addCheckpoint(memory, "and operation");
+    return true;
+  },
+  _validateOrOperation: function _validateOrOperation(memory) {
+    this.trace("TypesValidator._validateOrOperation", memory);
+    Return_unless_checking: {
+      if (memory.skipValidations || !memory.isLastInstruction) {
+        return true;
+      }
+    }
+    const { localAst } = memory;
+    let lastError;
+    Validate_first: {
+      const submemory = memory.clone({
+        data: memory.data,
+        dataPointer: memory.dataPointer.concat([]),
+        ast: memory.ast,
+        astPointer: memory.astPointer.concat(["left"]),
+      });
+      const output = this._validateDataRecursively(submemory);
+      if (output instanceof Error) {
+        // @OK, maybe next.
+      } else {
+        memory.result.addCheckpoint(submemory, `or operation (1)`);
+        return true;
+      }
+      lastError = output;
+    }
+    Validate_others: {
+      for (let index = 0; index < localAst.right.length; index++) {
+        const submemory = memory.clone({
+          data: memory.data,
+          dataPointer: memory.dataPointer.concat([]),
+          ast: memory.ast,
+          astPointer: memory.astPointer.concat(["right", index]),
+        });
+        const output = this._validateDataRecursively(submemory);
+        if (output instanceof Error) {
+          // @OK, maybe next.
+        } else {
+          memory.result.addCheckpoint(submemory, `or operation (${index+2})`);
+          return true;
+        }
+        lastError = output;
+      }
+    }
+    return this.addValidationError({
+      name: "LogicalOrNotSatisfied",
+      memory: memory,
+      header: `Logical «OR» was not satisfied`,
+      footer: "on method «TypesValidator._validateTypeLabel»",
+    });
+  },
+  _validateTypeLabel: function _validateTypeLabel(memory) {
+    this.trace("TypesValidator._validateTypeLabel", memory);
+    Return_unless_checking: {
+      if (memory.skipValidations || !memory.isLastInstruction) {
+        return true;
+      }
+    }
+    const { localAst } = memory;
+    Validating_by_label: {
+      if (!(localAst.label in memory.labels)) {
+        return this.addValidationError({
+          name: "TypeLabelNotIdentified",
+          memory: memory,
+          header: `Label «${localAst.label}» was not previously set`,
+          footer: "on method «TypesValidator._validateTypeLabel»",
+        });
+      }
+    }
+    const submemory = memory.clone({
+      data: memory.localData,
+      dataPointer: [],
+      ast: memory.labels[localAst.label],
+      astPointer: [],
+    });
+    return this._validateDataRecursively(submemory);
+  },
+  _validateFactoryType: function _validateFactoryType(memory) {
+    this.trace("TypesValidator._validateFactoryType", memory);
+    Return_unless_checking: {
+      if (memory.skipValidations || !memory.isLastInstruction) {
+        return true;
+      }
+    }
+    Validating_by_type: {
+      if (typeof memory.localData !== "function") {
+        return this.addValidationError({
+          name: "FactoryTypeValidationNotAccomplished",
+          memory: memory,
+          header: "Factory type validation was not accomplished",
+          footer: "on method «TypesValidator._validateFactoryType»",
+        });
+      }
+    }
+    memory.result.addCheckpoint(memory);
+    return true;
+  },
+  _validateClassType: function _validateClassType(memory) {
+    this.trace("TypesValidator._validateClassType", memory);
+    Return_unless_checking: {
+      if (memory.skipValidations || !memory.isLastInstruction) {
+        return true;
+      }
+    }
+    Validating_by_type: {
+      if (typeof memory.localData !== "function") {
+        return this.addValidationError({
+          name: "ClassTypeNotAccomplished",
+          memory: memory,
+          header: "Class type validation was not accomplished",
+          footer: "on method «TypesValidator._validateClassType» while validating class type",
+        });
+      }
+    }
+    return this._validateProperties(memory, "class");
+  },
+  _validateProperties: function _validateProperties(memory, mode = "object") {
+    const output = {};
+    Validating_properties:
+    for (let prop in memory.localAst.properties) {
+      const hasProperty = (typeof memory.localData[prop] !== "undefined") || (prop in memory.localData);
+      const propAst = memory.localAst.properties[prop];
+      if((!hasProperty) && propAst.optional) {
+        continue Validating_properties;
+      }
+      const submemory = memory.clone({
+        data: memory.data,
+        dataPointer: memory.dataPointer.concat([prop]),
+        ast: memory.ast,
+        astPointer: memory.astPointer.concat(["properties", prop]),
+      });
+      const result = this._validateDataRecursively(submemory);
+      if(result instanceof Error) {
+        return this.addValidationError({
+          name: "PropertyTypeNotAccomplished",
+          memory: submemory,
+          header: `Property type validation of ${mode} at «${prop}» was not accomplished`,
+          footer: `on method «TypesValidator._validateProperties» while validating class type`,
+        });
+      }
+      output[prop] = result;
+    }
+    return output;
+  },
+  _validateObjectType: function _validateObjectType(memory) {
+    this.trace("TypesValidator._validateObjectType", memory);
+    Return_unless_checking: {
+      if (memory.skipValidations || !memory.isLastInstruction) {
+        return true;
+      }
+    }
+    if ((typeof memory.localData !== "object") || (memory.localData === null)) {
+      return this.addValidationError({
+        name: "ObjectTypeNotAccomplished",
+        memory: memory,
+        header: "Object type validation was not accomplished",
+        footer: "on method «TypesValidator._validateObjectType» while validating object type",
+      });
+    }
+    return this._validateProperties(memory, "object");
+  },
+  _validateArrayType: function _validateArrayType(memory, arrayContext = null) {
+    this.trace("TypesValidator._validateArrayType", memory);
+    Return_unless_checking: {
+      if (memory.skipValidations || !memory.isLastInstruction) {
+        return true;
+      }
+    }
+    if (!Array.isArray(memory.localData)) {
+      return this.addValidationError({
+        name: "ArrayTypeNotAccomplished",
+        memory: memory,
+        header: `Array type validation was not accomplished`,
+        footer: "on method «TypesValidator._validateArrayType» while validating array type",
+      });
+    }
+    const hasArrayContextOwner = typeof arrayContext === "object" && arrayContext !== null;
+    arrayContext ||= { dataIndex: 0 };
+    Validating_items:
+    for(let index=0; index<memory.localAst.items.length; index++) {
+      const submemory = memory.clone({
+        data: memory.data,
+        dataPointer: memory.dataPointer.concat([arrayContext.dataIndex]),
+        ast: memory.ast,
+        astPointer: memory.astPointer.concat(["items", index]),
+      });
+      const output = this._validateSpreadableType(submemory, arrayContext);
+      if(output instanceof Error) {
+        return output;
+      }
+    }
+    if ((!hasArrayContextOwner) && (arrayContext.dataIndex !== memory.localData.length)) {
+      return this.addValidationError({
+        name: "ArrayValidationNotFullyAccomplished",
+        memory: memory,
+        header: `Array schema validation with ${arrayContext.dataIndex} items did not completely match the data structure with ${memory.localData.length} items`,
+        footer: `on method «TypesValidator._validateArrayType» while validating array type`,
+      });
+    }
+    return true;
+  },
+  _validateSpreadedList: function _validateSpreadedList(memory, arrayContext) {
+    this.trace("TypesValidator._validateSpreadedList", memory);
+    const { list } = memory.localAst;
+    const config = {
+      data: memory.data,
+      dataPointer: memory.dataPointer.slice(0, -1),
+    };
+    if(typeof list === "string") {
+      config.ast = memory.labels[list];
+      config.astPointer = [];
+    } else {
+      config.ast = memory.ast;
+      config.astPointer = memory.astPointer.concat(["list"]);
+    }
+    return this._validateArrayType(memory.clone(config), arrayContext);
+  },
+  _validateSpreadableType: function _validateSpreadableType(memory, arrayContext) {
+    this.trace("TypesValidator._validateSpreadableType", memory);
+    let output;
+    let hasMultiplier, isSpreadedList, multiplierMin, multiplierMax;
+    Initialize_spreadable_context: {
+      hasMultiplier = typeof memory.localAst.multiplier !== "undefined";
+      isSpreadedList = memory.localAst.grammar === "spreaded list";
+      if(hasMultiplier) {
+        if(memory.localAst.multiplier === "?") {
+          multiplierMin = 0;
+          multiplierMax = 1;
+        } else if(memory.localAst.multiplier === "+") {
+          multiplierMin = 1;
+          multiplierMax = Infinity;
+        } else if(memory.localAst.multiplier === "*") {
+          multiplierMin = 0;
+          multiplierMax = Infinity;
+        } else {
+          multiplierMin = 1;
+          multiplierMax = 1;
+        }
+      } else {
+        multiplierMin = 1;
+        multiplierMax = 1;
+      }
+    }
+    let multiplierCounter = 0;
+    Iterating_as_much_as_possible:
+    while(multiplierCounter < multiplierMax) {
+      const submemory = memory.clone({
+        data: memory.data,
+        dataPointer: memory.dataPointer.slice(0,-1).concat([arrayContext.dataIndex]),
+        ast: memory.ast,
+        astPointer: memory.astPointer,
+      });
+      if(isSpreadedList) {
+        output = this._validateSpreadedList(submemory, arrayContext);
+      } else {
+        output = this._validateDataRecursively(submemory);
+      }
+      Si_error_o_no_error:
+      if(output instanceof Error) {
+        if(multiplierMin > multiplierCounter) {
+          Y_menos_del_minimo: {
+            return output;
+          }
+        } else if(multiplierMax < multiplierCounter) {
+          Y_mas_del_maximo: {
+            return output;
+          }
+        } else {
+          En_rango_aceptable: {
+            return true;
+          }
+        }
+      } else {
+        if(!isSpreadedList) {
+          memory.result.addCheckpoint(memory, `list item (${arrayContext.dataIndex+1}/${memory.localData.length})`);
+          arrayContext.dataIndex++;
+        }
+      }
+      multiplierCounter++;
+    }
+    return true;
+  },
+  _validateIdType: function _validateIdType(memory) {
+    this.trace("TypesValidator._validateIdType", memory);
+    Return_unless_checking: {
+      if (memory.skipValidations || !memory.isLastInstruction) {
+        return true;
+      }
+    }
+    const { localAst, dataPointer, ast, astPointer } = memory;
+    Caso_de_ser_tipo: {
+      const TypeClass = memory.registry.get(localAst.id);
+      if (TypeClass?.abstraction?.onValidate) {
+        let validation;
+        try {
+          validation = TypeClass.abstraction.onValidate(memory);
+        } catch (error) {
+          validation = error;
+        }
+        if ((typeof validation === "undefined") || (validation === false)) {
+          validation = this.addValidationError({
+            name: "IdentifiedTypeNotAccomplished",
+            memory: memory,
+            header: `Type «${localAst.id}» validation was not accomplished`,
+            footer: `on method «TypesValidator._validateIdType»`,
+          });
+        }
+        if (!(validation instanceof Error)) {
+          memory.result.addCheckpoint(memory, `type id (${localAst.id})`);
+        }
+        return validation;
+      }
+    }
+    Caso_de_ser_label: {
+      if (memory.labels[localAst.id]) {
+        const submemory = memory.clone({
+          data: memory.data,
+          dataPointer: memory.dataPointer.concat([]),
+          ast: memory.labels[localAst.id],
+          astPointer: memory.astPointer.concat(["labels", localAst.id]),
+        });
+        const validation = this._validateDataRecursively(submemory);
+        if (!(validation instanceof Error) && localAst.label) {
+          memory.labels[localAst.label] = {
+            ...ast,
+            label: undefined,
+          };
+        }
+        memory.result.addCheckpoint(submemory, `type id (${localAst.id}) + label`);
+        return validation;
+      }
+    }
+    return this.addValidationError({
+      name: "UnidentifiedType",
+      memory: memory,
+      header: `Unidentified type by id «${localAst.id}» was found`,
+      footer: `on method «TypesValidator._validateIdType»`,
+    });
+  },
+  _validateScript: function _validateScript(memory) {
+    this.trace("TypesValidator._validateScript", memory);
+    let validation = undefined;
+    Validating_instructions:
+    for (let indexLine = 0; indexLine < memory.ast.ast.length; indexLine++) {
+      const isLastInstruction = indexLine === memory.ast.ast.length - 1;
+      const submemory = memory.clone({
+        ast: memory.ast,
+        data: memory.data,
+        astPointer: memory.astPointer.concat(["ast", indexLine]),
+        dataPointer: memory.dataPointer.concat([]),
+        isLastInstruction: isLastInstruction,
+      });
+      validation = this._validateDataRecursively(submemory);
+      if (validation instanceof Error) {
+        return validation;
+      }
+      if (isLastInstruction) {
+        memory.exportedAst = this._materializeAst(submemory, submemory.localAst);
+        memory.hasPassed = true;
+      }
+    }
+    memory.result.addCheckpoint(memory, "script");
+    // console.log(memory);
+    return memory;
+  },
+  _defaultOptionsForValidateDataRecursively: {
+    mode: "object",
+    isRoot: false,
+    skipValidations: false,
+  },
+  _validateDataRecursively: function _validateDataRecursively(memory = null, optionsBrute = {}) {
+    // this.trace("_validateDataRecursively", memory);
+    const options = Object.assign({}, this._defaultOptionsForValidateDataRecursively, optionsBrute || {});
+    const { mode, skipValidations } = options;
+    Initialize_memory: {
+      memory = memory instanceof Std.classes.ValidationMemory ? memory : Std.classes.ValidationMemory.new.config({
+        // Las propiedades de memory:
+        ...memory,
+        // 
+        astPointer: [],
+        dataPointer: [],
+        registry: Std.classes.TypesRegistry,
+        // 
+        mode: mode,
+        skipValidations: skipValidations,
+      });
+    }
+    let output = undefined;
+    const { localAst } = memory;
+    Export_label_if_any: {
+      if (localAst.label && localAst.grammar !== "type label") {
+        memory.labels[localAst.label] = { ...localAst };
+      }
+    }
+    Validate_grammar: {
+      const { grammar } = localAst;
+      if (grammar === "and operation") {
+        output = this._validateAndOperation(memory);
+      } else if (grammar === "or operation") {
+        output = this._validateOrOperation(memory);
+      } else if (grammar === "type label") {
+        output = this._validateTypeLabel(memory);
+      } else if (grammar === "factory type") {
+        output = this._validateFactoryType(memory);
+      } else if (grammar === "object type") {
+        output = this._validateObjectType(memory);
+      } else if (grammar === "class type") {
+        output = this._validateClassType(memory);
+      } else if (grammar === "array type") {
+        output = this._validateArrayType(memory);
+      } else if (grammar === "type id") {
+        output = this._validateIdType(memory);
+      } else if (grammar === "spreaded list") {
+        output = this._validateSpreadedList(memory);
+      } else if (grammar === "script") {
+        output = this._validateScript(memory);
+      } else {
+        console.log(memory);
+        throw Error.normalize({
+          name: "ValidationGrammarNotIdentified",
+          message: `Grammar «${grammar}» is not recognized on «TypesValidator._validateDataRecursively»`,
+        });
+      }
+    }
+    Validate_negation: {
+      if (localAst.negation) {
+        if (output instanceof Error) {
+          output = true;
+        } else {
+          output = this.addValidationError({
+            name: "NegationNotAccomplished",
+            memory: memory,
+            header: "Negated expression was not accomplished",
+            footer: "on method «TypesValidator._validateDataRecursively»",
+          });
+        }
+      }
+    }
+    return output;
+  },
+  _replaceImportsRecursively: async function _replaceImportsRecursively(ast) {
+    this.trace("TypesValidator._replaceImportsRecursively", ast);
+    if(typeof ast !== "object") return ast;
+    if(ast === null) return ast;
+    if(Array.isArray(ast)) {
+      const outputAst = [];
+      for(let index=0; index<ast.length; index++) {
+        const row = ast[index];
+        outputAst[index] = await this._replaceImportsRecursively(row);
+      }
+      return outputAst;
+    } else if(ast.grammar === "import") {
+      return await this._replaceSpecificImport(ast);
+    } else {
+      const outputAst = {};
+      for(let prop in ast) {
+        outputAst[prop] = await this._replaceImportsRecursively(ast[prop]);
+      }
+      return outputAst;
+    }
+  },
+  typesModuler: ModulerV6.globalInstance.cloneForFile("@/dist/www/types/any.tyla"),
+  _replaceSpecificImport: async function (ast) {
+    this.trace("TypesValidator._replaceSpecificImport", ast);
+    const readMethod = (function(it) {
+      if(it === "file") return "_readFile";
+      if(it === "url") return "_readUrl";
+      if(it === "path") return "_readPath";
+      if(it === null) return "_readPath";
+      throw new Error(`Resource type «${it}» is not identified`);
+    })(ast.resource);
+    const text = await this.typesModuler[readMethod](ast.target);
+    // @CHATGPT: aquí estoy. Tengo que hacer un validateData sin data.
+    Aqui_el_conflicto_ChatGPT: {
+      const validation = await this.validateData(text, null, true);
+      return validation.exportedAst;
+    }
+  },
+  _materializeAst: function _materializeAst(memory, localAst, resolvingLabels = new Set()) {
+    this.trace("TypesValidator._materializeAst");
+    Handle_null_non_objects_and_arrays: {
+      if (localAst === null || typeof localAst !== "object") {
+        return localAst;
+      } else if (Array.isArray(localAst)) {
+        return localAst.map(value => this._materializeAst(memory, value, resolvingLabels));
+      }
+    }
+    Handle_labels: {
+      if (localAst.grammar !== "type label") {
+        break Handle_labels;
+      }
+      const label = localAst.label;
+      Resolve_by_label: {
+        if (!(label in memory.labels)) {
+          return { ...localAst };
+        }
+      }
+      Throw_error_by_label: {
+        if (resolvingLabels.has(label)) {
+          throw Error.normalize({
+            name: "MissingTypeLabelDeclaration",
+            message: `Missing label «${label}» used as type on «TypesValidator._materializeAst» was found`,
+          });
+        }
+      }
+      Materialize_label: {
+        const nextResolvingLabels = new Set(resolvingLabels);
+        nextResolvingLabels.add(label);
+        return this._materializeAst(
+          memory,
+          memory.labels[label],
+          nextResolvingLabels
+        );
+      }
+    }
+    Inner_copy: {
+      const output = {};
+      for (const key of Object.keys(localAst)) {
+        output[key] = this._materializeAst(memory, localAst[key], resolvingLabels);
+      }
+      return output;
+    }
+  },
+  _readPath: ModulerV6.globalInstance._readPath,
+  _readFile: ModulerV6.globalInstance._readFile,
+  _readUrl: ModulerV6.globalInstance._readUrl,
+  },
+};
+    Std.all.TypesValidator = Std.classes.TypesValidator = class TypesValidator {
+  static {
+    $moduler.toolkit.makeClass([
+      Std.interfaces.InstantiableInterface,
+      Std.interfaces.TypesValidatorInterface,
+    ], this);
+  }
+  static {
+    this.globalInstance = this.$ = Std.objects.GlobalTypesValidator = this.new;
+  }
+};
+    Std.all.Domer = Std.classes.Domer = class Domer {
+  static {
+    $moduler.toolkit.makeClass([
+      Std.interfaces.InstantiableInterface,
+    ], this);
+  }
+  static insertElementById(id) {
+    return document.querySelector(`#${id}`) || (function() {
+      const elem = document.createElement("div");
+      elem.setAttribute("id", id);
+      document.body.appendChild(elem);
+      return elem;
+    })();
+  }
+  static find(selector = "*", base = document) {
+    let output = undefined;
+    if(typeof selector === "string") {
+      output = [...base.querySelectorAll(selector)];
+    } else if(typeof selector === "function") {
+      output = [...base.querySelectorAll("*")].filter(el => selector(el));
+    }
+    return output;
+  }
+  static first(select, base = document) {
+    return this.find(select, base)[0];
+  }
+  static findFirstParentWhere(filter, base) {
+    let pivot = base;
+    while(pivot !== null) {
+      if(filter(pivot)) {
+        return pivot;
+      }
+      pivot = pivot.parentElement;
+    }
+    throw new Error("No parent found passing the specified filter");
+  }
+  static {
+    Native_HTMLElement_extensions: {
+      if(Std.classes.Environmenter.isBrowser) {
+        HTMLElement.prototype.getVueComponent = function() {
+          return this.__vue__;
+        };
+      }
+    }
+  }
+};
+  }
+  Wave_8_Filesystem: {
+    Std.all.NodejsFilesystem = Std.classes.NodejsFilesystem = class NodejsFilesystem {
+
+  static {
+    $moduler.toolkit.makeClass([
+      Std.interfaces.InstantiableInterface,
+      Std.interfaces.TryableInterface,
+    ], this);
+  }
+
+  static async mount() {
+    // @ASYNC: to polyfill
+    return new this();
+  }
+
+  constructor() {
+    // @EMPTY: just to polyfill
+  }
+
+  async mount() {
+    // @EMPTY: just to polyfill
+  }
+
+  async unmount() {
+    // @EMPTY: just to polyfill
+  }
+
+  readFile(fileBrute) {
+    const file = $moduler.normalizationOf(fileBrute);
+    return require("fs").promises.readFile(file, "utf8");
+  }
+
+  writeFile(fileBrute, content) {
+    const file = $moduler.normalizationOf(fileBrute);
+    return require("fs").promises.writeFile(file, content, "utf8");
+  }
+
+  deleteFile(fileBrute) {
+    const file = $moduler.normalizationOf(fileBrute);
+    return require("fs").promises.unlink(file);
+  }
+
+  hasFile(fileBrute) {
+    const file = $moduler.normalizationOf(fileBrute);
+    return require("fs").promises.lstat(file).then(stat => stat.isFile()).catch(error => false);
+  }
+
+  readDirectory(dirBrute) {
+    const dir = $moduler.normalizationOf(dirBrute);
+    return require("fs").promises.readdir(dir);
+  }
+
+  writeDirectory(dirBrute) {
+    const dir = $moduler.normalizationOf(dirBrute);
+    return require("fs").promises.mkdir(dir);
+  }
+
+  deleteDirectory(dirBrute) {
+    const dir = $moduler.normalizationOf(dirBrute);
+    return require("fs").promises.rm(dir, { recursive: true });
+  }
+
+  hasDirectory(dirBrute) {
+    const dir = $moduler.normalizationOf(dirBrute);
+    return require("fs").promises.lstat(dir).then(stat => stat.isDirectory()).catch(error => false);
+  }
+
+  async assertParentDirectory(nodeBrute, appendix = false) {
+    const node = $moduler.normalizationOf(nodeBrute);
+    const parts = node.split(require("path").sep);
+    if (parts.length === 1) return true;
+    parts.pop();
+    const parent = parts.join(require("path").sep);
+    if (await this.hasDirectory(parent)) return true;
+    throw new Error(
+      `Required «${node}» to have an existing directory${appendix ? " " + appendix : ""}`
+    );
+  }
+
+  async copyFile(srcBrute, dstBrute) {
+    const src = $moduler.normalizationOf(srcBrute);
+    const dst = $moduler.normalizationOf(dstBrute);
+    await this.assertParentDirectory(dst, "on «NodejsFilesystem.prototype.copyFile»");
+    await require("fs").promises.copyFile(src, dst);
+    return true;
+  }
+
+  async copyDirectory(srcBrute, dstBrute) {
+    const src = $moduler.normalizationOf(srcBrute);
+    const dst = $moduler.normalizationOf(dstBrute);
+    await this.assertParentDirectory(dst, "on «NodejsFilesystem.prototype.copyDirectory»");
+    await require("fs").promises.cp(src, dst, {
+      recursive: true,
+    });
+    return true;
+  }
+
+  async moveFile(srcBrute, dstBrute) {
+    const src = $moduler.normalizationOf(srcBrute);
+    const dst = $moduler.normalizationOf(dstBrute);
+    await this.assertParentDirectory(dst, "on «NodejsFilesystem.prototype.moveFile»");
+    await require("fs").promises.rename(src, dst);
+    return true;
+  }
+
+  async moveDirectory(srcBrute, dstBrute) {
+    const src = $moduler.normalizationOf(srcBrute);
+    const dst = $moduler.normalizationOf(dstBrute);
+    await this.assertParentDirectory(dst, "on «NodejsFilesystem.prototype.moveDirectory»");
+    await require("fs").promises.rename(src, dst);
+    return true;
+  }
+
+  static {
+    this.globalInstance = this.$ = Std.objects.Nodefs = this.new;
+  }
+
+};
+    Std.all.IdbCrud = Std.classes.IdbCrud = class IdbCrud {
+
+  constructor(db) {
+    this.db = db;
+  }
+
+  get(storeName, key) {
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction(storeName, "readonly");
+      const store = transaction.objectStore(storeName);
+      const request = store.get(key);
+
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  getAll(storeName) {
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction(storeName, "readonly");
+      const store = transaction.objectStore(storeName);
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  put(storeName, value) {
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction(storeName, "readwrite");
+      const store = transaction.objectStore(storeName);
+      const request = store.put(value);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  delete(storeName, key) {
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction(storeName, "readwrite");
+      const store = transaction.objectStore(storeName);
+      const request = store.delete(key);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+}
+;
+    Std.all.IdbFilesystem = Std.classes.IdbFilesystem = class IdbFilesystem {
+
+  static {
+    $moduler.toolkit.makeClass([
+      Std.interfaces.InstantiableInterface,
+      Std.interfaces.TryableInterface,
+    ], this);
+  }
+
+  static async mount() {
+    const fs = new this();
+    await fs.mount();
+    return fs;
+  }
+
+  constructor() {
+    this.db = null;
+    this.crud = null;
+  }
+
+  basenameOf(path) {
+    return path.split("/").filter(it => !!it).pop();
+  }
+
+  async mount() {
+    this.db = await new Promise((resolve, reject) => {
+      const request = indexedDB.open("StdIdbFilesystem", 1);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains("files")) {
+          db.createObjectStore("files", {
+            keyPath: "path",
+          });
+        }
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    this.crud = new Std.classes.IdbCrud(this.db);
+  }
+
+  async unmount() {
+    if (this.db) {
+      this.db.close();
+      this.db = null;
+      this.crud = null;
+    }
+  }
+
+  async readFile(file) {
+    const entry = await this.crud.get("files", file);
+    if (!entry || entry.type !== "file") {
+      throw new Error(`File not found: ${file}`);
+    }
+    return entry.content;
+  }
+
+  async writeFile(file, content) {
+    await this.assertParentDirectory(file, "on «IdbFilesystem.prototype.writeFile»");
+    await this.crud.put("files", {
+      path: file,
+      type: "file",
+      content,
+    });
+  }
+
+  async deleteFile(file) {
+    const entry = await this.crud.get("files", file);
+    if (!entry || entry.type !== "file") {
+      throw new Error(`File not found: ${file}`);
+    }
+    await this.crud.delete("files", file);
+  }
+
+  async hasFile(file) {
+    const entry = await this.crud.get("files", file);
+    return !!entry && entry.type === "file";
+  }
+
+  async readDirectory(dir) {
+    const entries = await this.crud.getAll("files");
+    const nodes = entries.filter((entry) => {
+      const isSubdir = entry.path.startsWith(dir + "/");
+      if (!isSubdir) return false;
+      const extraPath = entry.path.replace(dir + "/", "");
+      const isImmediate = extraPath.match(/\//g) === null;
+      if (!isImmediate) return false;
+      const isItself = extraPath.length === 0;
+      if (isItself) return false;
+      return isSubdir && isImmediate && !isItself;
+    }).map(entry => this.basenameOf(entry.path));
+    if ((nodes.length === 0) && (!await this.hasDirectory(dir))) {
+      throw new Error(`IdbFilesystem.prototype.readDirectory cannot read directory because does not exist: ${dir}`);
+    }
+    return nodes;
+  }
+
+  async writeDirectory(dir) {
+    await this.assertParentDirectory(dir, "on «IdbFilesystem.prototype.writeDirectory»");
+    await this.crud.put("files", {
+      path: dir,
+      type: "directory",
+    });
+  }
+
+  async deleteDirectory(dir) {
+    const entries = await this.crud.getAll("files");
+    const children = entries.filter((entry) => {
+      return entry.path === dir || entry.path.startsWith(dir + "/");
+    });
+    for (const entry of children) {
+      await this.crud.delete("files", entry.path);
+    }
+  }
+
+  async hasDirectory(dir) {
+    const entry = await this.crud.get("files", dir);
+    return !!entry && entry.type === "directory";
+  }
+
+  async hasParentDirectory(node, rootsOk = true) {
+    const parts = node.split("/");
+    if (parts.length === 1 && rootsOk) return true;
+    parts.pop();
+    const supernode = parts.join("/");
+    if (supernode === node) return rootsOk;
+    return await this.hasDirectory(supernode);
+  }
+
+  async assertParentDirectory(node, appendix = false) {
+    const has = await this.hasParentDirectory(node);
+    if (has) return true;
+    throw new Error(`Required «${node}» to have an existing directory${appendix ? ' ' + appendix : ''}`);
+  }
+
+  async copyFile(src, dst) {
+    await this.assertParentDirectory(dst, "on «IdbFilesystem.prototype.copyFile»");
+    const contents = await this.readFile(src);
+    await this.writeFile(dst, contents);
+    return true;
+  }
+
+  async moveFile(src, dst) {
+    await this.assertParentDirectory(dst, "on «IdbFilesystem.prototype.copyFile»");
+    const contents = await this.readFile(src);
+    await this.writeFile(dst, contents);
+    await this.deleteFile(src);
+    return true;
+  }
+
+  async copyDirectory(src, dst) {
+    await this.assertParentDirectory(dst, "on «IdbFilesystem.prototype.copyDirectory»");
+    if (!await this.hasDirectory(src)) {
+      throw new Error(`Directory not found: ${src}`);
+    }
+    const entries = await this.crud.getAll("files");
+    const children = entries.filter((entry) => {
+      return entry.path === src || entry.path.startsWith(src + "/");
+    });
+    for (const entry of children) {
+      const path = dst + entry.path.slice(src.length);
+      await this.crud.put("files", {
+        ...entry,
+        path,
+      });
+    }
+    return true;
+  }
+
+  async moveDirectory(src, dst) {
+    await this.assertParentDirectory(dst, "on «IdbFilesystem.prototype.moveDirectory»");
+    await this.copyDirectory(src, dst);
+    await this.deleteDirectory(src);
+    return true;
+  }
+
+};
+    Std.all.makeFunctionByProperties = Std.functions.makeFunctionByProperties = function makeFunctionByProperties(callback, props = {}) {
+  return Object.assign(callback, props);
+};
+  }
+  Wave_9_Abstractions: {
+    Std.all.AbstractionUtils = Std.classes.AbstractionUtils = class AbstractionUtils {
+  static mergeAbstractions = Std.classes.AbstractionMerger.mergeAbstractions;
+};
+  }
+  Wave_10_Database: {
+
+  }
+  Wave_11_Operative_system: {
+    Std.all.ProcessUtils = Std.classes.ProcessUtils = class ProcessUtils{
+  static {
+    $moduler.toolkit.makeClass([
+      Std.interfaces.InstantiableInterface,
+    ], this);
+  }
+};
+    Std.all.ThreadInterface = Std.interfaces.ThreadInterface = // @interface:ThreadInterface
+{
+  static: {},
+  prototype: {
+    onCreate: function (parameters) {
+      Std.all.Tracer?.globalInstance.log("Std.interfaces.ThreadInterface.prototype.onCreate", arguments || []);;
+      Pre_validation: {
+        $moduler.assert(typeof parameters === "object", `Required «parameters» to be object on «ThreadInterface.prototype.onCreate»`);
+      }
+      Initialization: {
+        this.threadId = Std.classes.Randomizer.getRandomLetters(10);
+        this.parent = null;
+        this.children = [];
+        this.isClosed = false;
+      }
+      Polyfillment: {
+        // @SIP: aquí se están juntando las APIs de Dialogs y Thread, intencionalmente, por cierto:
+        Object.assign(this, parameters);
+      }
+      Corrections: {
+        if(this.parent === null) {
+          this.parent = Std.classes.Thread.globalInstance;
+        }
+        this.onChange = new Std.classes.FunctionsList();
+        this.onChange.push(...(parameters.onChange || []));
+        this.onClose = new Std.classes.FunctionsList();
+        this.onClose.push(...(parameters.onClose || []));
+      }
+      Post_validation: {
+        if(this.parent !== false) {
+          $moduler.assert(typeof this.parent === "object", `Required «this.parent» to be object on «ThreadInterface.prototype.onCreate»`);
+          $moduler.assert(this.parent instanceof Std.classes.Thread, `Required «this.parent» to be instance of «Std.classes.Thread» on «ThreadInterface.prototype.onCreate»`);
+          $moduler.assert(Array.isArray(this.parent.children), `Required «this.parent.children» to be array on «ThreadInterface.prototype.onCreate»`);
+        }
+      }
+      Self_push_into_parent: {
+        if (this.parent === false) {
+          break Self_push_into_parent;
+        }
+        this.parent.children.push(this);
+      }
+      Emit_related_events: {
+        let pivot = this;
+        while(pivot) {
+          pivot.onChange.evaluateFunctionsSync([{ thread: this }]);
+          pivot = pivot.parent;
+        }
+      }
+      Emit_dialogs_update: {
+        Std.classes.Dialogs?.port?.refreshView();
+      }
+    },
+    get newSubthread() {
+      Std.all.Tracer?.globalInstance.log("Std.interfaces.ThreadInterface.prototype.newSubthread", arguments || []);;
+      return this.createSubthread();
+    },
+    createSubthread(config = {}) {
+      Std.all.Tracer?.globalInstance.log("Std.interfaces.ThreadInterface.prototype.createSubthread", arguments || []);;
+      return Std.classes.Thread.create({ ...config, parent: this });
+    },
+    close: function () {
+      Std.all.Tracer?.globalInstance.log("Std.interfaces.ThreadInterface.prototype.close", arguments || []);;
+      Close_children: {
+        for (let index = this.children.length - 1; index >= 0; index--) {
+          this.children[index].close();
+        }
+      }
+      Self_close: {
+        this.isClosed = true;
+      }
+      Self_remove_from_parent: {
+        if (!this.parent) break Self_remove_from_parent;
+        const pos = this.parent.children.indexOf(this);
+        if (pos === -1) break Self_remove_from_parent;
+        this.parent.children.splice(pos, 1);
+      }
+      Emit_related_events: {
+        this.onClose.evaluateFunctionsSync([{ thread: this }]);
+        let pivot = this;
+        while(pivot) {
+          pivot.onChange.evaluateFunctionsSync([{ thread: this }]);
+          pivot = pivot.parent;
+        }
+      }
+      Emit_dialogs_update: {
+        Std.classes.Dialogs?.port?.refreshView();
+      }
+    }
+  },
+};
+    Std.all.Thread = Std.classes.Thread = class Thread {
+  static {
+    $moduler.toolkit.makeClass([
+      Std.interfaces.InstantiableInterface,
+      Std.interfaces.ThreadInterface,
+    ], this);
+    this.globalInstance = this.$ = Std.objects.GlobalThread = Thread.create({
+      threadId: "Std.objects.GlobalThread",
+      parent: false,
+      children: [],
+      isClosed: false,
+    });
+  }
+};
+  }
 
   Wave_13_Errors: {
     Std.all.ErrorViewer = Std.views.ErrorViewer = Std.classes.ViewsRegistry.set("ErrorViewer",
@@ -30184,7 +30352,9 @@ $moduler.toolkit.makeInterface([
  + "                    </div>" + '\n'
  + "                </div>" + '\n'
  + "                <div class=\"dialog_body\" :class=\"getDialogBodyContainerClasses()\">" + '\n'
- + "                    <DynamicView :view=\"thread\" :args=\"{dialog:this}\" ref=\"body\" />" + '\n'
+ + "                    <div>" + '\n'
+ + "                        <DynamicView :view=\"thread\" :args=\"{dialog:this}\" ref=\"body\" />" + '\n'
+ + "                    </div>" + '\n'
  + "                </div>" + '\n'
  + "                <div class=\"dialog_footer\">" + '\n'
  + "                    <div class=\"dialog_buttons\" v-if=\"thread.buttons?.length\">" + '\n'
@@ -31174,30 +31344,7 @@ $moduler.toolkit.makeInterface([
   }
 
   Wave_17_Forms_and_types: {
-    Std.all.TypesFormPrototype = Std.views.TypesFormPrototype = {
-  props: {
-    params: {
-      type: Object,
-      required: true,
-    }
-  },
-  created() {
-    const params = $moduler.toolkit.normalizeObject(this.params, ...Std.views.TypesFormNode.static.paramsNormalization);
-    this.$locals = { params };
-  },
-  computed: {
-    localAst: {
-      get() {
-        return Std.classes.Introspector.get(this.$locals.params.ast, this.$locals.params.astIndex);
-      }
-    },
-    localData: {
-      get() {
-        return Std.classes.Introspector.get(this.$locals.params.data, this.$locals.params.dataIndex);
-      }
-    }
-  }
-};
+    
     Std.all.TypesFormAndOperation = Std.views.TypesFormAndOperation = Std.classes.ViewsRegistry.set("TypesFormAndOperation", {
   name: "TypesFormAndOperation",
   props: {},
@@ -31440,11 +31587,60 @@ $moduler.toolkit.makeInterface([
 });
     Std.all.TypesFormTypeId = Std.views.TypesFormTypeId = Std.classes.ViewsRegistry.set("TypesFormTypeId", {
   name: "TypesFormTypeId",
-  props: {},
   mixins: [Std.views.TypesFormPrototype],
   template: "<div class=\"TypesFormTypeId View\">" + '\n'
- + "    Type id: <b>{{ localAst.id }}</b>" + '\n'
+ + "    <div>Type id: <b>{{ $locals.type.id }}</b></div>" + '\n'
+ + "    <ErrorViewer" + '\n'
+ + "        :error=\"$locals.type.error\"" + '\n'
+ + "        v-if=\"$locals.type.error\"" + '\n'
+ + "    />" + '\n'
+ + "    <component" + '\n'
+ + "        v-else-if=\"$locals.type.isLoaded\"" + '\n'
+ + "        :is=\"getCorrespondingView($locals.type.definition)\"" + '\n'
+ + "        v-bind=\"{ params }\"" + '\n'
+ + "    />" + '\n'
  + "</div>",
+  created() {
+    this.$locals.type = {
+      isLoaded: false,
+      error: false,
+      id: this.localAst.id,
+      url: $moduler.normalizationOf(`@/dist/www/types/${this.localAst.id}/${this.localAst.id}.dist.js`),
+      definition: undefined,
+      resolvable: $moduler.constructor.createResolvable(),
+    };
+  },
+  methods: {
+    validateTypeDefinition(definition) {
+      $moduler.assert(typeof definition === "object", "Not accepted type definition due to rule 1");
+      $moduler.assert(typeof definition.abstraction === "object", "Not accepted type definition due to rule 2");
+      $moduler.assert(typeof definition.abstraction.views === "object", "Not accepted type definition due to rule 3");
+      $moduler.assert(typeof definition.abstraction.views.default === "object", "Not accepted type definition due to rule 4");
+      $moduler.assert(typeof definition.abstraction.views.default.name === "string", "Not accepted type definition due to rule 5");
+    },
+    getCorrespondingView(definition) {
+      return definition.abstraction.views.default.name;
+    }
+  },
+  async mounted() {
+    Load_definition_once: {
+      if(this.$locals.type.isLoaded || this.$locals.type.error) {
+        break Load_definition_once;
+      }
+      try {
+        const definition = await Std.classes.TypesRegistry.find(this.localAst.id);
+        this.validateTypeDefinition(definition);
+        this.$locals.type.definition = definition;
+        this.$locals.type.isLoaded = true;
+        this.$locals.type.resolvable.resolve(definition);
+      } catch (error) {
+        this.error = error;
+        this.$locals.type.resolvable.reject(error);
+      } finally {
+        this.$forceUpdate(true);
+      }
+    }
+  },
 });
     Std.all.TypesFormTypeLabel = Std.views.TypesFormTypeLabel = Std.classes.ViewsRegistry.set("TypesFormTypeLabel", {
   name: "TypesFormTypeLabel",
@@ -31827,6 +32023,20 @@ $moduler.toolkit.makeInterface([
   },
   methods: {},
 });
+  }
+
+  Wave_22_Modules: {
+    Std.all.ModuleLoader = Std.classes.ModuleLoader = class ModuleLoader {
+  static loaders = {
+    CompilerV7: () => $moduler.import("@/dist/www/modules/CompilerV7/CompilerV7.dist.js"),
+    DevBinaryV7: () => $moduler.import("@/dist/www/modules/DevBinaryV7/DevBinaryV7.dist.js"),
+    Refrescador: () => $moduler.import("@/dist/www/modules/Refrescador/Refrescador.dist.js"),
+  };
+  static load(id) {
+    $moduler.assert(id in this.loaders, `Module «${id}» has not a loader candidate on «ModuleLoader.load»`);
+    return this.loaders[id]();
+  }
+};
   }
 
   Wave_95_Application_starter: {

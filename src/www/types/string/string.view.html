@@ -1,3 +1,13 @@
-<div>
-    Aqui el control para string.
+<div class="View Type Type_string TypeStringDefaultView control_component">
+    <div class="control_statement" v-if="$locals.computed.statement">{{ $locals.computed.statement }}</div>
+    {{ $locals.computed }}
+    <input
+        class="control_element"
+        :value="$locals.value"
+        ref="domValueOrigin"
+        v-on:input="updateValueFromDom"
+        type="text"
+        spellcheck="false"
+        :placeholder="$locals.computed.placeholder || ''"
+    />
 </div>

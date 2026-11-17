@@ -1,3 +1,12 @@
 <div class="TypesFormTypeId View">
-    Type id: <b>{{ localAst.id }}</b>
+    <div>Type id: <b>{{ $locals.type.id }}</b></div>
+    <ErrorViewer
+        :error="$locals.type.error"
+        v-if="$locals.type.error"
+    />
+    <component
+        v-else-if="$locals.type.isLoaded"
+        :is="getCorrespondingView($locals.type.definition)"
+        v-bind="{ params }"
+    />
 </div>

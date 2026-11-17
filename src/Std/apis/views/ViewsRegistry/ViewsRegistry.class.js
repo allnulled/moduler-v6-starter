@@ -1,6 +1,6 @@
 class ViewsRegistry {
 
-  static validateView({ key, value, output }) {
+  static validateView(value) {
     $moduler.assert(typeof value === "object", `Required parameter «view» to be object but «${typeof value}» was found instead on «ViewsRegistry.prototype.onRegister»`);
     $moduler.assert(typeof value.name === "string", `Required parameter «view.name» to be string but «${typeof value.name}» was found instead on «ViewsRegistry.prototype.onRegister»`);
     $moduler.assert((typeof value.template === "string") || (typeof value.render === "function"), `Required parameter «view.template» to be string or «view.render» to be function but «${typeof value.template}» was found instead on «ViewsRegistry.prototype.onRegister»`);
@@ -27,8 +27,8 @@ class ViewsRegistry {
   }
 
   static onRegister(input) {
-    this.validateView(input)
     const { key, value, output } = input;
+    this.validateView(value);
     if(Std.externals.Vue2) {
       Std.externals.Vue2.component(value.name, value);
     }

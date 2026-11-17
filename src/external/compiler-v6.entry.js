@@ -1161,6 +1161,9 @@ static nativeGrammars = {
   InjectModules: ["$"+"compiler.inject.modules(", this.Parser.symbols.PARENTHESYS_BALANCE, function (token) {
     return { syntax: "Inject Modules", ...token, };
   }],
+  InjectPlainModule: ["$"+"compiler.inject.plainModule(", this.Parser.symbols.PARENTHESYS_BALANCE, function (token) {
+    return { syntax: "Inject Plain Module", inner: token.inner, location: token.location };
+  }],
   ImportJs: ["$"+"moduler.import(", this.ParserUtils.stringOrArrayOfStringsContinuation, function (token) {
     return { syntax: "Moduler Import", ...token, };
   }, {}],
@@ -1252,6 +1255,7 @@ static defaultGrammars = {
     this.nativeGrammars.InjectTemplate,
     this.nativeGrammars.InjectModules,
     this.nativeGrammars.InjectModule,
+    this.nativeGrammars.InjectPlainModule,
     this.nativeGrammars.ImportJs,
     this.nativeGrammars.ExportJs,
     /*
@@ -4118,6 +4122,7 @@ async _compileTokens(compilationFile, compilationProcess) {
     "Inject String": this._compileAsInjectString,
     "Inject Template": this._compileAsInjectTemplate,
     "Inject Module": this._compileAsInjectModule,
+    "Inject Plain Module": this._compileAsInjectPlainModule,
     "Inject Modules": this._compileAsInjectModules,
     "Multiline Comment Code Injection": this._compileAsMultilineCommentCodeInjection,
     "Multiline Comment Value Injection": this._compileAsMultilineCommentValueInjection,
@@ -4804,6 +4809,55 @@ async _compileAsInjectModules(compilationFile, compilationProcess, { token, toke
     out += `\n]).until(Promise.fromCollection(${subcode1}))`;
   }
   compilationFile.compilation.js = this._replaceTextRange(compilationFile.compilation.js, token.location[0], token.location[1], out, token);
+}
+  /**
+ * @name CompilerV6.prototype._compileAsInjectPlainModuleModule
+ * @type 
+ * @description 
+ */
+async _compileAsInjectPlainModule(compilationFile, compilationProcess, { token, tokenIndex }, options = {}) {
+  this._traceIn("_compileAsInjectPlainModule", arguments);
+  let parameters, targetPath, targetCompilation, targetCaches = {};
+  const currentStep = [];
+  try {
+    const {
+      tokenization,
+      source,
+      resource,
+      isRoot,
+    } = compilationFile;
+    Evaluate_parameters: {
+      currentStep.push("1. evaluate parameters");
+      parameters = await this._getDataForTokenCompilation({
+        compilationFile,
+        compilationProcess,
+        token,
+        tokenIndex,
+      });
+    }
+    Extend_token: {
+      currentStep.push("2. extend token");
+      this._extendToken(token, ["referenceOf"]);
+    }
+    Extract_target_path: {
+      currentStep.push("3. extract target path");
+      this.assert(token.referenceOf.fullpath === this.normalizationOf(parameters[0]), "DesignError: The first parameter and the token.referenceOf.fullpath should be the same on «CompilerV6.prototype._compileAsInjectPlain»");
+      targetPath = token.referenceOf.fullpath;
+    }
+    let outputJs = "";
+    Read_source: {
+      outputJs = await this.files.readFile(targetPath);
+    }
+    Alter_source_for_the_module_part: {
+      outputJs = this._wrapAsModuleInjection(outputJs, token.referenceOf.rootpath);
+    }
+    Inject_content: {
+      compilationFile.compilation.js = this._replaceTextRange(compilationFile.compilation.js, token.location[0], token.location[1], outputJs, token);
+    }
+  } catch(error) {
+    console.log(`[!] Error on method «_compileAsInjectPlain» on root «${this.rootdir}» on resource «${this.rootdirOf(compilationFile.resource)}» and target «${this.rootdirOf(targetPath || "?")}» on step «${currentStep.reverse().join(" < ")}»`, error);
+    throw error;
+  }
 }
   /**
  * @name CompilerV6.prototype._compileAsMultilineCommentCodeInjection

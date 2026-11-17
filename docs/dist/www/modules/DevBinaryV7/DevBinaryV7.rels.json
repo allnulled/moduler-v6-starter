@@ -1,0 +1,63 @@
+{
+  "tree": {
+    "@/src/www/modules/DevBinaryV7/DevBinaryV7.entry.js": {
+      "218-266": {
+        "syntax": "Inject Source",
+        "inner": "\"./DevBinaryV7.class.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "./DevBinaryV7.class.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/modules/DevBinaryV7/DevBinaryV7.class.js",
+          "rootpath": "@/src/www/modules/DevBinaryV7/DevBinaryV7.class.js"
+        }
+      },
+      "17-148": {
+        "syntax": "Moduler Import",
+        "type": "$moduler.import(",
+        "inner": "[\n  \"@/dist/www/modules/Refrescador/Refrescador.dist.js\",\n  \"@/dist/www/modules/CompilerV7/CompilerV7.dist.js\",\n], ",
+        "outer": "$moduler.import([\n  \"@/dist/www/modules/Refrescador/Refrescador.dist.js\",\n  \"@/dist/www/modules/CompilerV7/CompilerV7.dist.js\",\n], ",
+        "dependenciesOf": [
+          "@/dist/www/modules/Refrescador/Refrescador.dist.js",
+          "@/dist/www/modules/CompilerV7/CompilerV7.dist.js"
+        ]
+      }
+    },
+    "@/src/www/modules/DevBinaryV7/DevBinaryV7.class.js": {
+      "175-207": {
+        "syntax": "@Injects",
+        "inner": "\"./static.touch.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "./static.touch.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/modules/DevBinaryV7/static.touch.js",
+          "rootpath": "@/src/www/modules/DevBinaryV7/static.touch.js"
+        }
+      },
+      "141-172": {
+        "syntax": "@Injects",
+        "inner": "\"./static.loop.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "./static.loop.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/modules/DevBinaryV7/static.loop.js",
+          "rootpath": "@/src/www/modules/DevBinaryV7/static.loop.js"
+        }
+      },
+      "66-131": {
+        "syntax": "Inject Source",
+        "inner": "\"./static.utils.findRootDirectoryFrom.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "./static.utils.findRootDirectoryFrom.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/modules/DevBinaryV7/static.utils.findRootDirectoryFrom.js",
+          "rootpath": "@/src/www/modules/DevBinaryV7/static.utils.findRootDirectoryFrom.js"
+        }
+      }
+    },
+    "@/src/www/modules/DevBinaryV7/static.touch.js": {},
+    "@/src/www/modules/DevBinaryV7/static.loop.js": {},
+    "@/src/www/modules/DevBinaryV7/static.utils.findRootDirectoryFrom.js": {},
+    "@/dist/www/modules/Refrescador/Refrescador.dist.js": {},
+    "@/dist/www/modules/CompilerV7/CompilerV7.dist.js": {}
+  }
+}

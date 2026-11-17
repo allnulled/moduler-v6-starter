@@ -51,7 +51,9 @@
                     </div>
                 </div>
                 <div class="dialog_body" :class="getDialogBodyContainerClasses()">
-                    <DynamicView :view="thread" :args="{dialog:this}" ref="body" />
+                    <div>
+                        <DynamicView :view="thread" :args="{dialog:this}" ref="body" />
+                    </div>
                 </div>
                 <div class="dialog_footer">
                     <div class="dialog_buttons" v-if="thread.buttons?.length">

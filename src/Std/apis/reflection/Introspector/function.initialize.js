@@ -7,5 +7,5 @@ function initialize(data, key, value, wasInitializedValue = false) {
   const lastKey = key[key.length - 1];
   if(lastKey in output) return wasInitializedValue;
   output[lastKey] = value;
-  return data;
+  return value;
 }

@@ -22,15 +22,33 @@ class TypesRegistry {
         ),
         {
           static: {
+            registerViewsOfType(TypeDefinition, id) {
+              $moduler.assert(typeof TypeDefinition === "object", `Definition of type «${id}» should be object but «${typeof TypeDefinition}» was found instead on «Std.classes.TypesRegistry.registerViewsOfType»`);
+              $moduler.assert(typeof TypeDefinition.abstraction === "object", `Property «abstraction» of type «${id}» should be object but «${typeof TypeDefinition.abstraction}» was found instead on «Std.classes.TypesRegistry.registerViewsOfType»`);
+              $moduler.assert(typeof TypeDefinition.abstraction.views === "object", `Property «abstraction.views» of type «${id}» should be object but «${typeof TypeDefinition.abstraction.views}» was found instead on «Std.classes.TypesRegistry.registerViewsOfType»`);
+              const allViews = TypeDefinition.abstraction.views;
+              for(const name in allViews) {
+                const view = allViews[name];
+                $moduler.assert(typeof view === "object", `View «${name}» of type «${id}» should be object but «${typeof view}» was found instead on «Std.classes.TypesRegistry.registerViewsOfType»`);
+                $moduler.assert(typeof view.name === "string", `Property «name» of view «${name}» of type «${id}» should be string but «${typeof view.name}» was found instead on «Std.classes.TypesRegistry.registerViewsOfType»`);
+                Std.classes.ViewsRegistry.initialize(view.name, view);
+              }
+              return TypeDefinition;
+            },
             // @ATENCIÓN: usar siempre con await si quieres evitar ambigüedades de contexto.
             find(...args) {
-              if(this.has(args[0])) return this.get(args[0]);
+              const [ name ] = args;
+              if(this.has(name)) {
+                const TypeDefinition = this.get(name);
+                this.registerViewsOfType(TypeDefinition, name);
+                return TypeDefinition;
+              }
               return this.fetch(...args);
             },
-            fetch(id) {
-              return $moduler.import(`@/dist/www/types/${id}/${id}.dist.js`).then(TypeDefinition => {
-                return this.set(id, TypeDefinition);
-              });
+            async fetch(id) {
+              const TypeDefinition = await $moduler.import(`@/dist/www/types/${id}/${id}.dist.js`);
+              this.registerViewsOfType(TypeDefinition, id);
+              return this.set(id, TypeDefinition);
             }
           }
         }

@@ -1,0 +1,95 @@
+{
+  "tree": {
+    "@/src/www/modules/CompilerV7/CompilerV7.entry.js": {
+      "101-148": {
+        "syntax": "Inject Source",
+        "inner": "\"./CompilerV7.class.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "./CompilerV7.class.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/modules/CompilerV7/CompilerV7.class.js",
+          "rootpath": "@/src/www/modules/CompilerV7/CompilerV7.class.js"
+        }
+      }
+    },
+    "@/src/www/modules/CompilerV7/CompilerV7.class.js": {
+      "1546-1630": {
+        "syntax": "Inject Source",
+        "inner": "\"@/src/www/modules/CompilerV7/Parser/degrammerFor/action.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "@/src/www/modules/CompilerV7/Parser/degrammerFor/action.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/modules/CompilerV7/Parser/degrammerFor/action.js",
+          "rootpath": "@/src/www/modules/CompilerV7/Parser/degrammerFor/action.js"
+        }
+      },
+      "1435-1521": {
+        "syntax": "Inject Source",
+        "inner": "\"@/src/www/modules/CompilerV7/Parser/degrammerFor/template.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "@/src/www/modules/CompilerV7/Parser/degrammerFor/template.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/modules/CompilerV7/Parser/degrammerFor/template.js",
+          "rootpath": "@/src/www/modules/CompilerV7/Parser/degrammerFor/template.js"
+        }
+      },
+      "1325-1408": {
+        "syntax": "Inject Source",
+        "inner": "\"@/src/www/modules/CompilerV7/Parser/degrammerFor/plain.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "@/src/www/modules/CompilerV7/Parser/degrammerFor/plain.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/modules/CompilerV7/Parser/degrammerFor/plain.js",
+          "rootpath": "@/src/www/modules/CompilerV7/Parser/degrammerFor/plain.js"
+        }
+      },
+      "1217-1301": {
+        "syntax": "Inject Source",
+        "inner": "\"@/src/www/modules/CompilerV7/Parser/degrammerFor/string.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "@/src/www/modules/CompilerV7/Parser/degrammerFor/string.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/modules/CompilerV7/Parser/degrammerFor/string.js",
+          "rootpath": "@/src/www/modules/CompilerV7/Parser/degrammerFor/string.js"
+        }
+      },
+      "1110-1192": {
+        "syntax": "Inject Source",
+        "inner": "\"@/src/www/modules/CompilerV7/Parser/degrammerFor/code.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "@/src/www/modules/CompilerV7/Parser/degrammerFor/code.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/modules/CompilerV7/Parser/degrammerFor/code.js",
+          "rootpath": "@/src/www/modules/CompilerV7/Parser/degrammerFor/code.js"
+        }
+      },
+      "908-1013": {
+        "syntax": "Inject Source",
+        "inner": "\"@/src/www/modules/CompilerV7/classes/CompilationState/CompilationState.class.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "@/src/www/modules/CompilerV7/classes/CompilationState/CompilationState.class.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/modules/CompilerV7/classes/CompilationState/CompilationState.class.js",
+          "rootpath": "@/src/www/modules/CompilerV7/classes/CompilationState/CompilationState.class.js"
+        }
+      },
+      "765-853": {
+        "syntax": "Inject Source",
+        "inner": "\"@/src/www/modules/CompilerV7/Parser/CompilerV7Parser.object.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "@/src/www/modules/CompilerV7/Parser/CompilerV7Parser.object.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/modules/CompilerV7/Parser/CompilerV7Parser.object.js",
+          "rootpath": "@/src/www/modules/CompilerV7/Parser/CompilerV7Parser.object.js"
+        }
+      }
+    },
+    "@/src/www/modules/CompilerV7/Parser/degrammerFor/action.js": {},
+    "@/src/www/modules/CompilerV7/Parser/degrammerFor/template.js": {},
+    "@/src/www/modules/CompilerV7/Parser/degrammerFor/plain.js": {},
+    "@/src/www/modules/CompilerV7/Parser/degrammerFor/string.js": {},
+    "@/src/www/modules/CompilerV7/Parser/degrammerFor/code.js": {},
+    "@/src/www/modules/CompilerV7/classes/CompilationState/CompilationState.class.js": {},
+    "@/src/www/modules/CompilerV7/Parser/CompilerV7Parser.object.js": {}
+  }
+}

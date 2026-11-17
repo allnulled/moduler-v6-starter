@@ -83,6 +83,7 @@
     Std.all.ObjectReflector = Std.classes.ObjectReflector = $compiler.inject.source("./apis/reflection/ObjectReflector/ObjectReflector.class.js");
     Std.all.FunctionReflector = Std.classes.FunctionReflector = $compiler.inject.source("./apis/reflection/FunctionReflector/FunctionReflector.class.js");
     Std.all.ClassReflector = Std.classes.ClassReflector = $compiler.inject.source("./apis/reflection/ClassReflector/ClassReflector.class.js");
+    Std.all.ComputedProperties = Std.classes.ComputedProperties = $compiler.inject.source("./apis/reflection/ComputedProperties/ComputedProperties.class.js");
     Std.all.UniqueEvent = Std.classes.UniqueEvent = $compiler.inject.source("./apis/events/UniqueEvent/UniqueEvent.class.js");
     Std.all.FunctionsList = Std.classes.FunctionsList = $compiler.inject.source("./apis/events/FunctionsList/FunctionsList.class.js");
   }
@@ -113,35 +114,9 @@
     Std.all.Tester = Std.classes.Tester = $compiler.inject.source("./apis/testing/Tester/Tester.class.js");
     Std.all.Progresser = Std.classes.Progresser = $compiler.inject.source("./apis/debug/Progresser/Progresser.class.js");
     Std.all.Randomizer = Std.classes.Randomizer = $compiler.inject.source("./apis/random/Randomizer/Randomizer.class.js");
+    Std.all.AnsiProfiles = Std.classes.AnsiProfiles = $compiler.inject.source("./apis/console/Ansi/AnsiProfiles.class.js");
   }
-  Wave_6_Types_system: {
-    Std.all.TypesParser = Std.objects.TypesParser = Std.parsers.typeslang = $compiler.inject.source("./apis/types/TypesParser/TypesParser.object.js");
-    Std.all.ValidationMemoryInterface = Std.interfaces.ValidationMemoryInterface = $compiler.inject.source("./apis/types/TypesValidator/ValidationMemory/ValidationMemoryInterface.interface.js");
-    Std.all.ValidationMemory = Std.interfaces.ValidationMemory = $compiler.inject.source("./apis/types/TypesValidator/ValidationMemory/ValidationMemory.class.js");
-    Std.all.TypesRegistry = Std.classes.TypesRegistry = $compiler.inject.source("./apis/types/TypesRegistry/TypesRegistry.class.js");
-    Std.all.TypesValidatorInterface = Std.interfaces.TypesValidatorInterface = $compiler.inject.source("./apis/types/TypesValidator/TypesValidatorInterface.interface.js");
-    Std.all.TypesValidator = Std.classes.TypesValidator = $compiler.inject.source("./apis/types/TypesValidator/TypesValidator.class.js");
-    Std.all.Domer = Std.classes.Domer = $compiler.inject.source("./apis/dom/Domer/Domer.class.js");
-  }
-  Wave_7_Filesystem: {
-    Std.all.NodejsFilesystem = Std.classes.NodejsFilesystem = $compiler.inject.source("./apis/files/NodejsFilesystem/NodejsFilesystem.class.js");
-    Std.all.IdbCrud = Std.classes.IdbCrud = $compiler.inject.source("./apis/indexeddb/IdbCrud/IdbCrud.class.js");
-    Std.all.IdbFilesystem = Std.classes.IdbFilesystem = $compiler.inject.source("./apis/files/IdbFilesystem/IdbFilesystem.class.js");
-    Std.all.makeFunctionByProperties = Std.functions.makeFunctionByProperties = $compiler.inject.source("@/src/Std/apis/reflection/makeFunctionByProperties/makeFunctionByProperties.function.js");
-  }
-  Wave_8_Abstractions: {
-    Std.all.AbstractionUtils = Std.classes.AbstractionUtils = $compiler.inject.source("./apis/abstraction/AbstractionUtils/AbstractionUtils.class.js");
-  }
-  Wave_9_Database: {
-
-  }
-  Wave_10_Operative_system: {
-    Std.all.ProcessUtils = Std.classes.ProcessUtils = $compiler.inject.source("./apis/os/process/ProcessUtils.class.js");
-    Std.all.ThreadInterface = Std.interfaces.ThreadInterface = $compiler.inject.source("./apis/os/threads/ThreadInterface/ThreadInterface.interface.js");
-    Std.all.Thread = Std.classes.Thread = $compiler.inject.source("./apis/os/threads/Thread/Thread.class.js");
-  }
-  
-  Wave_12_Views_system: {
+  Wave_6_Views_system: {
     External_Vue2_js: {
       if(typeof window === "undefined") break External_Vue2_js;
       if(typeof Vue2 !== "undefined") break External_Vue2_js;
@@ -152,6 +127,35 @@
     Std.all.ViewsStaticMerger = Std.classes.ViewsStaticMerger = $compiler.inject.source("./apis/merge/ViewsStaticMerger/ViewsStaticMerger.class.js");
     Std.all.DynamicView = Std.views.DynamicView = $compiler.inject.source("./apis/views/containers/DynamicView/DynamicView.object.js");
     Std.all.ContextualView = Std.views.ContextualView = $compiler.inject.source("./apis/views/containers/ContextualView/ContextualView.object.js");
+  }
+  Wave_7_Types_system: {
+    Std.all.TypesParser = Std.objects.TypesParser = Std.parsers.typeslang = $compiler.inject.source("./apis/types/TypesParser/TypesParser.object.js");
+    Std.all.ValidationMemoryInterface = Std.interfaces.ValidationMemoryInterface = $compiler.inject.source("./apis/types/TypesValidator/ValidationMemory/ValidationMemoryInterface.interface.js");
+    Std.all.ValidationMemory = Std.interfaces.ValidationMemory = $compiler.inject.source("./apis/types/TypesValidator/ValidationMemory/ValidationMemory.class.js");
+    Componente_base_para_los_forms_tiene_prioridad: {
+      Std.all.TypesFormPrototype = Std.views.TypesFormPrototype = $compiler.inject.source("./apis/forms/types/mixins/TypesFormPrototype/TypesFormPrototype.object.js");
+      Std.all.TypesRegistry = Std.classes.TypesRegistry = $compiler.inject.source("./apis/types/TypesRegistry/TypesRegistry.class.js");
+    }
+    Std.all.TypesValidatorInterface = Std.interfaces.TypesValidatorInterface = $compiler.inject.source("./apis/types/TypesValidator/TypesValidatorInterface.interface.js");
+    Std.all.TypesValidator = Std.classes.TypesValidator = $compiler.inject.source("./apis/types/TypesValidator/TypesValidator.class.js");
+    Std.all.Domer = Std.classes.Domer = $compiler.inject.source("./apis/dom/Domer/Domer.class.js");
+  }
+  Wave_8_Filesystem: {
+    Std.all.NodejsFilesystem = Std.classes.NodejsFilesystem = $compiler.inject.source("./apis/files/NodejsFilesystem/NodejsFilesystem.class.js");
+    Std.all.IdbCrud = Std.classes.IdbCrud = $compiler.inject.source("./apis/indexeddb/IdbCrud/IdbCrud.class.js");
+    Std.all.IdbFilesystem = Std.classes.IdbFilesystem = $compiler.inject.source("./apis/files/IdbFilesystem/IdbFilesystem.class.js");
+    Std.all.makeFunctionByProperties = Std.functions.makeFunctionByProperties = $compiler.inject.source("@/src/Std/apis/reflection/makeFunctionByProperties/makeFunctionByProperties.function.js");
+  }
+  Wave_9_Abstractions: {
+    Std.all.AbstractionUtils = Std.classes.AbstractionUtils = $compiler.inject.source("./apis/abstraction/AbstractionUtils/AbstractionUtils.class.js");
+  }
+  Wave_10_Database: {
+
+  }
+  Wave_11_Operative_system: {
+    Std.all.ProcessUtils = Std.classes.ProcessUtils = $compiler.inject.source("./apis/os/process/ProcessUtils.class.js");
+    Std.all.ThreadInterface = Std.interfaces.ThreadInterface = $compiler.inject.source("./apis/os/threads/ThreadInterface/ThreadInterface.interface.js");
+    Std.all.Thread = Std.classes.Thread = $compiler.inject.source("./apis/os/threads/Thread/Thread.class.js");
   }
 
   Wave_13_Errors: {
@@ -178,7 +182,7 @@
   }
 
   Wave_17_Forms_and_types: {
-    Std.all.TypesFormPrototype = Std.views.TypesFormPrototype = $compiler.inject.source("./apis/forms/types/mixins/TypesFormPrototype/TypesFormPrototype.object.js");
+    
     Std.all.TypesFormAndOperation = Std.views.TypesFormAndOperation = $compiler.inject.source("./apis/forms/types/TypesFormAndOperation/TypesFormAndOperation.object.js");
     Std.all.TypesFormArrayType = Std.views.TypesFormArrayType = $compiler.inject.source("./apis/forms/types/TypesFormArrayType/TypesFormArrayType.object.js");
     Std.all.TypesFormClassType = Std.views.TypesFormClassType = $compiler.inject.source("./apis/forms/types/TypesFormClassType/TypesFormClassType.object.js");
@@ -216,6 +220,10 @@
   Wave_21_Background: {
     Std.all.ApplicationBackgroundWidget = Std.views.ApplicationBackgroundWidget = $compiler.inject.source("./apis/views/background/ApplicationBackgroundWidget/ApplicationBackgroundWidget.object.js");
     Std.all.ApplicationBackgroundConfigurer = Std.views.ApplicationBackgroundConfigurer = $compiler.inject.source("./apis/views/background/ApplicationBackgroundConfigurer/ApplicationBackgroundConfigurer.object.js");
+  }
+
+  Wave_22_Modules: {
+    Std.all.ModuleLoader = Std.classes.ModuleLoader = $compiler.inject.source("./apis/modules/ModuleLoader/ModuleLoader.class.js");
   }
 
   Wave_95_Application_starter: {

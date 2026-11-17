@@ -14,7 +14,7 @@ module.exports = function({ devbin }) {
       // Tracer off
       devbin.compiler._tracer.activate(1);
       // Logger by tracing
-      devbin.compiler._tracer.isLogging = true;
+      devbin.compiler._tracer.isLogging = false;
     },
     clean: () => {
       // Restart logger

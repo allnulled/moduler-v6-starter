@@ -1,4 +1,4 @@
-{
+Std.classes.ViewsStaticMerger.mergeViews({
   props: {
     params: {
       type: Object,
@@ -21,4 +21,38 @@
       }
     }
   }
-}
+}, {
+  // BasicControlViewTrait.object.js
+  created() {
+    Inicia_locals: {
+      if(!this.$locals) this.$locals = {};
+    }
+    Valor_local: {
+      this.$locals.value = "";
+      this.$locals.seniuelo = "88888";
+    }
+    Propiedades_computadas: {
+      this.$locals.computed = new Std.classes.ComputedProperties({
+        statement: {
+          get: () => {
+            return this.seniuelo;
+          }
+        },
+        placeholder: {
+          get: () => {
+            return "yeeeeeeeeep" || this.seniuelo;
+          }
+        }
+      });
+    }
+  },
+  methods: {
+    getValueFromDom() {
+      return this.getValueFromDom ? this.onGetValueFromDom : this.$refs.domValueOrigin.value;
+    },
+    updateValueFromDom() {
+      const value = this.getValueFromDom();
+      this.$locals.value = value;
+    }
+  }
+})

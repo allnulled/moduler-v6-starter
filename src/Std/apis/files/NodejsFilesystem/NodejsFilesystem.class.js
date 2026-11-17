@@ -110,4 +110,8 @@ class NodejsFilesystem {
     return true;
   }
 
+  static {
+    this.globalInstance = this.$ = Std.objects.Nodefs = this.new;
+  }
+
 }

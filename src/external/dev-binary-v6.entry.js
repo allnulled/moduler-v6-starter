@@ -1173,6 +1173,9 @@ static nativeGrammars = {
   InjectModules: ["$"+"compiler.inject.modules(", this.Parser.symbols.PARENTHESYS_BALANCE, function (token) {
     return { syntax: "Inject Modules", ...token, };
   }],
+  InjectPlainModule: ["$"+"compiler.inject.plainModule(", this.Parser.symbols.PARENTHESYS_BALANCE, function (token) {
+    return { syntax: "Inject Plain Module", inner: token.inner, location: token.location };
+  }],
   ImportJs: ["$"+"moduler.import(", this.ParserUtils.stringOrArrayOfStringsContinuation, function (token) {
     return { syntax: "Moduler Import", ...token, };
   }, {}],
@@ -1264,6 +1267,7 @@ static defaultGrammars = {
     this.nativeGrammars.InjectTemplate,
     this.nativeGrammars.InjectModules,
     this.nativeGrammars.InjectModule,
+    this.nativeGrammars.InjectPlainModule,
     this.nativeGrammars.ImportJs,
     this.nativeGrammars.ExportJs,
     /*
@@ -4130,6 +4134,7 @@ async _compileTokens(compilationFile, compilationProcess) {
     "Inject String": this._compileAsInjectString,
     "Inject Template": this._compileAsInjectTemplate,
     "Inject Module": this._compileAsInjectModule,
+    "Inject Plain Module": this._compileAsInjectPlainModule,
     "Inject Modules": this._compileAsInjectModules,
     "Multiline Comment Code Injection": this._compileAsMultilineCommentCodeInjection,
     "Multiline Comment Value Injection": this._compileAsMultilineCommentValueInjection,
@@ -4816,6 +4821,55 @@ async _compileAsInjectModules(compilationFile, compilationProcess, { token, toke
     out += `\n]).until(Promise.fromCollection(${subcode1}))`;
   }
   compilationFile.compilation.js = this._replaceTextRange(compilationFile.compilation.js, token.location[0], token.location[1], out, token);
+}
+  /**
+ * @name CompilerV6.prototype._compileAsInjectPlainModuleModule
+ * @type 
+ * @description 
+ */
+async _compileAsInjectPlainModule(compilationFile, compilationProcess, { token, tokenIndex }, options = {}) {
+  this._traceIn("_compileAsInjectPlainModule", arguments);
+  let parameters, targetPath, targetCompilation, targetCaches = {};
+  const currentStep = [];
+  try {
+    const {
+      tokenization,
+      source,
+      resource,
+      isRoot,
+    } = compilationFile;
+    Evaluate_parameters: {
+      currentStep.push("1. evaluate parameters");
+      parameters = await this._getDataForTokenCompilation({
+        compilationFile,
+        compilationProcess,
+        token,
+        tokenIndex,
+      });
+    }
+    Extend_token: {
+      currentStep.push("2. extend token");
+      this._extendToken(token, ["referenceOf"]);
+    }
+    Extract_target_path: {
+      currentStep.push("3. extract target path");
+      this.assert(token.referenceOf.fullpath === this.normalizationOf(parameters[0]), "DesignError: The first parameter and the token.referenceOf.fullpath should be the same on «CompilerV6.prototype._compileAsInjectPlain»");
+      targetPath = token.referenceOf.fullpath;
+    }
+    let outputJs = "";
+    Read_source: {
+      outputJs = await this.files.readFile(targetPath);
+    }
+    Alter_source_for_the_module_part: {
+      outputJs = this._wrapAsModuleInjection(outputJs, token.referenceOf.rootpath);
+    }
+    Inject_content: {
+      compilationFile.compilation.js = this._replaceTextRange(compilationFile.compilation.js, token.location[0], token.location[1], outputJs, token);
+    }
+  } catch(error) {
+    console.log(`[!] Error on method «_compileAsInjectPlain» on root «${this.rootdir}» on resource «${this.rootdirOf(compilationFile.resource)}» and target «${this.rootdirOf(targetPath || "?")}» on step «${currentStep.reverse().join(" < ")}»`, error);
+    throw error;
+  }
 }
   /**
  * @name CompilerV6.prototype._compileAsMultilineCommentCodeInjection
@@ -6581,7 +6635,7 @@ async propagateUpTouchEventFrom(filepath, event = {}) {
         withFileTypes: true
       });
       const matchedEntries = entries.filter(e => {
-        return e.isFile() && (e.name.endsWith(".entry.js") || e.name.endsWith(".entry.css") || e.name.endsWith(".entry.md"));
+        return (e.name !== filepath) && e.isFile() && (e.name.endsWith(".entry.js") || e.name.endsWith(".entry.css") || e.name.endsWith(".entry.md"));
       }).map(e => path.resolve(e.path, e.name));
       On_propagate_up_until_entries_found: {
         // Este evento se llamara en cada touch arbol para arriba hasta encontrar un entry nuevo donde se concatenara para arriba otra vez
@@ -6611,7 +6665,8 @@ async propagateUpTouchEventFrom(filepath, event = {}) {
       });
     }));
   }
-  return this.propagateUpTouchEventFrom(firstFile, event);
+  return "ok";
+  //this.propagateUpTouchEventFrom(firstFile, event);
 }
   /**
  * @name DevBinaryV6.Utils.prototype.ensureDirectoryOf
@@ -6914,6 +6969,7 @@ async touchFile(fileBrute, optionsInput = {}) {
             title: "feature",
             filename: "feature.js",
             filter: file => this.matchesFileWithSimpleSelector(path.basename(file), [
+              "**/*", // Los features de los eventos acumulados:
               ...(event.testFeatures), // Los features de los eventos acumulados:
               ...(this.devbin.settings.data?.test?.features || []), // Los features del dev/settings.js#test/features:
             ]),

@@ -674,7 +674,7 @@ this.moduler = moduler;
    */
   return this.normalizeObject(options, normalization);
 }
-  normalizeObject(parameters = {}, normalization = null) {
+  normalizeObject(parameters = {}, normalization = null, postnormalization = null) {
   /**
    * @name ModulerV6.Toolkit.prototype.normalizeObject
    * @type 
@@ -699,7 +699,7 @@ this.moduler = moduler;
           if (typeof result === "undefined") {
             // @OK
           } else if (result !== true) {
-            throw new Error(result || `Validation of property «${property}» should return true or undefined but «${typeof result}» was found instead on «ModulerV6.Toolkit.normalizeObject»`);
+            throw new Error(result || `Property «${property}» could not be validated because it returned «${result}» instead of «true» on «ModulerV6.Toolkit.normalizeObject»`);
           }
         } else if (typeof configuration.validate === "object") {
           output[property] = this.normalizeObject(output[property], configuration.validate);
@@ -713,6 +713,19 @@ this.moduler = moduler;
         const result = configuration.format(output[property], output, normalization);
         if(typeof result !== "undefined") output[property] = result;
       }
+    }
+  }
+  if(postnormalization) {
+    Apply_validation: {
+      if(postnormalization.validate) {
+        const result = postnormalization.validate(output);
+        if(result !== true) {
+          throw new Error(result || `Global normalization could not be validated because it returned «${result}» instead of «true» on «ModulerV6.Toolkit.prototype.normalizeObject»`);
+        }
+      }
+    }
+    Apply_format: {
+      if(postnormalization.format) output = postnormalization.format(output);
     }
   }
   return output;
@@ -797,7 +810,7 @@ static Parser = (function (mod) {
           };
         }
         this.assert(typeof grammar === "object", `Grammar «${index}» must be object`);
-        this.assert(typeof grammar[0] === "string", `Grammar «start», at position «0», on grammar «${index}» must be string`);
+        this.assert(typeof grammar[0] === "string" || grammar[0] instanceof RegExp, `Grammar «start», at position «0», on grammar «${index}» must be string or regex`);
         this.assert(typeof grammar[1] === "string" || typeof grammar[1] === "object" || typeof grammar[1] === "function", `Grammar «end», at position «1», on grammar «${index}» must be string, object or function`);
         this.assert(typeof grammar[2] === "function", `Grammar «formatter», at position «2», on grammar «${index}» must be function`);
         this.assert(typeof grammar[3] === "object", `Grammar «settings», at position «3», on grammar «${index}» must be object`);
@@ -869,12 +882,18 @@ static Parser = (function (mod) {
         for (let index = 0; index < this.grammars.length; index++) {
           const grammar = this.grammars[index];
           const [starter, ender, formatter, options] = grammar;
-          const isMatchingStarter = text.startsWith(starter, state.position);
+          let starterMatch;
+          if(typeof starter === "string") {
+            starterMatch = text.startsWith(starter, state.position) ? [starter] : null;
+          } else {
+            starterMatch = text.slice(state.position).match(new RegExp(starter.source, starter.flags.replace("g", "").replace("y", "")));
+          }
+          const isMatchingStarter = starterMatch !== null;
           On_not_matched:
           if (!isMatchingStarter) {
             continue Iterating_grammars;
           }
-          const countingFrom = state.position + starter.length;
+          const countingFrom = state.position + starterMatch[0].length;
           let offset = 0;
           let wasEnded = false;
           Processing_match:
@@ -1148,6 +1167,9 @@ static nativeGrammars = {
   InjectModules: ["$"+"compiler.inject.modules(", this.Parser.symbols.PARENTHESYS_BALANCE, function (token) {
     return { syntax: "Inject Modules", ...token, };
   }],
+  InjectPlainModule: ["$"+"compiler.inject.plainModule(", this.Parser.symbols.PARENTHESYS_BALANCE, function (token) {
+    return { syntax: "Inject Plain Module", inner: token.inner, location: token.location };
+  }],
   ImportJs: ["$"+"moduler.import(", this.ParserUtils.stringOrArrayOfStringsContinuation, function (token) {
     return { syntax: "Moduler Import", ...token, };
   }, {}],
@@ -1239,6 +1261,7 @@ static defaultGrammars = {
     this.nativeGrammars.InjectTemplate,
     this.nativeGrammars.InjectModules,
     this.nativeGrammars.InjectModule,
+    this.nativeGrammars.InjectPlainModule,
     this.nativeGrammars.ImportJs,
     this.nativeGrammars.ExportJs,
     /*
@@ -4105,6 +4128,7 @@ async _compileTokens(compilationFile, compilationProcess) {
     "Inject String": this._compileAsInjectString,
     "Inject Template": this._compileAsInjectTemplate,
     "Inject Module": this._compileAsInjectModule,
+    "Inject Plain Module": this._compileAsInjectPlainModule,
     "Inject Modules": this._compileAsInjectModules,
     "Multiline Comment Code Injection": this._compileAsMultilineCommentCodeInjection,
     "Multiline Comment Value Injection": this._compileAsMultilineCommentValueInjection,
@@ -4791,6 +4815,55 @@ async _compileAsInjectModules(compilationFile, compilationProcess, { token, toke
     out += `\n]).until(Promise.fromCollection(${subcode1}))`;
   }
   compilationFile.compilation.js = this._replaceTextRange(compilationFile.compilation.js, token.location[0], token.location[1], out, token);
+}
+  /**
+ * @name CompilerV6.prototype._compileAsInjectPlainModuleModule
+ * @type 
+ * @description 
+ */
+async _compileAsInjectPlainModule(compilationFile, compilationProcess, { token, tokenIndex }, options = {}) {
+  this._traceIn("_compileAsInjectPlainModule", arguments);
+  let parameters, targetPath, targetCompilation, targetCaches = {};
+  const currentStep = [];
+  try {
+    const {
+      tokenization,
+      source,
+      resource,
+      isRoot,
+    } = compilationFile;
+    Evaluate_parameters: {
+      currentStep.push("1. evaluate parameters");
+      parameters = await this._getDataForTokenCompilation({
+        compilationFile,
+        compilationProcess,
+        token,
+        tokenIndex,
+      });
+    }
+    Extend_token: {
+      currentStep.push("2. extend token");
+      this._extendToken(token, ["referenceOf"]);
+    }
+    Extract_target_path: {
+      currentStep.push("3. extract target path");
+      this.assert(token.referenceOf.fullpath === this.normalizationOf(parameters[0]), "DesignError: The first parameter and the token.referenceOf.fullpath should be the same on «CompilerV6.prototype._compileAsInjectPlain»");
+      targetPath = token.referenceOf.fullpath;
+    }
+    let outputJs = "";
+    Read_source: {
+      outputJs = await this.files.readFile(targetPath);
+    }
+    Alter_source_for_the_module_part: {
+      outputJs = this._wrapAsModuleInjection(outputJs, token.referenceOf.rootpath);
+    }
+    Inject_content: {
+      compilationFile.compilation.js = this._replaceTextRange(compilationFile.compilation.js, token.location[0], token.location[1], outputJs, token);
+    }
+  } catch(error) {
+    console.log(`[!] Error on method «_compileAsInjectPlain» on root «${this.rootdir}» on resource «${this.rootdirOf(compilationFile.resource)}» and target «${this.rootdirOf(targetPath || "?")}» on step «${currentStep.reverse().join(" < ")}»`, error);
+    throw error;
+  }
 }
   /**
  * @name CompilerV6.prototype._compileAsMultilineCommentCodeInjection

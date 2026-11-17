@@ -8,6 +8,7 @@ module.exports = async function ({ Tester }) {
     "5": `{code:number|string|null|undefined}&{conduct:string|undefined}`,
     "6": `class {code:number|string|null|undefined}&{conduct:string|undefined}`,
     "7": `function (@name string) => class {code:number|string|null|undefined}&{conduct:string|undefined}`,
+    "8": `{code:number|string|null|undefined}&{conduct:string|undefined}&{hobbies:[string*]}`,
     // "8": `[@message+]`,
   };
   tests.last = tests[Object.keys(tests).at(-1)];

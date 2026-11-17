@@ -90,7 +90,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    overflow: scroll;
+    overflow: visible;
 }
 .DialogView .dialog_body.is_centered {
     overflow: hidden;

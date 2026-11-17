@@ -134,7 +134,7 @@ html {
 ------------------------------------------------------------ */
 
 :root {
-  --scrollbar-size: 14px;
+  --scrollbar-size: 9px;
   --scrollbar-track-color:transparent; /*var(--grey90);*/
   --scrollbar-thumb-color: rgba(0,0,0,0.4); /*var(--grey60);*/
   --scrollbar-thumb-color-hover: rgba(0,0,0,0.6); /*var(--grey55);*/
@@ -330,6 +330,8 @@ textarea {
 .rotate5of8 { transform: rotate(225deg); }
 .rotate6of8 { transform: rotate(270deg); }
 .rotate7of8 { transform: rotate(315deg); }
+
+
 .TypesFormAndOperation,
 .TypesFormArrayType,
 .TypesFormClassType,
@@ -342,7 +344,12 @@ textarea {
 .TypesFormSpreadedList,
 .TypesFormTypeId,
 .TypesFormTypeLabel {
-    padding-left: 8px;
+    padding-left: 4px;
+}
+.TypesFormScript {
+    min-width: 260px;
+    max-width: 460px;
+    font-size: 10px;
 }
 .DialogView {
     position: fixed;
@@ -436,7 +443,7 @@ textarea {
     left: 0;
     right: 0;
     bottom: 0;
-    overflow: scroll;
+    overflow: visible;
 }
 .DialogView .dialog_body.is_centered {
     overflow: hidden;
@@ -950,7 +957,7 @@ textarea {
     left: 0;
     right: 0;
     bottom: 0;
-    overflow: scroll;
+    overflow: visible;
 }
 .DialogView .dialog_body.is_centered {
     overflow: hidden;

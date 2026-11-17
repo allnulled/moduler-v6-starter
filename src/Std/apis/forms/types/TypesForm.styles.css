@@ -10,5 +10,10 @@
 .TypesFormSpreadedList,
 .TypesFormTypeId,
 .TypesFormTypeLabel {
-    padding-left: 8px;
+    padding-left: 4px;
+}
+.TypesFormScript {
+    min-width: 260px;
+    max-width: 460px;
+    font-size: 10px;
 }

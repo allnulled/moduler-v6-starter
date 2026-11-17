@@ -1150,6 +1150,9 @@ static nativeGrammars = {
   InjectModules: ["$"+"compiler.inject.modules(", this.Parser.symbols.PARENTHESYS_BALANCE, function (token) {
     return { syntax: "Inject Modules", ...token, };
   }],
+  InjectPlainModule: ["$"+"compiler.inject.plainModule(", this.Parser.symbols.PARENTHESYS_BALANCE, function (token) {
+    return { syntax: "Inject Plain Module", inner: token.inner, location: token.location };
+  }],
   ImportJs: ["$"+"moduler.import(", this.ParserUtils.stringOrArrayOfStringsContinuation, function (token) {
     return { syntax: "Moduler Import", ...token, };
   }, {}],
@@ -1241,6 +1244,7 @@ static defaultGrammars = {
     this.nativeGrammars.InjectTemplate,
     this.nativeGrammars.InjectModules,
     this.nativeGrammars.InjectModule,
+    this.nativeGrammars.InjectPlainModule,
     this.nativeGrammars.ImportJs,
     this.nativeGrammars.ExportJs,
     /*
