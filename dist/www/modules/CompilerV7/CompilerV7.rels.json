@@ -13,7 +13,37 @@
       }
     },
     "@/src/www/modules/CompilerV7/CompilerV7.class.js": {
-      "1546-1630": {
+      "2706-2796": {
+        "syntax": "Inject Source",
+        "inner": "\"@/src/www/modules/CompilerV7/Parser/degrammerFor/form.control.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "@/src/www/modules/CompilerV7/Parser/degrammerFor/form.control.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/modules/CompilerV7/Parser/degrammerFor/form.control.js",
+          "rootpath": "@/src/www/modules/CompilerV7/Parser/degrammerFor/form.control.js"
+        }
+      },
+      "2551-2643": {
+        "syntax": "Inject Source",
+        "inner": "\"@/src/www/modules/CompilerV7/Parser/degrammerFor/template.block.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "@/src/www/modules/CompilerV7/Parser/degrammerFor/template.block.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/modules/CompilerV7/Parser/degrammerFor/template.block.js",
+          "rootpath": "@/src/www/modules/CompilerV7/Parser/degrammerFor/template.block.js"
+        }
+      },
+      "2435-2527": {
+        "syntax": "Inject Source",
+        "inner": "\"@/src/www/modules/CompilerV7/Parser/degrammerFor/template.value.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "@/src/www/modules/CompilerV7/Parser/degrammerFor/template.value.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/modules/CompilerV7/Parser/degrammerFor/template.value.js",
+          "rootpath": "@/src/www/modules/CompilerV7/Parser/degrammerFor/template.value.js"
+        }
+      },
+      "2286-2370": {
         "syntax": "Inject Source",
         "inner": "\"@/src/www/modules/CompilerV7/Parser/degrammerFor/action.js\"",
         "referenceOf": {
@@ -23,7 +53,7 @@
           "rootpath": "@/src/www/modules/CompilerV7/Parser/degrammerFor/action.js"
         }
       },
-      "1435-1521": {
+      "2175-2261": {
         "syntax": "Inject Source",
         "inner": "\"@/src/www/modules/CompilerV7/Parser/degrammerFor/template.js\"",
         "referenceOf": {
@@ -33,7 +63,7 @@
           "rootpath": "@/src/www/modules/CompilerV7/Parser/degrammerFor/template.js"
         }
       },
-      "1325-1408": {
+      "2065-2148": {
         "syntax": "Inject Source",
         "inner": "\"@/src/www/modules/CompilerV7/Parser/degrammerFor/plain.js\"",
         "referenceOf": {
@@ -43,7 +73,7 @@
           "rootpath": "@/src/www/modules/CompilerV7/Parser/degrammerFor/plain.js"
         }
       },
-      "1217-1301": {
+      "1957-2041": {
         "syntax": "Inject Source",
         "inner": "\"@/src/www/modules/CompilerV7/Parser/degrammerFor/string.js\"",
         "referenceOf": {
@@ -53,7 +83,7 @@
           "rootpath": "@/src/www/modules/CompilerV7/Parser/degrammerFor/string.js"
         }
       },
-      "1110-1192": {
+      "1850-1932": {
         "syntax": "Inject Source",
         "inner": "\"@/src/www/modules/CompilerV7/Parser/degrammerFor/code.js\"",
         "referenceOf": {
@@ -63,7 +93,7 @@
           "rootpath": "@/src/www/modules/CompilerV7/Parser/degrammerFor/code.js"
         }
       },
-      "908-1013": {
+      "1658-1763": {
         "syntax": "Inject Source",
         "inner": "\"@/src/www/modules/CompilerV7/classes/CompilationState/CompilationState.class.js\"",
         "referenceOf": {
@@ -73,7 +103,17 @@
           "rootpath": "@/src/www/modules/CompilerV7/classes/CompilationState/CompilationState.class.js"
         }
       },
-      "765-853": {
+      "1518-1625": {
+        "syntax": "Inject Source",
+        "inner": "\"@/src/www/modules/CompilerV7/classes/CompilationOutput/CompilationOutput.class.js\"",
+        "referenceOf": {
+          "type": "file",
+          "entry": "@/src/www/modules/CompilerV7/classes/CompilationOutput/CompilationOutput.class.js",
+          "fullpath": "/home/carlos/Escritorio/Programas/moduler-v6-starter/src/www/modules/CompilerV7/classes/CompilationOutput/CompilationOutput.class.js",
+          "rootpath": "@/src/www/modules/CompilerV7/classes/CompilationOutput/CompilationOutput.class.js"
+        }
+      },
+      "768-856": {
         "syntax": "Inject Source",
         "inner": "\"@/src/www/modules/CompilerV7/Parser/CompilerV7Parser.object.js\"",
         "referenceOf": {
@@ -84,12 +124,16 @@
         }
       }
     },
+    "@/src/www/modules/CompilerV7/Parser/degrammerFor/form.control.js": {},
+    "@/src/www/modules/CompilerV7/Parser/degrammerFor/template.block.js": {},
+    "@/src/www/modules/CompilerV7/Parser/degrammerFor/template.value.js": {},
     "@/src/www/modules/CompilerV7/Parser/degrammerFor/action.js": {},
     "@/src/www/modules/CompilerV7/Parser/degrammerFor/template.js": {},
     "@/src/www/modules/CompilerV7/Parser/degrammerFor/plain.js": {},
     "@/src/www/modules/CompilerV7/Parser/degrammerFor/string.js": {},
     "@/src/www/modules/CompilerV7/Parser/degrammerFor/code.js": {},
     "@/src/www/modules/CompilerV7/classes/CompilationState/CompilationState.class.js": {},
+    "@/src/www/modules/CompilerV7/classes/CompilationOutput/CompilationOutput.class.js": {},
     "@/src/www/modules/CompilerV7/Parser/CompilerV7Parser.object.js": {}
   }
 }

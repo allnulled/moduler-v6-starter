@@ -7,6 +7,11 @@ module.exports = async function({ devbin, file }) {
     format: "globals",
     exportVar: "CompilerV7Parser",
     output: "source",
+    allowedStartRules: [
+      "cv7_main_language",
+      "cv7_templates_language",
+      "cv7_forms_language",
+    ]
   });
   output = output.replace("root.CompilerV7Parser = {", "return root.CompilerV7Parser = {");
   output = output.replace("})(this);\n", "})(globalThis)");

@@ -98,4 +98,9 @@ class Printer {
 
   static return = this.log;
 
+  static die(...args) {
+    Std.classes.Printer.json(args);
+    process.exit(0);
+  }
+
 }

@@ -12,7 +12,7 @@
       }
     },
     "@/src/www/external/std/std-v1.entry.js": {
-      "1147404-1147472": {
+      "1147490-1147558": {
         "syntax": "Moduler Import",
         "type": "$moduler.import(",
         "inner": "\"@/dist/www/modules/Refrescador/Refrescador.dist.js\"",
@@ -21,7 +21,7 @@
           "@/dist/www/modules/Refrescador/Refrescador.dist.js"
         ]
       },
-      "1147310-1147378": {
+      "1147396-1147464": {
         "syntax": "Moduler Import",
         "type": "$moduler.import(",
         "inner": "\"@/dist/www/modules/DevBinaryV7/DevBinaryV7.dist.js\"",
@@ -30,7 +30,7 @@
           "@/dist/www/modules/DevBinaryV7/DevBinaryV7.dist.js"
         ]
       },
-      "1147218-1147284": {
+      "1147304-1147370": {
         "syntax": "Moduler Import",
         "type": "$moduler.import(",
         "inner": "\"@/dist/www/modules/CompilerV7/CompilerV7.dist.js\"",

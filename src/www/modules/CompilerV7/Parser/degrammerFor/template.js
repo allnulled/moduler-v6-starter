@@ -4,10 +4,17 @@
     const innerParameters = state.constructor.evaluateJs(`return [${innerCode}];`);
     const targetFileBrute = innerParameters[0];
     let replacement = "";
-    Aqui_habria_otra_operacion_para_averiguar_el_replacement: {
-      // const compilation = await compiler.cloneForFile(state.input.file.path)._compile(targetFileBrute);
-      // const replacement = compilation.out.channel[state.memory.fileChannel].content;
-      throw new Error("Syntax for templates is not yet available");
+    let templateSource = null;
+    Step_1_renderizar_plantilla: {
+      const subcompiler = compiler.cloneForFile(state.input.file.path);
+      const targetFile = subcompiler.moduler.normalizationOf(targetFileBrute);
+      const templateCompilation = await subcompiler._compileTemplateFile(targetFile);
+      Atencion_solo_se_transmite_el_canal_activo_original: {
+        Std.classes.Printer.json("templateCompilation", state.input.file.path, templateCompilation);
+        templateSource = templateCompilation.out.channel[state.memory.fileChannel].content;
+      }
+      const compilation = await subcompiler._compileSource(templateSource, state.input.file.path);
+      replacement = compilation.out.channel[state.memory.fileChannel].content;
     }
     return { token, replacedBy: replacement };
   }

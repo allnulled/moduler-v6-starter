@@ -10,15 +10,15 @@ module.exports = $moduler.import(function() {
               moduler: $moduler
             });
           },
-          compile: function(...args) {
+          compile: function (...args) {
             return this.globalInstance.compile(...args)
           }
         },
         prototype: {
-          cloneForFile: function(targetFile) {
+          cloneForFile: function (targetFile) {
             return this.cloneForDirectory(require("path").dirname(targetFile));
           },
-          cloneForDirectory: function(targetFile) {
+          cloneForDirectory: function (targetFile) {
             return new this.constructor({
               moduler: ModulerV6.create(this.moduler.normalizationOf(targetFile)),
             });
@@ -185,56 +185,67 @@ function peg$parse(input, options) {
   const peg$source = options.grammarSource;
 
   const peg$startRuleFunctions = {
-    cv7_language: peg$parsecv7_language,
+    cv7_main_language: peg$parsecv7_main_language,
+    cv7_templates_language: peg$parsecv7_templates_language,
+    cv7_forms_language: peg$parsecv7_forms_language,
   };
-  let peg$startRuleFunction = peg$parsecv7_language;
+  let peg$startRuleFunction = peg$parsecv7_main_language;
 
   const peg$c0 = "/*";
   const peg$c1 = "*/";
   const peg$c2 = "$compiler.inject";
-  const peg$c3 = ".to.";
-  const peg$c4 = ".";
-  const peg$c5 = ")";
-  const peg$c6 = "(";
-  const peg$c7 = "code(";
-  const peg$c8 = "string(";
-  const peg$c9 = "plain(";
-  const peg$c10 = "template(";
-  const peg$c11 = "action(";
-  const peg$c12 = "\r\n";
+  const peg$c3 = "/*%=";
+  const peg$c4 = "%";
+  const peg$c5 = "/*%";
+  const peg$c6 = "/*=\xBF";
+  const peg$c7 = "/*?*/";
+  const peg$c8 = ".to.";
+  const peg$c9 = ".";
+  const peg$c10 = ")";
+  const peg$c11 = "(";
+  const peg$c12 = "code(";
+  const peg$c13 = "string(";
+  const peg$c14 = "plain(";
+  const peg$c15 = "template(";
+  const peg$c16 = "action(";
 
   const peg$r0 = /^[A-Za-z$_]/;
   const peg$r1 = /^[A-Za-z0-9$_]/;
-  const peg$r2 = /^[\t ]/;
-  const peg$r3 = /^[\n\r]/;
 
   const peg$e0 = peg$anyExpectation();
   const peg$e1 = peg$literalExpectation("/*", false);
   const peg$e2 = peg$literalExpectation("*/", false);
   const peg$e3 = peg$literalExpectation("$compiler.inject", false);
-  const peg$e4 = peg$literalExpectation(".to.", false);
-  const peg$e5 = peg$literalExpectation(".", false);
-  const peg$e6 = peg$literalExpectation(")", false);
-  const peg$e7 = peg$literalExpectation("(", false);
-  const peg$e8 = peg$literalExpectation("code(", false);
-  const peg$e9 = peg$literalExpectation("string(", false);
-  const peg$e10 = peg$literalExpectation("plain(", false);
-  const peg$e11 = peg$literalExpectation("template(", false);
-  const peg$e12 = peg$literalExpectation("action(", false);
-  const peg$e13 = peg$classExpectation([["A", "Z"], ["a", "z"], "$", "_"], false, false, false);
-  const peg$e14 = peg$classExpectation([["A", "Z"], ["a", "z"], ["0", "9"], "$", "_"], false, false, false);
-  const peg$e15 = peg$classExpectation(["\t", " "], false, false, false);
-  const peg$e16 = peg$literalExpectation("\r\n", false);
-  const peg$e17 = peg$classExpectation(["\n", "\r"], false, false, false);
+  const peg$e4 = peg$literalExpectation("/*%=", false);
+  const peg$e5 = peg$literalExpectation("%", false);
+  const peg$e6 = peg$literalExpectation("/*%", false);
+  const peg$e7 = peg$literalExpectation("/*=\xBF", false);
+  const peg$e8 = peg$literalExpectation("/*?*/", false);
+  const peg$e9 = peg$literalExpectation(".to.", false);
+  const peg$e10 = peg$literalExpectation(".", false);
+  const peg$e11 = peg$literalExpectation(")", false);
+  const peg$e12 = peg$literalExpectation("(", false);
+  const peg$e13 = peg$literalExpectation("code(", false);
+  const peg$e14 = peg$literalExpectation("string(", false);
+  const peg$e15 = peg$literalExpectation("plain(", false);
+  const peg$e16 = peg$literalExpectation("template(", false);
+  const peg$e17 = peg$literalExpectation("action(", false);
+  const peg$e18 = peg$classExpectation([["A", "Z"], ["a", "z"], "$", "_"], false, false, false);
+  const peg$e19 = peg$classExpectation([["A", "Z"], ["a", "z"], ["0", "9"], "$", "_"], false, false, false);
 
   function peg$f0() {    return getTokens(text())  }
-  function peg$f1(token1, exp, closer) {    return Object.assign(exp, { outerLocation: getLocation(location()) })  }
-  function peg$f2(exp) {    tokens.push(exp); return exp  }
-  function peg$f3(grammar, channel, action, closer) {
+  function peg$f1() {    return getTokens(text())  }
+  function peg$f2() {    return getTokens(text())  }
+  function peg$f3(it) {    tokens.push(it); return it;  }
+  function peg$f4(it) {    tokens.push(it); return it;  }
+  function peg$f5(it) {    tokens.push(it); return it;  }
+  function peg$f6(token1, exp, closer) {    return Object.assign(exp, { outerLocation: getLocation(location()) })  }
+  function peg$f7(exp) {    return exp  }
+  function peg$f8(grammar, channel, action, closer) {
     const loc = location();
             const expressionLocation = getLocation(loc);
     return {
-            	grammar,
+            	grammar: "inject",
                 operation: action.name,
                 channel: channel || null,
                 outerLocation: expressionLocation,
@@ -242,12 +253,41 @@ function peg$parse(input, options) {
                 innerLocation: [action.end, loc.end.offset-1]
 			};
   }
-  function peg$f4(channel) {    return channel  }
-  function peg$f5(token1, action) {    return action  }
-  function peg$f6() {  }
-  function peg$f7() {  }
-  function peg$f8() {    return { name: text().slice(0,-1), end: location().end.offset }  }
-  function peg$f9() {    return text();  }
+  function peg$f9() {    return text()  }
+  function peg$f10() {    return text()  }
+  function peg$f11(token1, content, tokenZ) {
+    const loc = getLocation(location());
+    return {
+        grammar: "template",
+        operation: "value",
+        outerLocation: loc,
+        innerLocation: [loc[0] + token1.length, loc[1] - tokenZ.length],
+    };
+  }
+  function peg$f12(token1, content, tokenZ) {
+    const loc = getLocation(location());
+    return {
+        grammar: "template",
+        operation: "block",
+        outerLocation: loc,
+        innerLocation: [loc[0] + token1.length, loc[1] - tokenZ.length],
+    };
+  }
+  function peg$f13(token1, content, tokenZ) {
+    const loc = getLocation(location());
+    return {
+        grammar: "form",
+        operation: "control",
+        outerLocation: loc,
+        innerLocation: [loc[0] + token1.length, loc[1] - tokenZ.length],
+    };
+  }
+  function peg$f14(channel) {    return channel  }
+  function peg$f15(token1, action) {    return action  }
+  function peg$f16() {  }
+  function peg$f17() {  }
+  function peg$f18() {    return { name: text().slice(0,-1), end: location().end.offset }  }
+  function peg$f19() {    return text();  }
   let peg$currPos = options.peg$currPos | 0;
   let peg$savedPos = peg$currPos;
   const peg$posDetailsCache = [{ line: 1, column: 1 }];
@@ -418,11 +458,11 @@ function peg$parse(input, options) {
     );
   }
 
-  function peg$parsecv7_language() {
+  function peg$parsecv7_main_language() {
     let s0, s1;
 
     s0 = peg$currPos;
-    s1 = peg$parsecv7_expressions();
+    s1 = peg$parsecv7_main_expressions();
     peg$savedPos = s0;
     s1 = peg$f0();
     s0 = s1;
@@ -430,23 +470,95 @@ function peg$parse(input, options) {
     return s0;
   }
 
-  function peg$parsecv7_expressions() {
+  function peg$parsecv7_main_expressions() {
     let s0, s1;
 
     s0 = [];
-    s1 = peg$parsecv7_expression();
+    s1 = peg$parsecv7_main_expression();
     while (s1 !== peg$FAILED) {
       s0.push(s1);
-      s1 = peg$parsecv7_expression();
+      s1 = peg$parsecv7_main_expression();
     }
 
     return s0;
   }
 
-  function peg$parsecv7_expression() {
+  function peg$parsecv7_main_expression() {
     let s0;
 
-    s0 = peg$parsecv7_valid_expression();
+    s0 = peg$parsecv7_valid_main_expression();
+    if (s0 === peg$FAILED) {
+      s0 = peg$parsecv7_ignored_char();
+    }
+
+    return s0;
+  }
+
+  function peg$parsecv7_templates_language() {
+    let s0, s1;
+
+    s0 = peg$currPos;
+    s1 = peg$parsecv7_templates_expressions();
+    peg$savedPos = s0;
+    s1 = peg$f1();
+    s0 = s1;
+
+    return s0;
+  }
+
+  function peg$parsecv7_templates_expressions() {
+    let s0, s1;
+
+    s0 = [];
+    s1 = peg$parsecv7_templates_expression();
+    while (s1 !== peg$FAILED) {
+      s0.push(s1);
+      s1 = peg$parsecv7_templates_expression();
+    }
+
+    return s0;
+  }
+
+  function peg$parsecv7_templates_expression() {
+    let s0;
+
+    s0 = peg$parsecv7_valid_template_expression();
+    if (s0 === peg$FAILED) {
+      s0 = peg$parsecv7_ignored_char();
+    }
+
+    return s0;
+  }
+
+  function peg$parsecv7_forms_language() {
+    let s0, s1;
+
+    s0 = peg$currPos;
+    s1 = peg$parsecv7_forms_expressions();
+    peg$savedPos = s0;
+    s1 = peg$f2();
+    s0 = s1;
+
+    return s0;
+  }
+
+  function peg$parsecv7_forms_expressions() {
+    let s0, s1;
+
+    s0 = [];
+    s1 = peg$parsecv7_forms_expression();
+    while (s1 !== peg$FAILED) {
+      s0.push(s1);
+      s1 = peg$parsecv7_forms_expression();
+    }
+
+    return s0;
+  }
+
+  function peg$parsecv7_forms_expression() {
+    let s0;
+
+    s0 = peg$parsecv7_valid_forms_expression();
     if (s0 === peg$FAILED) {
       s0 = peg$parsecv7_ignored_char();
     }
@@ -468,69 +580,83 @@ function peg$parse(input, options) {
     return s0;
   }
 
-  function peg$parsecv7_valid_expression() {
+  function peg$parsecv7_valid_forms_expression() {
+    let s0, s1;
+
+    s0 = peg$currPos;
+    s1 = peg$parsecv7_expression_for_forms_control();
+    if (s1 !== peg$FAILED) {
+      peg$savedPos = s0;
+      s1 = peg$f3(s1);
+    }
+    s0 = s1;
+
+    return s0;
+  }
+
+  function peg$parsecv7_valid_template_expression() {
+    let s0, s1;
+
+    s0 = peg$currPos;
+    s1 = peg$parsecv7_expression_for_templates();
+    if (s1 !== peg$FAILED) {
+      peg$savedPos = s0;
+      s1 = peg$f4(s1);
+    }
+    s0 = s1;
+
+    return s0;
+  }
+
+  function peg$parsecv7_valid_main_expression() {
+    let s0, s1;
+
+    s0 = peg$currPos;
+    s1 = peg$parsecv7_expression_for_main();
+    if (s1 !== peg$FAILED) {
+      peg$savedPos = s0;
+      s1 = peg$f5(s1);
+    }
+    s0 = s1;
+
+    return s0;
+  }
+
+  function peg$parsecv7_expression_for_main() {
     let s0;
 
-    s0 = peg$parsecv7_valid_expression_commented();
+    s0 = peg$parsecv7_basic_expression_commented();
     if (s0 === peg$FAILED) {
-      s0 = peg$parsecv7_valid_expression_uncommented();
+      s0 = peg$parsecv7_basic_expression_uncommented();
     }
 
     return s0;
   }
 
-  function peg$parsecv7_valid_expression_commented() {
-    let s0, s1, s2, s3, s4, s5;
+  function peg$parsecv7_basic_expression_commented() {
+    let s0, s1, s2, s3;
 
     s0 = peg$currPos;
-    s1 = peg$currPos;
     if (input.substr(peg$currPos, 2) === peg$c0) {
-      s2 = peg$c0;
+      s1 = peg$c0;
       peg$currPos += 2;
     } else {
-      s2 = peg$FAILED;
+      s1 = peg$FAILED;
       if (peg$silentFails === 0) { peg$fail(peg$e1); }
     }
-    if (s2 !== peg$FAILED) {
-      s3 = [];
-      s4 = peg$parse_();
-      while (s4 !== peg$FAILED) {
-        s3.push(s4);
-        s4 = peg$parse_();
-      }
-      s2 = [s2, s3];
-      s1 = s2;
-    } else {
-      peg$currPos = s1;
-      s1 = peg$FAILED;
-    }
     if (s1 !== peg$FAILED) {
-      s2 = peg$parsecv7_valid_expression_uncommented();
+      s2 = peg$parsecv7_basic_expression_uncommented();
       if (s2 !== peg$FAILED) {
-        s3 = peg$currPos;
-        s4 = [];
-        s5 = peg$parse_();
-        while (s5 !== peg$FAILED) {
-          s4.push(s5);
-          s5 = peg$parse_();
-        }
         if (input.substr(peg$currPos, 2) === peg$c1) {
-          s5 = peg$c1;
+          s3 = peg$c1;
           peg$currPos += 2;
         } else {
-          s5 = peg$FAILED;
-          if (peg$silentFails === 0) { peg$fail(peg$e2); }
-        }
-        if (s5 !== peg$FAILED) {
-          s4 = [s4, s5];
-          s3 = s4;
-        } else {
-          peg$currPos = s3;
           s3 = peg$FAILED;
+          if (peg$silentFails === 0) { peg$fail(peg$e2); }
         }
         if (s3 !== peg$FAILED) {
           peg$savedPos = s0;
-          s0 = peg$f1(s1, s2, s3);
+          s0 = peg$f6(s1, s2, s3);
         } else {
           peg$currPos = s0;
           s0 = peg$FAILED;
@@ -547,21 +673,21 @@ function peg$parse(input, options) {
     return s0;
   }
 
-  function peg$parsecv7_valid_expression_uncommented() {
+  function peg$parsecv7_basic_expression_uncommented() {
     let s0, s1;
 
     s0 = peg$currPos;
-    s1 = peg$parsecv7_expression_1();
+    s1 = peg$parsecv7_basic_expression();
     if (s1 !== peg$FAILED) {
       peg$savedPos = s0;
-      s1 = peg$f2(s1);
+      s1 = peg$f7(s1);
     }
     s0 = s1;
 
     return s0;
   }
 
-  function peg$parsecv7_expression_1() {
+  function peg$parsecv7_basic_expression() {
     let s0, s1, s2, s3, s4;
 
     s0 = peg$currPos;
@@ -582,7 +708,423 @@ function peg$parse(input, options) {
         s4 = peg$parsecv7_close_parenthesys();
         if (s4 !== peg$FAILED) {
           peg$savedPos = s0;
-          s0 = peg$f3(s1, s2, s3, s4);
+          s0 = peg$f8(s1, s2, s3, s4);
+        } else {
+          peg$currPos = s0;
+          s0 = peg$FAILED;
+        }
+      } else {
+        peg$currPos = s0;
+        s0 = peg$FAILED;
+      }
+    } else {
+      peg$currPos = s0;
+      s0 = peg$FAILED;
+    }
+
+    return s0;
+  }
+
+  function peg$parsecv7_expression_for_templates() {
+    let s0;
+
+    s0 = peg$parsecv7_expression_for_template_value();
+    if (s0 === peg$FAILED) {
+      s0 = peg$parsecv7_expression_for_template_block();
+    }
+
+    return s0;
+  }
+
+  function peg$parsecv7_template_opener_1() {
+    let s0;
+
+    if (input.substr(peg$currPos, 4) === peg$c3) {
+      s0 = peg$c3;
+      peg$currPos += 4;
+    } else {
+      s0 = peg$FAILED;
+      if (peg$silentFails === 0) { peg$fail(peg$e4); }
+    }
+
+    return s0;
+  }
+
+  function peg$parsecv7_template_closer_1() {
+    let s0, s1, s2;
+
+    s0 = peg$currPos;
+    if (input.charCodeAt(peg$currPos) === 37) {
+      s1 = peg$c4;
+      peg$currPos++;
+    } else {
+      s1 = peg$FAILED;
+      if (peg$silentFails === 0) { peg$fail(peg$e5); }
+    }
+    if (s1 === peg$FAILED) {
+      s1 = null;
+    }
+    if (input.substr(peg$currPos, 2) === peg$c1) {
+      s2 = peg$c1;
+      peg$currPos += 2;
+    } else {
+      s2 = peg$FAILED;
+      if (peg$silentFails === 0) { peg$fail(peg$e2); }
+    }
+    if (s2 !== peg$FAILED) {
+      peg$savedPos = s0;
+      s0 = peg$f9();
+    } else {
+      peg$currPos = s0;
+      s0 = peg$FAILED;
+    }
+
+    return s0;
+  }
+
+  function peg$parsecv7_template_opener_2() {
+    let s0;
+
+    if (input.substr(peg$currPos, 3) === peg$c5) {
+      s0 = peg$c5;
+      peg$currPos += 3;
+    } else {
+      s0 = peg$FAILED;
+      if (peg$silentFails === 0) { peg$fail(peg$e6); }
+    }
+
+    return s0;
+  }
+
+  function peg$parsecv7_template_closer_2() {
+    let s0, s1, s2;
+
+    s0 = peg$currPos;
+    if (input.charCodeAt(peg$currPos) === 37) {
+      s1 = peg$c4;
+      peg$currPos++;
+    } else {
+      s1 = peg$FAILED;
+      if (peg$silentFails === 0) { peg$fail(peg$e5); }
+    }
+    if (s1 === peg$FAILED) {
+      s1 = null;
+    }
+    if (input.substr(peg$currPos, 2) === peg$c1) {
+      s2 = peg$c1;
+      peg$currPos += 2;
+    } else {
+      s2 = peg$FAILED;
+      if (peg$silentFails === 0) { peg$fail(peg$e2); }
+    }
+    if (s2 !== peg$FAILED) {
+      peg$savedPos = s0;
+      s0 = peg$f10();
+    } else {
+      peg$currPos = s0;
+      s0 = peg$FAILED;
+    }
+
+    return s0;
+  }
+
+  function peg$parsecv7_expression_for_template_value() {
+    let s0, s1, s2, s3, s4, s5;
+
+    s0 = peg$currPos;
+    s1 = peg$parsecv7_template_opener_1();
+    if (s1 !== peg$FAILED) {
+      s2 = [];
+      s3 = peg$currPos;
+      s4 = peg$currPos;
+      peg$silentFails++;
+      s5 = peg$parsecv7_template_closer_1();
+      peg$silentFails--;
+      if (s5 === peg$FAILED) {
+        s4 = undefined;
+      } else {
+        peg$currPos = s4;
+        s4 = peg$FAILED;
+      }
+      if (s4 !== peg$FAILED) {
+        if (input.length > peg$currPos) {
+          s5 = input.charAt(peg$currPos);
+          peg$currPos++;
+        } else {
+          s5 = peg$FAILED;
+          if (peg$silentFails === 0) { peg$fail(peg$e0); }
+        }
+        if (s5 !== peg$FAILED) {
+          s4 = [s4, s5];
+          s3 = s4;
+        } else {
+          peg$currPos = s3;
+          s3 = peg$FAILED;
+        }
+      } else {
+        peg$currPos = s3;
+        s3 = peg$FAILED;
+      }
+      if (s3 !== peg$FAILED) {
+        while (s3 !== peg$FAILED) {
+          s2.push(s3);
+          s3 = peg$currPos;
+          s4 = peg$currPos;
+          peg$silentFails++;
+          s5 = peg$parsecv7_template_closer_1();
+          peg$silentFails--;
+          if (s5 === peg$FAILED) {
+            s4 = undefined;
+          } else {
+            peg$currPos = s4;
+            s4 = peg$FAILED;
+          }
+          if (s4 !== peg$FAILED) {
+            if (input.length > peg$currPos) {
+              s5 = input.charAt(peg$currPos);
+              peg$currPos++;
+            } else {
+              s5 = peg$FAILED;
+              if (peg$silentFails === 0) { peg$fail(peg$e0); }
+            }
+            if (s5 !== peg$FAILED) {
+              s4 = [s4, s5];
+              s3 = s4;
+            } else {
+              peg$currPos = s3;
+              s3 = peg$FAILED;
+            }
+          } else {
+            peg$currPos = s3;
+            s3 = peg$FAILED;
+          }
+        }
+      } else {
+        s2 = peg$FAILED;
+      }
+      if (s2 !== peg$FAILED) {
+        s3 = peg$parsecv7_template_closer_1();
+        if (s3 !== peg$FAILED) {
+          peg$savedPos = s0;
+          s0 = peg$f11(s1, s2, s3);
+        } else {
+          peg$currPos = s0;
+          s0 = peg$FAILED;
+        }
+      } else {
+        peg$currPos = s0;
+        s0 = peg$FAILED;
+      }
+    } else {
+      peg$currPos = s0;
+      s0 = peg$FAILED;
+    }
+
+    return s0;
+  }
+
+  function peg$parsecv7_expression_for_template_block() {
+    let s0, s1, s2, s3, s4, s5;
+
+    s0 = peg$currPos;
+    s1 = peg$parsecv7_template_opener_2();
+    if (s1 !== peg$FAILED) {
+      s2 = [];
+      s3 = peg$currPos;
+      s4 = peg$currPos;
+      peg$silentFails++;
+      s5 = peg$parsecv7_template_closer_2();
+      peg$silentFails--;
+      if (s5 === peg$FAILED) {
+        s4 = undefined;
+      } else {
+        peg$currPos = s4;
+        s4 = peg$FAILED;
+      }
+      if (s4 !== peg$FAILED) {
+        if (input.length > peg$currPos) {
+          s5 = input.charAt(peg$currPos);
+          peg$currPos++;
+        } else {
+          s5 = peg$FAILED;
+          if (peg$silentFails === 0) { peg$fail(peg$e0); }
+        }
+        if (s5 !== peg$FAILED) {
+          s4 = [s4, s5];
+          s3 = s4;
+        } else {
+          peg$currPos = s3;
+          s3 = peg$FAILED;
+        }
+      } else {
+        peg$currPos = s3;
+        s3 = peg$FAILED;
+      }
+      if (s3 !== peg$FAILED) {
+        while (s3 !== peg$FAILED) {
+          s2.push(s3);
+          s3 = peg$currPos;
+          s4 = peg$currPos;
+          peg$silentFails++;
+          s5 = peg$parsecv7_template_closer_2();
+          peg$silentFails--;
+          if (s5 === peg$FAILED) {
+            s4 = undefined;
+          } else {
+            peg$currPos = s4;
+            s4 = peg$FAILED;
+          }
+          if (s4 !== peg$FAILED) {
+            if (input.length > peg$currPos) {
+              s5 = input.charAt(peg$currPos);
+              peg$currPos++;
+            } else {
+              s5 = peg$FAILED;
+              if (peg$silentFails === 0) { peg$fail(peg$e0); }
+            }
+            if (s5 !== peg$FAILED) {
+              s4 = [s4, s5];
+              s3 = s4;
+            } else {
+              peg$currPos = s3;
+              s3 = peg$FAILED;
+            }
+          } else {
+            peg$currPos = s3;
+            s3 = peg$FAILED;
+          }
+        }
+      } else {
+        s2 = peg$FAILED;
+      }
+      if (s2 !== peg$FAILED) {
+        s3 = peg$parsecv7_template_closer_2();
+        if (s3 !== peg$FAILED) {
+          peg$savedPos = s0;
+          s0 = peg$f12(s1, s2, s3);
+        } else {
+          peg$currPos = s0;
+          s0 = peg$FAILED;
+        }
+      } else {
+        peg$currPos = s0;
+        s0 = peg$FAILED;
+      }
+    } else {
+      peg$currPos = s0;
+      s0 = peg$FAILED;
+    }
+
+    return s0;
+  }
+
+  function peg$parsecv7_form_opener_1() {
+    let s0;
+
+    if (input.substr(peg$currPos, 4) === peg$c6) {
+      s0 = peg$c6;
+      peg$currPos += 4;
+    } else {
+      s0 = peg$FAILED;
+      if (peg$silentFails === 0) { peg$fail(peg$e7); }
+    }
+
+    return s0;
+  }
+
+  function peg$parsecv7_form_closer_1() {
+    let s0;
+
+    if (input.substr(peg$currPos, 5) === peg$c7) {
+      s0 = peg$c7;
+      peg$currPos += 5;
+    } else {
+      s0 = peg$FAILED;
+      if (peg$silentFails === 0) { peg$fail(peg$e8); }
+    }
+
+    return s0;
+  }
+
+  function peg$parsecv7_expression_for_forms_control() {
+    let s0, s1, s2, s3, s4, s5;
+
+    s0 = peg$currPos;
+    s1 = peg$parsecv7_form_opener_1();
+    if (s1 !== peg$FAILED) {
+      s2 = [];
+      s3 = peg$currPos;
+      s4 = peg$currPos;
+      peg$silentFails++;
+      s5 = peg$parsecv7_form_closer_1();
+      peg$silentFails--;
+      if (s5 === peg$FAILED) {
+        s4 = undefined;
+      } else {
+        peg$currPos = s4;
+        s4 = peg$FAILED;
+      }
+      if (s4 !== peg$FAILED) {
+        if (input.length > peg$currPos) {
+          s5 = input.charAt(peg$currPos);
+          peg$currPos++;
+        } else {
+          s5 = peg$FAILED;
+          if (peg$silentFails === 0) { peg$fail(peg$e0); }
+        }
+        if (s5 !== peg$FAILED) {
+          s4 = [s4, s5];
+          s3 = s4;
+        } else {
+          peg$currPos = s3;
+          s3 = peg$FAILED;
+        }
+      } else {
+        peg$currPos = s3;
+        s3 = peg$FAILED;
+      }
+      if (s3 !== peg$FAILED) {
+        while (s3 !== peg$FAILED) {
+          s2.push(s3);
+          s3 = peg$currPos;
+          s4 = peg$currPos;
+          peg$silentFails++;
+          s5 = peg$parsecv7_form_closer_1();
+          peg$silentFails--;
+          if (s5 === peg$FAILED) {
+            s4 = undefined;
+          } else {
+            peg$currPos = s4;
+            s4 = peg$FAILED;
+          }
+          if (s4 !== peg$FAILED) {
+            if (input.length > peg$currPos) {
+              s5 = input.charAt(peg$currPos);
+              peg$currPos++;
+            } else {
+              s5 = peg$FAILED;
+              if (peg$silentFails === 0) { peg$fail(peg$e0); }
+            }
+            if (s5 !== peg$FAILED) {
+              s4 = [s4, s5];
+              s3 = s4;
+            } else {
+              peg$currPos = s3;
+              s3 = peg$FAILED;
+            }
+          } else {
+            peg$currPos = s3;
+            s3 = peg$FAILED;
+          }
+        }
+      } else {
+        s2 = peg$FAILED;
+      }
+      if (s2 !== peg$FAILED) {
+        s3 = peg$parsecv7_form_closer_1();
+        if (s3 !== peg$FAILED) {
+          peg$savedPos = s0;
+          s0 = peg$f13(s1, s2, s3);
         } else {
           peg$currPos = s0;
           s0 = peg$FAILED;
@@ -603,18 +1145,18 @@ function peg$parse(input, options) {
     let s0, s1, s2;
 
     s0 = peg$currPos;
-    if (input.substr(peg$currPos, 4) === peg$c3) {
-      s1 = peg$c3;
+    if (input.substr(peg$currPos, 4) === peg$c8) {
+      s1 = peg$c8;
       peg$currPos += 4;
     } else {
       s1 = peg$FAILED;
-      if (peg$silentFails === 0) { peg$fail(peg$e4); }
+      if (peg$silentFails === 0) { peg$fail(peg$e9); }
     }
     if (s1 !== peg$FAILED) {
       s2 = peg$parsecv7_js_varname();
       if (s2 !== peg$FAILED) {
         peg$savedPos = s0;
-        s0 = peg$f4(s2);
+        s0 = peg$f14(s2);
       } else {
         peg$currPos = s0;
         s0 = peg$FAILED;
@@ -632,17 +1174,17 @@ function peg$parse(input, options) {
 
     s0 = peg$currPos;
     if (input.charCodeAt(peg$currPos) === 46) {
-      s1 = peg$c4;
+      s1 = peg$c9;
       peg$currPos++;
     } else {
       s1 = peg$FAILED;
-      if (peg$silentFails === 0) { peg$fail(peg$e5); }
+      if (peg$silentFails === 0) { peg$fail(peg$e10); }
     }
     if (s1 !== peg$FAILED) {
       s2 = peg$parsecv7_particle_inject_object_option();
       if (s2 !== peg$FAILED) {
         peg$savedPos = s0;
-        s0 = peg$f5(s1, s2);
+        s0 = peg$f15(s1, s2);
       } else {
         peg$currPos = s0;
         s0 = peg$FAILED;
@@ -659,11 +1201,11 @@ function peg$parse(input, options) {
     let s0, s1, s2;
 
     if (input.charCodeAt(peg$currPos) === 41) {
-      s0 = peg$c5;
+      s0 = peg$c10;
       peg$currPos++;
     } else {
       s0 = peg$FAILED;
-      if (peg$silentFails === 0) { peg$fail(peg$e6); }
+      if (peg$silentFails === 0) { peg$fail(peg$e11); }
     }
     if (s0 === peg$FAILED) {
       s0 = peg$parsecv7_inner_parenthesys();
@@ -680,7 +1222,7 @@ function peg$parse(input, options) {
           s2 = peg$parsecv7_close_parenthesys();
           if (s2 !== peg$FAILED) {
             peg$savedPos = s0;
-            s0 = peg$f6();
+            s0 = peg$f16();
           } else {
             peg$currPos = s0;
             s0 = peg$FAILED;
@@ -700,17 +1242,17 @@ function peg$parse(input, options) {
 
     s0 = peg$currPos;
     if (input.charCodeAt(peg$currPos) === 40) {
-      s1 = peg$c6;
+      s1 = peg$c11;
       peg$currPos++;
     } else {
       s1 = peg$FAILED;
-      if (peg$silentFails === 0) { peg$fail(peg$e7); }
+      if (peg$silentFails === 0) { peg$fail(peg$e12); }
     }
     if (s1 !== peg$FAILED) {
       s2 = peg$parsecv7_close_parenthesys();
       if (s2 !== peg$FAILED) {
         peg$savedPos = s0;
-        s0 = peg$f7();
+        s0 = peg$f17();
       } else {
         peg$currPos = s0;
         s0 = peg$FAILED;
@@ -727,44 +1269,44 @@ function peg$parse(input, options) {
     let s0, s1;
 
     s0 = peg$currPos;
-    if (input.substr(peg$currPos, 5) === peg$c7) {
-      s1 = peg$c7;
+    if (input.substr(peg$currPos, 5) === peg$c12) {
+      s1 = peg$c12;
       peg$currPos += 5;
     } else {
       s1 = peg$FAILED;
-      if (peg$silentFails === 0) { peg$fail(peg$e8); }
+      if (peg$silentFails === 0) { peg$fail(peg$e13); }
     }
     if (s1 === peg$FAILED) {
-      if (input.substr(peg$currPos, 7) === peg$c8) {
-        s1 = peg$c8;
+      if (input.substr(peg$currPos, 7) === peg$c13) {
+        s1 = peg$c13;
         peg$currPos += 7;
       } else {
         s1 = peg$FAILED;
-        if (peg$silentFails === 0) { peg$fail(peg$e9); }
+        if (peg$silentFails === 0) { peg$fail(peg$e14); }
       }
       if (s1 === peg$FAILED) {
-        if (input.substr(peg$currPos, 6) === peg$c9) {
-          s1 = peg$c9;
+        if (input.substr(peg$currPos, 6) === peg$c14) {
+          s1 = peg$c14;
           peg$currPos += 6;
         } else {
           s1 = peg$FAILED;
-          if (peg$silentFails === 0) { peg$fail(peg$e10); }
+          if (peg$silentFails === 0) { peg$fail(peg$e15); }
         }
         if (s1 === peg$FAILED) {
-          if (input.substr(peg$currPos, 9) === peg$c10) {
-            s1 = peg$c10;
+          if (input.substr(peg$currPos, 9) === peg$c15) {
+            s1 = peg$c15;
             peg$currPos += 9;
           } else {
             s1 = peg$FAILED;
-            if (peg$silentFails === 0) { peg$fail(peg$e11); }
+            if (peg$silentFails === 0) { peg$fail(peg$e16); }
           }
           if (s1 === peg$FAILED) {
-            if (input.substr(peg$currPos, 7) === peg$c11) {
-              s1 = peg$c11;
+            if (input.substr(peg$currPos, 7) === peg$c16) {
+              s1 = peg$c16;
               peg$currPos += 7;
             } else {
               s1 = peg$FAILED;
-              if (peg$silentFails === 0) { peg$fail(peg$e12); }
+              if (peg$silentFails === 0) { peg$fail(peg$e17); }
             }
           }
         }
@@ -772,7 +1314,7 @@ function peg$parse(input, options) {
     }
     if (s1 !== peg$FAILED) {
       peg$savedPos = s0;
-      s1 = peg$f8();
+      s1 = peg$f18();
     }
     s0 = s1;
 
@@ -788,7 +1330,7 @@ function peg$parse(input, options) {
       peg$currPos++;
     } else {
       s1 = peg$FAILED;
-      if (peg$silentFails === 0) { peg$fail(peg$e13); }
+      if (peg$silentFails === 0) { peg$fail(peg$e18); }
     }
     if (s1 !== peg$FAILED) {
       s2 = [];
@@ -797,7 +1339,7 @@ function peg$parse(input, options) {
         peg$currPos++;
       } else {
         s3 = peg$FAILED;
-        if (peg$silentFails === 0) { peg$fail(peg$e14); }
+        if (peg$silentFails === 0) { peg$fail(peg$e19); }
       }
       while (s3 !== peg$FAILED) {
         s2.push(s3);
@@ -806,46 +1348,14 @@ function peg$parse(input, options) {
           peg$currPos++;
         } else {
           s3 = peg$FAILED;
-          if (peg$silentFails === 0) { peg$fail(peg$e14); }
+          if (peg$silentFails === 0) { peg$fail(peg$e19); }
         }
       }
       peg$savedPos = s0;
-      s0 = peg$f9();
+      s0 = peg$f19();
     } else {
       peg$currPos = s0;
       s0 = peg$FAILED;
-    }
-
-    return s0;
-  }
-
-  function peg$parse_() {
-    let s0;
-
-    s0 = input.charAt(peg$currPos);
-    if (peg$r2.test(s0)) {
-      peg$currPos++;
-    } else {
-      s0 = peg$FAILED;
-      if (peg$silentFails === 0) { peg$fail(peg$e15); }
-    }
-    if (s0 === peg$FAILED) {
-      if (input.substr(peg$currPos, 2) === peg$c12) {
-        s0 = peg$c12;
-        peg$currPos += 2;
-      } else {
-        s0 = peg$FAILED;
-        if (peg$silentFails === 0) { peg$fail(peg$e16); }
-      }
-      if (s0 === peg$FAILED) {
-        s0 = input.charAt(peg$currPos);
-        if (peg$r3.test(s0)) {
-          peg$currPos++;
-        } else {
-          s0 = peg$FAILED;
-          if (peg$silentFails === 0) { peg$fail(peg$e17); }
-        }
-      }
     }
 
     return s0;
@@ -857,15 +1367,45 @@ function peg$parse(input, options) {
   	return [loc.start.offset,loc.end.offset];
   };
   const getTokens = function(txt) {
-  	return tokens;
-  	tokens.forEach(token => {
-    	Object.assign(token, {
-        	innerText: txt.slice(...token.innerLocation),
-            outerText: txt.slice(...token.outerLocation),
-            expressionText: txt.slice(...token.expressionLocation),
-        });
-    });
-    return tokens;
+    const result = [];
+    Expand_tokens: {
+        break Expand_tokens;
+        for(let index=0; index<tokens.length; index++) {
+            const token = tokens[index];
+            Object.assign(token, {
+                innerText: txt.slice(...token.innerLocation),
+                outerText: txt.slice(...token.outerLocation),
+                expressionText: txt.slice(...token.expressionLocation),
+            });
+        }
+    }
+    Fulfill_with_plain_text_tokens: {
+        let textIndex = 0;
+        for(let index=0; index<tokens.length; index++) {
+            const token = tokens[index];
+            const [start, end] = token.outerLocation;
+            if (start > textIndex) {
+                result.push({
+                    grammar: "plain",
+                    outerLocation: [textIndex, start],
+                });
+            }
+            result.push(token);
+            textIndex = end;
+        }
+        if(tokens.length === 0) {
+            result.push({
+                grammar: "plain",
+                outerLocation: [0, txt.length],
+            });
+        } else if (textIndex < txt.length) {
+            result.push({
+                grammar: "plain",
+                outerLocation: [textIndex, txt.length],
+            });
+        }
+    }
+    return result;
   };
 
   peg$result = peg$startRuleFunction();
@@ -903,12 +1443,67 @@ function peg$parse(input, options) {
 }
 
   return root.CompilerV7Parser = {
-    StartRules: ["cv7_language"],
+    StartRules: ["cv7_main_language", "cv7_templates_language", "cv7_forms_language"],
     SyntaxError: peg$SyntaxError,
     parse: peg$parse,
   };
 })(globalThis),
+          parse: function (text, options = {}) {
+            return this._parser.parse(text, {
+              ...options,
+              startRule: "cv7_main_language",
+            });
+          },
+          parseTemplate: function (text, options = {}) {
+            return this._parser.parse(text, {
+              ...options,
+              startRule: "cv7_templates_language",
+            });
+          },
+          parseForm: function (text, options = {}) {
+            return this._parser.parse(text, {
+              ...options,
+              startRule: "cv7_forms_language",
+            });
+          },
           _classes: {
+            CompilationOutput: class CompilationOutput {
+
+  static {
+    $moduler.toolkit.makeClass([
+      {
+        static: {
+          create(...args) {
+            return new this(...args);
+          },
+        },
+        prototype: {
+          fromChannelToFile(id, fileBrute) {
+            return require("fs").promises.writeFile($moduler.normalizationOf(fileBrute), this.channel[id].content, "utf8");
+          },
+          toDirectory(dir, filenameBrute) {
+            const fs = require("fs");
+            const filename = filenameBrute.replace(/\,js$/g, "");
+            const files = Object.keys(this.channel).filter(id => id.startsWith("~."));
+            const promises = files.map(id => {
+              const filepathBrute = $moduler._joinPaths([dir, id.replace("~", filename)])
+              const filepath = $moduler.normalizationOf(filepathBrute);
+              const filecontent = this.channel[id].content;
+              return fs.promises.writeFile(filepath, filecontent, "utf8");
+            });
+            return { files, promises };
+          }
+        },
+      },
+    ], this);
+  }
+
+  constructor(initialState, metadata) {
+    $moduler.assert(metadata.from === "compileTokens", `CompilationState can only be created «from=compileTokens» but «${metadata.from}» was found instead on «CompilationState.constructor»`);
+    Object.assign(this, initialState);
+  }
+
+},
             CompilationState: class CompilationState {
   
   static {
@@ -963,13 +1558,13 @@ function peg$parse(input, options) {
 },
           },
           _degrammerFor: {
-            "$compiler.inject": {
+            "inject": {
               code: {
   async detokenize({ token, state, index, compiler}) {
     const innerCode = state.input.source.slice(...token.innerLocation);
     const innerParameters = state.constructor.evaluateJs(`return [${innerCode}];`);
     const targetFileBrute = innerParameters[0];
-    const compilation = await compiler.cloneForFile(state.input.file.path)._compile(targetFileBrute);
+    const compilation = await compiler.cloneForFile(state.input.file.path)._compileFile(targetFileBrute);
     const replacement = compilation.out.channel[state.memory.fileChannel].content;
     return { token, replacedBy: replacement };
   }
@@ -999,10 +1594,17 @@ function peg$parse(input, options) {
     const innerParameters = state.constructor.evaluateJs(`return [${innerCode}];`);
     const targetFileBrute = innerParameters[0];
     let replacement = "";
-    Aqui_habria_otra_operacion_para_averiguar_el_replacement: {
-      // const compilation = await compiler.cloneForFile(state.input.file.path)._compile(targetFileBrute);
-      // const replacement = compilation.out.channel[state.memory.fileChannel].content;
-      throw new Error("Syntax for templates is not yet available");
+    let templateSource = null;
+    Step_1_renderizar_plantilla: {
+      const subcompiler = compiler.cloneForFile(state.input.file.path);
+      const targetFile = subcompiler.moduler.normalizationOf(targetFileBrute);
+      const templateCompilation = await subcompiler._compileTemplateFile(targetFile);
+      Atencion_solo_se_transmite_el_canal_activo_original: {
+        Std.classes.Printer.json("templateCompilation", state.input.file.path, templateCompilation);
+        templateSource = templateCompilation.out.channel[state.memory.fileChannel].content;
+      }
+      const compilation = await subcompiler._compileSource(templateSource, state.input.file.path);
+      replacement = compilation.out.channel[state.memory.fileChannel].content;
     }
     return { token, replacedBy: replacement };
   }
@@ -1021,8 +1623,34 @@ function peg$parse(input, options) {
   }
 },
             },
+            "template": {
+              value: {
+  async detokenize({ token, state, index, compiler}) {
+    return { token, replacedBy: "888" };
+  }
+},
+              block: {
+  async detokenize({ token, state, index, compiler}) {
+    return { token, replacedBy: "666" };
+  }
+},
+            },
+            "form": {
+              control: {
+  async detokenize({ token, state, index, compiler}) {
+    return { token };
+  }
+},
+            },
+            "plain": {
+              undefined: {
+                detokenize({ token }) {
+                  return { token };
+                }
+              }
+            }
           },
-          _compileTokens: async function(tokens, { options, source, file }, rootState = null) {
+          _compileTokens: async function (tokens, { options, source, file }, rootState = null) {
             let fileExtension, state;
             Initialize_state: {
               fileExtension = require("path").extname(file);
@@ -1043,80 +1671,88 @@ function peg$parse(input, options) {
                   fileChannel: `~${fileExtension}`,
                   detokenization: [],
                 },
-                output: {
+                output: this._classes.CompilationOutput.create({
                   channel: {},
-                },
-              }, {
-                from: "compileTokens"
-              });
+                }, { from: "compileTokens" }),
+              }, { from: "compileTokens" });
               state.memory.currentChannel = state.memory.fileChannel;
               state.output.channel[state.memory.currentChannel] = { content: "" };
             }
-            Degramme_tokens: {
-              Inject_pretoken: {
-                if(tokens.length === 0) {
-                  const pretoken = {
-                    grammar: "plain text",
-                    outerLocation: [
-                      0,
-                      source.length,
-                    ],
-                  };
-                  state.addDetoken({ token: pretoken, replacedBy: source.slice(...pretoken.outerLocation) });
-                }
-              }
-              for (let index = 0; index < tokens.length; index++) {
-                const token = tokens[index];
-                const degrammer = this._degrammerFor[token.grammar][token.operation];
-                const tokenStartPos = token.outerLocation[0];
-                Inject_intertext: {
-                  if(tokenStartPos === state.memory.textIndex) {
-                    break Inject_intertext;
-                  }
-                  const intertoken = {
-                    grammar: "plain text",
-                    outerLocation: [
-                      state.memory.textIndex,
-                      tokenStartPos,
-                    ],
-                  };
-                  state.addDetoken({ token: intertoken, replacedBy: source.slice(...intertoken.outerLocation) });
-                }
-                const detoken = await degrammer.detokenize({ token, state, index, compiler: this, });
-                state.addDetoken({ ...detoken, token });
-              }
-              Inject_postoken: {
-                if(state.memory.textIndex !== source.length) {
-                  const postoken = {
-                    grammar: "plain text",
-                    outerLocation: [
-                      state.memory.textIndex,
-                      source.length,
-                    ],
-                  };
-                  state.addDetoken({ token: postoken, replacedBy: source.slice(...postoken.outerLocation) });
-                }
-              }
+            Degramme_tokens:
+            for (let index = 0; index < tokens.length; index++) {
+              const token = tokens[index];
+              $moduler.assert(token.grammar in this._degrammerFor, `Missing degrammer for «${token.grammar}» grammar on «CompilerV7.prototype._compileTokens»`);
+              const degrammer = this._degrammerFor[token.grammar][token.operation];
+              const detoken = await degrammer.detokenize({ token, state, index, compiler: this, });
+              state.addDetoken({ ...detoken, token });
             }
             Formalize_output: {
-              for(let index=0; index<state.memory.detokenization.length; index++) {
+              for (let index = 0; index < state.memory.detokenization.length; index++) {
                 const detoken = state.memory.detokenization[index];
-                if(detoken.replacedBy) {
-                  state.appendToChannel(null, detoken.replacedBy || source.slice(...detoken.token.outerLocation));
-                }
+                state.appendToChannel(null, detoken.replacedBy || source.slice(...detoken.token.outerLocation));
               }
             }
             return { in: state.input, out: state.output, memory: state.memory, };
           },
-          compile: function(...args) {
-            return this._compile(...args);
+          compile: function (...args) {
+            return this._compileFile(...args);
           },
-          _compile: async function(fileBrute, options = {}, rootState = null) {
+          _compileSource: async function (source, file, options = {}, rootState = null) {
+            $moduler.assert(typeof source === "string", "Parameter «source» must be string on «CompilerV7.prototype._compileSource»");
+            $moduler.assert(typeof file === "string", "Parameter «file» must be string on «CompilerV7.prototype._compileSource»");
+            const tokens = this._parser.parse(source);
+            return await this._compileTokens(tokens, { options, source, file }, rootState);
+          },
+          _compileFile: async function (fileBrute, options = {}, rootState = null) {
+            $moduler.assert(typeof fileBrute === "string", "Parameter «file» must be string on «CompilerV7.prototype._compileFile»");
             const file = this.moduler.normalizationOf(fileBrute);
             const source = await require("fs").promises.readFile(file, "utf8");
-            const tokens = this._parser.parse(source);
-            const result = await this._compileTokens(tokens, { options, source, file }, rootState);
-            return result;
+            return await this._compileSource(source, file, options, rootState);
+          },
+
+          // TEMA TEMPLATES:
+          _compileTemplateSource: async function (templateSource, file, parameters, options, rootState) {
+            $moduler.assert(typeof templateSource === "string", "Parameter «templateSource» must be string on «CompilerV7.prototype._compileTemplate»");
+            $moduler.assert(typeof file === "string", "Parameter «file» must be string on «CompilerV7.prototype._compileTemplate»");
+            let newSource = "";
+            Digest_template: {
+              const tokens = this.parseTemplate(templateSource);
+              const sourceFactorySource = this._generateTemplateFunctionSourceFromTokens(tokens, templateSource);
+              const sourceFactory = new (async function() {}.constructor)(...Object.keys(parameters), sourceFactorySource);
+              newSource = await sourceFactory(...Object.values(parameters));
+            }
+            return await this._compileSource(newSource, file, options, rootState);
+          },
+          _compileTemplateFile: async function (fileBrute, options = {}, rootState = null) {
+            $moduler.assert(typeof fileBrute === "string", "Parameter «file» must be string on «CompilerV7.prototype._compileTemplateFile»");
+            $moduler.assert(typeof options === "object", "Parameter «options» must be object on «CompilerV7.prototype._compileTemplateFile»");
+            $moduler.assert(typeof rootState === "object", "Parameter «file» must be string on «CompilerV7.prototype._compileTemplateFile»");
+            const file = this.moduler.normalizationOf(fileBrute);
+            const source = await require("fs").promises.readFile(file, "utf8");
+            return await this._compileTemplateSource(source, file, {}, options, rootState);
+          },
+          _generateTemplateFunctionSourceFromTokens(tokens, templateSource) {
+            let out = "";
+            out += "  const __output = [];\n";
+            for (const token of tokens) {
+              const [start, end] = token.innerLocation || token.outerLocation;
+              switch (token.operation) {
+                case "block": {
+                  out += templateSource.slice(start, end) + "\n";
+                  break;
+                }
+                case "value": {
+                  out += `__output.push(String(${templateSource.slice(start, end)} ?? ""));\n`;
+                  break;
+                }
+                default: {
+                  out += `__output.push(${JSON.stringify(templateSource.slice(start, end))});\n`;
+                  break;
+                }
+              }
+            }
+            out += "  return __output.join('');\n";
+            return out;
           }
         },
       }
